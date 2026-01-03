@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Palette, Bell, Shield } from "lucide-react";
+import { User, Palette, Bell, Shield, CreditCard, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +10,16 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Settings = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { subscription, hasActiveSubscription } = useSubscription();
+  
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -22,10 +29,34 @@ const Settings = () => {
     updates: true,
   });
 
+  useEffect(() => {
+    if (user?.email) {
+      setProfile(prev => ({ ...prev, email: user.email || "" }));
+    }
+  }, [user]);
+
   const handleSaveProfile = () => {
     toast({
       title: "Profile Updated",
       description: "Your profile has been saved successfully.",
+    });
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
+    });
+    navigate("/");
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -41,6 +72,52 @@ const Settings = () => {
           <p className="text-muted-foreground">
             Manage your account and preferences.
           </p>
+        </motion.div>
+
+        {/* Subscription Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+        >
+          <Card className="glass-panel p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold">Subscription</h2>
+            </div>
+
+            {hasActiveSubscription && subscription ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/10 border border-primary/20">
+                  <div>
+                    <p className="font-semibold text-lg capitalize">
+                      {subscription.plan_type} Plan
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Active since {formatDate(subscription.started_at)}
+                    </p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                    Active
+                  </span>
+                </div>
+                {subscription.expires_at && (
+                  <p className="text-sm text-muted-foreground">
+                    Renews on {formatDate(subscription.expires_at)}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground mb-4">No active subscription</p>
+                <Button onClick={() => navigate("/pricing")}>
+                  View Plans
+                </Button>
+              </div>
+            )}
+          </Card>
         </motion.div>
 
         {/* Profile Section */}
@@ -75,7 +152,7 @@ const Settings = () => {
                   type="email"
                   placeholder="Enter your email"
                   value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                  disabled
                   className="mt-2"
                 />
               </div>
@@ -208,6 +285,28 @@ const Settings = () => {
               </div>
               <Button variant="outline" className="mt-2">
                 Update Password
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Sign Out Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <Card className="glass-panel p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Sign Out</p>
+                <p className="text-sm text-muted-foreground">
+                  Sign out of your account on this device
+                </p>
+              </div>
+              <Button variant="destructive" onClick={handleSignOut} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Sign Out
               </Button>
             </div>
           </Card>

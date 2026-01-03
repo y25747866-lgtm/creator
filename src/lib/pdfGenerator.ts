@@ -231,14 +231,31 @@ export function generatePDF(ebook: Ebook): void {
   doc.save(`${filename}.pdf`);
 }
 
-export function downloadCoverImage(ebook: Ebook): void {
+export async function downloadCoverImage(ebook: Ebook): Promise<void> {
   if (!ebook.coverImageUrl) return;
 
-  const link = document.createElement("a");
-  link.href = ebook.coverImageUrl;
-  const filename = ebook.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
-  link.download = `${filename}_cover.png`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    // Fetch the image as a blob to handle CORS issues
+    const response = await fetch(ebook.coverImageUrl);
+    const blob = await response.blob();
+    
+    // Create a blob URL
+    const blobUrl = URL.createObjectURL(blob);
+    
+    // Create download link
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    const filename = ebook.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
+    link.download = `${filename}_cover.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up blob URL
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error("Error downloading cover image:", error);
+    // Fallback: open in new tab
+    window.open(ebook.coverImageUrl, "_blank");
+  }
 }

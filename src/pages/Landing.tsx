@@ -3,6 +3,7 @@ import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import WhatIsNexora from "@/components/landing/WhatIsNexora";
 import Features from "@/components/landing/Features";
+import PricingSection from "@/components/landing/PricingSection";
 import Founder from "@/components/landing/Founder";
 import GetStarted from "@/components/landing/GetStarted";
 import FAQ from "@/components/landing/FAQ";
@@ -17,6 +18,7 @@ const Landing = () => {
         <Hero />
         <WhatIsNexora />
         <Features />
+        <PricingSection />
         <Founder />
         <GetStarted />
         <FAQ />

@@ -18,11 +18,11 @@ const Navbar = () => {
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
-            <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              About
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              FAQ
             </a>
           </div>
 

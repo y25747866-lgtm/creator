@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -9,14 +9,20 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import nexoraLogo from "@/assets/nexora-logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const DashboardSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -24,6 +30,15 @@ const DashboardSidebar = () => {
     { icon: Download, label: "Download History", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
+    });
+    navigate("/");
+  };
 
   return (
     <motion.aside
@@ -122,8 +137,31 @@ const DashboardSidebar = () => {
         </AnimatePresence>
       </nav>
 
-      {/* Collapse Button */}
-      <div className="p-4 border-t border-border/50">
+      {/* Sign Out & Collapse */}
+      <div className="p-4 border-t border-border/50 space-y-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSignOut}
+          className={cn(
+            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            collapsed ? "justify-center px-2" : "justify-start"
+          )}
+        >
+          <LogOut className="w-5 h-5 shrink-0" />
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="ml-2"
+              >
+                Sign Out
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Button>
         <Button
           variant="ghost"
           size="sm"
