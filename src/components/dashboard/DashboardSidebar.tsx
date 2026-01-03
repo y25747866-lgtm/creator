@@ -24,11 +24,6 @@ const DashboardSidebar = () => {
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];
 
-  const referralLinks = [
-    { label: "WHOP Referral", url: "https://whop.com/?a=zm1a" },
-    { label: "Payhip Referral", url: "https://payhip.com?fp_ref=yesh-malik48" },
-  ];
-
   return (
     <motion.aside
       initial={false}
@@ -91,7 +86,7 @@ const DashboardSidebar = () => {
           );
         })}
 
-        {/* Referral Links Section */}
+        {/* Start Your Digital Business Section */}
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -101,21 +96,27 @@ const DashboardSidebar = () => {
               className="pt-6"
             >
               <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Referral Links
+                Start your digital business today
               </p>
               <div className="space-y-2">
-                {referralLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
-                  >
-                    <ExternalLink className="w-4 h-4 shrink-0" />
-                    <span className="font-medium text-sm">{link.label}</span>
-                  </a>
-                ))}
+                <a
+                  href="https://whop.com/?a=zm1a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
+                >
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                  <span className="font-medium text-sm">Whop</span>
+                </a>
+                <a
+                  href="https://payhip.com?fp_ref=yesh-malik48"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
+                >
+                  <ExternalLink className="w-4 h-4 shrink-0" />
+                  <span className="font-medium text-sm">Payhip</span>
+                </a>
               </div>
             </motion.div>
           )}

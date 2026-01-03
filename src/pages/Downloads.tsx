@@ -11,99 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
-import { jsPDF } from "jspdf";
+import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { format } from "date-fns";
 
 const Downloads = () => {
   const { ebooks, removeEbook } = useEbookStore();
   const [previewEbook, setPreviewEbook] = useState<Ebook | null>(null);
-
-  const downloadPDF = (ebook: Ebook) => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-
-    // Cover page
-    if (ebook.coverImageUrl) {
-      try {
-        doc.addImage(ebook.coverImageUrl, "JPEG", 0, 0, pageWidth, pageHeight);
-      } catch {
-        doc.setFillColor(99, 102, 241);
-        doc.rect(0, 0, pageWidth, pageHeight, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(28);
-        const titleLines = doc.splitTextToSize(ebook.title, contentWidth);
-        doc.text(titleLines, pageWidth / 2, pageHeight / 2, { align: "center" });
-      }
-    }
-
-    // Table of Contents
-    doc.addPage();
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(24);
-    doc.text("Table of Contents", margin, 40);
-    
-    const sections = ebook.content.split(/(?=^#+\s)/gm).filter(Boolean);
-    let tocY = 60;
-    doc.setFontSize(12);
-    sections.forEach((section, index) => {
-      const title = section.split("\n")[0].replace(/^#+\s/, "");
-      if (title.trim()) {
-        doc.text(`${index + 1}. ${title}`, margin, tocY);
-        tocY += 10;
-      }
-    });
-
-    // Content pages
-    doc.addPage();
-    doc.setFontSize(12);
-    let y = margin;
-    let pageNum = 3;
-
-    const lines = doc.splitTextToSize(ebook.content, contentWidth);
-    
-    lines.forEach((line: string) => {
-      if (y > pageHeight - margin) {
-        doc.setFontSize(10);
-        doc.text(String(pageNum), pageWidth / 2, pageHeight - 10, { align: "center" });
-        doc.addPage();
-        pageNum++;
-        y = margin;
-        doc.setFontSize(12);
-      }
-
-      if (line.startsWith("# ")) {
-        doc.setFontSize(20);
-        doc.text(line.replace("# ", ""), margin, y);
-        doc.setFontSize(12);
-        y += 15;
-      } else if (line.startsWith("## ")) {
-        doc.setFontSize(16);
-        doc.text(line.replace("## ", ""), margin, y);
-        doc.setFontSize(12);
-        y += 12;
-      } else {
-        doc.text(line, margin, y);
-        y += 7;
-      }
-    });
-
-    doc.setFontSize(10);
-    doc.text(String(pageNum), pageWidth / 2, pageHeight - 10, { align: "center" });
-
-    doc.save(`${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
-  };
-
-  const downloadCover = (ebook: Ebook) => {
-    if (!ebook.coverImageUrl) return;
-    
-    const link = document.createElement("a");
-    link.href = ebook.coverImageUrl;
-    link.download = `${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}_cover.png`;
-    link.click();
-  };
 
   return (
     <DashboardLayout>
@@ -174,7 +87,7 @@ const Downloads = () => {
                       <div className="flex flex-wrap gap-3">
                         <Button
                           size="sm"
-                          onClick={() => downloadPDF(ebook)}
+                          onClick={() => generatePDF(ebook)}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           PDF
@@ -182,7 +95,8 @@ const Downloads = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => downloadCover(ebook)}
+                          onClick={() => downloadCoverImage(ebook)}
+                          disabled={!ebook.coverImageUrl}
                         >
                           <Image className="w-4 h-4 mr-2" />
                           Cover
@@ -218,6 +132,18 @@ const Downloads = () => {
             <DialogHeader>
               <DialogTitle>{previewEbook?.title}</DialogTitle>
             </DialogHeader>
+            
+            {/* Cover Image Preview */}
+            {previewEbook?.coverImageUrl && (
+              <div className="mb-6">
+                <img
+                  src={previewEbook.coverImageUrl}
+                  alt={previewEbook.title}
+                  className="w-48 mx-auto rounded-lg shadow-lg"
+                />
+              </div>
+            )}
+            
             <div className="prose prose-sm dark:prose-invert max-w-none">
               {previewEbook?.content.split("\n").map((line, i) => {
                 if (line.startsWith("# ")) {

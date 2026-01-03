@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { supabase } from "@/integrations/supabase/client";
-import { jsPDF } from "jspdf";
+import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 
 const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
@@ -64,9 +64,9 @@ const EbookGenerator = () => {
     setGeneratedEbook(null);
 
     try {
-      // Step 1: Generate content
-      setProgress(20);
-      setStatus("Generating ebook content...");
+      // Step 1: Generate content (token-aware)
+      setProgress(15);
+      setStatus("Analyzing topic and generating content...");
       
       const { data: contentData, error: contentError } = await supabase.functions.invoke(
         "generate-ebook-content",
@@ -75,10 +75,10 @@ const EbookGenerator = () => {
 
       if (contentError) throw contentError;
 
-      // Step 2: Generate cover image
-      setProgress(60);
-      setStatus("Creating cover image...");
+      setProgress(50);
+      setStatus("Content generated! Creating cover image...");
 
+      // Step 2: Generate cover image
       const { data: coverData, error: coverError } = await supabase.functions.invoke(
         "generate-ebook-cover",
         { body: { title: contentData.title, topic } }
@@ -87,8 +87,8 @@ const EbookGenerator = () => {
       if (coverError) throw coverError;
 
       // Step 3: Compile ebook
-      setProgress(90);
-      setStatus("Finalizing your ebook...");
+      setProgress(85);
+      setStatus("Compiling your professional ebook...");
 
       const ebook: Ebook = {
         id: crypto.randomUUID(),
@@ -96,7 +96,7 @@ const EbookGenerator = () => {
         topic,
         content: contentData.content,
         coverImageUrl: coverData.imageUrl,
-        pages: contentData.pages || Math.ceil(contentData.content.length / 3000),
+        pages: contentData.pages || Math.ceil(contentData.content.length / 2000),
         createdAt: new Date().toISOString(),
       };
 
@@ -107,110 +107,18 @@ const EbookGenerator = () => {
 
       toast({
         title: "Ebook Generated!",
-        description: "Your ebook is ready for download.",
+        description: `Your ${ebook.pages}-page ebook is ready for download.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error generating ebook:", error);
       toast({
         title: "Generation Failed",
-        description: error.message || "An error occurred while generating your ebook.",
+        description: error instanceof Error ? error.message : "An error occurred while generating your ebook.",
         variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const downloadPDF = () => {
-    if (!generatedEbook) return;
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-
-    // Cover page
-    if (generatedEbook.coverImageUrl) {
-      try {
-        doc.addImage(generatedEbook.coverImageUrl, "JPEG", 0, 0, pageWidth, pageHeight);
-      } catch {
-        doc.setFillColor(99, 102, 241);
-        doc.rect(0, 0, pageWidth, pageHeight, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(28);
-        const titleLines = doc.splitTextToSize(generatedEbook.title, contentWidth);
-        doc.text(titleLines, pageWidth / 2, pageHeight / 2, { align: "center" });
-      }
-    }
-
-    // Table of Contents
-    doc.addPage();
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(24);
-    doc.text("Table of Contents", margin, 40);
-    
-    const sections = generatedEbook.content.split(/(?=^#+\s)/gm).filter(Boolean);
-    let tocY = 60;
-    doc.setFontSize(12);
-    sections.forEach((section, index) => {
-      const title = section.split("\n")[0].replace(/^#+\s/, "");
-      if (title.trim()) {
-        doc.text(`${index + 1}. ${title}`, margin, tocY);
-        tocY += 10;
-      }
-    });
-
-    // Content pages
-    doc.addPage();
-    doc.setFontSize(12);
-    let y = margin;
-    let pageNum = 3;
-
-    const lines = doc.splitTextToSize(generatedEbook.content, contentWidth);
-    
-    lines.forEach((line: string) => {
-      if (y > pageHeight - margin) {
-        // Add page number
-        doc.setFontSize(10);
-        doc.text(String(pageNum), pageWidth / 2, pageHeight - 10, { align: "center" });
-        doc.addPage();
-        pageNum++;
-        y = margin;
-        doc.setFontSize(12);
-      }
-
-      // Check if it's a heading
-      if (line.startsWith("# ")) {
-        doc.setFontSize(20);
-        doc.text(line.replace("# ", ""), margin, y);
-        doc.setFontSize(12);
-        y += 15;
-      } else if (line.startsWith("## ")) {
-        doc.setFontSize(16);
-        doc.text(line.replace("## ", ""), margin, y);
-        doc.setFontSize(12);
-        y += 12;
-      } else {
-        doc.text(line, margin, y);
-        y += 7;
-      }
-    });
-
-    // Add final page number
-    doc.setFontSize(10);
-    doc.text(String(pageNum), pageWidth / 2, pageHeight - 10, { align: "center" });
-
-    doc.save(`${generatedEbook.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
-  };
-
-  const downloadCover = () => {
-    if (!generatedEbook?.coverImageUrl) return;
-    
-    const link = document.createElement("a");
-    link.href = generatedEbook.coverImageUrl;
-    link.download = `${generatedEbook.title.replace(/[^a-zA-Z0-9]/g, "_")}_cover.png`;
-    link.click();
   };
 
   return (
@@ -332,14 +240,15 @@ const EbookGenerator = () => {
                   </p>
 
                   <div className="flex flex-wrap gap-4 pt-4">
-                    <Button onClick={downloadPDF} className="flex-1 min-w-[150px]">
+                    <Button onClick={() => generatePDF(generatedEbook)} className="flex-1 min-w-[150px]">
                       <Download className="w-4 h-4 mr-2" />
                       Download PDF
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={downloadCover}
+                      onClick={() => downloadCoverImage(generatedEbook)}
                       className="flex-1 min-w-[150px]"
+                      disabled={!generatedEbook.coverImageUrl}
                     >
                       <Image className="w-4 h-4 mr-2" />
                       Download Cover
