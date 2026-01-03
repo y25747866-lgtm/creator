@@ -68,11 +68,8 @@ const Hero = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10" />
           <div className="glass-panel rounded-2xl p-2 shadow-2xl">
             <div className="bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-xl h-64 md:h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <p className="text-muted-foreground">Dashboard Preview</p>
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-white" />
               </div>
             </div>
           </div>
