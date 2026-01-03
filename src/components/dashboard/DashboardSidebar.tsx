@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import nexoraLogo from "@/assets/nexora-logo.png";
 
 const DashboardSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -34,9 +35,7 @@ const DashboardSidebar = () => {
       {/* Logo */}
       <div className="p-4 border-b border-border/50">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-lg">N</span>
-          </div>
+          <img src={nexoraLogo} alt="NexoraOS" className="w-10 h-10 shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span

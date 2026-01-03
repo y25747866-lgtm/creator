@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { ArrowRight } from "lucide-react";
+import nexoraLogo from "@/assets/nexora-logo.png";
 
 const Navbar = () => {
   return (
@@ -9,9 +10,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto glass-panel rounded-2xl px-6 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-white font-bold text-lg">N</span>
-            </div>
+            <img src={nexoraLogo} alt="NexoraOS" className="w-10 h-10" />
             <span className="font-bold text-xl">NexoraOS</span>
           </Link>
 
