@@ -19,29 +19,6 @@ const Footer = () => {
             <span className="font-bold text-xl">NexoraOS</span>
           </div>
 
-          {/* Start your digital business section */}
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Start your digital business today</p>
-            <div className="flex items-center gap-4 justify-center">
-              <a
-                href="https://whop.com/?a=zm1a"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                Whop →
-              </a>
-              <a
-                href="https://payhip.com?fp_ref=yesh-malik48"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                Payhip →
-              </a>
-            </div>
-          </div>
-
           <div className="flex items-center gap-4">
             <a
               href="#"
