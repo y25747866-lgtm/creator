@@ -52,6 +52,7 @@ export type Database = {
           updated_at: string
           user_id: string
           whop_order_id: string | null
+          whop_user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -63,6 +64,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           whop_order_id?: string | null
+          whop_user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -74,6 +76,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whop_order_id?: string | null
+          whop_user_id?: string | null
         }
         Relationships: []
       }

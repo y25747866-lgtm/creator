@@ -8,6 +8,7 @@ interface Subscription {
   plan_type: "monthly" | "annual";
   status: "active" | "cancelled" | "expired";
   whop_order_id: string | null;
+  whop_user_id: string | null;
   started_at: string;
   expires_at: string | null;
   created_at: string;
