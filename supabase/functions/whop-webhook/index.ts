@@ -63,6 +63,9 @@ serve(async (req) => {
         ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
+      // Extract whop_user_id from webhook
+      const whopUserId = data?.user?.id || data?.user_id || null;
+
       // Upsert subscription
       const { error: subError } = await supabase
         .from("subscriptions")
@@ -71,6 +74,7 @@ serve(async (req) => {
           plan_type: planType,
           status: "active",
           whop_order_id: data?.id || null,
+          whop_user_id: whopUserId,
           started_at: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
         }, {
