@@ -11,6 +11,7 @@ import Downloads from "./pages/Downloads";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
+import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/whop/success" element={<WhopSuccess />} />
             <Route
               path="/dashboard"
               element={

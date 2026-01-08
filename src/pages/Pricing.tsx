@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 // Payment links configuration - easily replaceable
 const PAYMENT_LINKS = {
@@ -76,7 +75,7 @@ const Pricing = () => {
   const { toast } = useToast();
 
   const [purchaseStarted, setPurchaseStarted] = useState(false);
-  const [checkingAccess, setCheckingAccess] = useState(false);
+  const [checkingAccess] = useState(false);
 
   const isReady = useMemo(() => !!user && !subLoading, [user, subLoading]);
 
@@ -97,47 +96,18 @@ const Pricing = () => {
 
   const handlePurchase = (link: string) => {
     setPurchaseStarted(true);
-    window.open(link, "_blank", "noopener,noreferrer");
+    // Keep checkout in the same tab so Whop can reliably redirect back to /whop/success
+    window.location.assign(link);
   };
 
   const checkAccessNow = async () => {
     if (!user) {
-      navigate("/auth");
+      navigate("/auth?redirect=%2Fwhop%2Fsuccess");
       return;
     }
 
-    setCheckingAccess(true);
-    try {
-      const { data, error } = await supabase.rpc("has_active_subscription", {
-        user_uuid: user.id,
-      });
-
-      if (error) throw error;
-
-      if (data) {
-        toast({
-          title: "Payment confirmed",
-          description: "Access unlocked. Redirecting…",
-        });
-        navigate("/dashboard/ebook-generator", { replace: true });
-        return;
-      }
-
-      toast({
-        title: "Not confirmed yet",
-        description:
-          "We haven't received the payment confirmation yet. Please wait 30–60 seconds and try again.",
-        variant: "destructive",
-      });
-    } catch (e: unknown) {
-      toast({
-        title: "Could not verify payment",
-        description: e instanceof Error ? e.message : "Unknown error",
-        variant: "destructive",
-      });
-    } finally {
-      setCheckingAccess(false);
-    }
+    // If user just paid, route them to the success page which will handle polling
+    navigate("/whop/success", { replace: true });
   };
 
   // After checkout finishes, users usually return to this tab manually.

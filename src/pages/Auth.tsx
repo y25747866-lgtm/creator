@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,17 +21,23 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
-  
+
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signIn, signUp, loading } = useAuth();
+
+  const redirectTo = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("redirect") || "/pricing";
+  }, [location.search]);
 
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      navigate("/pricing");
+      navigate(redirectTo, { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, redirectTo]);
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -90,7 +96,7 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
-        navigate("/pricing");
+        navigate(redirectTo, { replace: true });
       } else {
         const { error } = await signUp(email, password);
         if (error) {
@@ -113,7 +119,7 @@ const Auth = () => {
           title: "Account Created!",
           description: "Your account has been created successfully.",
         });
-        navigate("/pricing");
+        navigate(redirectTo, { replace: true });
       }
     } catch (err) {
       toast({
