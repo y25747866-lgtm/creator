@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.generate-ebook-cover]
 verify_jwt = false
+
+[functions.whop-webhook]
+verify_jwt = false

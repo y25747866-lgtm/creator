@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, webhook-id, webhook-signature, webhook-timestamp",
 };
 
 serve(async (req) => {
@@ -15,12 +16,40 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const webhookSecret = Deno.env.get("WHOP_WEBHOOK_SECRET");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const body = await req.json();
+    // Get raw body for signature verification
+    const rawBody = await req.text();
     
-    // Whop webhook payload structure
-    const { action, data } = body;
+    // Verify webhook signature if secret is configured
+    if (webhookSecret) {
+      try {
+        const wh = new Webhook(webhookSecret);
+        const headers: Record<string, string> = {};
+        req.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+        wh.verify(rawBody, headers);
+        console.log("Webhook signature verified successfully");
+      } catch (verifyError) {
+        console.error("Webhook signature verification failed:", verifyError);
+        return new Response(
+          JSON.stringify({ error: "Invalid webhook signature" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      console.warn("WHOP_WEBHOOK_SECRET not configured - skipping signature verification");
+    }
+
+    const body = JSON.parse(rawBody);
+    
+    // Whop webhook payload structure - handle both formats
+    // Format 1: { action, data } (legacy)
+    // Format 2: { type, data } (standard webhooks)
+    const action = body.action || body.type;
+    const data = body.data;
     
     console.log("Received Whop webhook:", { action, data });
 
