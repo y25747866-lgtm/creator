@@ -14,18 +14,30 @@ import { z } from "zod";
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
+type AuthMode = "login" | "signup" | "forgot" | "reset";
+
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, loading, resetPassword, updatePassword } = useAuth();
+
+  // Check URL params for mode (e.g., after password reset link clicked)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlMode = params.get("mode");
+    if (urlMode === "reset") {
+      setMode("reset");
+    }
+  }, [location.search]);
 
   const redirectTo = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -42,23 +54,30 @@ const Auth = () => {
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
-    try {
-      emailSchema.parse(email);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.email = e.errors[0].message;
+    // Email validation for login, signup, and forgot password modes
+    if (mode !== "reset") {
+      try {
+        emailSchema.parse(email);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.email = e.errors[0].message;
+        }
       }
     }
 
-    try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
+    // Password validation for login, signup, and reset modes
+    if (mode !== "forgot") {
+      try {
+        passwordSchema.parse(password);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.password = e.errors[0].message;
+        }
       }
     }
 
-    if (!isLogin && password !== confirmPassword) {
+    // Confirm password for signup and reset modes
+    if ((mode === "signup" || mode === "reset") && password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
@@ -74,7 +93,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
@@ -97,7 +116,7 @@ const Auth = () => {
           description: "You have successfully logged in.",
         });
         navigate(redirectTo, { replace: true });
-      } else {
+      } else if (mode === "signup") {
         const { error } = await signUp(email, password);
         if (error) {
           if (error.message.includes("User already registered")) {
@@ -120,6 +139,37 @@ const Auth = () => {
           description: "Your account has been created successfully.",
         });
         navigate(redirectTo, { replace: true });
+      } else if (mode === "forgot") {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        setResetEmailSent(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a password reset link.",
+        });
+      } else if (mode === "reset") {
+        const { error } = await updatePassword(password);
+        if (error) {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        toast({
+          title: "Password Updated",
+          description: "Your password has been reset successfully.",
+        });
+        navigate("/auth", { replace: true });
+        setMode("login");
       }
     } catch (err) {
       toast({
@@ -129,6 +179,41 @@ const Auth = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getModeTitle = () => {
+    switch (mode) {
+      case "login": return "Welcome Back";
+      case "signup": return "Create Account";
+      case "forgot": return "Reset Password";
+      case "reset": return "Set New Password";
+    }
+  };
+
+  const getModeDescription = () => {
+    switch (mode) {
+      case "login": return "Sign in to access your dashboard";
+      case "signup": return "Start your journey with NexoraOS";
+      case "forgot": return "Enter your email to receive a reset link";
+      case "reset": return "Enter your new password below";
+    }
+  };
+
+  const getSubmitButtonText = () => {
+    if (isLoading) {
+      switch (mode) {
+        case "login": return "Signing in...";
+        case "signup": return "Creating account...";
+        case "forgot": return "Sending...";
+        case "reset": return "Updating...";
+      }
+    }
+    switch (mode) {
+      case "login": return "Sign In";
+      case "signup": return "Create Account";
+      case "forgot": return "Send Reset Link";
+      case "reset": return "Update Password";
     }
   };
 
@@ -171,97 +256,155 @@ const Auth = () => {
           <Card className="glass-panel p-8">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold mb-2">
-                {isLogin ? "Welcome Back" : "Create Account"}
+                {getModeTitle()}
               </h1>
               <p className="text-muted-foreground">
-                {isLogin 
-                  ? "Sign in to access your dashboard" 
-                  : "Start your journey with NexoraOS"}
+                {getModeDescription()}
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={isLoading}
-                  />
+            {/* Show success message for forgot password */}
+            {mode === "forgot" && resetEmailSent ? (
+              <div className="text-center space-y-4">
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                  <p className="text-sm text-foreground">
+                    Check your email for a password reset link. It may take a few minutes to arrive.
+                  </p>
                 </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email}</p>
-                )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setMode("login");
+                    setResetEmailSent(false);
+                    setEmail("");
+                  }}
+                  className="w-full"
+                >
+                  Back to Sign In
+                </Button>
               </div>
+            ) : (
+              <>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Email field - shown for login, signup, forgot */}
+                  {mode !== "reset" && (
+                    <div>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="Email address"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.email && (
+                        <p className="text-sm text-destructive mt-1">{errors.email}</p>
+                      )}
+                    </div>
+                  )}
 
-              <div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    disabled={isLoading}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password}</p>
-                )}
-              </div>
+                  {/* Password field - shown for login, signup, reset */}
+                  {mode !== "forgot" && (
+                    <div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder={mode === "reset" ? "New password" : "Password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.password && (
+                        <p className="text-sm text-destructive mt-1">{errors.password}</p>
+                      )}
+                    </div>
+                  )}
 
-              {!isLogin && (
-                <div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-10"
+                  {/* Confirm password - shown for signup and reset */}
+                  {(mode === "signup" || mode === "reset") && (
+                    <div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="Confirm Password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.confirmPassword && (
+                        <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {getSubmitButtonText()}
+                  </Button>
+                </form>
+
+                {/* Forgot password link - only on login */}
+                {mode === "login" && (
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("forgot");
+                        setErrors({});
+                        setPassword("");
+                      }}
+                      className="text-sm text-muted-foreground hover:text-primary hover:underline"
                       disabled={isLoading}
-                    />
+                    >
+                      Forgot your password?
+                    </button>
                   </div>
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>
+                )}
+
+                {/* Toggle between modes */}
+                <div className="mt-6 text-center">
+                  {mode === "forgot" || mode === "reset" ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("login");
+                        setErrors({});
+                        setPassword("");
+                        setConfirmPassword("");
+                      }}
+                      className="text-sm text-primary hover:underline font-medium"
+                      disabled={isLoading}
+                    >
+                      Back to Sign In
+                    </button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode(mode === "login" ? "signup" : "login");
+                          setErrors({});
+                        }}
+                        className="text-primary hover:underline font-medium"
+                        disabled={isLoading}
+                      >
+                        {mode === "login" ? "Sign up" : "Sign in"}
+                      </button>
+                    </p>
                   )}
                 </div>
-              )}
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isLogin ? "Signing in..." : "Creating account..."}
-                  </>
-                ) : (
-                  isLogin ? "Sign In" : "Create Account"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setErrors({});
-                  }}
-                  className="text-primary hover:underline font-medium"
-                  disabled={isLoading}
-                >
-                  {isLogin ? "Sign up" : "Sign in"}
-                </button>
-              </p>
-            </div>
+              </>
+            )}
           </Card>
         </motion.div>
       </div>
