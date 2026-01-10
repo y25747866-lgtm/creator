@@ -1,23 +1,18 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-
-const POLL_MS = 2500;
-const TIMEOUT_MS = 60_000;
 
 const WhopSuccess = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [status, setStatus] = useState<"polling" | "active" | "timeout">("polling");
+  const [status, setStatus] = useState<"checking" | "active" | "no-subscription">("checking");
 
   useEffect(() => {
     if (authLoading || !user) return;
 
     let cancelled = false;
-    const startedAt = Date.now();
 
     const checkSubscription = async () => {
       try {
@@ -33,39 +28,35 @@ const WhopSuccess = () => {
         
         if (error) {
           console.error("Error checking subscription:", error);
+          setStatus("no-subscription");
           return;
         }
 
-        if (data && data.length > 0) {
-          setStatus("active");
-          setTimeout(() => {
-            if (!cancelled) {
-              navigate("/dashboard", { replace: true });
-            }
-          }, 1500);
+        // No active subscription found - redirect to pricing
+        if (!data || data.length === 0) {
+          setStatus("no-subscription");
           return;
         }
 
-        if (Date.now() - startedAt >= TIMEOUT_MS) {
-          setStatus("timeout");
-        }
+        // Active subscription found - show success and redirect
+        setStatus("active");
+        setTimeout(() => {
+          if (!cancelled) {
+            navigate("/dashboard", { replace: true });
+          }
+        }, 1500);
       } catch (err) {
         console.error("Subscription check error:", err);
+        setStatus("no-subscription");
       }
     };
 
     void checkSubscription();
-    const intervalId = window.setInterval(() => {
-      if (status === "polling") {
-        void checkSubscription();
-      }
-    }, POLL_MS);
 
     return () => {
       cancelled = true;
-      window.clearInterval(intervalId);
     };
-  }, [authLoading, user, navigate, status]);
+  }, [authLoading, user, navigate]);
 
   // Auth loading state
   if (authLoading) {
@@ -76,64 +67,44 @@ const WhopSuccess = () => {
     );
   }
 
-  // Not logged in - redirect to auth with return URL
+  // Not logged in - redirect to pricing
   if (!user) {
-    const redirect = encodeURIComponent("/whop/success");
-    return <Navigate to={`/auth?redirect=${redirect}`} replace />;
+    return <Navigate to="/pricing" replace />;
   }
 
+  // No subscription - redirect to pricing
+  if (status === "no-subscription") {
+    return <Navigate to="/pricing" replace />;
+  }
+
+  // Checking subscription status
+  if (status === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          </div>
+          <h1 className="text-2xl font-semibold">Verifying access…</h1>
+          <p className="text-muted-foreground">
+            Please wait while we check your account status.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Active subscription - show success before redirect
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <div className="max-w-md w-full text-center space-y-6">
-        {status === "polling" && (
-          <>
-            <div className="flex items-center justify-center">
-              <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            </div>
-            <h1 className="text-2xl font-semibold">Activating your access…</h1>
-            <p className="text-muted-foreground">
-              Please wait while we confirm your payment. This usually takes a few seconds.
-            </p>
-          </>
-        )}
-
-        {status === "active" && (
-          <>
-            <div className="flex items-center justify-center">
-              <CheckCircle className="w-12 h-12 text-green-500" />
-            </div>
-            <h1 className="text-2xl font-semibold text-green-500">Access Activated!</h1>
-            <p className="text-muted-foreground">
-              Redirecting you to the dashboard…
-            </p>
-          </>
-        )}
-
-        {status === "timeout" && (
-          <>
-            <div className="flex items-center justify-center">
-              <AlertCircle className="w-12 h-12 text-yellow-500" />
-            </div>
-            <h1 className="text-2xl font-semibold">Taking longer than expected</h1>
-            <p className="text-muted-foreground">
-              Your payment was received. If access does not activate within a few minutes, please contact support.
-            </p>
-            <div className="flex flex-col gap-3 pt-4">
-              <Button 
-                onClick={() => setStatus("polling")}
-                variant="default"
-              >
-                Check Again
-              </Button>
-              <Button 
-                onClick={() => navigate("/dashboard")}
-                variant="outline"
-              >
-                Go to Dashboard
-              </Button>
-            </div>
-          </>
-        )}
+        <div className="flex items-center justify-center">
+          <CheckCircle className="w-12 h-12 text-green-500" />
+        </div>
+        <h1 className="text-2xl font-semibold text-green-500">Access Verified!</h1>
+        <p className="text-muted-foreground">
+          Redirecting you to the dashboard…
+        </p>
       </div>
     </div>
   );
