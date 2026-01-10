@@ -55,13 +55,12 @@ const WhopSuccess = () => {
     startTime.current = Date.now();
     pollCount.current = 0;
 
-    const poll = async () => {
-      if (cancelled) return;
-
+    // First, do an immediate check - if no subscription exists at all, redirect immediately
+    const initialCheck = async () => {
       const hasActive = await checkSubscription();
-
+      
       if (cancelled) return;
-
+      
       if (hasActive) {
         // Active subscription found → show success briefly, then redirect
         setStatus("active");
@@ -72,30 +71,49 @@ const WhopSuccess = () => {
         }, 800);
         return;
       }
-
-      // Check if we've exceeded timeout
-      const elapsed = Date.now() - startTime.current;
-      if (elapsed >= MAX_WAIT_MS) {
-        // First poll with no subscription = likely cancelled checkout
-        // Subsequent polls with no subscription after timeout = payment processing
-        if (pollCount.current === 0) {
-          // User probably cancelled - redirect to pricing silently
-          setStatus("redirect-pricing");
-        } else {
-          // Was polling but never found subscription - show timeout message
-          setStatus("timeout");
-        }
-        return;
-      }
-
+      
+      // No active subscription on first check - start polling but with shorter initial timeout
       pollCount.current++;
+      startPolling();
+    };
 
-      // Continue polling
+    const startPolling = () => {
+      const poll = async () => {
+        if (cancelled) return;
+
+        const hasActive = await checkSubscription();
+
+        if (cancelled) return;
+
+        if (hasActive) {
+          // Active subscription found → show success briefly, then redirect
+          setStatus("active");
+          setTimeout(() => {
+            if (!cancelled) {
+              navigate("/dashboard", { replace: true });
+            }
+          }, 800);
+          return;
+        }
+
+        // Check if we've exceeded timeout
+        const elapsed = Date.now() - startTime.current;
+        if (elapsed >= MAX_WAIT_MS) {
+          // Show timeout message - payment may be processing
+          setStatus("timeout");
+          return;
+        }
+
+        pollCount.current++;
+
+        // Continue polling
+        setTimeout(poll, POLL_INTERVAL_MS);
+      };
+
       setTimeout(poll, POLL_INTERVAL_MS);
     };
 
-    // Start polling immediately
-    void poll();
+    void initialCheck();
 
     return () => {
       cancelled = true;

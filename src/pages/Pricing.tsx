@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import Background3D from "@/components/Background3D";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useToast } from "@/hooks/use-toast";
 
@@ -96,18 +97,41 @@ const Pricing = () => {
 
   const handlePurchase = (link: string) => {
     setPurchaseStarted(true);
-    // Keep checkout in the same tab so Whop can reliably redirect back to /whop/success
-    window.location.assign(link);
+    // Open checkout in new tab so user stays on the pricing page
+    // This prevents 404s when user cancels and presses back
+    window.open(link, "_blank");
   };
 
   const checkAccessNow = async () => {
     if (!user) {
-      navigate("/auth?redirect=%2Fwhop%2Fsuccess");
+      navigate("/auth");
       return;
     }
 
-    // If user just paid, route them to the success page which will handle polling
-    navigate("/whop/success", { replace: true });
+    // Quick check for active subscription before navigating
+    try {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("id, status, expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      if (data && data.length > 0) {
+        // Has active subscription - go to dashboard
+        navigate("/dashboard", { replace: true });
+      } else {
+        // No active subscription - show toast and stay on pricing
+        toast({
+          title: "No active subscription found",
+          description: "Complete payment to unlock access.",
+          variant: "default",
+        });
+      }
+    } catch (err) {
+      console.error("Error checking subscription:", err);
+    }
   };
 
   // After checkout finishes, users usually return to this tab manually.
