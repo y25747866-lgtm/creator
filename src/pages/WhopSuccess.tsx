@@ -1,62 +1,113 @@
-import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+
+type Status = "checking" | "active" | "timeout" | "redirect-pricing";
+
+const POLL_INTERVAL_MS = 1000;
+const MAX_WAIT_MS = 10000;
 
 const WhopSuccess = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [status, setStatus] = useState<"checking" | "active" | "no-subscription">("checking");
+  const [status, setStatus] = useState<Status>("checking");
+  const pollCount = useRef(0);
+  const startTime = useRef<number>(Date.now());
+
+  const checkSubscription = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("id, status, expires_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+
+      if (error) {
+        console.error("Error checking subscription:", error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (err) {
+      console.error("Subscription check error:", err);
+      return false;
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    // Wait for auth to load
+    if (authLoading) return;
+
+    // Not logged in → redirect to pricing immediately
+    if (!user) {
+      navigate("/pricing", { replace: true });
+      return;
+    }
 
     let cancelled = false;
+    startTime.current = Date.now();
+    pollCount.current = 0;
 
-    const checkSubscription = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("subscriptions")
-          .select("id, status, expires_at")
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .gt("expires_at", new Date().toISOString())
-          .limit(1);
+    const poll = async () => {
+      if (cancelled) return;
 
-        if (cancelled) return;
-        
-        if (error) {
-          console.error("Error checking subscription:", error);
-          setStatus("no-subscription");
-          return;
-        }
+      const hasActive = await checkSubscription();
 
-        // No active subscription found - redirect to pricing
-        if (!data || data.length === 0) {
-          setStatus("no-subscription");
-          return;
-        }
+      if (cancelled) return;
 
-        // Active subscription found - show success and redirect
+      if (hasActive) {
+        // Active subscription found → show success briefly, then redirect
         setStatus("active");
         setTimeout(() => {
           if (!cancelled) {
             navigate("/dashboard", { replace: true });
           }
-        }, 1500);
-      } catch (err) {
-        console.error("Subscription check error:", err);
-        setStatus("no-subscription");
+        }, 800);
+        return;
       }
+
+      // Check if we've exceeded timeout
+      const elapsed = Date.now() - startTime.current;
+      if (elapsed >= MAX_WAIT_MS) {
+        // First poll with no subscription = likely cancelled checkout
+        // Subsequent polls with no subscription after timeout = payment processing
+        if (pollCount.current === 0) {
+          // User probably cancelled - redirect to pricing silently
+          setStatus("redirect-pricing");
+        } else {
+          // Was polling but never found subscription - show timeout message
+          setStatus("timeout");
+        }
+        return;
+      }
+
+      pollCount.current++;
+
+      // Continue polling
+      setTimeout(poll, POLL_INTERVAL_MS);
     };
 
-    void checkSubscription();
+    // Start polling immediately
+    void poll();
 
     return () => {
       cancelled = true;
     };
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, navigate, checkSubscription]);
+
+  // Redirect to pricing for cancelled/no-subscription users
+  useEffect(() => {
+    if (status === "redirect-pricing") {
+      navigate("/pricing", { replace: true });
+    }
+  }, [status, navigate]);
 
   // Auth loading state
   if (authLoading) {
@@ -67,17 +118,7 @@ const WhopSuccess = () => {
     );
   }
 
-  // Not logged in - redirect to pricing
-  if (!user) {
-    return <Navigate to="/pricing" replace />;
-  }
-
-  // No subscription - redirect to pricing
-  if (status === "no-subscription") {
-    return <Navigate to="/pricing" replace />;
-  }
-
-  // Checking subscription status
+  // Checking subscription status (polling)
   if (status === "checking") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
@@ -87,8 +128,36 @@ const WhopSuccess = () => {
           </div>
           <h1 className="text-2xl font-semibold">Verifying access…</h1>
           <p className="text-muted-foreground">
-            Please wait while we check your account status.
+            Please wait while we confirm your subscription.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Timeout - payment received but subscription not yet active
+  if (status === "timeout") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="flex items-center justify-center">
+            <AlertCircle className="w-12 h-12 text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-semibold">Payment received</h1>
+          <p className="text-muted-foreground">
+            Access is syncing. Please refresh or contact support if this persists.
+          </p>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/pricing", { replace: true })}
+            >
+              Return to Pricing
+            </Button>
+          </div>
         </div>
       </div>
     );
