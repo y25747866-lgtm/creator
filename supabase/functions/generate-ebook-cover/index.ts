@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { 
+  corsHeaders, 
+  validateEbookInput, 
+  sanitizeInput, 
+  verifyAccess, 
+  errorResponse 
+} from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,14 +13,45 @@ serve(async (req) => {
   }
 
   try {
-    const { title, topic } = await req.json();
+    // Verify authentication and subscription
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Unauthorized', 401);
+    }
+
+    // Parse and validate input
+    let body: { title?: string; topic?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid JSON body');
+    }
+
+    const { title, topic } = body;
+    
+    // Validate input
+    const validation = validateEbookInput(topic, title);
+    if (!validation.valid) {
+      return errorResponse(validation.error || 'Invalid input');
+    }
+
+    // Sanitize inputs
+    const sanitizedTitle = title ? sanitizeInput(title).substring(0, 200) : 'Ebook';
+    const sanitizedTopic = sanitizeInput(topic!);
+
     const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 
     if (!OPENROUTER_API_KEY) {
-      throw new Error('OpenRouter API key not configured');
+      console.log('No API key - generating placeholder');
+      return new Response(
+        JSON.stringify({ 
+          imageUrl: createGradientPlaceholder(sanitizedTitle)
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('Generating cover for:', title);
+    console.log('Generating cover for:', sanitizedTitle.substring(0, 30) + '...');
 
     // Generate a cover description first
     const descResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -38,7 +71,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Create a short image generation prompt for an ebook cover. Title: "${title}", Topic: "${topic}". 
+            content: `Create a short image generation prompt for an ebook cover. Title: "${sanitizedTitle}", Topic: "${sanitizedTopic}". 
             
 Style: Professional, modern, clean design with abstract elements. Use gradients of indigo, violet, and deep blue. 
 Include visual metaphors related to the topic. No text in the image.
@@ -52,10 +85,9 @@ Keep it under 50 words.`
 
     if (!descResponse.ok) {
       console.error('Failed to generate cover description');
-      // Return a placeholder gradient image
       return new Response(
         JSON.stringify({ 
-          imageUrl: createGradientPlaceholder(title)
+          imageUrl: createGradientPlaceholder(sanitizedTitle)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -64,11 +96,10 @@ Keep it under 50 words.`
     const descData = await descResponse.json();
     const imagePrompt = descData.choices?.[0]?.message?.content?.trim() || '';
 
-    console.log('Image prompt:', imagePrompt);
+    console.log('Image prompt generated successfully');
 
-    // Try to use an image generation model via OpenRouter
-    // If not available, create a styled placeholder
-    const imageUrl = createGradientPlaceholder(title);
+    // Create a styled placeholder (actual image generation would go here)
+    const imageUrl = createGradientPlaceholder(sanitizedTitle);
 
     return new Response(
       JSON.stringify({ imageUrl }),
@@ -86,6 +117,9 @@ Keep it under 50 words.`
 });
 
 function createGradientPlaceholder(title: string): string {
+  // Sanitize title for SVG - escape XML entities
+  const safeTitle = escapeXml(title.substring(0, 60));
+  
   // Create an SVG-based cover
   const svg = `
     <svg width="600" height="800" xmlns="http://www.w3.org/2000/svg">
@@ -105,8 +139,8 @@ function createGradientPlaceholder(title: string): string {
       <rect width="100%" height="100%" fill="url(#grad)" opacity="0.1" filter="url(#noise)"/>
       <circle cx="150" cy="200" r="120" fill="white" opacity="0.1"/>
       <circle cx="450" cy="600" r="180" fill="white" opacity="0.08"/>
-      <text x="50%" y="45%" font-family="system-ui, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">${escapeXml(title.substring(0, 30))}</text>
-      ${title.length > 30 ? `<text x="50%" y="52%" font-family="system-ui, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">${escapeXml(title.substring(30, 60))}</text>` : ''}
+      <text x="50%" y="45%" font-family="system-ui, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">${safeTitle.substring(0, 30)}</text>
+      ${safeTitle.length > 30 ? `<text x="50%" y="52%" font-family="system-ui, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">${safeTitle.substring(30, 60)}</text>` : ''}
       <text x="50%" y="90%" font-family="system-ui, sans-serif" font-size="18" fill="white" text-anchor="middle" opacity="0.7">NexoraOS</text>
     </svg>
   `;

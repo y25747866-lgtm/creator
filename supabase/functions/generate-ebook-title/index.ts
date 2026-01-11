@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { 
+  corsHeaders, 
+  validateEbookInput, 
+  sanitizeInput, 
+  verifyAccess, 
+  errorResponse 
+} from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,14 +13,38 @@ serve(async (req) => {
   }
 
   try {
-    const { topic } = await req.json();
+    // Verify authentication and subscription
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Unauthorized', 401);
+    }
+
+    // Parse and validate input
+    let body: { topic?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid JSON body');
+    }
+
+    const { topic } = body;
+    
+    // Validate input
+    const validation = validateEbookInput(topic);
+    if (!validation.valid) {
+      return errorResponse(validation.error || 'Invalid input');
+    }
+
+    // Sanitize input for AI prompt
+    const sanitizedTopic = sanitizeInput(topic!);
+
     const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 
     if (!OPENROUTER_API_KEY) {
       throw new Error('OpenRouter API key not configured');
     }
 
-    console.log('Generating title for topic:', topic);
+    console.log('Generating title for topic:', sanitizedTopic.substring(0, 50) + '...');
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -37,7 +63,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Generate a professional, compelling ebook title for this topic: "${topic}". The title should be catchy, marketable, and promise value to readers.`
+            content: `Generate a professional, compelling ebook title for this topic: "${sanitizedTopic}". The title should be catchy, marketable, and promise value to readers.`
           }
         ],
         max_tokens: 100,
@@ -52,9 +78,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const title = data.choices?.[0]?.message?.content?.trim() || topic;
+    const title = data.choices?.[0]?.message?.content?.trim() || sanitizedTopic;
 
-    console.log('Generated title:', title);
+    console.log('Generated title successfully');
 
     return new Response(
       JSON.stringify({ title }),

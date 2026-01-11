@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { 
+  corsHeaders, 
+  validateEbookInput, 
+  sanitizeInput, 
+  verifyAccess, 
+  errorResponse 
+} from "../_shared/validation.ts";
 
 // Token-aware content generation tiers
 interface ContentTier {
@@ -22,8 +24,6 @@ const CONTENT_TIERS: ContentTier[] = [
 ];
 
 function selectContentTier(): ContentTier {
-  // Default to premium tier - the API will handle token limits gracefully
-  // We try premium first and the model will naturally adjust output length
   return CONTENT_TIERS[0];
 }
 
@@ -75,23 +75,45 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, title } = await req.json();
+    // Verify authentication and subscription
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Unauthorized', 401);
+    }
+
+    // Parse and validate input
+    let body: { topic?: string; title?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return errorResponse('Invalid JSON body');
+    }
+
+    const { topic, title } = body;
+    
+    // Validate input
+    const validation = validateEbookInput(topic, title);
+    if (!validation.valid) {
+      return errorResponse(validation.error || 'Invalid input');
+    }
+
+    // Sanitize inputs
+    const sanitizedTopic = sanitizeInput(topic!);
+    const sanitizedTitle = title ? sanitizeInput(title).substring(0, 200) : sanitizedTopic;
+
     const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 
     if (!OPENROUTER_API_KEY) {
-      // Graceful fallback - generate basic content without API
       console.log('No API key - generating fallback content');
       return new Response(
-        JSON.stringify(generateFallbackContent(title, topic)),
+        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Select appropriate content tier
     const tier = selectContentTier();
-    console.log(`Generating ${tier.name} content for: ${title} (target: ${tier.pageTarget} pages)`);
+    console.log(`Generating ${tier.name} content for user ${access.userId} (target: ${tier.pageTarget} pages)`);
 
-    // Try premium content first, fall back gracefully if needed
     let content = '';
     let success = false;
 
@@ -113,7 +135,7 @@ serve(async (req) => {
             model: 'google/gemini-2.0-flash-001',
             messages: [
               { role: 'system', content: getSystemPrompt(currentTier) },
-              { role: 'user', content: getUserPrompt(title, topic, currentTier) }
+              { role: 'user', content: getUserPrompt(sanitizedTitle, sanitizedTopic, currentTier) }
             ],
             max_tokens: currentTier.maxTokens,
             temperature: 0.7,
@@ -132,7 +154,6 @@ serve(async (req) => {
           const errorText = await response.text();
           console.error(`${currentTier.name} tier failed:`, response.status, errorText);
           
-          // If rate limited or payment required, try next tier
           if (response.status === 429 || response.status === 402) {
             console.log('Token limit issue, trying smaller tier...');
             continue;
@@ -143,58 +164,58 @@ serve(async (req) => {
       }
     }
 
-    // If all tiers failed, use fallback
     if (!success || !content) {
       console.log('All tiers failed, using fallback content');
       return new Response(
-        JSON.stringify(generateFallbackContent(title, topic)),
+        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Calculate pages based on content length
     const pages = Math.max(10, Math.ceil(content.length / 2000));
 
     console.log('Generated content length:', content.length, 'Estimated pages:', pages);
 
     return new Response(
-      JSON.stringify({ title, content, pages }),
+      JSON.stringify({ title: sanitizedTitle, content, pages }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: unknown) {
     console.error('Error in generate-ebook-content:', error);
-    
-    // Never fail - always return usable content
-    const { topic = 'General Topic', title = 'Ebook' } = await req.json().catch(() => ({}));
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify(generateFallbackContent(title, topic)),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
 function generateFallbackContent(title: string, topic: string): { title: string; content: string; pages: number } {
+  // Escape for safe use in content
+  const safeTitle = title.replace(/[<>]/g, '');
+  const safeTopic = topic.replace(/[<>]/g, '');
+  
   const content = `# Introduction
 
-Welcome to "${title}". This comprehensive guide will walk you through everything you need to know about ${topic}.
+Welcome to "${safeTitle}". This comprehensive guide will walk you through everything you need to know about ${safeTopic}.
 
-In today's rapidly evolving world, understanding ${topic} has become more important than ever. Whether you're a beginner just starting out or someone looking to deepen your knowledge, this ebook will provide you with valuable insights and practical strategies.
+In today's rapidly evolving world, understanding ${safeTopic} has become more important than ever. Whether you're a beginner just starting out or someone looking to deepen your knowledge, this ebook will provide you with valuable insights and practical strategies.
 
 ## What You'll Learn
 
 Throughout this guide, you will discover:
-- The fundamental concepts and principles of ${topic}
+- The fundamental concepts and principles of ${safeTopic}
 - Practical strategies you can implement immediately
 - Common mistakes to avoid and how to overcome challenges
 - Expert tips and best practices from industry leaders
 
 # Chapter 1: Understanding the Basics
 
-Before diving deep into ${topic}, it's essential to build a strong foundation. This chapter covers the core concepts that will serve as building blocks for your journey.
+Before diving deep into ${safeTopic}, it's essential to build a strong foundation. This chapter covers the core concepts that will serve as building blocks for your journey.
 
 ## Core Concepts
 
-The first step in mastering ${topic} is understanding its fundamental principles. These concepts form the backbone of everything else you'll learn in this guide.
+The first step in mastering ${safeTopic} is understanding its fundamental principles. These concepts form the backbone of everything else you'll learn in this guide.
 
 ### Getting Started
 
@@ -249,7 +270,7 @@ Learn from the best in the field. These tips come from years of experience and c
 
 # Conclusion
 
-Congratulations on completing this guide! You now have a solid understanding of ${topic} and practical strategies to implement what you've learned.
+Congratulations on completing this guide! You now have a solid understanding of ${safeTopic} and practical strategies to implement what you've learned.
 
 ## Key Takeaways
 
@@ -270,7 +291,7 @@ Remember: the best time to start was yesterday. The second best time is now.
 `;
 
   return {
-    title,
+    title: safeTitle,
     content,
     pages: 15,
   };
