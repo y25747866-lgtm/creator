@@ -39,23 +39,15 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+  // Magic Link authentication (email only, no password)
+  const sendMagicLink = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/whop/success`;
     
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
       options: {
         emailRedirectTo: redirectUrl,
       },
-    });
-    return { error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
     });
     return { error };
   };
@@ -65,30 +57,11 @@ export function useAuth() {
     return { error };
   };
 
-  const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth?mode=reset`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-    return { error };
-  };
-
-  const updatePassword = async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    return { error };
-  };
-
   return {
     user: authState.user,
     session: authState.session,
     loading: authState.loading,
-    signUp,
-    signIn,
+    sendMagicLink,
     signOut,
-    resetPassword,
-    updatePassword,
   };
 }

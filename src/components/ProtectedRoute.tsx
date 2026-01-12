@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Loader2 } from "lucide-react";
@@ -11,7 +11,6 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading: authLoading } = useAuth();
   const { hasActiveSubscription, loading: subLoading } = useSubscription();
-  const location = useLocation();
 
   // Show loading state while checking auth and subscription
   if (authLoading || subLoading) {
@@ -25,10 +24,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // If not logged in, redirect to auth page with return URL
+  // If not logged in, redirect to auth page
   if (!user) {
-    const returnUrl = encodeURIComponent(location.pathname);
-    return <Navigate to={`/auth?redirect=${returnUrl}`} replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   // If logged in but no active subscription, redirect to pricing
