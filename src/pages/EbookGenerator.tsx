@@ -69,7 +69,7 @@ const EbookGenerator = () => {
 
       const { data: contentData, error: contentError } = await supabase.functions.invoke(
         "generate-ebook-content",
-        { body: { topic, title: generatedTitle || topic, length: ebookLength, author: "Yesh Malik", github: "yeshmalik__", twitter: "@yeshmalik__" } }
+        { body: { topic, title: generatedTitle || topic, length: ebookLength } }
       );
 
       if (contentError) throw contentError;
@@ -79,7 +79,7 @@ const EbookGenerator = () => {
 
       const { data: coverData, error: coverError } = await supabase.functions.invoke(
         "generate-ebook-cover",
-        { body: { title: generatedTitle || topic, topic, author: "Yesh Malik" } }
+        { body: { title: generatedTitle || topic, topic } }
       );
 
       if (coverError) throw coverError;
@@ -91,7 +91,7 @@ const EbookGenerator = () => {
         id: crypto.randomUUID(),
         title: generatedTitle || topic,
         topic,
-        content: contentData.content, // Filled template with real text
+        content: contentData.content,
         coverImageUrl: coverData.imageUrl,
         pages: contentData.pages,
         createdAt: new Date().toISOString(),
@@ -120,56 +120,29 @@ const EbookGenerator = () => {
 
   const generatePDF = (ebook: Ebook) => {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Page 1: Cover with your picture (use a placeholder or your image URL)
-    doc.addImage(ebook.coverImageUrl || 'https://via.placeholder.com/600x900?text=Cover', 'JPEG', 0, 0, pageWidth, pageHeight);
-    doc.save('cover-only.pdf'); // First, save cover as separate if needed
+    // First page: Cover with your picture, title on top
+    doc.addImage('https://i.imgur.com/0M6B2Lh.jpg', 'JPEG', 0, 0, 210, 297); // Your picture as base
+    doc.setFontSize(40);
+    doc.setTextColor(139, 69, 19); // Brown for title
+    doc.text(ebook.title, 105, 80, { align: 'center' }); // Title on top
+    doc.setFontSize(20);
+    doc.text(topic, 105, 120, { align: 'center' }); // Subtitle
 
-    // New PDF for full book
-    const fullDoc = new jsPDF();
+    // Add content from page 2
+    doc.addPage();
     let y = 20;
-
-    // Cover on first page
-    fullDoc.addImage(ebook.coverImageUrl || 'https://via.placeholder.com/210x297?text=Cover', 'JPEG', 0, 0, 210, 297);
-    y = 297 + 20;
-
-    // Add content below cover
     const lines = ebook.content.split('\n');
     for (let line of lines) {
-      line = line.trim();
-      if (y > pageHeight - 20) {
-        fullDoc.addPage();
+      if (y > 277) {
+        doc.addPage();
         y = 20;
       }
-
-      if (line.startsWith('# ')) {
-        fullDoc.setFontSize(20);
-        fullDoc.setFont("helvetica", "bold");
-        fullDoc.text(line.slice(2), 20, y);
-        y += 25;
-      } else if (line.startsWith('## ')) {
-        fullDoc.setFontSize(16);
-        fullDoc.setFont("helvetica", "bold");
-        fullDoc.text(line.slice(3), 20, y);
-        y += 20;
-      } else if (line.startsWith('### ')) {
-        fullDoc.setFontSize(14);
-        fullDoc.setFont("helvetica", "bold");
-        fullDoc.text(line.slice(4), 20, y);
-        y += 15;
-      } else if (line) {
-        fullDoc.setFontSize(12);
-        const split = fullDoc.splitTextToSize(line, 170);
-        fullDoc.text(split, 20, y);
-        y += split.length * 6;
-      } else {
-        y += 10;
-      }
+      doc.text(line, 20, y);
+      y += 10;
     }
 
-    fullDoc.save(`${ebook.title}.pdf`);
+    doc.save(`${ebook.title}.pdf`);
   };
 
   const downloadCoverImage = (ebook: Ebook) => {
@@ -217,16 +190,16 @@ const EbookGenerator = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Ebook Length (Token-Based)
+                  Ebook Length
                 </label>
                 <select
                   value={ebookLength}
                   onChange={(e) => setEbookLength(e.target.value)}
                   className="w-full p-2 rounded border"
                 >
-                  <option value="short">Short (5-10 pages, fewer tokens)</option>
+                  <option value="short">Short (5-10 pages)</option>
                   <option value="medium">Medium (10-20 pages)</option>
-                  <option value="long">Long (40-50 pages, more tokens)</option>
+                  <option value="long">Long (40-50 pages)</option>
                 </select>
               </div>
 
@@ -316,7 +289,7 @@ const EbookGenerator = () => {
                   <div className="flex flex-wrap gap-4 pt-4">
                     <Button onClick={() => generatePDF(generatedEbook)} className="flex-1 min-w-[150px]">
                       <Download className="w-4 h-4 mr-2" />
-                      Download PDF (Full Book with Cover on Page 1)
+                      Download PDF
                     </Button>
                     <Button
                       variant="outline"
@@ -325,7 +298,7 @@ const EbookGenerator = () => {
                       disabled={!generatedEbook.coverImageUrl}
                     >
                       <Image className="w-4 h-4 mr-2" />
-                      Download Cover Image
+                      Download Cover
                     </Button>
                   </div>
                 </div>
