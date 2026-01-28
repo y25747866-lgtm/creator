@@ -60,15 +60,15 @@ const EbookGenerator = () => {
 
     setIsGenerating(true);
     setProgress(0);
-    setStatus("Starting AI...");
+    setStatus("Starting...");
     setGeneratedEbook(null);
 
     try {
       setProgress(30);
-      setStatus("Generating unique title...");
+      setStatus("Generating title...");
 
       setProgress(50);
-      setStatus("Writing full ebook...");
+      setStatus("Writing full ebook... (this may take a minute for long ebooks)");
 
       const { data: contentData, error: contentError } = await supabase.functions.invoke(
         "generate-ebook-content",
@@ -77,8 +77,8 @@ const EbookGenerator = () => {
 
       if (contentError) throw contentError;
 
-      setProgress(70);
-      setStatus("Designing beautiful cover...");
+      setProgress(80);
+      setStatus("Designing cover...");
 
       const { data: coverData, error: coverError } = await supabase.functions.invoke(
         "generate-ebook-cover",
@@ -88,7 +88,7 @@ const EbookGenerator = () => {
       if (coverError) throw coverError;
 
       setProgress(100);
-      setStatus("Your real ebook is ready!");
+      setStatus("Done!");
 
       const ebook: Ebook = {
         id: crypto.randomUUID(),
@@ -105,13 +105,13 @@ const EbookGenerator = () => {
 
       toast({
         title: "Success!",
-        description: "Full readable ebook ready. Click to download!",
+        description: `Your ${ebook.pages}-page ebook is ready!`,
       });
     } catch (error: unknown) {
-      console.error("Error:", error);
+      console.error("Generation error:", error);
       toast({
         title: "Failed",
-        description: "Try again.",
+        description: error instanceof Error ? error.message : "Try again",
         variant: "destructive",
       });
     } finally {
@@ -124,7 +124,7 @@ const EbookGenerator = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Page 1: Cover (text fallback since jsPDF can't add SVG directly)
+    // Page 1: Cover (text fallback because jsPDF can't render SVG directly)
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     doc.setFontSize(40);
@@ -192,8 +192,8 @@ const EbookGenerator = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">Length</label>
                 <select value={ebookLength} onChange={(e) => setEbookLength(e.target.value)} className="w-full p-2 rounded border">
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
+                  <option value="short">Short (5-10 pages)</option>
+                  <option value="medium">Medium (15-25 pages)</option>
                   <option value="long">Long (40-50 pages)</option>
                 </select>
               </div>
