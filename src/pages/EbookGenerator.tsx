@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
-import { supabase } from "@/integrations/supabase/client";
-import { jsPDF } from 'jspdf';
+import { jsPDF } from "jspdf";
 
 const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
@@ -35,16 +34,17 @@ const EbookGenerator = () => {
 
   const generateTitle = async (topicText: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook-title", {
-        body: { topic: topicText },
+      const res = await fetch("/api/generate-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topicText }),
       });
 
-      if (error) throw error;
-      if (data?.title) {
-        setGeneratedTitle(data.title);
-      }
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      if (data.title) setGeneratedTitle(data.title);
     } catch (error) {
-      console.error("Error generating title:", error);
+      console.error("Title generation failed:", error);
     }
   };
 
@@ -68,24 +68,41 @@ const EbookGenerator = () => {
       setStatus("Creating title...");
 
       setProgress(50);
-      setStatus(`Writing full ebook... (${ebookLength === "long" ? "This may take 1-2 minutes for 40-50 pages" : "Quick generation in progress"})`);
-
-      const { data: contentData, error: contentError } = await supabase.functions.invoke(
-        "generate-ebook-content",
-        { body: { topic, title: generatedTitle || topic, length: ebookLength } }
+      setStatus(
+        ebookLength === "long"
+          ? "Writing full ebook... (this may take 1-2 minutes for 40-50 pages)"
+          : "Generating ebook content..."
       );
 
-      if (contentError) throw contentError;
+      const contentRes = await fetch("/api/generate-ebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          title: generatedTitle || topic,
+          length: ebookLength,
+        }),
+      });
+
+      if (!contentRes.ok) {
+        const errText = await contentRes.text();
+        throw new Error(errText || "Failed to generate content");
+      }
+
+      const contentData = await contentRes.json();
 
       setProgress(80);
       setStatus("Designing beautiful cover...");
 
-      const { data: coverData, error: coverError } = await supabase.functions.invoke(
-        "generate-ebook-cover",
-        { body: { title: generatedTitle || topic, topic } }
-      );
+      const coverRes = await fetch("/api/generate-cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: generatedTitle || topic, topic }),
+      });
 
-      if (coverError) throw coverError;
+      if (!coverRes.ok) throw new Error("Failed to generate cover");
+
+      const coverData = await coverRes.json();
 
       setProgress(100);
       setStatus("Your ebook is ready!");
@@ -105,7 +122,7 @@ const EbookGenerator = () => {
 
       toast({
         title: "Success!",
-        description: `Your ~${ebook.pages}-page ebook is ready for download!`,
+        description: `Your ~${ebook.pages}-page ebook is ready!`,
       });
     } catch (error: unknown) {
       console.error("Generation error:", error);
@@ -124,45 +141,37 @@ const EbookGenerator = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Page 1: Cover (text fallback - jsPDF doesn't support SVG natively)
-    doc.setFillColor(30, 41, 59); // Dark background
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    // Page 1: Cover (text fallback)
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
     doc.setFontSize(40);
-    doc.setTextColor(251, 191, 36); // Gold text
-    doc.text(ebook.title, pageWidth / 2, pageHeight / 2 - 50, { align: 'center' });
+    doc.setTextColor(251, 191, 36);
+    doc.text(ebook.title, pageWidth / 2, pageHeight / 2 - 50, { align: "center" });
     doc.setFontSize(20);
     doc.setTextColor(226, 232, 240);
-    doc.text(ebook.topic, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
+    doc.text(ebook.topic, pageWidth / 2, pageHeight / 2 + 20, { align: "center" });
     doc.setFontSize(16);
-    doc.text("NexoraOS by Yesh Malik", pageWidth / 2, pageHeight - 50, { align: 'center' });
+    doc.text("NexoraOS by Yesh Malik", pageWidth / 2, pageHeight - 50, { align: "center" });
 
     // Content from page 2
     doc.addPage();
     let y = 20;
-    const lines = ebook.content.split('\n');
+    const lines = ebook.content.split("\n");
     for (let line of lines) {
       if (y > pageHeight - 20) {
         doc.addPage();
         y = 20;
       }
-      if (line.startsWith('# ')) {
+      if (line.startsWith("# ")) {
         doc.setFontSize(24);
-        doc.setTextColor(0, 0, 0);
         doc.text(line.slice(2), 20, y);
         y += 30;
-      } else if (line.startsWith('## ')) {
+      } else if (line.startsWith("## ")) {
         doc.setFontSize(18);
-        doc.setTextColor(0, 0, 0);
         doc.text(line.slice(3), 20, y);
         y += 25;
-      } else if (line.startsWith('### ')) {
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.text(line.slice(4), 20, y);
-        y += 20;
       } else if (line) {
         doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
         const split = doc.splitTextToSize(line, pageWidth - 40);
         doc.text(split, 20, y);
         y += split.length * 8;
@@ -171,7 +180,7 @@ const EbookGenerator = () => {
       }
     }
 
-    doc.save(`${ebook.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    doc.save(`${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
   };
 
   const downloadCoverImage = (ebook: Ebook) => {
@@ -179,9 +188,9 @@ const EbookGenerator = () => {
       toast({ title: "No cover available", variant: "destructive" });
       return;
     }
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = ebook.coverImageUrl;
-    a.download = `${ebook.title.replace(/[^a-zA-Z0-9]/g, '_')}_cover.svg`;
+    a.download = `${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}_cover.svg`;
     a.click();
   };
 
