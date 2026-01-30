@@ -143,10 +143,14 @@ const EbookGenerator = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const lineHeight = 7;
+    let y = margin;
 
-    // Page 1: Cover (text fallback since jsPDF can't render SVG)
+    // Page 1: Cover (text fallback - jsPDF cannot render SVG)
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, pageHeight, "F");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(40);
     doc.setTextColor(251, 191, 36);
     doc.text(ebook.title, pageWidth / 2, pageHeight / 2 - 50, { align: "center" });
@@ -156,32 +160,65 @@ const EbookGenerator = () => {
     doc.setFontSize(16);
     doc.text("NexoraOS by Yesh Malik", pageWidth / 2, pageHeight - 50, { align: "center" });
 
-    // Content from page 2
+    // Content pages
     doc.addPage();
-    let y = 20;
+    y = margin;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+
     const lines = ebook.content.split("\n");
+
     for (let line of lines) {
-      if (y > pageHeight - 20) {
+      if (y > pageHeight - margin - 20) {
+        // Add page number
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - margin - 20, pageHeight - 10);
         doc.addPage();
-        y = 20;
+        y = margin;
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
       }
+
+      if (line.trim() === "") {
+        y += lineHeight; // paragraph spacing
+        continue;
+      }
+
       if (line.startsWith("# ")) {
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(24);
-        doc.text(line.slice(2), 20, y);
+        const text = line.slice(2).trim();
+        doc.text(text, margin, y);
         y += 30;
       } else if (line.startsWith("## ")) {
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(18);
-        doc.text(line.slice(3), 20, y);
+        const text = line.slice(3).trim();
+        doc.text(text, margin, y);
         y += 25;
-      } else if (line) {
-        doc.setFontSize(12);
-        const split = doc.splitTextToSize(line, pageWidth - 40);
-        doc.text(split, 20, y);
-        y += split.length * 8;
+      } else if (line.startsWith("### ")) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        const text = line.slice(4).trim();
+        doc.text(text, margin, y);
+        y += 20;
       } else {
-        y += 10;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        const maxWidth = pageWidth - margin * 2;
+        const splitText = doc.splitTextToSize(line, maxWidth);
+        doc.text(splitText, margin, y);
+        y += splitText.length * lineHeight;
       }
     }
+
+    // Final page number
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth - margin - 20, pageHeight - 10);
 
     doc.save(`${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
   };
