@@ -100,7 +100,10 @@ const EbookGenerator = () => {
         body: JSON.stringify({ title: generatedTitle || topic, topic }),
       });
 
-      if (!coverRes.ok) throw new Error("Failed to generate cover");
+      if (!coverRes.ok) {
+        const errText = await coverRes.text();
+        throw new Error(errText || "Failed to generate cover");
+      }
 
       const coverData = await coverRes.json();
 
@@ -141,7 +144,7 @@ const EbookGenerator = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Page 1: Cover (text fallback)
+    // Page 1: Cover (text fallback since jsPDF can't render SVG)
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, pageHeight, "F");
     doc.setFontSize(40);
