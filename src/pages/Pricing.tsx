@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Payment links configuration - easily replaceable
 const PAYMENT_LINKS = {
-  monthly: "https://whop.com/checkout/plan_cGgxUSfDmR2xF",
+  monthly: "https://whop.com/checkout/plan_mjSb1J02UNpkD",
   annual: "https://whop.com/checkout/plan_xNlBWUTysLURE",
 };
 
