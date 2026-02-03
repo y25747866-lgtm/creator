@@ -1,57 +1,50 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { topic } = req.body;
-    if (!topic) return res.status(400).json({ error: "Missing topic" });
+
+    if (!topic) return res.status(400).json({ error: 'Topic is required' });
 
     const prompt = `
-You are a world-class ebook publishing strategist.
-
-Generate a professional, premium ebook title and subtitle for this topic:
-"${topic}"
-
-Rules:
-- Title must be bold, transformational, and Amazon-style
-- Subtitle must explain the benefit clearly
-- No emojis
-- No quotes
-- No explanations
-
-Output format:
-Title: ...
-Subtitle: ...
+Generate a premium ebook title and subtitle for topic "${topic}".
+Main title: Big, bold, transformation-focused, confident.
+Subtitle: One line explaining the outcome/benefit.
+Output only JSON:
+{"title": "Main Title", "subtitle": "Subtitle"}
 `;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.SITE_URL || "https://localhost",
-        "X-Title": process.env.SITE_NAME || "NexoraOS",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini",
+        model: "mistralai/mixtral-8x7b-instruct",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.6,
-      }),
+        max_tokens: 100,
+        temperature: 0.7
+      })
     });
+
+    if (!response.ok) throw new Error(await response.text());
 
     const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
+    const text = data.choices[0].message.content.trim();
 
-    const titleMatch = text.match(/Title:\s*(.+)/i);
-    const subtitleMatch = text.match(/Subtitle:\s*(.+)/i);
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { title: `Mastering ${topic}`, subtitle: `The Proven Path to Success` };
+    }
 
-    res.json({
-      title: titleMatch?.[1]?.trim() || topic,
-      subtitle: subtitleMatch?.[1]?.trim() || "",
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Title generation failed" });
+    res.status(200).json(json);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate title' });
   }
       }
