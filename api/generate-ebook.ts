@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const { title, topic, length } = req.body;
+    const { title, subtitle, topic, length } = req.body;
 
     let chapters = 4;
     let chapterDetail = "800-1200 words";
@@ -44,36 +44,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       chapterDetail = "400-700 words";
     }
 
-    let content = `# ${title}\n\n`;
+    let content = `---\n`;
+    content += `title: ${title}\n`;
+    content += `tagline: ${subtitle}\n`;
+    content += `author: Yesh Malik\n`;
+    content += `github: yourgithubusername\n`;
+    content += `twitter: @yourtwiiterhandle\n`;
+    content += `coverimage: (cover image here)\n`;
+    content += `date: ${new Date().getFullYear()}\n`;
+    content += `---\n\n`;
 
-    content += "## Introduction\n\n";
-    content += await generateSection(`Write detailed introduction for ebook "\( {title}" about " \){topic}". Engaging, overview, examples.`);
+    content += `Copyright (c) ${new Date().getFullYear()} NexoraOS. All rights reserved.\n`;
+    content += `This ebook is for educational purposes only. No liability is assumed.\n\n`;
 
+    content += `## Table of Contents\n\n`;
+    content += `* [Introduction](#introduction)\n`;
     for (let i = 1; i <= chapters; i++) {
-      content += `\n\n## Chapter ${i}\n\n`;
-      content += await generateSection(`Write detailed chapter (\( {chapterDetail}) for " \){title}" about "${topic}". Part ${i}. Use subsections, bullet points, examples, stories.`);
+      content += `* [Chapter \( {i}](#chapter- \){i})\n`;
+    }
+    content += `* [Conclusion](#conclusion)\n\n`;
+
+    // Introduction
+    content += `<a name="introduction"></a>\n## Introduction\n\n`;
+    content += await generateSection(`Write an engaging introduction for ebook "\( {title}" about " \){topic}". Address reader directly ('you'), describe pain points, build hope. Short paragraphs. Motivational. ${chapterDetail}.`);
+
+    // Chapters
+    for (let i = 1; i <= chapters; i++) {
+      content += `<a name="chapter-${i}"></a>\n## Chapter ${i}\n\n`;
+      content += await generateSection(`Write a premium chapter for "\( {title}" about " \){topic}". Emotional hook, what this chapter covers, why it matters, step-by-step framework, common mistakes, action task. ${chapterDetail}.`);
     }
 
-    content += "\n\n## Conclusion\n\n";
-    content += await generateSection(`Write detailed conclusion for "\( {title}" about " \){topic}". Summarize, inspire.`);
+    // Conclusion
+    content += `<a name="conclusion"></a>\n## Conclusion\n\n`;
+    content += await generateSection(`Write a premium conclusion for "\( {title}" about " \){topic}". Reassure reader, encourage implementation, motivate action. Short paragraphs. ${chapterDetail}.`);
 
     const wordCount = content.split(/\s+/).length;
     const pages = Math.ceil(wordCount / 500);
 
-    // Save to Supabase DB
-    const { error } = await supabase.from('ebooks').insert({
-      title,
-      topic,
-      content,
-      pages,
-      // user_id: req.user?.id || null, // Add auth later
-    });
-
+    // Save to Supabase (optional)
+    const { error } = await supabase.from('ebooks').insert({ title, topic, content, pages });
     if (error) throw error;
 
     res.status(200).json({ content, pages });
   } catch (e) {
-    console.error(e);
     res.status(500).json({ error: e.message });
   }
-}
+    }
