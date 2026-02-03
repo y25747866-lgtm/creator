@@ -1,61 +1,28 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { title, topic } = req.body;
-    if (!title || !topic) return res.status(400).json({ error: "Missing title or topic" });
+    const { title, subtitle } = req.body as { title: string; subtitle: string };
 
-    const prompt = `
-You are a professional ebook cover designer.
+    // Clean premium cover (big centered title + subtitle below)
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="900" fill="url(#bg)"/>
+  <text x="300" y="380" text-anchor="middle" fill="#ffffff" font-size="48" font-weight="bold" font-family="Arial, sans-serif">${title}</text>
+  <text x="300" y="460" text-anchor="middle" fill="#e0e7ff" font-size="24" font-family="Arial, sans-serif">${subtitle}</text>
+</svg>`;
 
-Design a premium ebook cover for:
-Title: "${title}"
-Topic: "${topic}"
+    const base64 = btoa(unescape(encodeURIComponent(svg)));
 
-Style rules:
-- Dark background
-- Cinematic lighting
-- Central glowing object
-- Amazon-style typography
-- High contrast
-- No clutter
-- No emojis
-
-If topic involves:
-- Money → gold coins, charts, glow
-- Tech → futuristic circuits, holograms
-- Growth → arrows, stairs, light beams
-
-Output ONLY valid SVG code. No markdown. No explanations.
-`;
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.SITE_URL || "https://localhost",
-        "X-Title": process.env.SITE_NAME || "NexoraOS",
-      },
-      body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.6,
-      }),
-    });
-
-    const data = await response.json();
-    const svg = data.choices?.[0]?.message?.content || "";
-
-    const base64 = Buffer.from(svg).toString("base64");
-
-    res.json({
-      imageUrl: `data:image/svg+xml;base64,${base64}`,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Cover generation failed" });
+    res.status(200).json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to generate cover' });
   }
-      }
+}
