@@ -32,30 +32,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let chapters = length === "long" ? 10 : length === "short" ? 5 : 8;
     let chapterDetail = length === "long" ? "1500-2500 words" : length === "short" ? "600-1000 words" : "1000-1500 words";
 
-    let content = `# ${title}\n\n`;
-
+    let content = `${title}\n\n`;
     content += `${subtitle}\n\n`;
+    content += `by Yesh Malik\n\n`;
+    content += "--------------------------------------------\n\n";
+    content += "CONTENTS\n\n";
 
-    // Table of Contents
-    content += `## Table of Contents\n\n`;
-    content += `- [Introduction](#introduction)\n`;
+    // Table of Contents - clean numbered list
+    content += `Introduction\n`;
     for (let i = 1; i <= chapters; i++) {
-      content += `- [Chapter \( {i}](#chapter- \){i})\n`;
+      content += `Chapter ${i}\n`;
     }
-    content += `- [Conclusion](#conclusion)\n\n`;
+    content += `Conclusion\n\n`;
 
     // Introduction
-    content += `<a name="introduction"></a>\n## Introduction\n\n`;
+    content += "Introduction\n\n";
     content += await generateSection(`Write a premium introduction for ebook "\( {title}" about " \){topic}". Address reader directly, describe pain points, build hope, explain transformation. Motivational tone. ${chapterDetail}.`);
 
-    // Chapters
+    // Chapters - numbered, clean headings
     for (let i = 1; i <= chapters; i++) {
-      content += `<a name="chapter-${i}"></a>\n## Chapter ${i}\n\n`;
+      content += `\nChapter ${i}\n\n`;
       content += await generateSection(`Write a premium chapter for "\( {title}" about " \){topic}". Chapter ${i}. Emotional hook, what this chapter covers, why it matters, step-by-step framework, common mistakes, action task. ${chapterDetail}.`);
     }
 
     // Conclusion
-    content += `<a name="conclusion"></a>\n## Conclusion\n\n`;
+    content += `\nConclusion\n\n`;
     content += await generateSection(`Write a premium conclusion for "\( {title}" about " \){topic}". Reassure, motivate action, final call to implement. ${chapterDetail}.`);
 
     const wordCount = content.split(/\s+/).length;
@@ -66,4 +67,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error(e);
     res.status(500).json({ error: e.message || "Failed to generate ebook" });
   }
-}
+    }
