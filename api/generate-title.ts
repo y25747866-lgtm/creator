@@ -9,11 +9,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!topic) return res.status(400).json({ error: 'Topic is required' });
 
     const prompt = `
-Generate a premium ebook title and subtitle for topic "${topic}".
-Main title: Big, bold, transformation-focused, confident.
-Subtitle: One line explaining the outcome/benefit.
+You are a world-class publishing studio.
+Generate a powerful, benefit-driven book title and a bold transformation subtitle for topic "${topic}".
+Title must signal expertise and promise transformation.
+Subtitle must clarify the outcome.
 Output only JSON:
-{"title": "Main Title", "subtitle": "Subtitle"}
+{"title": "Title", "subtitle": "Subtitle"}
 `;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -35,16 +36,10 @@ Output only JSON:
     const data = await response.json();
     const text = data.choices[0].message.content.trim();
 
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      json = { title: `Mastering ${topic}`, subtitle: `The Proven Path to Success` };
-    }
+    const json = JSON.parse(text);
 
     res.status(200).json(json);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Failed to generate title' });
   }
       }
