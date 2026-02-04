@@ -10,13 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!topic) return res.status(400).json({ error: "topic is required" });
 
     const prompt = `
-You are a bestselling publishing strategist.
-Generate:
-1. A powerful, short, Amazon-style book title
-2. A transformation-driven subtitle
-
-Topic: "${topic}"
-
+Generate a bestselling ebook title and subtitle for topic "${topic}".
 Return ONLY valid JSON:
 {"title":"...","subtitle":"..."}
 `;
@@ -39,10 +33,11 @@ Return ONLY valid JSON:
     const raw = j.choices?.[0]?.message?.content || "";
     const json = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] || "{}");
 
-    if (!json.title || !json.subtitle) throw new Error("Invalid AI response");
-
-    res.status(200).json(json);
-  } catch (e) {
+    res.status(200).json({
+      title: json.title || `Mastering ${topic}`,
+      subtitle: json.subtitle || `The Complete Guide to ${topic}`,
+    });
+  } catch {
     res.status(500).json({ error: "Title generation failed" });
   }
-        }
+}
