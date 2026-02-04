@@ -42,4 +42,4 @@ Output only JSON:
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate title' });
   }
-      }
+        }
