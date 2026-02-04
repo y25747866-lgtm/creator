@@ -1,54 +1,48 @@
-export const runtime = "nodejs";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export async function POST(req: Request) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
   try {
-    const { topic } = await req.json();
-    if (!topic) {
-      return new Response(JSON.stringify({ error: "Topic is required" }), { status: 400 });
-    }
+    const { topic } = req.body;
+    if (!topic) return res.status(400).json({ error: "Missing topic" });
 
-    const systemPrompt = `
-You are a professional nonfiction publishing editor.
+    const prompt = `
+Generate a powerful professional ebook title and subtitle for this topic:
+"${topic}"
 
-Generate ONE commercially viable ebook title.
-
-RULES:
-- Max 10 words
-- Clear benefit-driven promise
-- No hype words (ultimate, secret, hacks)
-- No motivational fluff
-- Must sound authoritative and professional
-
-Topic: ${topic}
-
-Return ONLY the title text.
+Format exactly like this:
+Title: ...
+Subtitle: ...
 `;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-        messages: [{ role: "system", content: systemPrompt }],
-        temperature: 0.2,
-        max_tokens: 40,
-      }),
+        model: "mistralai/mixtral-8x7b-instruct",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 120,
+        temperature: 0.7
+      })
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(err);
-    }
+    if (!r.ok) throw new Error(await r.text());
+    const j = await r.json();
+    const text = j.choices[0].message.content;
 
-    const data = await response.json();
-    const title = data.choices[0].message.content.trim();
+    const titleMatch = text.match(/Title:\s*(.*)/i);
+    const subtitleMatch = text.match(/Subtitle:\s*(.*)/i);
 
-    return Response.json({ title });
-  } catch (err) {
-    console.error("generate-title error:", err);
-    return new Response(JSON.stringify({ error: "Failed to generate title" }), { status: 500 });
+    res.status(200).json({
+      title: titleMatch?.[1] || "Untitled",
+      subtitle: subtitleMatch?.[1] || ""
+    });
+  } catch (e: any) {
+    console.error(e);
+    res.status(500).json({ error: "Title generation failed" });
   }
-        }
+  }
