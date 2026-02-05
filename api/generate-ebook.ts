@@ -1,8 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createClient } from "@supabase/supabase-js";
+
+export const config = { runtime: "nodejs" };
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!;
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
 
-async function callAI(prompt: string, maxTokens = 2500) {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+async function callAI(prompt: string, maxTokens = 1800): Promise<string> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -12,12 +19,13 @@ async function callAI(prompt: string, maxTokens = 2500) {
     body: JSON.stringify({
       model: "mistralai/mixtral-8x7b-instruct",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
       max_tokens: maxTokens,
+      temperature: 0.7,
     }),
   });
 
   if (!res.ok) throw new Error(await res.text());
+
   const data = await res.json();
   return data.choices[0].message.content.trim();
 }
@@ -32,165 +40,115 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "title and topic are required" });
     }
 
-    let chapters = 5;
-    let chapterSize = "900–1200 words";
-    if (length === "short") {
-      chapters = 3;
-      chapterSize = "500–700 words";
-    } else if (length === "long") {
-      chapters = 9;
-      chapterSize = "1400–1800 words";
+    const chapters =
+      length === "long" ? 10 : length === "short" ? 2 : 5;
+
+    const chapterSize =
+      length === "long"
+        ? "1200–1800 words"
+        : length === "short"
+        ? "500–800 words"
+        : "800–1200 words";
+
+    let content = "";
+
+    // PAGE 1 — COVER TEXT
+    content += `${title}\n\n${topic}\n\nNexoraOS\n\n`;
+
+    // PAGE 2 — COPYRIGHT
+    content += `COPYRIGHT & DISCLAIMER\n\n`;
+    content += `Copyright © ${new Date().getFullYear()} NexoraOS. All rights reserved.\n\n`;
+    content += `This ebook is for educational purposes only. Not financial or legal advice.\n\n`;
+    content += `No liability assumed. All rights reserved.\n\n`;
+
+    // PAGE 3 — AUTHOR LETTER
+    content += `PERSONAL LETTER FROM THE AUTHOR\n\n`;
+    content += await callAI(
+      `Write a sincere, authoritative personal letter from the author to the reader for an ebook titled "${title}" about "${topic}". Emotional, motivational, premium tone. 400–600 words.`
+    );
+
+    // PAGE 4 — WHAT YOU WILL ACHIEVE
+    content += `\n\nWHAT YOU WILL ACHIEVE FROM THIS BOOK\n\n`;
+    content += await callAI(
+      `Write a powerful bullet-point outcome list for an ebook titled "${title}" about "${topic}". Each bullet benefit-driven, concrete, premium.`
+    );
+
+    // PAGE 5 — HOW TO USE THIS BOOK
+    content += `\n\nHOW TO USE THIS BOOK\n\n`;
+    content += await callAI(
+      `Explain how to use this ebook titled "${title}" about "${topic}" for maximum transformation. Systematic, mentor tone.`
+    );
+
+    // PAGE 6 — TABLE OF CONTENTS
+    content += `\n\nTABLE OF CONTENTS\n\n`;
+    const toc = await callAI(
+      `Generate ${chapters} premium chapter titles for an ebook titled "${title}" about "${topic}". Output only numbered chapter titles, one per line.`
+    );
+    content += toc + "\n\n";
+
+    // CHAPTERS
+    for (let i = 1; i <= chapters; i++) {
+      content += `CHAPTER ${i}\n\n`;
+      content += await callAI(
+        `Write Chapter ${i} of an ebook titled "${title}" about "${topic}". Follow this structure exactly:
+
+Hook
+Problem Reality
+Truth Shift
+Framework/System (named)
+Deep Explanation
+Real-World Example
+Action Steps
+Identity Shift
+
+Long-form, premium, human tone. ${chapterSize}.`,
+        2200
+      );
+      content += "\n\n";
     }
 
-    // ---------------------------
-    // 1️⃣ Front Matter (Fast)
-    // ---------------------------
-    const frontMatter = `
-# ${title}
+    // SUMMARY
+    content += `SUMMARY\n\n`;
+    content += await callAI(
+      `Write a strong executive-style summary for an ebook titled "${title}" about "${topic}".`
+    );
 
-${topic}
+    // CLOSING
+    content += `\n\nCLOSING MESSAGE\n\n`;
+    content += await callAI(
+      `Write a motivational closing message from the author for an ebook titled "${title}" about "${topic}".`
+    );
 
-NexoraOS
+    // NEXT STEPS
+    content += `\n\nNEXT STEPS\n\n`;
+    content += await callAI(
+      `Write actionable next steps for readers of an ebook titled "${title}" about "${topic}".`
+    );
 
----
-
-## Copyright & Disclaimer
-
-Copyright © ${new Date().getFullYear()} NexoraOS. All rights reserved.
-
-This ebook is for educational purposes only. It does not replace professional advice. You are responsible for how you apply the ideas in this book.
-
-Redistribution or resale without permission is prohibited.
-
----
-
-## Letter From The Author
-
-${await callAI(`
-Write a sincere, authoritative author letter for a professional ebook titled "${title}" about "${topic}". 
-Tone: confident, mentor-like, premium publishing style. 
-Explain who this book is for, why it works, and what transformation the reader will achieve.
-400–600 words.
-`, 1200)}
-
----
-
-## What You Will Achieve
-
-${await callAI(`
-Create a bullet-point outcome list for an ebook titled "${title}" about "${topic}". 
-Each bullet must be benefit-driven and concrete. 
-No fluff. 8–12 bullets.
-`, 800)}
-
----
-
-## How To Use This Book
-
-${await callAI(`
-Explain how to use this ebook titled "${title}" about "${topic}". 
-Position it as a system, not just information. 
-Explain pacing, application, and commitment.
-300–500 words.
-`, 900)}
-`;
-
-    // ---------------------------
-    // 2️⃣ Table of Contents
-    // ---------------------------
-    const tocRaw = await callAI(`
-Generate ${chapters} professional chapter titles for an ebook titled "${title}" about "${topic}".
-Titles must be outcome-driven and progression-based.
-Output only the list, one per line.
-`, 600);
-
-    const chapterTitles = tocRaw
-      .split("\n")
-      .map((l: string) => l.replace(/^\d+[\).\s-]*/, "").trim())
-      .filter(Boolean)
-      .slice(0, chapters);
-
-    let content = frontMatter + `\n---\n\n## Table of Contents\n\n`;
-    chapterTitles.forEach((t: string, i: number) => {
-      content += `${i + 1}. ${t}\n`;
-    });
-
-    // ---------------------------
-    // 3️⃣ Chapters (Optimized)
-    // ---------------------------
-    for (let i = 0; i < chapterTitles.length; i++) {
-      const chapterTitle = chapterTitles[i];
-
-      const chapter = await callAI(`
-Write Chapter ${i + 1} of a premium ebook titled "${title}" about "${topic}".
-
-Chapter title: "${chapterTitle}"
-
-Structure EXACTLY:
-1. Hook (emotionally gripping opening)
-2. Problem Reality (current struggle of reader)
-3. Truth Shift (core mindset reframe)
-4. Framework/System (named system)
-5. Deep Explanation (step-by-step breakdown)
-6. Real-World Examples
-7. Action Steps (clear bullets)
-8. Identity Shift (who the reader becomes)
-
-Style:
-- Human, authoritative, professional
-- No fluff
-- No summaries
-- Long-form
-
-Length: ${chapterSize}.
-`, 2600);
-
-      content += `\n\n---\n\n# Chapter ${i + 1}: ${chapterTitle}\n\n${chapter}`;
-    }
-
-    // ---------------------------
-    // 4️⃣ Closing Sections
-    // ---------------------------
-    const summary = await callAI(`
-Summarize the key lessons of the ebook titled "${title}" about "${topic}".
-Clear, structured, motivating.
-300–500 words.
-`, 900);
-
-    const closing = await callAI(`
-Write a powerful closing message for the ebook titled "${title}" about "${topic}".
-Tone: confident, transformational, premium publishing style.
-200–400 words.
-`, 700);
-
-    const nextSteps = await callAI(`
-Write a "Next Steps" section for the ebook titled "${title}" about "${topic}".
-Encourage continued growth and disciplined action.
-200–300 words.
-`, 600);
-
-    content += `
-\n\n---\n\n# Summary\n\n${summary}
-
-\n\n---\n\n# Closing Message\n\n${closing}
-
-\n\n---\n\n# Next Steps\n\n${nextSteps}
-
-\n\n---\n\n# Brand Signature
-
-NexoraOS exists to build systems, not motivation.  
-Knowledge compounds only when applied daily with structure and discipline.
-`;
+    // BRAND SIGNATURE
+    content += `\n\nBRAND SIGNATURE\n\n`;
+    content += await callAI(
+      `Write a premium brand signature section for NexoraOS for an ebook titled "${title}" about "${topic}".`
+    );
 
     const wordCount = content.split(/\s+/).length;
-    const pages = Math.max(8, Math.ceil(wordCount / 450));
+    const pages = Math.ceil(wordCount / 450);
+
+    // Save to Supabase (optional)
+    try {
+      await supabase.from("ebooks").insert({
+        title,
+        topic,
+        content,
+        pages,
+      });
+    } catch (e) {
+      console.warn("Supabase insert failed (ignored):", e);
+    }
 
     res.status(200).json({ content, pages });
   } catch (e: any) {
     console.error("Ebook generation error:", e);
-    res.status(500).json({
-      error: "Ebook generation failed",
-      detail: e.message || "Unknown error",
-    });
+    res.status(500).json({ error: "Ebook generation failed", detail: e.message });
   }
-      }
+  }
