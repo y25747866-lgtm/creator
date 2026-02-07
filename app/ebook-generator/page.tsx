@@ -9,8 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
+import { useEbookStore } from "@/hooks/useEbookStore";
 import { jsPDF } from "jspdf";
+
+interface Ebook {
+  id: string;
+  title: string;
+  topic: string;
+  content: string;
+  coverImageUrl: string | null;
+  pages: number;
+  createdAt: string;
+}
 
 interface StatusData {
   status: string;
@@ -20,7 +30,7 @@ interface StatusData {
   title?: string;
 }
 
-const EbookGeneratorPage = () => {
+const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("clear, authoritative, practical");
   const [ebookLength, setEbookLength] = useState<"short" | "medium" | "long">("medium");
@@ -28,31 +38,9 @@ const EbookGeneratorPage = () => {
   const [statusData, setStatusData] = useState<StatusData | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
-
-  // Auto-preview title as user types
-  const [titlePreview, setTitlePreview] = useState("");
-  useEffect(() => {
-    if (topic.length > 3) {
-      const timer = setTimeout(async () => {
-        try {
-          const res = await fetch("/api/generate-title", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setTitlePreview(data.title || "");
-          }
-        } catch {}
-      }, 800);
-      return () => clearTimeout(timer);
-    } else {
-      setTitlePreview("");
-    }
-  }, [topic]);
 
   const startGeneration = async () => {
     if (!topic.trim()) {
@@ -87,7 +75,6 @@ const EbookGeneratorPage = () => {
     }
   };
 
-  // Poll status & auto-trigger next chapter
   useEffect(() => {
     if (!jobId) return;
 
@@ -110,7 +97,7 @@ const EbookGeneratorPage = () => {
         if (data.status === "complete" && data.finalMarkdown) {
           const ebook: Ebook = {
             id: jobId,
-            title: data.title ?? "Untitled Ebook",
+            title: data.title ?? "Untitled",
             topic,
             content: data.finalMarkdown,
             coverImageUrl: null,
@@ -121,7 +108,7 @@ const EbookGeneratorPage = () => {
           toast({ title: "Success!", description: `Ebook ready (${ebook.pages} pages)` });
         }
       } catch (err) {
-        console.error("Polling error:", err);
+        console.error(err);
       }
     }, 5000);
 
@@ -146,7 +133,6 @@ const EbookGeneratorPage = () => {
 
     doc.setFont("helvetica");
 
-    // Cover page
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, pageWidth, pageHeight, "F");
     doc.setFont("helvetica", "bold");
@@ -160,7 +146,6 @@ const EbookGeneratorPage = () => {
     doc.setFontSize(18);
     doc.text("NexoraOS", pageWidth / 2, pageHeight - 100, { align: "center" });
 
-    // Content pages
     doc.addPage();
     y = margin;
     doc.setFont("helvetica", "normal");
@@ -324,4 +309,4 @@ const EbookGeneratorPage = () => {
   );
 };
 
-export default EbookGeneratorPage;
+export default EbookGenerator;
