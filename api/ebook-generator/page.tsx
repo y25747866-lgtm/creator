@@ -1,31 +1,85 @@
 "use client";
+
 import { useState, useEffect } from "react";
-export default function EbookGenerator() {
+import { motion } from "framer-motion";
+import { BookOpen, Loader2, Sparkles, Download, Image as ImageIcon } from "lucide-react";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
+import { jsPDF } from "jspdf";
+
+const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("clear, authoritative, practical");
-  const [length, setLength] = useState<"short" | "medium" | "long">("medium");
+  const [ebookLength, setEbookLength] = useState<"short" | "medium" | "long">("medium");
   const [jobId, setJobId] = useState<string | null>(null);
-  const [status, setStatus] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [statusData, setStatusData] = useState<any>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { toast } = useToast();
+  const addEbook = useEbookStore((state) => state.addEbook);
 
-  const start = async () => {
-    setError(null);
+  // Optional title preview (auto-generate as typing)
+  const [titlePreview, setTitlePreview] = useState("");
+  useEffect(() => {
+    if (topic.length > 3) {
+      const timer = setTimeout(async () => {
+        try {
+          const res = await fetch("/api/generate-title", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setTitlePreview(data.title || "");
+          }
+        } catch {}
+      }, 800);
+      return () => clearTimeout(timer);
+    } else {
+      setTitlePreview("");
+    }
+  }, [topic]);
+
+  const startGeneration = async () => {
+    if (!topic.trim()) {
+      toast({ title: "Topic Required", variant: "destructive" });
+      return;
+    }
+
+    setIsGenerating(true);
+    setErrorMsg(null);
+    setJobId(null);
+    setStatusData(null);
+
     try {
       const res = await fetch("/api/generate-ebook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, tone, length }),
+        body: JSON.stringify({ topic, tone, length: ebookLength }),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Failed to start generation");
+      }
 
       const data = await res.json();
       setJobId(data.jobId);
+      toast({ title: "Started", description: "Generation in progress..." });
     } catch (err: any) {
-      setError(err.message);
+      setErrorMsg(err.message);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+      setIsGenerating(false);
     }
   };
 
+  // Poll status + auto-trigger next chapter
   useEffect(() => {
     if (!jobId) return;
 
@@ -33,10 +87,11 @@ export default function EbookGenerator() {
       try {
         const res = await fetch(`/api/ebook-status?jobId=${jobId}`);
         if (!res.ok) throw new Error("Status fetch failed");
-        const data = await res.json();
-        setStatus(data);
 
-        // Auto-trigger next chapter if ready
+        const data = await res.json();
+        setStatusData(data);
+
+        // Auto-trigger next chapter if outline ready and not all done
         if (data.status === "outline_done" && data.progress < data.totalChapters) {
           await fetch("/api/generate-chapter", {
             method: "POST",
@@ -44,112 +99,224 @@ export default function EbookGenerator() {
             body: JSON.stringify({ jobId, chapterIndex: data.progress }),
           });
         }
-      } catch (err: any) {
-        console.error(err);
+
+        // When complete → save to store
+        if (data.status === "complete" && data.finalMarkdown) {
+          const ebook: Ebook = {
+            id: jobId,
+            title: data.title,
+            topic,
+            content: data.finalMarkdown,
+            coverImageUrl: null, // add cover later if needed
+            pages: Math.ceil(data.finalMarkdown.split(/\s+/).length / 450),
+            createdAt: new Date().toISOString(),
+          };
+          addEbook(ebook);
+          toast({ title: "Success!", description: `Ebook ready (${ebook.pages} pages)` });
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
       }
-    }, 4000);
+    }, 5000); // poll every 5 seconds
 
     return () => clearInterval(interval);
-  }, [jobId]);
+  }, [jobId, topic, addEbook]);
 
-  const isComplete = status?.status === "complete";
+  const isComplete = statusData?.status === "complete";
+  const progressPercent = statusData?.totalChapters
+    ? (statusData.progress / statusData.totalChapters) * 100
+    : 0;
+
+  // PDF generation (adapted from your original)
+  const generatePDF = () => {
+    if (!statusData?.finalMarkdown) return;
+
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 60;
+    const maxWidth = pageWidth - margin * 2;
+    const lineHeight = 18;
+    let y = margin;
+
+    doc.setFont("helvetica");
+
+    // Cover page
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(48);
+    doc.setTextColor(251, 191, 36);
+    const titleLines = doc.splitTextToSize(statusData.title, maxWidth);
+    doc.text(titleLines, pageWidth / 2, pageHeight / 2 - 80, { align: "center" });
+    doc.setFontSize(24);
+    doc.setTextColor(226, 232, 240);
+    doc.text(topic, pageWidth / 2, pageHeight / 2 + 20, { align: "center" });
+    doc.setFontSize(18);
+    doc.text("NexoraOS", pageWidth / 2, pageHeight - 100, { align: "center" });
+
+    // Content
+    doc.addPage();
+    y = margin;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+
+    const lines = statusData.finalMarkdown.split("\n");
+    for (let line of lines) {
+      if (y > pageHeight - margin - 40) {
+        doc.addPage();
+        y = margin;
+      }
+      const trimmed = line.trim();
+      if (!trimmed) {
+        y += lineHeight;
+        continue;
+      }
+
+      if (trimmed.startsWith("# ")) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(24);
+        doc.text(trimmed.slice(2), margin, y);
+        y += 35;
+      } else if (trimmed.startsWith("## ")) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(18);
+        doc.text(trimmed.slice(3), margin, y);
+        y += 28;
+      } else {
+        const wrapped = doc.splitTextToSize(trimmed, maxWidth);
+        doc.text(wrapped, margin, y);
+        y += wrapped.length * lineHeight;
+      }
+    }
+
+    doc.save(`${statusData.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+  };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      {!jobId ? (
-        <>
-          <h1>Generate Ebook</h1>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              start();
-            }}
-          >
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-3xl font-bold mb-2">AI Ebook Generator</h1>
+          <p className="text-muted-foreground">Create a real, full ebook.</p>
+        </motion.div>
+
+        <Card className="p-8">
+          <div className="space-y-6">
             <div>
-              <label>Topic</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium mb-2">Topic</label>
+              <Input
+                placeholder="e.g., Money making"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Building a SaaS Product"
-                required
-                style={{ width: "100%", padding: "0.8rem", margin: "0.5rem 0" }}
+                disabled={isGenerating}
+                className="text-lg py-6"
               />
             </div>
 
             <div>
-              <label>Tone</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium mb-2">Tone</label>
+              <Input
+                placeholder="clear, authoritative, practical"
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
-                placeholder="e.g. clear, tactical, motivational"
-                style={{ width: "100%", padding: "0.8rem", margin: "0.5rem 0" }}
+                disabled={isGenerating}
               />
             </div>
 
             <div>
-              <label>Length</label>
+              <label className="block text-sm font-medium mb-2">Length</label>
               <select
-                value={length}
-                onChange={(e) => setLength(e.target.value as any)}
-                style={{ width: "100%", padding: "0.8rem", margin: "0.5rem 0" }}
+                value={ebookLength}
+                onChange={(e) => setEbookLength(e.target.value as any)}
+                className="w-full p-3 rounded-md border border-input bg-background"
+                disabled={isGenerating}
               >
-                <option value="short">Short (\~3 chapters)</option>
-                <option value="medium">Medium (\~5 chapters)</option>
-                <option value="long">Long (\~7 chapters)</option>
+                <option value="short">Short (5-10 pages)</option>
+                <option value="medium">Medium (15-25 pages)</option>
+                <option value="long">Long (40-50 pages)</option>
               </select>
             </div>
 
-            <button
-              type="submit"
-              style={{
-                padding: "1rem 2rem",
-                background: "#0066ff",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                marginTop: "1rem",
-              }}
+            {titlePreview && (
+              <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <div className="flex items-center gap-2 text-sm text-primary mb-1">
+                  <Sparkles className="w-4 h-4" />
+                  <span>AI Suggested Title</span>
+                </div>
+                <p className="font-semibold text-lg">{titlePreview}</p>
+              </div>
+            )}
+
+            {isGenerating && statusData && (
+              <div className="space-y-3">
+                <Progress value={progressPercent} className="h-2" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>
+                    {isComplete
+                      ? "Done!"
+                      : statusData.status?.includes("writing")
+                      ? `Writing chapter ${statusData.progress + 1} of ${statusData.totalChapters}...`
+                      : statusData.status || "Processing..."}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
+            <Button
+              onClick={startGeneration}
+              disabled={isGenerating || !topic.trim()}
+              className="w-full py-6 text-lg font-medium"
             >
-              Start Generation
-            </button>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Generate Ebook
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
 
-            {error && <p style={{ color: "red", marginTop: "1rem" }}>{error}</p>}
-          </form>
-        </>
-      ) : (
-        <>
-          <h1>{status?.title || "Creating your ebook..."}</h1>
-          {status?.subtitle && <h3>{status.subtitle}</h3>}
+        {isComplete && statusData?.finalMarkdown && (
+          <Card className="p-8">
+            <h2 className="text-xl font-semibold mb-6">Your Ebook is Ready!</h2>
+            <div className="flex flex-col md:flex-row gap-8">
+              <div className="w-full md:w-48 shrink-0">
+                <div className="w-full aspect-[3/4] rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center p-4 text-center">
+                  <span className="text-white font-semibold">{statusData.title}</span>
+                </div>
+              </div>
 
-          <p>
-            <strong>Status:</strong> {status?.status || "starting..."}
-          </p>
-          <p>
-            <strong>Progress:</strong> {status?.progress || 0} /{" "}
-            {status?.totalChapters || "?"}
-          </p>
+              <div className="flex-1 space-y-4">
+                <h3 className="text-2xl font-bold">{statusData.title}</h3>
+                <p className="text-muted-foreground">Topic: {topic}</p>
+                <p className="text-muted-foreground">
+                  Pages: \~{Math.ceil(statusData.finalMarkdown.split(/\s+/).length / 450)}
+                </p>
 
-          <progress
-            value={status?.progress || 0}
-            max={status?.totalChapters || 1}
-            style={{ width: "100%", height: "24px", margin: "1rem 0" }}
-          />
-
-          {isComplete && (
-            <div style={{ marginTop: "2rem" }}>
-              <h2>Done!</h2>
-              <p>You can now download or view the ebook.</p>
-              {/* Add download link or display markdown */}
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Button onClick={generatePDF} className="flex-1 min-w-[150px]">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
             </div>
-          )}
-
-          {status?.errorMessage && (
-            <p style={{ color: "red" }}>Error: {status.errorMessage}</p>
-          )}
-        </>
-      )}
-    </div>
+          </Card>
+        )}
+      </div>
+    </DashboardLayout>
   );
-    }
+};
+
+export default EbookGenerator;
