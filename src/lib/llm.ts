@@ -1,5 +1,5 @@
 // lib/llm.ts
-// Shared LLM calling function for OpenRouter (or any OpenAI-compatible API)
+// Reusable helper to call OpenRouter (or any OpenAI-compatible LLM API)
 
 interface LLMOptions {
   model?: string;
@@ -29,8 +29,8 @@ export async function callLLM(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://nexoraos.vercel.app", // change to your domain if you want
-        "X-Title": "NexoraOS Ebook Generator",
+        "HTTP-Referer": "https://nexoraos.vercel.app", // optional — helps OpenRouter track usage
+        "X-Title": "NexoraOS Ebook Generator",        // optional
       },
       body: JSON.stringify({
         model,
@@ -43,7 +43,7 @@ export async function callLLM(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenRouter API error ${response.status}: ${errorText}`);
+      throw new Error(`OpenRouter error ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -60,7 +60,7 @@ export async function callLLM(
   }
 }
 
-// Optional helper: for when you want JSON output
+// Helper for when you expect JSON output (more reliable)
 export async function callLLMJson<T = any>(
   prompt: string,
   options: LLMOptions = {}
@@ -73,4 +73,4 @@ export async function callLLMJson<T = any>(
     console.error("JSON parse failed:", text);
     throw new Error("LLM returned invalid JSON");
   }
-        }
+                           }
