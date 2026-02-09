@@ -1,5 +1,7 @@
 {
-  "version": 2,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "builds": [
     {
       "src": "package.json",
@@ -9,8 +11,5 @@
       }
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "framework": "vite"
 }
