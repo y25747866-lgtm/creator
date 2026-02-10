@@ -7,194 +7,325 @@ import {
   errorResponse 
 } from "../_shared/validation.ts";
 
-// Token-aware content generation tiers
-interface ContentTier {
-  name: string;
-  maxTokens: number;
+interface LengthConfig {
+  label: string;
   chapterCount: string;
+  chaptersNum: number;
   wordTarget: string;
-  pageTarget: number;
+  pageTarget: string;
+  maxTokens: number;
 }
 
-const CONTENT_TIERS: ContentTier[] = [
-  { name: 'premium', maxTokens: 16000, chapterCount: '10-12', wordTarget: '8000-10000', pageTarget: 50 },
-  { name: 'standard', maxTokens: 8000, chapterCount: '7-9', wordTarget: '5000-7000', pageTarget: 35 },
-  { name: 'compact', maxTokens: 4000, chapterCount: '5-6', wordTarget: '3000-4000', pageTarget: 20 },
-  { name: 'minimal', maxTokens: 2000, chapterCount: '3-4', wordTarget: '1500-2000', pageTarget: 10 },
-];
+const LENGTH_CONFIGS: Record<string, LengthConfig> = {
+  short: {
+    label: "Short",
+    chapterCount: "5-7",
+    chaptersNum: 6,
+    wordTarget: "4000-6000",
+    pageTarget: "10-15",
+    maxTokens: 8000,
+  },
+  medium: {
+    label: "Medium",
+    chapterCount: "8-12",
+    chaptersNum: 10,
+    wordTarget: "10000-15000",
+    pageTarget: "20-30",
+    maxTokens: 16000,
+  },
+  long: {
+    label: "Long",
+    chapterCount: "14-18",
+    chaptersNum: 16,
+    wordTarget: "20000-25000",
+    pageTarget: "40-50",
+    maxTokens: 16000,
+  },
+};
 
-function selectContentTier(): ContentTier {
-  return CONTENT_TIERS[0];
+function getSystemPrompt(config: LengthConfig): string {
+  return `You are a bestselling author who writes with warmth, clarity, and emotional depth. Your writing feels deeply human — like a wise friend sharing hard-won wisdom over coffee. You never sound robotic, generic, or templated.
+
+WRITING STYLE:
+- Write with genuine emotion, personal anecdotes, and relatable stories
+- Use conversational yet polished language — accessible but never dumbed down
+- Include metaphors, vivid imagery, and sensory details
+- Vary sentence length for rhythm — short punchy lines mixed with flowing paragraphs
+- Address the reader directly with "you" — make them feel seen
+- Share vulnerable moments and honest reflections
+- End chapters with reflection questions or powerful takeaways
+
+FORMATTING:
+- Use "# " for chapter titles
+- Use "## " for major section headings within chapters
+- Use "### " for sub-sections
+- Write full, rich paragraphs (4-8 sentences each)
+- Each chapter must have ${config.wordTarget} words of substantive content
+- Target ${config.chapterCount} chapters total
+
+STRUCTURE:
+- Opening chapter that hooks emotionally — tell a story, paint a picture
+- Each chapter builds on the last like a journey
+- Include real-world examples, case studies, step-by-step guides
+- Mix theory with practical application
+- Closing chapter with emotional resonance and clear next steps
+
+CRITICAL: Write the COMPLETE content. Do NOT summarize or skip sections. Every chapter must be fully written out with rich, detailed content. This is a real book, not an outline.`;
 }
 
-function getSystemPrompt(tier: ContentTier): string {
-  return `You are an expert ebook writer creating professional, publication-ready content.
-
-FORMATTING REQUIREMENTS:
-- Use "# " for chapter titles (main sections)
-- Use "## " for section headings within chapters
-- Use "### " for sub-sections when needed
-- Write clear, flowing paragraphs with proper spacing
-- Each chapter should have substantial, valuable content
-
-STRUCTURE REQUIREMENTS:
-- Introduction chapter that hooks the reader
-- ${tier.chapterCount} main chapters with detailed content
-- Practical tips, examples, and actionable advice throughout
-- Strong conclusion with key takeaways and next steps
-
-QUALITY GUIDELINES:
-- Write professionally with clear, engaging language
-- Include real-world examples and case studies
-- Provide step-by-step instructions where applicable
-- Make content actionable and immediately useful
-- Target ${tier.wordTarget} words of high-quality content
-
-Do NOT include any meta-commentary about the ebook itself. Just write the content directly.`;
-}
-
-function getUserPrompt(title: string, topic: string, tier: ContentTier): string {
-  return `Write a complete, professional ebook with the following details:
+function getUserPrompt(title: string, topic: string, description: string, config: LengthConfig): string {
+  return `Write a complete, publication-ready ebook.
 
 Title: "${title}"
 Topic: "${topic}"
+${description ? `Author's Vision: "${description}"` : ""}
 
 Requirements:
-1. Start with a compelling Introduction that explains what readers will learn
-2. Write ${tier.chapterCount} detailed main chapters covering all aspects of the topic
-3. Include practical examples, tips, and actionable advice in each chapter
-4. End with a Conclusion summarizing key points and providing next steps
-5. Target approximately ${tier.pageTarget} pages of content
+1. Write ${config.chapterCount} full chapters (${config.pageTarget} pages worth of content)
+2. Start with a powerful Introduction that draws readers in emotionally
+3. Each chapter should be detailed, practical, and emotionally engaging
+4. Include stories, examples, actionable advice, and reflection moments
+5. End with a Conclusion that ties everything together with hope and motivation
+6. Target ${config.wordTarget} words total
 
-Write the complete ebook content now, starting with the Introduction chapter.`;
+Begin writing the complete ebook now. Start with "# Introduction" and write every word.`;
+}
+
+async function generateContent(
+  apiKey: string,
+  title: string,
+  topic: string,
+  description: string,
+  config: LengthConfig
+): Promise<string> {
+  // For long books, generate in parts
+  if (config.label === "Long") {
+    return await generateLongContent(apiKey, title, topic, description, config);
+  }
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://nexoraos.lovable.app",
+      "X-Title": "NexoraOS",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        { role: "system", content: getSystemPrompt(config) },
+        { role: "user", content: getUserPrompt(title, topic, description, config) },
+      ],
+      max_tokens: config.maxTokens,
+      temperature: 0.75,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("OpenRouter error:", response.status, errorText);
+    throw new Error(`AI generation failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+async function generateLongContent(
+  apiKey: string,
+  title: string,
+  topic: string,
+  description: string,
+  config: LengthConfig
+): Promise<string> {
+  // Generate outline first
+  const outlineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://nexoraos.lovable.app",
+      "X-Title": "NexoraOS",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        {
+          role: "system",
+          content: "You create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. [\"Introduction\", \"Chapter 1: ...\", ...]. No other text.",
+        },
+        {
+          role: "user",
+          content: `Create ${config.chaptersNum} chapter titles for an ebook titled "${title}" about "${topic}". ${description ? `Vision: "${description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
+        },
+      ],
+      max_tokens: 500,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!outlineResponse.ok) throw new Error("Failed to generate outline");
+
+  const outlineData = await outlineResponse.json();
+  const outlineText = outlineData.choices?.[0]?.message?.content?.trim() || "";
+  
+  let chapters: string[];
+  try {
+    chapters = JSON.parse(outlineText);
+  } catch {
+    // Fallback chapters
+    chapters = [
+      "Introduction",
+      "Chapter 1: Understanding the Fundamentals",
+      "Chapter 2: The Foundation",
+      "Chapter 3: Core Strategies",
+      "Chapter 4: Building Momentum",
+      "Chapter 5: Advanced Techniques",
+      "Chapter 6: Overcoming Obstacles",
+      "Chapter 7: Real-World Applications",
+      "Chapter 8: Scaling Your Success",
+      "Chapter 9: The Mindset Shift",
+      "Chapter 10: Putting It All Together",
+      "Conclusion",
+    ];
+  }
+
+  // Generate content in 2-3 batches
+  const batchSize = Math.ceil(chapters.length / 3);
+  const batches: string[][] = [];
+  for (let i = 0; i < chapters.length; i += batchSize) {
+    batches.push(chapters.slice(i, i + batchSize));
+  }
+
+  let fullContent = "";
+
+  for (const batch of batches) {
+    const batchPrompt = `Continue writing the ebook "${title}" about "${topic}".
+    
+Write the following chapters in full detail (1500-2000 words each):
+${batch.map((ch) => `- ${ch}`).join("\n")}
+
+${fullContent ? "Previous content ended with the last chapter. Continue seamlessly." : "Start with the first chapter."}
+
+Write complete, emotionally engaging content. Use "# " for chapter titles, "## " for sections. Do NOT summarize.`;
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://nexoraos.lovable.app",
+        "X-Title": "NexoraOS",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash-001",
+        messages: [
+          { role: "system", content: getSystemPrompt(config) },
+          { role: "user", content: batchPrompt },
+        ],
+        max_tokens: config.maxTokens,
+        temperature: 0.75,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Batch generation failed:", response.status);
+      continue;
+    }
+
+    const data = await response.json();
+    const batchContent = data.choices?.[0]?.message?.content || "";
+    fullContent += (fullContent ? "\n\n" : "") + batchContent;
+  }
+
+  return fullContent;
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify authentication and subscription
     const access = await verifyAccess(req);
     if (!access.authorized) {
-      return errorResponse(access.error || 'Unauthorized', 401);
+      return errorResponse(access.error || "Unauthorized", 401);
     }
 
-    // Parse and validate input
-    let body: { topic?: string; title?: string };
+    let body: { topic?: string; title?: string; description?: string; length?: string };
     try {
       body = await req.json();
     } catch {
-      return errorResponse('Invalid JSON body');
+      return errorResponse("Invalid JSON body");
     }
 
-    const { topic, title } = body;
-    
-    // Validate input
+    const { topic, title, description = "", length = "medium" } = body;
+
     const validation = validateEbookInput(topic, title);
     if (!validation.valid) {
-      return errorResponse(validation.error || 'Invalid input');
+      return errorResponse(validation.error || "Invalid input");
     }
 
-    // Sanitize inputs
     const sanitizedTopic = sanitizeInput(topic!);
     const sanitizedTitle = title ? sanitizeInput(title).substring(0, 200) : sanitizedTopic;
+    const sanitizedDescription = description ? sanitizeInput(description).substring(0, 500) : "";
+    const lengthKey = ["short", "medium", "long"].includes(length) ? length : "medium";
+    const config = LENGTH_CONFIGS[lengthKey];
 
-    const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
+    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
     if (!OPENROUTER_API_KEY) {
-      console.log('No API key - generating fallback content');
+      console.log("No API key - generating fallback content");
       return new Response(
         JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const tier = selectContentTier();
-    console.log(`Generating ${tier.name} content for user ${access.userId} (target: ${tier.pageTarget} pages)`);
+    console.log(`Generating ${config.label} ebook for user ${access.userId}: "${sanitizedTitle}"`);
 
-    let content = '';
-    let success = false;
+    const content = await generateContent(
+      OPENROUTER_API_KEY,
+      sanitizedTitle,
+      sanitizedTopic,
+      sanitizedDescription,
+      config
+    );
 
-    for (const currentTier of CONTENT_TIERS) {
-      if (success) break;
-
-      try {
-        console.log(`Attempting ${currentTier.name} tier (${currentTier.maxTokens} tokens)`);
-        
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://nexoraos.lovable.app',
-            'X-Title': 'NexoraOS',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
-            messages: [
-              { role: 'system', content: getSystemPrompt(currentTier) },
-              { role: 'user', content: getUserPrompt(sanitizedTitle, sanitizedTopic, currentTier) }
-            ],
-            max_tokens: currentTier.maxTokens,
-            temperature: 0.7,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          content = data.choices?.[0]?.message?.content || '';
-          
-          if (content && content.length > 500) {
-            success = true;
-            console.log(`Successfully generated ${currentTier.name} content: ${content.length} chars`);
-          }
-        } else {
-          const errorText = await response.text();
-          console.error(`${currentTier.name} tier failed:`, response.status, errorText);
-          
-          if (response.status === 429 || response.status === 402) {
-            console.log('Token limit issue, trying smaller tier...');
-            continue;
-          }
-        }
-      } catch (tierError) {
-        console.error(`Error in ${currentTier.name} tier:`, tierError);
-      }
-    }
-
-    if (!success || !content) {
-      console.log('All tiers failed, using fallback content');
+    if (!content || content.length < 500) {
+      console.log("Content too short, using fallback");
       return new Response(
         JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const pages = Math.max(10, Math.ceil(content.length / 2000));
+    const pages = Math.max(
+      parseInt(config.pageTarget.split("-")[0]),
+      Math.ceil(content.split(/\s+/).length / 250)
+    );
 
-    console.log('Generated content length:', content.length, 'Estimated pages:', pages);
+    console.log(`Generated ${content.length} chars, ~${pages} pages`);
 
     return new Response(
       JSON.stringify({ title: sanitizedTitle, content, pages }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    console.error('Error in generate-ebook-content:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error("Error in generate-ebook-content:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
 function generateFallbackContent(title: string, topic: string): { title: string; content: string; pages: number } {
-  // Escape for safe use in content
-  const safeTitle = title.replace(/[<>]/g, '');
-  const safeTopic = topic.replace(/[<>]/g, '');
-  
+  const safeTitle = title.replace(/[<>]/g, "");
+  const safeTopic = topic.replace(/[<>]/g, "");
+
   const content = `# Introduction
 
 Welcome to "${safeTitle}". This comprehensive guide will walk you through everything you need to know about ${safeTopic}.
@@ -231,42 +362,15 @@ Now that you understand the basics, it's time to put that knowledge into action.
 
 ## Strategy 1: Start Small
 
-Don't try to do everything at once. Begin with one small step and build momentum from there. Consistency beats intensity in the long run.
+Don't try to do everything at once. Begin with one small step and build momentum from there.
 
 ## Strategy 2: Learn from Others
 
-Find mentors, join communities, and learn from those who have already achieved what you're working toward. Their experience can save you years of trial and error.
+Find mentors, join communities, and learn from those who have already achieved what you're working toward.
 
 ## Strategy 3: Track Your Progress
 
-What gets measured gets improved. Keep track of your progress and celebrate your wins, no matter how small they may seem.
-
-# Chapter 3: Overcoming Challenges
-
-Every journey has its obstacles. This chapter addresses the most common challenges you'll face and provides solutions to overcome them.
-
-## Common Challenges
-
-- Lack of time and resources
-- Information overload
-- Self-doubt and imposter syndrome
-- Difficulty staying motivated
-
-## Solutions and Strategies
-
-For each challenge, there are proven strategies to help you push through. The key is to anticipate these challenges and have a plan ready.
-
-# Chapter 4: Advanced Techniques
-
-Once you've mastered the basics, it's time to level up. This chapter introduces advanced techniques that will help you stand out from the crowd.
-
-## Taking Your Skills to the Next Level
-
-Advanced mastery requires deliberate practice and continuous learning. Focus on the areas that will have the biggest impact on your goals.
-
-## Expert Tips
-
-Learn from the best in the field. These tips come from years of experience and can accelerate your progress significantly.
+What gets measured gets improved. Keep track of your progress and celebrate your wins.
 
 # Conclusion
 
@@ -279,20 +383,12 @@ Congratulations on completing this guide! You now have a solid understanding of 
 3. Expect and prepare for challenges
 4. Continue learning and growing
 
-## Your Next Steps
-
-Knowledge without action is just entertainment. Take what you've learned and put it into practice today. Start small, stay consistent, and watch your progress compound over time.
-
 Remember: the best time to start was yesterday. The second best time is now.
 
 ---
 
-*Generated by NexoraOS - Your Digital Product Operating System*
+*Generated by NexoraOS*
 `;
 
-  return {
-    title: safeTitle,
-    content,
-    pages: 15,
-  };
+  return { title: safeTitle, content, pages: 12 };
 }

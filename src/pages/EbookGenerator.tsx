@@ -1,171 +1,324 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { BookOpen, Loader2, Sparkles, Download } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BookOpen, Loader2, Download, Sparkles, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
-import { jsPDF } from "jspdf";
+import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
+import { supabase } from "@/integrations/supabase/client";
+
+const LENGTH_OPTIONS = [
+  { value: "short" as const, label: "Short", pages: "10–15 pages", icon: "📄" },
+  { value: "medium" as const, label: "Medium", pages: "20–30 pages", icon: "📕" },
+  { value: "long" as const, label: "Long", pages: "40–50 pages", icon: "📚" },
+];
+
+type GenerationStep = "idle" | "title" | "content" | "cover" | "complete";
+
+const STEP_LABELS: Record<GenerationStep, string> = {
+  idle: "",
+  title: "Crafting your title...",
+  content: "Writing your book... This may take a minute.",
+  cover: "Designing your cover...",
+  complete: "Your ebook is ready!",
+};
+
+const STEP_PROGRESS: Record<GenerationStep, number> = {
+  idle: 0,
+  title: 15,
+  content: 60,
+  cover: 85,
+  complete: 100,
+};
 
 const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
-  const [tone, setTone] = useState("clear, authoritative, practical");
+  const [description, setDescription] = useState("");
   const [ebookLength, setEbookLength] = useState<"short" | "medium" | "long">("medium");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [step, setStep] = useState<GenerationStep>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [ebookData, setEbookData] = useState<any>(null);
+  const [ebookData, setEbookData] = useState<Ebook | null>(null);
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
 
+  const isGenerating = step !== "idle" && step !== "complete";
+
   const startGeneration = async () => {
     if (!topic.trim()) {
-      toast({ title: "Topic Required", variant: "destructive" });
+      toast({ title: "Topic Required", description: "Please enter a topic for your ebook.", variant: "destructive" });
       return;
     }
 
-    setIsGenerating(true);
+    setStep("title");
     setErrorMsg(null);
     setEbookData(null);
 
     try {
-      const res = await fetch("/api/generate-ebook", {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Please log in to generate ebooks.");
+
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+      // Step 1: Generate title
+      const titleRes = await fetch(`${baseUrl}/functions/v1/generate-ebook-title`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, tone, length: ebookLength }),
+        headers,
+        body: JSON.stringify({ topic }),
       });
 
-      if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err || "Failed to start generation");
+      if (!titleRes.ok) {
+        const err = await titleRes.json().catch(() => ({ error: "Title generation failed" }));
+        throw new Error(err.error || "Title generation failed");
       }
 
-      const data = await res.json();
+      const { title } = await titleRes.json();
+      setStep("content");
 
+      // Step 2: Generate content
+      const contentRes = await fetch(`${baseUrl}/functions/v1/generate-ebook-content`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ topic, title, description, length: ebookLength }),
+      });
+
+      if (!contentRes.ok) {
+        const err = await contentRes.json().catch(() => ({ error: "Content generation failed" }));
+        throw new Error(err.error || "Content generation failed");
+      }
+
+      const contentData = await contentRes.json();
+      setStep("cover");
+
+      // Step 3: Generate cover
+      let coverImageUrl: string | null = null;
+      try {
+        const coverRes = await fetch(`${baseUrl}/functions/v1/generate-ebook-cover`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ title, topic }),
+        });
+
+        if (coverRes.ok) {
+          const coverData = await coverRes.json();
+          coverImageUrl = coverData.imageUrl || null;
+        }
+      } catch {
+        console.log("Cover generation skipped");
+      }
+
+      // Build ebook object
       const ebook: Ebook = {
-        id: data.jobId,
-        title: data.title,
+        id: crypto.randomUUID(),
+        title: contentData.title || title,
         topic,
-        content: data.content,
-        coverImageUrl: null,
-        pages: data.pages,
+        description,
+        content: contentData.content,
+        coverImageUrl,
+        pages: contentData.pages,
+        length: ebookLength,
         createdAt: new Date().toISOString(),
       };
 
       addEbook(ebook);
       setEbookData(ebook);
-      toast({ title: "Success", description: "Ebook generated!" });
+      setStep("complete");
+      toast({ title: "Success!", description: `"${ebook.title}" is ready to download.` });
     } catch (err: any) {
+      console.error("Generation error:", err);
       setErrorMsg(err.message);
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setIsGenerating(false);
+      setStep("idle");
+      toast({ title: "Generation Failed", description: err.message, variant: "destructive" });
     }
   };
 
-  const generatePDF = (ebook: Ebook) => {
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "a4",
-    });
+  const handleDownloadPDF = () => {
+    if (ebookData) generatePDF(ebookData);
+  };
 
-    // Simple example - expand with your full PDF logic
-    doc.setFontSize(24);
-    doc.text(ebook.title, 40, 60);
-    doc.setFontSize(12);
-    doc.text(ebook.content.substring(0, 500) + "...", 40, 100);
+  const handleDownloadCover = () => {
+    if (ebookData) downloadCoverImage(ebookData);
+  };
 
-    doc.save(`${ebook.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
+  const resetForm = () => {
+    setStep("idle");
+    setEbookData(null);
+    setTopic("");
+    setDescription("");
+    setErrorMsg(null);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
-      <div className="max-w-2xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-4xl font-bold mb-6 text-center">AI Ebook Generator</h1>
-          <p className="text-xl text-muted-foreground text-center mb-12">
-            Create professional ebooks in minutes
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            AI-Powered Book Generator
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+            Create Professional Ebooks
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Enter your topic and let AI write a complete, human-quality ebook — ready to download as PDF in minutes.
           </p>
         </motion.div>
 
-        <Card className="p-8 shadow-lg">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-lg font-medium mb-2">Topic</label>
-              <Input
-                placeholder="e.g., Money making"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                disabled={isGenerating}
-                className="text-lg py-6"
-              />
-            </div>
-
-            <div>
-              <label className="block text-lg font-medium mb-2">Tone</label>
-              <Input
-                placeholder="clear, authoritative, practical"
-                value={tone}
-                onChange={(e) => setTone(e.target.value)}
-                disabled={isGenerating}
-              />
-            </div>
-
-            <div>
-              <label className="block text-lg font-medium mb-2">Length</label>
-              <select
-                value={ebookLength}
-                onChange={(e) => setEbookLength(e.target.value as "short" | "medium" | "long")}
-                disabled={isGenerating}
-                className="w-full p-4 rounded-md border bg-background text-lg"
-              >
-                <option value="short">Short (5-10 pages)</option>
-                <option value="medium">Medium (15-25 pages)</option>
-                <option value="long">Long (40-50 pages)</option>
-              </select>
-            </div>
-
-            {isGenerating && (
-              <div className="space-y-4">
-                <Progress value={60} className="h-3" />
-                <p className="text-center text-muted-foreground">Generating your ebook...</p>
-              </div>
-            )}
-
-            {errorMsg && <p className="text-red-500 text-center">{errorMsg}</p>}
-
-            <Button
-              onClick={startGeneration}
-              disabled={isGenerating || !topic.trim()}
-              className="w-full py-8 text-xl font-medium"
+        {/* Main Form / Result */}
+        <AnimatePresence mode="wait">
+          {step === "complete" && ebookData ? (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <BookOpen className="w-6 h-6 mr-3" />
-                  Generate Ebook
-                </>
-              )}
-            </Button>
+              <Card className="p-8 sm:p-10 border-primary/20">
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">{ebookData.title}</h2>
+                  <p className="text-muted-foreground">
+                    {ebookData.pages} pages • {ebookData.length === "short" ? "Short" : ebookData.length === "long" ? "Long" : "Medium"} format
+                  </p>
+                </div>
 
-            {ebookData && (
-              <div className="mt-8 p-6 border rounded-lg bg-muted/50">
-                <h2 className="text-2xl font-bold mb-4">{ebookData.title}</h2>
-                <p className="text-muted-foreground mb-4">\~{ebookData.pages} pages</p>
-                <Button onClick={() => generatePDF(ebookData)}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button onClick={handleDownloadPDF} size="lg" className="gap-2">
+                    <Download className="w-5 h-5" />
+                    Download PDF
+                  </Button>
+                  {ebookData.coverImageUrl && (
+                    <Button onClick={handleDownloadCover} variant="outline" size="lg" className="gap-2">
+                      <ImageIcon className="w-5 h-5" />
+                      Download Cover
+                    </Button>
+                  )}
+                </div>
+
+                <div className="mt-8 pt-6 border-t">
+                  <Button onClick={resetForm} variant="ghost" className="w-full">
+                    Generate Another Ebook
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <Card className="p-8 sm:p-10">
+                <div className="space-y-8">
+                  {/* Topic */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Topic *</label>
+                    <Input
+                      placeholder="e.g., How to build passive income with digital products"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      disabled={isGenerating}
+                      className="h-12 text-base"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Description <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <Textarea
+                      placeholder="Describe what you want the book to cover, the tone, target audience, or any specific chapters..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      disabled={isGenerating}
+                      rows={3}
+                      className="text-base resize-none"
+                    />
+                  </div>
+
+                  {/* Length Selector */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-3">Book Length</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {LENGTH_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setEbookLength(opt.value)}
+                          disabled={isGenerating}
+                          className={`relative p-4 rounded-xl border-2 text-center transition-all ${
+                            ebookLength === opt.value
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/40"
+                          } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <div className="text-2xl mb-1">{opt.icon}</div>
+                          <div className="font-semibold text-sm">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground">{opt.pages}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  {isGenerating && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="space-y-3"
+                    >
+                      <Progress value={STEP_PROGRESS[step]} className="h-2" />
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {STEP_LABELS[step]}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Error */}
+                  {errorMsg && (
+                    <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
+                      {errorMsg}
+                    </div>
+                  )}
+
+                  {/* Submit */}
+                  <Button
+                    onClick={startGeneration}
+                    disabled={isGenerating || !topic.trim()}
+                    size="lg"
+                    className="w-full h-14 text-base font-semibold gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="w-5 h-5" />
+                        Generate Ebook
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

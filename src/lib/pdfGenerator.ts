@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import { Ebook } from "@/hooks/useEbookStore";
 
 interface PDFSection {
-  type: "h1" | "h2" | "h3" | "paragraph";
+  type: "h1" | "h2" | "h3" | "paragraph" | "bullet";
   content: string;
 }
 
@@ -20,229 +20,238 @@ function parseContent(content: string): PDFSection[] {
       sections.push({ type: "h2", content: trimmed.replace("## ", "") });
     } else if (trimmed.startsWith("# ")) {
       sections.push({ type: "h1", content: trimmed.replace("# ", "") });
+    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      sections.push({ type: "bullet", content: trimmed.substring(2) });
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      sections.push({ type: "bullet", content: trimmed });
+    } else if (trimmed === "---" || trimmed === "***") {
+      continue; // skip dividers
     } else {
       sections.push({ type: "paragraph", content: trimmed });
     }
   }
-
   return sections;
 }
 
-function extractChapters(sections: PDFSection[]): { title: string; index: number }[] {
-  const chapters: { title: string; index: number }[] = [];
-  sections.forEach((section, index) => {
-    if (section.type === "h1" || section.type === "h2") {
-      chapters.push({ title: section.content, index });
-    }
-  });
-  return chapters;
+function extractChapters(sections: PDFSection[]): string[] {
+  return sections.filter((s) => s.type === "h1").map((s) => s.content);
 }
 
 export function generatePDF(ebook: Ebook): void {
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
   const margin = 25;
-  const contentWidth = pageWidth - margin * 2;
-  const lineHeight = 7;
-  const headerColor: [number, number, number] = [79, 70, 229]; // Indigo
-  const textColor: [number, number, number] = [30, 30, 30];
-  const mutedColor: [number, number, number] = [100, 100, 100];
+  const cw = pw - margin * 2;
+  const bodyLineH = 6.5;
 
-  let currentPage = 1;
+  const colors = {
+    primary: [55, 48, 163] as [number, number, number],    // indigo-800
+    text: [28, 28, 28] as [number, number, number],
+    muted: [110, 110, 110] as [number, number, number],
+    accent: [79, 70, 229] as [number, number, number],     // indigo-600
+    white: [255, 255, 255] as [number, number, number],
+  };
+
+  let pageNum = 0;
   let y = margin;
 
-  // Helper: Add page number
-  const addPageNumber = () => {
-    doc.setFontSize(10);
-    doc.setTextColor(...mutedColor);
-    doc.text(String(currentPage), pageWidth / 2, pageHeight - 12, { align: "center" });
+  const addPage = () => {
+    doc.addPage();
+    pageNum++;
+    y = margin;
   };
 
-  // Helper: Check page break
-  const checkPageBreak = (requiredSpace: number = 20): void => {
-    if (y + requiredSpace > pageHeight - margin - 15) {
-      addPageNumber();
-      doc.addPage();
-      currentPage++;
-      y = margin;
-    }
+  const footer = () => {
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.muted);
+    doc.text(`${pageNum}`, pw / 2, ph - 10, { align: "center" });
   };
 
-  // ===== PAGE 1: Cover Page =====
-  if (ebook.coverImageUrl) {
-    try {
-      // Add cover image to fill the entire first page
-      doc.addImage(ebook.coverImageUrl, "PNG", 0, 0, pageWidth, pageHeight);
-    } catch {
-      // Fallback: Create a styled cover
-      doc.setFillColor(79, 70, 229);
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
-      
-      // Add gradient overlay
-      doc.setFillColor(124, 58, 237);
-      doc.rect(0, pageHeight * 0.6, pageWidth, pageHeight * 0.4, "F");
-      
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(32);
-      const titleLines = doc.splitTextToSize(ebook.title, contentWidth - 20);
-      const titleY = pageHeight / 2 - (titleLines.length * 12);
-      doc.text(titleLines, pageWidth / 2, titleY, { align: "center" });
-      
-      // NexoraOS branding
-      doc.setFontSize(14);
-      doc.text("NexoraOS", pageWidth / 2, pageHeight - 30, { align: "center" });
+  const needsBreak = (space: number) => {
+    if (y + space > ph - 20) {
+      footer();
+      addPage();
+      return true;
     }
-  } else {
-    // No cover image - create styled cover
-    doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, pageWidth, pageHeight, "F");
+    return false;
+  };
+
+  // ===== COVER =====
+  pageNum++;
+  doc.setFillColor(...colors.primary);
+  doc.rect(0, 0, pw, ph, "F");
+
+  // Decorative circles
+  doc.setFillColor(255, 255, 255);
+  doc.setGState(doc.GState({ opacity: 0.05 }));
+  doc.circle(pw * 0.8, ph * 0.2, 60, "F");
+  doc.circle(pw * 0.2, ph * 0.7, 80, "F");
+  doc.setGState(doc.GState({ opacity: 1 }));
+
+  // Title on cover
+  doc.setTextColor(...colors.white);
+  doc.setFontSize(36);
+  const coverTitle = doc.splitTextToSize(ebook.title, cw - 20);
+  const titleStartY = ph / 2 - coverTitle.length * 14;
+  doc.text(coverTitle, pw / 2, titleStartY, { align: "center" });
+
+  // Topic subtitle
+  if (ebook.topic) {
+    doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(32);
-    const titleLines = doc.splitTextToSize(ebook.title, contentWidth - 20);
-    doc.text(titleLines, pageWidth / 2, pageHeight / 2, { align: "center" });
-    doc.setFontSize(14);
-    doc.text("NexoraOS", pageWidth / 2, pageHeight - 30, { align: "center" });
+    doc.setGState(doc.GState({ opacity: 0.8 }));
+    const topicLines = doc.splitTextToSize(ebook.topic, cw - 40);
+    doc.text(topicLines, pw / 2, titleStartY + coverTitle.length * 14 + 10, { align: "center" });
+    doc.setGState(doc.GState({ opacity: 1 }));
   }
 
-  // ===== PAGE 2: Title Page =====
-  doc.addPage();
-  currentPage++;
-  
-  doc.setTextColor(...headerColor);
+  // Branding
+  doc.setFontSize(12);
+  doc.setTextColor(...colors.white);
+  doc.text("NexoraOS", pw / 2, ph - 25, { align: "center" });
+
+  // ===== TITLE PAGE =====
+  addPage();
+  y = 55;
+  doc.setTextColor(...colors.primary);
   doc.setFontSize(28);
-  const titleLines = doc.splitTextToSize(ebook.title, contentWidth);
-  y = 60;
-  doc.text(titleLines, pageWidth / 2, y, { align: "center" });
-  
-  y += titleLines.length * 12 + 20;
-  
-  doc.setFontSize(14);
-  doc.setTextColor(...mutedColor);
-  doc.text(`Topic: ${ebook.topic}`, pageWidth / 2, y, { align: "center" });
-  
-  y += 15;
-  doc.text(`Generated by NexoraOS`, pageWidth / 2, y, { align: "center" });
-  
+  const tpTitle = doc.splitTextToSize(ebook.title, cw);
+  doc.text(tpTitle, pw / 2, y, { align: "center" });
+  y += tpTitle.length * 12 + 15;
+
+  doc.setFontSize(13);
+  doc.setTextColor(...colors.muted);
+  doc.text(`Topic: ${ebook.topic}`, pw / 2, y, { align: "center" });
+  y += 12;
+  doc.text("Generated by NexoraOS", pw / 2, y, { align: "center" });
   y += 10;
-  const date = new Date(ebook.createdAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  const dateStr = new Date(ebook.createdAt).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
   });
-  doc.text(date, pageWidth / 2, y, { align: "center" });
-  
-  addPageNumber();
+  doc.text(dateStr, pw / 2, y, { align: "center" });
+  footer();
 
-  // ===== PAGE 3: Table of Contents =====
-  doc.addPage();
-  currentPage++;
-  y = margin;
-
-  doc.setTextColor(...headerColor);
-  doc.setFontSize(24);
-  doc.text("Table of Contents", margin, y);
-  y += 20;
-
+  // ===== TABLE OF CONTENTS =====
   const sections = parseContent(ebook.content);
   const chapters = extractChapters(sections);
 
-  doc.setFontSize(12);
-  doc.setTextColor(...textColor);
+  if (chapters.length > 0) {
+    addPage();
+    y = margin;
+    doc.setTextColor(...colors.primary);
+    doc.setFontSize(24);
+    doc.text("Table of Contents", margin, y);
+    y += 18;
 
-  chapters.forEach((chapter, index) => {
-    checkPageBreak(10);
-    const prefix = chapter.title.toLowerCase().includes("introduction") || 
-                   chapter.title.toLowerCase().includes("conclusion") 
-      ? "" 
-      : `${index + 1}. `;
-    
-    const tocText = `${prefix}${chapter.title}`;
-    const lines = doc.splitTextToSize(tocText, contentWidth - 20);
-    doc.text(lines, margin + 5, y);
-    y += lines.length * 6 + 4;
-  });
+    // Decorative line
+    doc.setDrawColor(...colors.accent);
+    doc.setLineWidth(0.8);
+    doc.line(margin, y, margin + 40, y);
+    y += 12;
 
-  addPageNumber();
+    doc.setFontSize(12);
+    chapters.forEach((chapter, i) => {
+      needsBreak(10);
+      doc.setTextColor(...colors.text);
+      const tocLine = doc.splitTextToSize(`${i + 1}.  ${chapter}`, cw - 10);
+      doc.text(tocLine, margin + 5, y);
+      y += tocLine.length * 6 + 5;
+    });
+    footer();
+  }
 
-  // ===== CONTENT PAGES =====
-  doc.addPage();
-  currentPage++;
-  y = margin;
+  // ===== CONTENT =====
+  addPage();
 
   sections.forEach((section) => {
     switch (section.type) {
-      case "h1":
-        checkPageBreak(30);
-        y += 10;
-        doc.setFontSize(22);
-        doc.setTextColor(...headerColor);
-        const h1Lines = doc.splitTextToSize(section.content, contentWidth);
-        doc.text(h1Lines, margin, y);
-        y += h1Lines.length * 10 + 8;
-        break;
-
-      case "h2":
-        checkPageBreak(25);
-        y += 8;
-        doc.setFontSize(18);
-        doc.setTextColor(...headerColor);
-        const h2Lines = doc.splitTextToSize(section.content, contentWidth);
-        doc.text(h2Lines, margin, y);
-        y += h2Lines.length * 8 + 6;
-        break;
-
-      case "h3":
-        checkPageBreak(20);
+      case "h1": {
+        // Start each chapter on a new page (unless we're near the top)
+        if (y > margin + 10) {
+          footer();
+          addPage();
+        }
         y += 5;
-        doc.setFontSize(14);
-        doc.setTextColor(60, 60, 60);
-        const h3Lines = doc.splitTextToSize(section.content, contentWidth);
-        doc.text(h3Lines, margin, y);
-        y += h3Lines.length * 6 + 4;
+        doc.setFontSize(22);
+        doc.setTextColor(...colors.primary);
+        const h1 = doc.splitTextToSize(section.content, cw);
+        doc.text(h1, margin, y);
+        y += h1.length * 10 + 5;
+        // Decorative line under chapter title
+        doc.setDrawColor(...colors.accent);
+        doc.setLineWidth(0.6);
+        doc.line(margin, y, margin + 30, y);
+        y += 8;
         break;
-
-      case "paragraph":
+      }
+      case "h2": {
+        needsBreak(22);
+        y += 6;
+        doc.setFontSize(16);
+        doc.setTextColor(...colors.accent);
+        const h2 = doc.splitTextToSize(section.content, cw);
+        doc.text(h2, margin, y);
+        y += h2.length * 7 + 5;
+        break;
+      }
+      case "h3": {
+        needsBreak(18);
+        y += 4;
+        doc.setFontSize(13);
+        doc.setTextColor(70, 70, 70);
+        const h3 = doc.splitTextToSize(section.content, cw);
+        doc.text(h3, margin, y);
+        y += h3.length * 6 + 4;
+        break;
+      }
+      case "bullet": {
+        needsBreak(bodyLineH + 2);
         doc.setFontSize(11);
-        doc.setTextColor(...textColor);
-        const paraLines = doc.splitTextToSize(section.content, contentWidth);
-        
-        paraLines.forEach((line: string) => {
-          checkPageBreak(lineHeight);
+        doc.setTextColor(...colors.text);
+        const bulletLines = doc.splitTextToSize(section.content, cw - 8);
+        // Bullet dot
+        doc.setFillColor(...colors.accent);
+        doc.circle(margin + 2, y - 1.2, 1, "F");
+        bulletLines.forEach((line: string, i: number) => {
+          needsBreak(bodyLineH);
+          doc.text(line, margin + 7, y);
+          y += bodyLineH;
+        });
+        y += 1;
+        break;
+      }
+      case "paragraph": {
+        doc.setFontSize(11);
+        doc.setTextColor(...colors.text);
+        const para = doc.splitTextToSize(section.content, cw);
+        para.forEach((line: string) => {
+          needsBreak(bodyLineH);
           doc.text(line, margin, y);
-          y += lineHeight;
+          y += bodyLineH;
         });
         y += 3;
         break;
+      }
     }
   });
 
-  // Add final page number
-  addPageNumber();
+  footer();
 
-  // Save PDF
-  const filename = ebook.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
+  const filename = ebook.title
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .replace(/\s+/g, "_")
+    .substring(0, 60);
   doc.save(`${filename}.pdf`);
 }
 
 export async function downloadCoverImage(ebook: Ebook): Promise<void> {
   if (!ebook.coverImageUrl) return;
-
   try {
-    // Fetch the image as a blob to handle CORS issues
     const response = await fetch(ebook.coverImageUrl);
     const blob = await response.blob();
-    
-    // Create a blob URL
     const blobUrl = URL.createObjectURL(blob);
-    
-    // Create download link
     const link = document.createElement("a");
     link.href = blobUrl;
     const filename = ebook.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
@@ -250,12 +259,9 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up blob URL
     URL.revokeObjectURL(blobUrl);
   } catch (error) {
     console.error("Error downloading cover image:", error);
-    // Fallback: open in new tab
     window.open(ebook.coverImageUrl, "_blank");
   }
 }
