@@ -26,7 +26,7 @@ const WhopSuccess = () => {
 
       if (cancelled) return;
 
-      if (res.allowed) {
+      if (res.hasAccess) {
         clearInterval(interval);
         setStatus("active");
         setTimeout(() => {

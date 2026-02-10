@@ -5,9 +5,11 @@ export interface Ebook {
   id: string;
   title: string;
   topic: string;
+  description?: string;
   content: string;
-  coverImageUrl: string;
+  coverImageUrl: string | null;
   pages: number;
+  length?: "short" | "medium" | "long";
   createdAt: string;
 }
 
