@@ -61,6 +61,182 @@ export type Database = {
           },
         ]
       }
+      monetization_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          module_id: string
+          rating: number | null
+          section: string | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          rating?: number | null
+          section?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          rating?: number | null
+          section?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monetization_feedback_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "monetization_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monetization_metrics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          module_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          module_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          module_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monetization_metrics_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "monetization_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monetization_modules: {
+        Row: {
+          created_at: string
+          id: string
+          module_type: string
+          product_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_type: string
+          product_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_type?: string
+          product_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monetization_modules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "monetization_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monetization_products: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          source_product_id: string | null
+          source_type: string
+          title: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_product_id?: string | null
+          source_type?: string
+          title: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_product_id?: string | null
+          source_type?: string
+          title?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monetization_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          model_used: string | null
+          module_id: string
+          prompt_used: string | null
+          version_number: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          module_id: string
+          prompt_used?: string | null
+          version_number?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          module_id?: string
+          prompt_used?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monetization_versions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "monetization_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_feedback: {
         Row: {
           comment: string | null

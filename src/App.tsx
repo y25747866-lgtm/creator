@@ -14,6 +14,7 @@ import Pricing from "./pages/Pricing";
 import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
 import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
+import MonetizationDashboard from "./pages/dashboard/MonetizationDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ProductsDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/monetization"
+              element={
+                <ProtectedRoute>
+                  <MonetizationDashboard />
                 </ProtectedRoute>
               }
             />

@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.product-tracking]
 verify_jwt = false
+
+[functions.monetization]
+verify_jwt = false

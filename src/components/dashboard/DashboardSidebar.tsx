@@ -7,6 +7,7 @@ import {
   Download,
   Settings,
   BarChart3,
+  Package,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -29,6 +30,7 @@ const DashboardSidebar = () => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Ebook Generator", path: "/dashboard/ebook-generator" },
     { icon: BarChart3, label: "Product Analytics", path: "/dashboard/products" },
+    { icon: Package, label: "Monetization", path: "/dashboard/monetization" },
     { icon: Download, label: "Download History", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];

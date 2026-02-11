@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Loader2, Download, Sparkles, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { BookOpen, Loader2, Download, Sparkles, FileText, Image as ImageIcon, CheckCircle2, Package } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,6 +46,7 @@ const EbookGenerator = () => {
   const [ebookData, setEbookData] = useState<Ebook | null>(null);
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
+  const navigate = useNavigate();
 
   const isGenerating = step !== "idle" && step !== "complete";
 
@@ -236,7 +238,15 @@ const EbookGenerator = () => {
                   )}
                 </div>
 
-                <div className="mt-8 pt-6 border-t">
+                <div className="mt-8 pt-6 border-t flex flex-col gap-3">
+                  <Button
+                    onClick={() => navigate("/dashboard/monetization")}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <Package className="w-5 h-5" />
+                    Monetize This Ebook
+                  </Button>
                   <Button onClick={resetForm} variant="ghost" className="w-full">
                     Generate Another Ebook
                   </Button>
