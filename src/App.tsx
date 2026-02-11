@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import Pricing from "./pages/Pricing";
 import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
+import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/products"
+              element={
+                <ProtectedRoute>
+                  <ProductsDashboard />
                 </ProtectedRoute>
               }
             />

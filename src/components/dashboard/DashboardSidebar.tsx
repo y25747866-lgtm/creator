@@ -6,6 +6,7 @@ import {
   BookOpen,
   Download,
   Settings,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -27,6 +28,7 @@ const DashboardSidebar = () => {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Ebook Generator", path: "/dashboard/ebook-generator" },
+    { icon: BarChart3, label: "Product Analytics", path: "/dashboard/products" },
     { icon: Download, label: "Download History", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];
