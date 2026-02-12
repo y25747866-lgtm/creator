@@ -31,19 +31,19 @@ const GetStarted = () => {
             </motion.div>
 
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Ready to Transform Your
+              Ready to Build Your
               <br />
-              <span className="gradient-text">Digital Business?</span>
+              <span className="gradient-text">AI-Powered Business?</span>
             </h2>
             
             <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10">
-              Join thousands of creators who are already using NexoraOS to build 
-              and scale their digital empires. Start your journey today.
+              Start with a 10-minute free trial. Create products, explore monetization, 
+              and see why NexoraOS is the only platform that turns one idea into an entire business system.
             </p>
 
             <Link to="/dashboard">
               <Button size="lg" className="text-base px-10 py-6 rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
-                Launch Your Dashboard
+                Start Your Free Trial
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

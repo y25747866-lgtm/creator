@@ -1,42 +1,66 @@
 import { motion } from "framer-motion";
-import { Check, Zap, Crown } from "lucide-react";
+import { Check, Zap, Crown, Rocket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 const PLANS = [
   {
-    id: "monthly",
-    name: "Monthly",
-    price: "$50.99",
-    period: "/month",
-    description: "Full access to all NexoraOS features",
+    id: "trial",
+    name: "Free Trial",
+    price: "$0",
+    period: "10 min",
+    description: "Experience the full OS — no credit card required",
     icon: Zap,
     features: [
-      "Unlimited AI Ebook Generation",
-      "Professional PDF Downloads",
-      "Custom Cover Images",
-      "Priority Support",
+      "Full product creation access",
+      "Monetization engine preview",
+      "Analytics dashboard access",
+      "Downloads & exports disabled",
     ],
     popular: false,
-    link: "https://whop.com/checkout/plan_cGgxUSfDmR2xF",
+    cta: "Start Free Trial",
+    route: "/dashboard",
   },
   {
-    id: "annual",
-    name: "Annual",
-    price: "$599",
-    period: "/year",
-    description: "Best value — save over $12/month",
+    id: "creator",
+    name: "Creator",
+    price: "$50.99",
+    period: "/month",
+    description: "Full access to create, monetize, and export",
     icon: Crown,
     features: [
-      "Everything in Monthly",
-      "Save $12+ per month",
-      "Extended Support",
-      "Early Access to Features",
+      "Unlimited AI Product Creation",
+      "Monetization Engine Access",
+      "Funnel + Course Builder",
+      "Analytics Dashboard",
+      "Download & Export System",
+      "Priority Support",
     ],
     popular: true,
-    link: "https://whop.com/checkout/plan_xNlBWUTysLURE",
+    badge: "Most Popular",
+    cta: "Get Creator",
+    route: "/pricing",
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "$99",
+    period: "/month",
+    description: "Enterprise-grade AI with self-evolving intelligence",
+    icon: Rocket,
+    features: [
+      "Everything in Creator",
+      "Self-Evolving AI System",
+      "Micro SaaS Blueprints",
+      "Version Intelligence",
+      "Priority AI Queue",
+      "Early Feature Access",
+    ],
+    popular: false,
     badge: "Best Value",
+    cta: "Go Pro",
+    route: "/pricing",
   },
 ];
 
@@ -57,11 +81,11 @@ const PricingSection = () => {
             Simple, Transparent <span className="gradient-text">Pricing</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose the plan that works for you. Full access to all features, no hidden fees.
+            Start free. Upgrade when you're ready to export and scale.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {PLANS.map((plan, index) => (
             <motion.div
               key={plan.id}
@@ -120,9 +144,9 @@ const PricingSection = () => {
                   size="lg"
                   className="w-full"
                   variant={plan.popular ? "default" : "outline"}
-                  onClick={() => navigate("/pricing")}
+                  onClick={() => navigate(plan.route)}
                 >
-                  Get Started
+                  {plan.cta}
                 </Button>
               </Card>
             </motion.div>

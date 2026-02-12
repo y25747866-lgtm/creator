@@ -5,18 +5,18 @@ const WhatIsNexora = () => {
   const points = [
     {
       icon: Zap,
-      title: "AI-Powered Creation",
-      description: "Generate professional ebooks, guides, and digital products in minutes using advanced AI.",
+      title: "AI-Powered Product Creation",
+      description: "Generate ebooks, courses, SaaS blueprints, funnels, and more from a single idea using advanced AI.",
     },
     {
       icon: Layers,
-      title: "Unified Platform",
-      description: "One dashboard to create, manage, and distribute all your digital products seamlessly.",
+      title: "Full Business OS",
+      description: "One platform to create, monetize, track, version, and scale every digital product you build.",
     },
     {
       icon: Shield,
-      title: "Enterprise Ready",
-      description: "Built for scale with secure infrastructure and professional-grade features.",
+      title: "Self-Evolving Intelligence",
+      description: "Products learn from feedback, auto-improve across versions, and optimize for conversions over time.",
     },
   ];
 
@@ -34,8 +34,8 @@ const WhatIsNexora = () => {
             What is <span className="gradient-text">NexoraOS</span>?
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            NexoraOS is a complete digital product operating system designed for the modern creator economy. 
-            Build, launch, and scale your digital empire from a single, powerful platform.
+            NexoraOS is an AI-powered Operating System that turns ideas into scalable digital businesses. 
+            Create products, monetize instantly, and let the system self-improve — all from one dashboard.
           </p>
         </motion.div>
 
