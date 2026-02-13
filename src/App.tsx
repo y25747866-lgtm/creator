@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
 import MonetizationDashboard from "./pages/dashboard/MonetizationDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ViewableRoute from "./components/ViewableRoute";
 
 const queryClient = new QueryClient();
 
@@ -66,9 +67,9 @@ const App = () => (
             <Route
               path="/dashboard/products"
               element={
-                <ProtectedRoute>
+                <ViewableRoute>
                   <ProductsDashboard />
-                </ProtectedRoute>
+                </ViewableRoute>
               }
             />
             <Route
