@@ -8,6 +8,7 @@ import Founder from "@/components/landing/Founder";
 import GetStarted from "@/components/landing/GetStarted";
 import FAQ from "@/components/landing/FAQ";
 import Footer from "@/components/landing/Footer";
+import LogoMarquee from "@/components/landing/LogoMarquee";
 
 const Landing = () => {
   return (
@@ -16,6 +17,7 @@ const Landing = () => {
       <Navbar />
       <main className="pt-24">
         <Hero />
+        <LogoMarquee />
         <WhatIsNexora />
         <Features />
         <PricingSection />
