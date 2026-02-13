@@ -10,6 +10,7 @@ import EbookGenerator from "./pages/EbookGenerator";
 import Downloads from "./pages/Downloads";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Pricing from "./pages/Pricing";
 import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
@@ -30,38 +31,39 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/whop/success" element={<WhopSuccess />} />
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ViewableRoute>
                   <Dashboard />
-                </ProtectedRoute>
+                </ViewableRoute>
               }
             />
             <Route
               path="/dashboard/ebook-generator"
               element={
-                <ProtectedRoute>
+                <ViewableRoute>
                   <EbookGenerator />
-                </ProtectedRoute>
+                </ViewableRoute>
               }
             />
             <Route
               path="/dashboard/downloads"
               element={
-                <ProtectedRoute>
+                <ViewableRoute>
                   <Downloads />
-                </ProtectedRoute>
+                </ViewableRoute>
               }
             />
             <Route
               path="/dashboard/settings"
               element={
-                <ProtectedRoute>
+                <ViewableRoute>
                   <Settings />
-                </ProtectedRoute>
+                </ViewableRoute>
               }
             />
             <Route

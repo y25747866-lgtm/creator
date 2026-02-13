@@ -12,6 +12,8 @@ import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
+import TrialExpiredModal from "@/components/TrialExpiredModal";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
@@ -72,6 +74,7 @@ const EbookGenerator = () => {
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const navigate = useNavigate();
+  const { isFreeUser, expired } = useFreeTrial();
 
   const isGenerating = step !== "idle" && step !== "complete";
 
@@ -188,6 +191,10 @@ const EbookGenerator = () => {
   };
 
   const handleDownloadPDF = () => {
+    if (isFreeUser) {
+      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+      return;
+    }
     if (ebookData) {
       generatePDF(ebookData);
       if (ebookData.dbProductId) {
@@ -197,6 +204,10 @@ const EbookGenerator = () => {
   };
 
   const handleDownloadCover = () => {
+    if (isFreeUser) {
+      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+      return;
+    }
     if (ebookData) {
       downloadCoverImage(ebookData);
       if (ebookData.dbProductId) {
@@ -438,6 +449,7 @@ const EbookGenerator = () => {
           )}
         </AnimatePresence>
       </div>
+      {isFreeUser && <TrialExpiredModal open={expired} />}
     </div>
   );
 };

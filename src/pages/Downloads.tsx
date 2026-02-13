@@ -13,10 +13,23 @@ import {
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { format } from "date-fns";
+import { useFreeTrial } from "@/hooks/useFreeTrial";
+import TrialExpiredModal from "@/components/TrialExpiredModal";
+import { useToast } from "@/hooks/use-toast";
 
 const Downloads = () => {
   const { ebooks, removeEbook } = useEbookStore();
   const [previewEbook, setPreviewEbook] = useState<Ebook | null>(null);
+  const { isFreeUser, expired } = useFreeTrial();
+  const { toast } = useToast();
+
+  const guardedDownload = (fn: () => void) => {
+    if (isFreeUser) {
+      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+      return;
+    }
+    fn();
+  };
 
   return (
     <DashboardLayout>
@@ -87,7 +100,7 @@ const Downloads = () => {
                       <div className="flex flex-wrap gap-3">
                         <Button
                           size="sm"
-                          onClick={() => generatePDF(ebook)}
+                          onClick={() => guardedDownload(() => generatePDF(ebook))}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           PDF
@@ -95,7 +108,7 @@ const Downloads = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => downloadCoverImage(ebook)}
+                          onClick={() => guardedDownload(() => downloadCoverImage(ebook))}
                           disabled={!ebook.coverImageUrl}
                         >
                           <Image className="w-4 h-4 mr-2" />
@@ -163,6 +176,7 @@ const Downloads = () => {
             </div>
           </DialogContent>
         </Dialog>
+      {isFreeUser && <TrialExpiredModal open={expired} />}
       </div>
     </DashboardLayout>
   );
