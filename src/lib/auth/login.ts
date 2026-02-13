@@ -1,5 +1,8 @@
 import { supabase } from "../supabaseClient";
 
+/**
+ * Email + Password Sign In
+ */
 export async function signIn(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -8,15 +11,16 @@ export async function signIn(email: string, password: string) {
 
   if (error) throw error;
 
-  if (!data.user.confirmed_at) {
+  if (!data.user?.email_confirmed_at) {
     throw new Error("Email not verified");
   }
 
   return data.user;
 }
 
-
-// ✅ ADD THIS FUNCTION FOR GOOGLE LOGIN
+/**
+ * Google Sign In
+ */
 export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -26,4 +30,4 @@ export async function signInWithGoogle() {
   });
 
   if (error) throw error;
-}
+                                                        }
