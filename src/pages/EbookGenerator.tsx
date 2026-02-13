@@ -13,6 +13,28 @@ import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
 
+const CATEGORY_OPTIONS = [
+  "Business & Entrepreneurship",
+  "Self-Help & Personal Development",
+  "Finance & Investing",
+  "Marketing & Sales",
+  "Technology & AI",
+  "Health & Wellness",
+  "Education & Learning",
+  "Creativity & Design",
+  "Relationships & Communication",
+  "Productivity & Habits",
+];
+
+const TONE_OPTIONS = [
+  { value: "professional", label: "Professional" },
+  { value: "motivational", label: "Motivational" },
+  { value: "educational", label: "Educational" },
+  { value: "business", label: "Business" },
+  { value: "conversational", label: "Conversational" },
+  { value: "inspirational", label: "Inspirational" },
+];
+
 const LENGTH_OPTIONS = [
   { value: "short" as const, label: "Short", pages: "10–15 pages", icon: "📄" },
   { value: "medium" as const, label: "Medium", pages: "20–30 pages", icon: "📕" },
@@ -40,6 +62,9 @@ const STEP_PROGRESS: Record<GenerationStep, number> = {
 const EbookGenerator = () => {
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [tone, setTone] = useState("professional");
   const [ebookLength, setEbookLength] = useState<"short" | "medium" | "long">("medium");
   const [step, setStep] = useState<GenerationStep>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -51,8 +76,8 @@ const EbookGenerator = () => {
   const isGenerating = step !== "idle" && step !== "complete";
 
   const startGeneration = async () => {
-    if (!topic.trim()) {
-      toast({ title: "Topic Required", description: "Please enter a topic for your ebook.", variant: "destructive" });
+    if (!topic.trim() || !category) {
+      toast({ title: "Required Fields", description: "Please enter a topic and select a category.", variant: "destructive" });
       return;
     }
 
@@ -91,7 +116,7 @@ const EbookGenerator = () => {
       const contentRes = await fetch(`${baseUrl}/functions/v1/generate-ebook-content`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ topic, title, description, length: ebookLength }),
+        body: JSON.stringify({ topic, title, description, length: ebookLength, category, targetAudience, tone }),
       });
 
       if (!contentRes.ok) {
@@ -185,6 +210,9 @@ const EbookGenerator = () => {
     setEbookData(null);
     setTopic("");
     setDescription("");
+    setCategory("");
+    setTargetAudience("");
+    setTone("professional");
     setErrorMsg(null);
   };
 
@@ -274,13 +302,64 @@ const EbookGenerator = () => {
                     />
                   </div>
 
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Category *</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      disabled={isGenerating}
+                      className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base"
+                    >
+                      <option value="">Select a category</option>
+                      {CATEGORY_OPTIONS.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Target Audience */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Target Audience <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <Input
+                      placeholder="e.g., Beginners who want to start an online business"
+                      value={targetAudience}
+                      onChange={(e) => setTargetAudience(e.target.value)}
+                      disabled={isGenerating}
+                      className="h-12 text-base"
+                    />
+                  </div>
+
+                  {/* Tone */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-3">Tone</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                      {TONE_OPTIONS.map((t) => (
+                        <button
+                          key={t.value}
+                          onClick={() => setTone(t.value)}
+                          disabled={isGenerating}
+                          className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                            tone === t.value
+                              ? "border-primary bg-primary/5 text-primary"
+                              : "border-border hover:border-primary/40 text-muted-foreground"
+                          } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Description */}
                   <div>
                     <label className="block text-sm font-semibold mb-2">
                       Description <span className="text-muted-foreground font-normal">(optional)</span>
                     </label>
                     <Textarea
-                      placeholder="Describe what you want the book to cover, the tone, target audience, or any specific chapters..."
+                      placeholder="Describe what you want the book to cover, specific chapters, or any special requirements..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       disabled={isGenerating}
@@ -337,7 +416,7 @@ const EbookGenerator = () => {
                   {/* Submit */}
                   <Button
                     onClick={startGeneration}
-                    disabled={isGenerating || !topic.trim()}
+                    disabled={isGenerating || !topic.trim() || !category}
                     size="lg"
                     className="w-full h-14 text-base font-semibold gap-2"
                   >

@@ -20,8 +20,11 @@ import {
   type AggregatedMetrics,
 } from "@/lib/dashboardMetrics";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSubscription } from "@/hooks/useSubscription";
+import UpgradeOverlay from "@/components/UpgradeOverlay";
 
 const ProductsDashboard = () => {
+  const { hasActiveSubscription } = useSubscription();
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -92,6 +95,10 @@ const ProductsDashboard = () => {
 
   return (
     <DashboardLayout>
+      <div className="relative">
+        {!hasActiveSubscription && (
+          <UpgradeOverlay message="Analytics is available in view-only mode on the free plan. Upgrade to interact with your data, track performance, and export insights." />
+        )}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
         {/* Header */}
         <div>
@@ -149,6 +156,7 @@ const ProductsDashboard = () => {
           </>
         )}
       </motion.div>
+      </div>
     </DashboardLayout>
   );
 };

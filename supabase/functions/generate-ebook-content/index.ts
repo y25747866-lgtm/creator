@@ -44,9 +44,16 @@ const LENGTH_CONFIGS: Record<string, LengthConfig> = {
 };
 
 function getSystemPrompt(config: LengthConfig): string {
-  return `You are a bestselling author who writes with warmth, clarity, and emotional depth. Your writing feels deeply human — like a wise friend sharing hard-won wisdom over coffee. You never sound robotic, generic, or templated.
+  return `You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
 
-WRITING STYLE:
+The ebook must feel like a premium product worth $19–$49.
+
+WRITING QUALITY RULES:
+- Feel written by an expert — NOT AI-generated
+- Do NOT repeat unnecessarily
+- Do NOT include fluff or filler
+- Provide real, actionable value
+- Be clear, modern, and engaging
 - Write with genuine emotion, personal anecdotes, and relatable stories
 - Use conversational yet polished language — accessible but never dumbed down
 - Include metaphors, vivid imagery, and sensory details
@@ -56,39 +63,72 @@ WRITING STYLE:
 - End chapters with reflection questions or powerful takeaways
 
 FORMATTING:
-- Use "# " for chapter titles
-- Use "## " for major section headings within chapters
-- Use "### " for sub-sections
+- Use "# " for the ebook title
+- Use "## " for chapter titles
+- Use "### " for major section headings within chapters
+- Use "#### " for sub-sections
 - Write full, rich paragraphs (4-8 sentences each)
-- Each chapter must have ${config.wordTarget} words of substantive content
 - Target ${config.chapterCount} chapters total
+- Each chapter must have substantive, detailed content
+- Target ${config.wordTarget} words total
 
 STRUCTURE:
 - Opening chapter that hooks emotionally — tell a story, paint a picture
 - Each chapter builds on the last like a journey
 - Include real-world examples, case studies, step-by-step guides
 - Mix theory with practical application
+- Include actionable steps, examples, and explanations
 - Closing chapter with emotional resonance and clear next steps
+
+SALES OPTIMIZATION:
+- The ebook must feel like a Gumroad / Whop premium digital product
+- Something people would pay money for
+- Professional, structured, and high-value
 
 CRITICAL: Write the COMPLETE content. Do NOT summarize or skip sections. Every chapter must be fully written out with rich, detailed content. This is a real book, not an outline.`;
 }
 
-function getUserPrompt(title: string, topic: string, description: string, config: LengthConfig): string {
-  return `Write a complete, publication-ready ebook.
+function getUserPrompt(
+  title: string, 
+  topic: string, 
+  description: string, 
+  config: LengthConfig,
+  category: string,
+  targetAudience: string,
+  tone: string
+): string {
+  return `Generate a complete, publication-ready premium ebook.
 
-Title: "${title}"
-Topic: "${topic}"
-${description ? `Author's Vision: "${description}"` : ""}
+INPUTS:
+- Category: ${category || "General"}
+- Topic: "${topic}"
+- Title: "${title}"
+- Target Audience: ${targetAudience || "General readers interested in this topic"}
+- Tone: ${tone || "professional, educational"}
+- Length: ${config.label} (${config.pageTarget} pages)
+${description ? `- Author's Vision: "${description}"` : ""}
 
-Requirements:
-1. Write ${config.chapterCount} full chapters (${config.pageTarget} pages worth of content)
-2. Start with a powerful Introduction that draws readers in emotionally
-3. Each chapter should be detailed, practical, and emotionally engaging
-4. Include stories, examples, actionable advice, and reflection moments
-5. End with a Conclusion that ties everything together with hope and motivation
-6. Target ${config.wordTarget} words total
+OUTPUT REQUIREMENTS:
 
-Begin writing the complete ebook now. Start with "# Introduction" and write every word.`;
+1. Table of Contents — Generate ${config.chapterCount} structured chapters
+
+2. Full Ebook Content including:
+   - Introduction (hook emotionally)
+   - ${config.chapterCount} Chapters with subsections
+   - Actionable steps and examples in each chapter
+   - Summary per chapter
+   - Conclusion with clear next steps
+
+3. Target ${config.wordTarget} words total
+
+Content must be: original, high quality, professional, valuable, clear, structured, engaging.
+
+Do NOT include author name.
+Do NOT include irrelevant content.
+Title and content must match the category and topic automatically.
+Everything must be consistent.
+
+Begin writing the complete ebook now. Start with "# ${title}" followed by a subtitle, then "## Introduction" and write every word.`;
 }
 
 async function generateContent(
@@ -96,11 +136,14 @@ async function generateContent(
   title: string,
   topic: string,
   description: string,
-  config: LengthConfig
+  config: LengthConfig,
+  category: string,
+  targetAudience: string,
+  tone: string
 ): Promise<string> {
   // For long books, generate in parts
   if (config.label === "Long") {
-    return await generateLongContent(apiKey, title, topic, description, config);
+    return await generateLongContent(apiKey, title, topic, description, config, category, targetAudience, tone);
   }
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -115,7 +158,7 @@ async function generateContent(
       model: "google/gemini-2.0-flash-001",
       messages: [
         { role: "system", content: getSystemPrompt(config) },
-        { role: "user", content: getUserPrompt(title, topic, description, config) },
+        { role: "user", content: getUserPrompt(title, topic, description, config, category, targetAudience, tone) },
       ],
       max_tokens: config.maxTokens,
       temperature: 0.75,
@@ -137,7 +180,10 @@ async function generateLongContent(
   title: string,
   topic: string,
   description: string,
-  config: LengthConfig
+  config: LengthConfig,
+  category: string,
+  targetAudience: string,
+  tone: string
 ): Promise<string> {
   // Generate outline first
   const outlineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -253,14 +299,14 @@ serve(async (req) => {
       return errorResponse(access.error || "Unauthorized", 401);
     }
 
-    let body: { topic?: string; title?: string; description?: string; length?: string };
+    let body: { topic?: string; title?: string; description?: string; length?: string; category?: string; targetAudience?: string; tone?: string };
     try {
       body = await req.json();
     } catch {
       return errorResponse("Invalid JSON body");
     }
 
-    const { topic, title, description = "", length = "medium" } = body;
+    const { topic, title, description = "", length = "medium", category = "", targetAudience = "", tone = "" } = body;
 
     const validation = validateEbookInput(topic, title);
     if (!validation.valid) {
@@ -270,6 +316,9 @@ serve(async (req) => {
     const sanitizedTopic = sanitizeInput(topic!);
     const sanitizedTitle = title ? sanitizeInput(title).substring(0, 200) : sanitizedTopic;
     const sanitizedDescription = description ? sanitizeInput(description).substring(0, 500) : "";
+    const sanitizedCategory = category ? sanitizeInput(category).substring(0, 100) : "";
+    const sanitizedAudience = targetAudience ? sanitizeInput(targetAudience).substring(0, 200) : "";
+    const sanitizedTone = tone ? sanitizeInput(tone).substring(0, 100) : "";
     const lengthKey = ["short", "medium", "long"].includes(length) ? length : "medium";
     const config = LENGTH_CONFIGS[lengthKey];
 
@@ -290,7 +339,10 @@ serve(async (req) => {
       sanitizedTitle,
       sanitizedTopic,
       sanitizedDescription,
-      config
+      config,
+      sanitizedCategory,
+      sanitizedAudience,
+      sanitizedTone
     );
 
     if (!content || content.length < 500) {
