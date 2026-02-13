@@ -14,3 +14,16 @@ export async function signIn(email: string, password: string) {
 
   return data.user;
 }
+
+
+// ✅ ADD THIS FUNCTION FOR GOOGLE LOGIN
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: "https://nexoraos.vercel.app/auth/callback",
+    },
+  });
+
+  if (error) throw error;
+}
