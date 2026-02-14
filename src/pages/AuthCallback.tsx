@@ -1,61 +1,55 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client"; // ← adjust path if different
-import { Loader2 } from "lucide-react"; // or use your own spinner component
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        // 1. Try to get current session (Supabase may have already processed it)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.log("AuthCallback mounted – checking session...");
 
-        if (sessionError) {
-          console.error("getSession error:", sessionError);
-          navigate("/auth?error=session_failed");
+    const handleCallback = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("getSession result:", { session, error });
+
+        if (error) {
+          console.error("getSession error:", error.message);
+          navigate("/auth?error=session_error");
           return;
         }
 
         if (session) {
-          console.log("Session found in callback → redirecting");
+          console.log("Session found – redirecting to dashboard");
           navigate("/dashboard");
           return;
         }
 
-        // 2. If no session yet → listen for the change (common in SPA + PKCE flow)
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, newSession) => {
+        // Listen if exchange is async
+        const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
+          console.log("Auth state changed:", event, newSession ? "session present" : "no session");
           if (event === "SIGNED_IN" && newSession) {
-            console.log("Auth state changed → SIGNED_IN");
             navigate("/dashboard");
           }
         });
 
-        // Cleanup listener when component unmounts
-        return () => {
-          authListener.subscription.unsubscribe();
-        };
+        return () => listener.subscription.unsubscribe();
       } catch (err) {
-        console.error("Auth callback error:", err);
-        navigate("/auth?error=callback_error");
+        console.error("Callback error:", err);
+        navigate("/auth?error=callback_failed");
       }
     };
 
-    handleAuthCallback();
+    handleCallback();
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-6">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Completing sign in...
-        </h2>
-        <p className="text-muted-foreground">
-          Please wait a moment
-        </p>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-lg font-medium">Completing sign in...</p>
       </div>
     </div>
   );
-        }
+    }
