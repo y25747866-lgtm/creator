@@ -22,12 +22,23 @@ export async function signIn(email: string, password: string) {
  * Google Sign In
  */
 export async function signInWithGoogle() {
+  // Dynamic redirect – works on localhost, preview, production
+  const redirectTo = `${window.location.origin}/auth/callback`;
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "https://nexoraos.vercel.app/auth/callback",
+      redirectTo,
+      // Ask Google for refresh token + force consent screen (helps debugging)
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
     },
   });
 
-  if (error) throw error;
-                                                        }
+  if (error) {
+    console.error("Google sign-in failed:", error.message, error);
+    throw error;
+  }
+          }
