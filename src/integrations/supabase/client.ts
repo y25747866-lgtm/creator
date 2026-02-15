@@ -8,7 +8,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',                    // ← This forces client-side PKCE flow
-    redirectTo: window.location.origin + '/auth/callback',  // ← Ensures correct redirect
+    flowType: "pkce", // ← THIS LINE IS CRITICAL
   },
 });
