@@ -12,7 +12,7 @@ import nexoraLogo from "@/assets/nexora-logo.png";
 import { useToast } from "@/hooks/use-toast";
 
 const PAYMENT_LINKS = {
-  creator: "https://whop.com/checkout/plan_mjSb1J02UNpkD",
+  creator: "https://whop.com/checkout/5q5mTvNs1ODMBL3RPr-Z5Wp-Zly1-KwwP-lGktR6dgK7UO/",
   pro: "https://whop.com/checkout/plan_xNlBWUTysLURE",
 };
 
