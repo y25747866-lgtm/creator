@@ -4,7 +4,6 @@ import { useAuth } from "./useAuth";
 
 export function useSubscription() {
   const { user, loading: authLoading } = useAuth();
-  
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +17,8 @@ export function useSubscription() {
     }
 
     const checkSubscription = async () => {
+      setLoading(true);
+
       try {
         const { data, error } = await supabase
           .from("subscriptions")
@@ -26,7 +27,7 @@ export function useSubscription() {
           .maybeSingle();
 
         if (error) {
-          console.error("Supabase error:", error);
+          console.error("Supabase subscription error:", error.message);
           setHasActiveSubscription(false);
           setLoading(false);
           return;
@@ -34,30 +35,30 @@ export function useSubscription() {
 
         const sub = data;
 
-        // SUPER SIMPLE & BULLETPROOF FREE ACCESS LOGIC
-        const isActive = !!sub && (
+        // FIXED: Accept ANY active or free/pro plan, ignore expires_at if NULL
+        const isActive = sub && (
+          sub.status === "active" ||
           sub.plan_type?.toLowerCase() === "free" ||
           sub.plan_type?.toLowerCase() === "pro" ||
           sub.plan_type?.toLowerCase() === "creator" ||
-          sub.status === "active" ||
+          sub.plan_type?.toLowerCase() === "Pro" ||
           (sub.expires_at && new Date(sub.expires_at) > new Date())
         );
 
-        console.log("✅ Subscription Check Result:", {
+        console.log("✅ Subscription check:", {
           user_id: user.id,
           found: !!sub,
           plan_type: sub?.plan_type,
           status: sub?.status,
           expires_at: sub?.expires_at,
-          isActive: isActive
+          isActive
         });
 
-        setHasActiveSubscription(isActive);
-        setLoading(false);
-
+        setHasActiveSubscription(isActive || false);
       } catch (err) {
         console.error("Subscription hook error:", err);
         setHasActiveSubscription(false);
+      } finally {
         setLoading(false);
       }
     };
@@ -65,8 +66,5 @@ export function useSubscription() {
     checkSubscription();
   }, [user, authLoading]);
 
-  return { 
-    hasActiveSubscription, 
-    loading 
-  };
-        }
+  return { hasActiveSubscription, loading };
+    }
