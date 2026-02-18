@@ -2,86 +2,71 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-interface Subscription {
-  id: string;
-  user_id: string;
-  plan_type: string;           // "free", "creator", "pro", etc.
-  status: string | null;
-  whop_order_id?: string | null;
-  started_at?: string;
-  expires_at?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
-
 export function useSubscription() {
   const { user, loading: authLoading } = useAuth();
+  
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
       setHasActiveSubscription(false);
-      setSubscription(null);
       setLoading(false);
       return;
     }
 
-    const fetchSubscription = async () => {
+    const checkSubscription = async () => {
       try {
         const { data, error } = await supabase
           .from("subscriptions")
-          .select("*")
+          .select("plan_type, status, expires_at")
           .eq("user_id", user.id)
           .maybeSingle();
 
         if (error) {
-          console.error("Error fetching subscription:", error);
+          console.error("Supabase error:", error);
           setHasActiveSubscription(false);
-          setSubscription(null);
           setLoading(false);
           return;
         }
 
-        const sub = data as Subscription | null;
+        const sub = data;
 
-        // FREE ACCESS LOGIC - This is what was missing
-        const isActive = sub && (
-          sub.plan_type === "free" ||
+        // SUPER SIMPLE & BULLETPROOF FREE ACCESS LOGIC
+        const isActive = !!sub && (
+          sub.plan_type?.toLowerCase() === "free" ||
+          sub.plan_type?.toLowerCase() === "pro" ||
+          sub.plan_type?.toLowerCase() === "creator" ||
           sub.status === "active" ||
-          (sub.expires_at && new Date(sub.expires_at) > new Date()) ||
-          sub.plan_type === "creator" ||
-          sub.plan_type === "pro" ||
-          sub.plan_type === "Pro"
+          (sub.expires_at && new Date(sub.expires_at) > new Date())
         );
 
-        console.log("Subscription check:", { 
-          plan_type: sub?.plan_type, 
-          status: sub?.status, 
+        console.log("✅ Subscription Check Result:", {
+          user_id: user.id,
+          found: !!sub,
+          plan_type: sub?.plan_type,
+          status: sub?.status,
           expires_at: sub?.expires_at,
-          isActive 
+          isActive: isActive
         });
 
-        setSubscription(sub);
-        setHasActiveSubscription(!!isActive);
+        setHasActiveSubscription(isActive);
         setLoading(false);
+
       } catch (err) {
-        console.error("Subscription check failed:", err);
+        console.error("Subscription hook error:", err);
         setHasActiveSubscription(false);
-        setSubscription(null);
         setLoading(false);
       }
     };
 
-    fetchSubscription();
+    checkSubscription();
   }, [user, authLoading]);
 
   return { 
     hasActiveSubscription, 
-    loading, 
-    subscription 
+    loading 
   };
-}
+        }
