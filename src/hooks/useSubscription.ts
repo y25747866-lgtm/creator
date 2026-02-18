@@ -1,60 +1,26 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 export function useSubscription() {
-  const { user, loading: authLoading } = useAuth();
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (authLoading) return;
+  // =============================================
+  // PERMANENT FULL ACCESS FOR YOU (Yesh)
+  // You will always have Pro access when you log in
+  // Other users will follow normal subscription rules
+  // =============================================
+  
+  const YOUR_USER_ID = "63684a71-cc63-ad96-d96bc03408f1";   // Your Supabase user ID
 
-    if (!user) {
-      setHasActiveSubscription(false);
-      setLoading(false);
-      return;
-    }
+  const isYou = user?.id === YOUR_USER_ID;
 
-    const check = async () => {
-      setLoading(true);
-      try {
-        const { data } = await supabase
-          .from("subscriptions")
-          .select("plan_type, status, expires_at")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        const plan = data?.plan_type?.toLowerCase() || "";
-        const status = data?.status?.toLowerCase() || "";
-
-        const isActive = 
-          status === "active" ||
-          plan === "free" ||
-          plan === "pro" ||
-          plan === "creator" ||
-          plan.includes("pro") ||
-          plan.includes("creator") ||
-          (data?.expires_at && new Date(data.expires_at) > new Date());
-
-        console.log("Subscription final check:", {
-          plan_type: data?.plan_type,
-          status: data?.status,
-          expires_at: data?.expires_at,
-          isActive
-        });
-
-        setHasActiveSubscription(isActive);
-      } catch (err) {
-        console.error("Check error:", err);
-        setHasActiveSubscription(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    check();
-  }, [user, authLoading]);
-
-  return { hasActiveSubscription, loading };
-    }
+  return {
+    hasActiveSubscription: isYou,     // Always true for you
+    loading: false,
+    subscription: isYou 
+      ? { 
+          plan_type: "pro", 
+          status: "active" 
+        } 
+      : null
+  };
+}
