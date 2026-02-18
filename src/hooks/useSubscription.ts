@@ -16,64 +16,45 @@ export function useSubscription() {
       return;
     }
 
-    const checkSubscription = async () => {
+    const check = async () => {
       setLoading(true);
-
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("subscriptions")
           .select("plan_type, status, expires_at")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Supabase error:", error.message);
-          setHasActiveSubscription(false);
-          setLoading(false);
-          return;
-        }
+        const plan = data?.plan_type?.toLowerCase() || "";
+        const status = data?.status?.toLowerCase() || "";
 
-        const sub = data;
+        const isActive = 
+          status === "active" ||
+          plan === "free" ||
+          plan === "pro" ||
+          plan === "creator" ||
+          plan.includes("pro") ||
+          plan.includes("creator") ||
+          (data?.expires_at && new Date(data.expires_at) > new Date());
 
-        // SUPER TOLERANT LOGIC – accepts almost anything reasonable
-        const planLower = sub?.plan_type?.toLowerCase() || "";
-        const isFreeOrPaid = 
-          planLower === "free" ||
-          planLower === "pro" ||
-          planLower === "creator" ||
-          planLower.includes("pro") ||
-          planLower.includes("creator");
-
-        const isActiveStatus = sub?.status?.toLowerCase() === "active";
-
-        const hasNotExpired = !sub?.expires_at || new Date(sub.expires_at) > new Date();
-
-        const isActive = sub && (isFreeOrPaid || isActiveStatus) && hasNotExpired;
-
-        console.log("FINAL SUBSCRIPTION CHECK:", {
-          user_id: user.id,
-          found_row: !!sub,
-          raw_plan_type: sub?.plan_type,
-          normalized_plan: planLower,
-          status: sub?.status,
-          expires_at: sub?.expires_at,
-          isFreeOrPaid,
-          isActiveStatus,
-          hasNotExpired,
-          final_isActive: isActive
+        console.log("Subscription final check:", {
+          plan_type: data?.plan_type,
+          status: data?.status,
+          expires_at: data?.expires_at,
+          isActive
         });
 
-        setHasActiveSubscription(isActive || false);
+        setHasActiveSubscription(isActive);
       } catch (err) {
-        console.error("Hook crashed:", err);
+        console.error("Check error:", err);
         setHasActiveSubscription(false);
       } finally {
         setLoading(false);
       }
     };
 
-    checkSubscription();
+    check();
   }, [user, authLoading]);
 
   return { hasActiveSubscription, loading };
-  }
+    }
