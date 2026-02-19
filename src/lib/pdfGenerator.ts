@@ -37,213 +37,235 @@ function extractChapters(sections: PDFSection[]): string[] {
   return sections.filter((s) => s.type === "h1").map((s) => s.content);
 }
 
-export function generatePDF(ebook: Ebook): void {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+export async function generatePDF(ebook: Ebook): Promise<void> {
+  try {
+    console.log("🚀 Starting PDF generation for:", ebook.title);
 
-  const pw = doc.internal.pageSize.getWidth();
-  const ph = doc.internal.pageSize.getHeight();
-  const margin = 25;
-  const cw = pw - margin * 2;
-  const bodyLineH = 6.5;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  const colors = {
-    primary: [55, 48, 163] as [number, number, number],    // indigo-800
-    text: [28, 28, 28] as [number, number, number],
-    muted: [110, 110, 110] as [number, number, number],
-    accent: [79, 70, 229] as [number, number, number],     // indigo-600
-    white: [255, 255, 255] as [number, number, number],
-  };
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const margin = 25;
+    const cw = pw - margin * 2;
+    const bodyLineH = 6.5;
 
-  let pageNum = 0;
-  let y = margin;
+    const colors = {
+      primary: [55, 48, 163] as [number, number, number],
+      text: [28, 28, 28] as [number, number, number],
+      muted: [110, 110, 110] as [number, number, number],
+      accent: [79, 70, 229] as [number, number, number],
+      white: [255, 255, 255] as [number, number, number],
+    };
 
-  const addPage = () => {
-    doc.addPage();
+    let pageNum = 0;
+    let y = margin;
+
+    const addPage = () => {
+      doc.addPage();
+      pageNum++;
+      y = margin;
+    };
+
+    const footer = () => {
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.muted);
+      doc.text(`${pageNum}`, pw / 2, ph - 10, { align: "center" });
+    };
+
+    const needsBreak = (space: number) => {
+      if (y + space > ph - 20) {
+        footer();
+        addPage();
+        return true;
+      }
+      return false;
+    };
+
+    // ===== COVER =====
     pageNum++;
-    y = margin;
-  };
+    doc.setFillColor(...colors.primary);
+    doc.rect(0, 0, pw, ph, "F");
 
-  const footer = () => {
-    doc.setFontSize(9);
-    doc.setTextColor(...colors.muted);
-    doc.text(`${pageNum}`, pw / 2, ph - 10, { align: "center" });
-  };
+    // Decorative circles
+    doc.setFillColor(255, 255, 255);
+    doc.setGState(new doc.GState({ opacity: 0.05 }));
+    doc.circle(pw * 0.8, ph * 0.2, 60, "F");
+    doc.circle(pw * 0.2, ph * 0.7, 80, "F");
+    doc.setGState(new doc.GState({ opacity: 1 }));
 
-  const needsBreak = (space: number) => {
-    if (y + space > ph - 20) {
-      footer();
-      addPage();
-      return true;
+    // Title on cover
+    doc.setTextColor(...colors.white);
+    doc.setFontSize(36);
+    const coverTitle = doc.splitTextToSize(ebook.title, cw - 20);
+    const titleStartY = ph / 2 - coverTitle.length * 14;
+    doc.text(coverTitle, pw / 2, titleStartY, { align: "center" });
+
+    // Topic subtitle
+    if (ebook.topic) {
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.setGState(new doc.GState({ opacity: 0.8 }));
+      const topicLines = doc.splitTextToSize(ebook.topic, cw - 40);
+      doc.text(topicLines, pw / 2, titleStartY + coverTitle.length * 14 + 10, { align: "center" });
+      doc.setGState(new doc.GState({ opacity: 1 }));
     }
-    return false;
-  };
 
-  // ===== COVER =====
-  pageNum++;
-  doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pw, ph, "F");
-
-  // Decorative circles
-  doc.setFillColor(255, 255, 255);
-  doc.setGState(doc.GState({ opacity: 0.05 }));
-  doc.circle(pw * 0.8, ph * 0.2, 60, "F");
-  doc.circle(pw * 0.2, ph * 0.7, 80, "F");
-  doc.setGState(doc.GState({ opacity: 1 }));
-
-  // Title on cover
-  doc.setTextColor(...colors.white);
-  doc.setFontSize(36);
-  const coverTitle = doc.splitTextToSize(ebook.title, cw - 20);
-  const titleStartY = ph / 2 - coverTitle.length * 14;
-  doc.text(coverTitle, pw / 2, titleStartY, { align: "center" });
-
-  // Topic subtitle
-  if (ebook.topic) {
-    doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.setGState(doc.GState({ opacity: 0.8 }));
-    const topicLines = doc.splitTextToSize(ebook.topic, cw - 40);
-    doc.text(topicLines, pw / 2, titleStartY + coverTitle.length * 14 + 10, { align: "center" });
-    doc.setGState(doc.GState({ opacity: 1 }));
-  }
-
-  // Branding
-  doc.setFontSize(12);
-  doc.setTextColor(...colors.white);
-  doc.text("NexoraOS", pw / 2, ph - 25, { align: "center" });
-
-  // ===== TITLE PAGE =====
-  addPage();
-  y = 55;
-  doc.setTextColor(...colors.primary);
-  doc.setFontSize(28);
-  const tpTitle = doc.splitTextToSize(ebook.title, cw);
-  doc.text(tpTitle, pw / 2, y, { align: "center" });
-  y += tpTitle.length * 12 + 15;
-
-  doc.setFontSize(13);
-  doc.setTextColor(...colors.muted);
-  doc.text(`Topic: ${ebook.topic}`, pw / 2, y, { align: "center" });
-  y += 12;
-  doc.text("Generated by NexoraOS", pw / 2, y, { align: "center" });
-  y += 10;
-  const dateStr = new Date(ebook.createdAt).toLocaleDateString("en-US", {
-    year: "numeric", month: "long", day: "numeric",
-  });
-  doc.text(dateStr, pw / 2, y, { align: "center" });
-  footer();
-
-  // ===== TABLE OF CONTENTS =====
-  const sections = parseContent(ebook.content);
-  const chapters = extractChapters(sections);
-
-  if (chapters.length > 0) {
-    addPage();
-    y = margin;
-    doc.setTextColor(...colors.primary);
-    doc.setFontSize(24);
-    doc.text("Table of Contents", margin, y);
-    y += 18;
-
-    // Decorative line
-    doc.setDrawColor(...colors.accent);
-    doc.setLineWidth(0.8);
-    doc.line(margin, y, margin + 40, y);
-    y += 12;
-
+    // Branding
     doc.setFontSize(12);
-    chapters.forEach((chapter, i) => {
-      needsBreak(10);
-      doc.setTextColor(...colors.text);
-      const tocLine = doc.splitTextToSize(`${i + 1}.  ${chapter}`, cw - 10);
-      doc.text(tocLine, margin + 5, y);
-      y += tocLine.length * 6 + 5;
+    doc.setTextColor(...colors.white);
+    doc.text("NexoraOS", pw / 2, ph - 25, { align: "center" });
+
+    // ===== TITLE PAGE =====
+    addPage();
+    y = 55;
+    doc.setTextColor(...colors.primary);
+    doc.setFontSize(28);
+    const tpTitle = doc.splitTextToSize(ebook.title, cw);
+    doc.text(tpTitle, pw / 2, y, { align: "center" });
+    y += tpTitle.length * 12 + 15;
+
+    doc.setFontSize(13);
+    doc.setTextColor(...colors.muted);
+    doc.text(`Topic: ${ebook.topic || ""}`, pw / 2, y, { align: "center" });
+    y += 12;
+    doc.text("Generated by NexoraOS", pw / 2, y, { align: "center" });
+    y += 10;
+    const dateStr = new Date(ebook.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
+    doc.text(dateStr, pw / 2, y, { align: "center" });
     footer();
-  }
 
-  // ===== CONTENT =====
-  addPage();
+    // ===== TABLE OF CONTENTS =====
+    const sections = parseContent(ebook.content);
+    const chapters = extractChapters(sections);
 
-  sections.forEach((section) => {
-    switch (section.type) {
-      case "h1": {
-        // Start each chapter on a new page (unless we're near the top)
-        if (y > margin + 10) {
-          footer();
-          addPage();
-        }
-        y += 5;
-        doc.setFontSize(22);
-        doc.setTextColor(...colors.primary);
-        const h1 = doc.splitTextToSize(section.content, cw);
-        doc.text(h1, margin, y);
-        y += h1.length * 10 + 5;
-        // Decorative line under chapter title
-        doc.setDrawColor(...colors.accent);
-        doc.setLineWidth(0.6);
-        doc.line(margin, y, margin + 30, y);
-        y += 8;
-        break;
-      }
-      case "h2": {
-        needsBreak(22);
-        y += 6;
-        doc.setFontSize(16);
-        doc.setTextColor(...colors.accent);
-        const h2 = doc.splitTextToSize(section.content, cw);
-        doc.text(h2, margin, y);
-        y += h2.length * 7 + 5;
-        break;
-      }
-      case "h3": {
-        needsBreak(18);
-        y += 4;
-        doc.setFontSize(13);
-        doc.setTextColor(70, 70, 70);
-        const h3 = doc.splitTextToSize(section.content, cw);
-        doc.text(h3, margin, y);
-        y += h3.length * 6 + 4;
-        break;
-      }
-      case "bullet": {
-        needsBreak(bodyLineH + 2);
-        doc.setFontSize(11);
+    if (chapters.length > 0) {
+      addPage();
+      y = margin;
+      doc.setTextColor(...colors.primary);
+      doc.setFontSize(24);
+      doc.text("Table of Contents", margin, y);
+      y += 18;
+
+      // Decorative line
+      doc.setDrawColor(...colors.accent);
+      doc.setLineWidth(0.8);
+      doc.line(margin, y, margin + 40, y);
+      y += 12;
+
+      doc.setFontSize(12);
+      chapters.forEach((chapter, i) => {
+        needsBreak(10);
         doc.setTextColor(...colors.text);
-        const bulletLines = doc.splitTextToSize(section.content, cw - 8);
-        // Bullet dot
-        doc.setFillColor(...colors.accent);
-        doc.circle(margin + 2, y - 1.2, 1, "F");
-        bulletLines.forEach((line: string, i: number) => {
-          needsBreak(bodyLineH);
-          doc.text(line, margin + 7, y);
-          y += bodyLineH;
-        });
-        y += 1;
-        break;
-      }
-      case "paragraph": {
-        doc.setFontSize(11);
-        doc.setTextColor(...colors.text);
-        const para = doc.splitTextToSize(section.content, cw);
-        para.forEach((line: string) => {
-          needsBreak(bodyLineH);
-          doc.text(line, margin, y);
-          y += bodyLineH;
-        });
-        y += 3;
-        break;
-      }
+        const tocLine = doc.splitTextToSize(`${i + 1}.  ${chapter}`, cw - 10);
+        doc.text(tocLine, margin + 5, y);
+        y += tocLine.length * 6 + 5;
+      });
+      footer();
     }
-  });
 
-  footer();
+    // ===== CONTENT =====
+    addPage();
 
-  const filename = ebook.title
-    .replace(/[^a-zA-Z0-9\s]/g, "")
-    .replace(/\s+/g, "_")
-    .substring(0, 60);
-  doc.save(`${filename}.pdf`);
+    sections.forEach((section) => {
+      switch (section.type) {
+        case "h1": {
+          if (y > margin + 10) {
+            footer();
+            addPage();
+          }
+          y += 5;
+          doc.setFontSize(22);
+          doc.setTextColor(...colors.primary);
+          const h1 = doc.splitTextToSize(section.content, cw);
+          doc.text(h1, margin, y);
+          y += h1.length * 10 + 5;
+          // Decorative line under chapter title
+          doc.setDrawColor(...colors.accent);
+          doc.setLineWidth(0.6);
+          doc.line(margin, y, margin + 30, y);
+          y += 8;
+          break;
+        }
+        case "h2": {
+          needsBreak(22);
+          y += 6;
+          doc.setFontSize(16);
+          doc.setTextColor(...colors.accent);
+          const h2 = doc.splitTextToSize(section.content, cw);
+          doc.text(h2, margin, y);
+          y += h2.length * 7 + 5;
+          break;
+        }
+        case "h3": {
+          needsBreak(18);
+          y += 4;
+          doc.setFontSize(13);
+          doc.setTextColor(70, 70, 70);
+          const h3 = doc.splitTextToSize(section.content, cw);
+          doc.text(h3, margin, y);
+          y += h3.length * 6 + 4;
+          break;
+        }
+        case "bullet": {
+          needsBreak(bodyLineH + 2);
+          doc.setFontSize(11);
+          doc.setTextColor(...colors.text);
+          const bulletLines = doc.splitTextToSize(section.content, cw - 8);
+          // Bullet dot
+          doc.setFillColor(...colors.accent);
+          doc.circle(margin + 2, y - 1.2, 1, "F");
+          bulletLines.forEach((line: string) => {
+            needsBreak(bodyLineH);
+            doc.text(line, margin + 7, y);
+            y += bodyLineH;
+          });
+          y += 1;
+          break;
+        }
+        case "paragraph": {
+          doc.setFontSize(11);
+          doc.setTextColor(...colors.text);
+          const para = doc.splitTextToSize(section.content, cw);
+          para.forEach((line: string) => {
+            needsBreak(bodyLineH);
+            doc.text(line, margin, y);
+            y += bodyLineH;
+          });
+          y += 3;
+          break;
+        }
+      }
+    });
+
+    footer();
+
+    // ===== INSTANT DOWNLOAD (mobile + desktop reliable) =====
+    const filename = ebook.title
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .replace(/\s+/g, "_")
+      .substring(0, 60) || "NexoraOS_Ebook";
+
+    const pdfBlob = doc.output("blob");
+    const blobUrl = URL.createObjectURL(pdfBlob);
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `${filename}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+
+    console.log(`✅ PDF downloaded successfully: ${filename}.pdf`);
+
+  } catch (error) {
+    console.error("❌ PDF generation failed:", error);
+    alert("Download failed. Open console (F12) → copy the red error and send it to me.");
+  }
 }
 
 export async function downloadCoverImage(ebook: Ebook): Promise<void> {
@@ -254,7 +276,9 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = blobUrl;
-    const filename = ebook.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_");
+    const filename = ebook.title
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .replace(/\s+/g, "_");
     link.download = `${filename}_cover.png`;
     document.body.appendChild(link);
     link.click();
@@ -264,4 +288,4 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     console.error("Error downloading cover image:", error);
     window.open(ebook.coverImageUrl, "_blank");
   }
-}
+                           }
