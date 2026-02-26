@@ -6,8 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  Rocket,
+  Megaphone,
+} from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
+
 import {
   MODULE_TYPES,
   ModuleType,
@@ -15,6 +23,7 @@ import {
   createMonetizationModule,
   generateModuleContent,
 } from "@/lib/monetization";
+
 import { useEbookStore } from "@/hooks/useEbookStore";
 
 interface Props {
@@ -33,98 +42,154 @@ interface GenerationStatus {
 
 const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
   const [step, setStep] = useState<Step>("select");
+
   const [selectedModules, setSelectedModules] = useState<ModuleType[]>([]);
+
   const [title, setTitle] = useState("");
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
+
   const [sourceEbookId, setSourceEbookId] = useState<string | null>(null);
+
   const [statuses, setStatuses] = useState<GenerationStatus[]>([]);
+
   const { toast } = useToast();
 
   const ebooks = useEbookStore((s) => s.ebooks);
 
-  const toggleModule = (val: ModuleType) => {
-    setSelectedModules((prev) =>
-      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
-    );
-  };
-
   const selectedEbook = ebooks.find((e) => e.id === sourceEbookId);
 
-  const handleStartDetails = () => {
+  function toggleModule(val: ModuleType) {
+    setSelectedModules((prev) =>
+      prev.includes(val)
+        ? prev.filter((v) => v !== val)
+        : [...prev, val]
+    );
+  }
+
+  function handleStartDetails() {
     if (selectedModules.length === 0) {
-      toast({ title: "Select at least one module", variant: "destructive" });
+      toast({
+        title: "Select at least one marketing asset",
+        variant: "destructive",
+      });
       return;
     }
-    // Pre-fill from ebook if selected
+
     if (selectedEbook) {
       setTitle(selectedEbook.title);
       setTopic(selectedEbook.topic);
       setDescription(selectedEbook.description || "");
     }
-    setStep("details");
-  };
 
-  const handleGenerate = async () => {
+    setStep("details");
+  }
+
+  async function handleGenerate() {
     if (!title.trim() || !topic.trim()) {
-      toast({ title: "Title and topic are required", variant: "destructive" });
+      toast({
+        title: "Title and topic required",
+        variant: "destructive",
+      });
       return;
     }
 
     setStep("generating");
-    const initial: GenerationStatus[] = selectedModules.map((mt) => ({
+
+    const initial = selectedModules.map((mt) => ({
       moduleType: mt,
-      label: MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
-      status: "pending",
+      label:
+        MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
+      status: "pending" as const,
     }));
+
     setStatuses(initial);
 
     try {
-      // 1. Create product
-      const { product } = await createMonetizationProduct({
-        title,
-        topic,
-        description,
-        sourceType: sourceEbookId ? "ebook" : "idea",
-        sourceProductId: sourceEbookId || undefined,
-      });
+      const { product } =
+        await createMonetizationProduct({
+          title,
+          topic,
+          description,
 
-      const sourceContent = selectedEbook?.content || "";
+          sourceType: sourceEbookId
+            ? "ebook"
+            : "idea",
 
-      // 2. Generate each module sequentially
-      for (let i = 0; i < selectedModules.length; i++) {
+          sourceProductId:
+            sourceEbookId || undefined,
+        });
+
+      const sourceContent =
+        selectedEbook?.content || "";
+
+      for (
+        let i = 0;
+        i < selectedModules.length;
+        i++
+      ) {
         const mt = selectedModules[i];
-        const modLabel = MODULE_TYPES.find((m) => m.value === mt)?.label || mt;
+
+        const label =
+          MODULE_TYPES.find(
+            (m) => m.value === mt
+          )?.label || mt;
 
         setStatuses((prev) =>
-          prev.map((s, idx) => (idx === i ? { ...s, status: "generating" } : s))
+          prev.map((s, idx) =>
+            idx === i
+              ? {
+                  ...s,
+                  status: "generating",
+                }
+              : s
+          )
         );
 
         try {
-          // Create module record
-          const { module } = await createMonetizationModule({
-            productId: product.id,
-            moduleType: mt,
-            title: `${modLabel} — ${title}`,
-          });
+          const { module } =
+            await createMonetizationModule({
+              productId: product.id,
 
-          // Generate content
+              moduleType: mt,
+
+              title: `${label} — ${title}`,
+            });
+
           await generateModuleContent({
             moduleId: module.id,
+
             moduleType: mt,
+
             title,
+
             topic,
+
             description,
+
             sourceContent,
           });
 
           setStatuses((prev) =>
-            prev.map((s, idx) => (idx === i ? { ...s, status: "done" } : s))
+            prev.map((s, idx) =>
+              idx === i
+                ? {
+                    ...s,
+                    status: "done",
+                  }
+                : s
+            )
           );
         } catch (err: any) {
           setStatuses((prev) =>
             prev.map((s, idx) =>
-              idx === i ? { ...s, status: "error", error: err.message } : s
+              idx === i
+                ? {
+                    ...s,
+                    status: "error",
+                    error: err.message,
+                  }
+                : s
             )
           );
         }
@@ -132,199 +197,326 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
       setStep("done");
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      toast({
+        title: "Generation failed",
+        description: err.message,
+        variant: "destructive",
+      });
+
       setStep("details");
     }
-  };
+  }
 
-  const completedCount = statuses.filter((s) => s.status === "done").length;
+  const completed =
+    statuses.filter(
+      (s) => s.status === "done"
+    ).length;
+
   const progress =
-    statuses.length > 0 ? Math.round((completedCount / statuses.length) * 100) : 0;
+    statuses.length > 0
+      ? Math.round(
+          (completed /
+            statuses.length) *
+            100
+        )
+      : 0;
 
   return (
     <Card className="p-8 max-w-2xl mx-auto">
-      {/* Step: Select Modules */}
+
+      {/* STEP 1 */}
+
       {step === "select" && (
-        <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-6"
+        >
           <div>
-            <h2 className="text-xl font-bold mb-1">Choose Monetization Assets</h2>
+
+            <div className="flex items-center gap-2 mb-1">
+              <Megaphone className="w-5 h-5 text-primary" />
+
+              <h2 className="text-xl font-bold">
+                Choose Marketing Assets
+              </h2>
+            </div>
+
             <p className="text-sm text-muted-foreground">
-              Select which products to generate from your content.
+              Turn your ebook or idea into a complete marketing system.
             </p>
           </div>
 
-          {/* Optional: select source ebook */}
+          {/* ebook select */}
+
           {ebooks.length > 0 && (
             <div>
+
               <label className="block text-sm font-medium mb-2">
-                Source Ebook <span className="text-muted-foreground">(optional)</span>
+                Source Ebook (optional)
               </label>
+
               <select
-                value={sourceEbookId || ""}
-                onChange={(e) => setSourceEbookId(e.target.value || null)}
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+                value={
+                  sourceEbookId || ""
+                }
+                onChange={(e) =>
+                  setSourceEbookId(
+                    e.target.value || null
+                  )
+                }
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background"
               >
-                <option value="">Start from scratch</option>
+                <option value="">
+                  Start from scratch
+                </option>
+
                 {ebooks.map((eb) => (
-                  <option key={eb.id} value={eb.id}>
+                  <option
+                    key={eb.id}
+                    value={eb.id}
+                  >
                     {eb.title}
                   </option>
                 ))}
               </select>
+
             </div>
           )}
 
+          {/* module cards */}
+
           <div className="grid gap-3 sm:grid-cols-2">
-            {MODULE_TYPES.map((mt) => (
-              <label
-                key={mt.value}
-                className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  selectedModules.includes(mt.value)
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/40"
-                }`}
-              >
-                <Checkbox
-                  checked={selectedModules.includes(mt.value)}
-                  onCheckedChange={() => toggleModule(mt.value)}
-                  className="mt-0.5"
-                />
-                <div>
-                  <div className="font-medium text-sm">{mt.label}</div>
-                  <div className="text-xs text-muted-foreground">{mt.description}</div>
-                </div>
-              </label>
-            ))}
+
+            {MODULE_TYPES.map((mt) => {
+              const active =
+                selectedModules.includes(
+                  mt.value
+                );
+
+              return (
+                <motion.label
+                  whileHover={{
+                    scale: 1.02,
+                  }}
+                  key={mt.value}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all
+
+                  ${
+                    active
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
+                  }
+                  `}
+                >
+                  <div className="flex gap-3">
+
+                    <Checkbox
+                      checked={active}
+                      onCheckedChange={() =>
+                        toggleModule(
+                          mt.value
+                        )
+                      }
+                    />
+
+                    <div>
+
+                      <div className="font-medium text-sm">
+                        {mt.label}
+                      </div>
+
+                      <div className="text-xs text-muted-foreground">
+                        {mt.description}
+                      </div>
+
+                    </div>
+
+                  </div>
+                </motion.label>
+              );
+            })}
           </div>
 
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={onCancel}>
+          <div className="flex justify-end gap-3">
+
+            <Button
+              variant="ghost"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
-            <Button onClick={handleStartDetails} disabled={selectedModules.length === 0}>
+
+            <Button
+              onClick={
+                handleStartDetails
+              }
+              disabled={
+                selectedModules.length ===
+                0
+              }
+            >
               Next
             </Button>
+
           </div>
-        </div>
+
+        </motion.div>
       )}
 
-      {/* Step: Details */}
+      {/* STEP 2 */}
+
       {step === "details" && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold mb-1">Product Details</h2>
-            <p className="text-sm text-muted-foreground">
-              Describe the product these assets will be built from.
-            </p>
+
+          <div className="flex items-center gap-2">
+            <Rocket className="w-5 h-5 text-primary" />
+
+            <h2 className="text-xl font-bold">
+              Marketing Campaign Details
+            </h2>
           </div>
 
           <div className="space-y-4">
+
             <div>
-              <label className="block text-sm font-medium mb-1.5">Title *</label>
+              <label className="text-sm font-medium">
+                Campaign Name
+              </label>
+
               <Input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Digital Product Mastery"
+                onChange={(e) =>
+                  setTitle(
+                    e.target.value
+                  )
+                }
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium mb-1.5">Topic *</label>
+              <label className="text-sm font-medium">
+                Topic / Niche
+              </label>
+
               <Input
                 value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g., Building and selling digital products online"
+                onChange={(e) =>
+                  setTopic(
+                    e.target.value
+                  )
+                }
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium mb-1.5">Description</label>
+              <label className="text-sm font-medium">
+                Description
+              </label>
+
               <Textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the product..."
-                rows={3}
-                className="resize-none"
+                onChange={(e) =>
+                  setDescription(
+                    e.target.value
+                  )
+                }
               />
             </div>
+
           </div>
 
-          <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setStep("select")}>
+          <div className="flex justify-end gap-3">
+
+            <Button
+              variant="ghost"
+              onClick={() =>
+                setStep("select")
+              }
+            >
               Back
             </Button>
+
             <Button
-              onClick={handleGenerate}
-              disabled={!title.trim() || !topic.trim()}
+              onClick={
+                handleGenerate
+              }
               className="gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              Generate {selectedModules.length} Asset{selectedModules.length > 1 ? "s" : ""}
+              Build Marketing System
             </Button>
+
           </div>
+
         </div>
       )}
 
-      {/* Step: Generating */}
+      {/* STEP 3 */}
+
       {step === "generating" && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-bold mb-1">Building Your Assets</h2>
-            <p className="text-sm text-muted-foreground">
-              AI is creating production-ready monetization assets.
-            </p>
-          </div>
 
-          <Progress value={progress} className="h-2" />
+          <h2 className="text-xl font-bold">
+            Building Your Marketing System
+          </h2>
 
-          <div className="space-y-3">
-            {statuses.map((s, i) => (
+          <Progress value={progress} />
+
+          {statuses.map(
+            (s, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                className="flex items-center gap-3"
               >
-                {s.status === "pending" && (
-                  <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                {s.status ===
+                  "generating" && (
+                  <Loader2 className="animate-spin w-4 h-4" />
                 )}
-                {s.status === "generating" && (
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+
+                {s.status ===
+                  "done" && (
+                  <CheckCircle2 className="text-green-500 w-4 h-4" />
                 )}
-                {s.status === "done" && (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                )}
-                {s.status === "error" && (
-                  <div className="w-5 h-5 rounded-full bg-destructive/20 flex items-center justify-center text-destructive text-xs font-bold">!</div>
-                )}
-                <div className="flex-1">
-                  <span className="text-sm font-medium">{s.label}</span>
-                  {s.status === "generating" && (
-                    <span className="text-xs text-muted-foreground ml-2">Generating...</span>
-                  )}
-                  {s.error && (
-                    <span className="text-xs text-destructive ml-2">{s.error}</span>
-                  )}
-                </div>
+
+                <span>
+                  {s.label}
+                </span>
+
               </div>
-            ))}
-          </div>
+            )
+          )}
+
         </div>
       )}
 
-      {/* Step: Done */}
+      {/* STEP 4 */}
+
       {step === "done" && (
-        <div className="text-center space-y-6 py-4">
-          <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-8 h-8 text-green-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold mb-1">Assets Created</h2>
-            <p className="text-sm text-muted-foreground">
-              {completedCount} of {statuses.length} assets generated successfully.
-            </p>
-          </div>
-          <Button onClick={onComplete} className="w-full">
+        <div className="text-center space-y-4">
+
+          <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
+
+          <h2 className="text-xl font-bold">
+            Marketing System Ready
+          </h2>
+
+          <p className="text-sm text-muted-foreground">
+            {completed} assets created successfully.
+          </p>
+
+          <Button
+            onClick={
+              onComplete
+            }
+            className="w-full"
+          >
             View Assets
           </Button>
+
         </div>
       )}
+
     </Card>
   );
 };
