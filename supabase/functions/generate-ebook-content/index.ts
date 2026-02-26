@@ -105,8 +105,8 @@ INPUTS:
 - Title: "${title}"
 - Target Audience: ${targetAudience || "General readers interested in this topic"}
 - Tone: ${tone || "professional, educational"}
-- Length: ${config.label} (${config.pageTarget} pages)
-${description ? `- Author's Vision: "${description}"` : ""}
+- Length: \( {config.label} ( \){config.pageTarget} pages)
+\( {description ? `- Author's Vision: " \){description}"` : ""}
 
 OUTPUT REQUIREMENTS:
 
@@ -141,21 +141,18 @@ async function generateContent(
   targetAudience: string,
   tone: string
 ): Promise<string> {
-  // For long books, generate in parts
   if (config.label === "Long") {
     return await generateLongContent(apiKey, title, topic, description, config, category, targetAudience, tone);
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://nexoraos.lovable.app",
-      "X-Title": "NexoraOS",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.0-flash-001",
+      model: "llama-3.3-70b-versatile",   // ← Changed to Groq model
       messages: [
         { role: "system", content: getSystemPrompt(config) },
         { role: "user", content: getUserPrompt(title, topic, description, config, category, targetAudience, tone) },
@@ -167,7 +164,7 @@ async function generateContent(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("OpenRouter error:", response.status, errorText);
+    console.error("Groq error:", response.status, errorText);
     throw new Error(`AI generation failed: ${response.status}`);
   }
 
@@ -185,17 +182,14 @@ async function generateLongContent(
   targetAudience: string,
   tone: string
 ): Promise<string> {
-  // Generate outline first
-  const outlineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const outlineResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://nexoraos.lovable.app",
-      "X-Title": "NexoraOS",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.0-flash-001",
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
@@ -203,7 +197,7 @@ async function generateLongContent(
         },
         {
           role: "user",
-          content: `Create ${config.chaptersNum} chapter titles for an ebook titled "${title}" about "${topic}". ${description ? `Vision: "${description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
+          content: `Create \( {config.chaptersNum} chapter titles for an ebook titled " \){title}" about "${topic}". \( {description ? `Vision: " \){description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
         },
       ],
       max_tokens: 500,
@@ -220,7 +214,6 @@ async function generateLongContent(
   try {
     chapters = JSON.parse(outlineText);
   } catch {
-    // Fallback chapters
     chapters = [
       "Introduction",
       "Chapter 1: Understanding the Fundamentals",
@@ -237,7 +230,6 @@ async function generateLongContent(
     ];
   }
 
-  // Generate content in 2-3 batches
   const batchSize = Math.ceil(chapters.length / 3);
   const batches: string[][] = [];
   for (let i = 0; i < chapters.length; i += batchSize) {
@@ -247,7 +239,7 @@ async function generateLongContent(
   let fullContent = "";
 
   for (const batch of batches) {
-    const batchPrompt = `Continue writing the ebook "${title}" about "${topic}".
+    const batchPrompt = `Continue writing the ebook "\( {title}" about " \){topic}".
     
 Write the following chapters in full detail (1500-2000 words each):
 ${batch.map((ch) => `- ${ch}`).join("\n")}
@@ -256,16 +248,14 @@ ${fullContent ? "Previous content ended with the last chapter. Continue seamless
 
 Write complete, emotionally engaging content. Use "# " for chapter titles, "## " for sections. Do NOT summarize.`;
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://nexoraos.lovable.app",
-        "X-Title": "NexoraOS",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: getSystemPrompt(config) },
           { role: "user", content: batchPrompt },
@@ -322,9 +312,9 @@ serve(async (req) => {
     const lengthKey = ["short", "medium", "long"].includes(length) ? length : "medium";
     const config = LENGTH_CONFIGS[lengthKey];
 
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
-    if (!OPENROUTER_API_KEY) {
+    if (!GROQ_API_KEY) {
       console.log("No API key - generating fallback content");
       return new Response(
         JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
@@ -332,10 +322,10 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating ${config.label} ebook for user ${access.userId}: "${sanitizedTitle}"`);
+    console.log(`Generating ${config.label} ebook for user \( {access.userId}: " \){sanitizedTitle}"`);
 
     const content = await generateContent(
-      OPENROUTER_API_KEY,
+      GROQ_API_KEY,
       sanitizedTitle,
       sanitizedTopic,
       sanitizedDescription,
@@ -358,7 +348,7 @@ serve(async (req) => {
       Math.ceil(content.split(/\s+/).length / 250)
     );
 
-    console.log(`Generated ${content.length} chars, ~${pages} pages`);
+    console.log(`Generated \( {content.length} chars, \~ \){pages} pages`);
 
     return new Response(
       JSON.stringify({ title: sanitizedTitle, content, pages }),
@@ -443,4 +433,4 @@ Remember: the best time to start was yesterday. The second best time is now.
 `;
 
   return { title: safeTitle, content, pages: 12 };
-}
+  }
