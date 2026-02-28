@@ -3,15 +3,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   Loader2,
   Download,
   RefreshCw,
   Copy,
   CheckCircle2,
-  Calendar,
 } from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
+
 import {
   MonetizationModule,
   MonetizationVersion,
@@ -20,237 +22,455 @@ import {
   generateModuleContent,
   recordMonetizationMetric,
 } from "@/lib/monetization";
-import { format } from "date-fns";
+
 
 interface Props {
+
   module: MonetizationModule;
+
   productTitle: string;
+
   onBack: () => void;
+
 }
 
+
 export default function ModulePreview({
+
   module,
+
   productTitle,
+
+  onBack,
+
 }: Props) {
-  const [versions, setVersions] = useState<MonetizationVersion[]>([]);
-  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [regenerating, setRegenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const { toast } = useToast();
 
+  const [versions, setVersions] =
+    useState<MonetizationVersion[]>([]);
+
+  const [selectedVersion, setSelectedVersion] =
+    useState<number | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [generating, setGenerating] =
+    useState(false);
+
+  const [copied, setCopied] =
+    useState(false);
+
+
   const typeLabel =
     MODULE_TYPES.find(
-      (m) => m.value === module.module_type
-    )?.label || module.module_type;
+      (m) =>
+        m.value ===
+        module.module_type
+    )?.label ||
+    module.module_type;
+
 
   /*
   LOAD MODULE CONTENT
   */
+
   useEffect(() => {
+
     loadModule();
+
   }, [module.id]);
 
+
   async function loadModule() {
+
     try {
+
       setLoading(true);
 
-      const res = await getModuleWithVersions(module.id);
+      let res =
+        await getModuleWithVersions(
+          module.id
+        );
 
-      const list = res?.versions || [];
+      /*
+      IF EMPTY → GENERATE FIRST VERSION
+      */
 
-      setVersions(list);
+      if (
+        !res.versions ||
+        res.versions.length === 0
+      ) {
 
-      if (list.length > 0) {
-        setSelectedVersion(list[0].version_number);
+        setGenerating(true);
+
+        await generateModuleContent({
+
+          moduleId: module.id,
+
+          moduleType:
+            module.module_type,
+
+          title:
+            productTitle,
+
+          topic:
+            productTitle,
+
+        });
+
+        res =
+          await getModuleWithVersions(
+            module.id
+          );
+
+        setGenerating(false);
+
       }
 
-      await recordMonetizationMetric(module.id, "view");
+      setVersions(
+        res.versions || []
+      );
 
-    } catch (e) {
-      console.error(e);
+      setSelectedVersion(
+
+        res.versions?.[0]
+          ?.version_number ||
+          null
+
+      );
+
+      recordMonetizationMetric(
+
+        module.id,
+
+        "view"
+
+      ).catch(() => {});
+
+    } catch (err) {
+
       toast({
-        title: "Failed to load content",
-        variant: "destructive",
+
+        title:
+          "Failed to load asset",
+
+        variant:
+          "destructive",
+
       });
+
     } finally {
+
       setLoading(false);
+
     }
+
   }
+
 
   /*
   CURRENT VERSION
   */
-  const currentVersion = useMemo(
-    () =>
-      versions.find(
-        (v) => v.version_number === selectedVersion
-      ),
-    [versions, selectedVersion]
-  );
+
+  const currentVersion =
+    useMemo(
+
+      () =>
+        versions.find(
+
+          (v) =>
+            v.version_number ===
+            selectedVersion
+
+        ),
+
+      [
+        versions,
+        selectedVersion,
+      ]
+
+    );
+
 
   const markdown =
-    currentVersion?.content?.markdown || "";
+    currentVersion?.content
+      ?.markdown ||
+    "";
+
 
   /*
   COPY
   */
-  async function handleCopy() {
-    if (!markdown) return;
 
-    await navigator.clipboard.writeText(markdown);
+  function handleCopy() {
+
+    navigator.clipboard.writeText(
+      markdown
+    );
 
     setCopied(true);
 
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(
+      () =>
+        setCopied(false),
+      2000
+    );
 
-    recordMonetizationMetric(module.id, "copy");
+    recordMonetizationMetric(
 
-    toast({
-      title: "Copied to clipboard",
-    });
+      module.id,
+
+      "copy"
+
+    ).catch(() => {});
+
   }
+
 
   /*
   DOWNLOAD
   */
-  function handleDownload() {
-    if (!markdown) return;
 
-    const blob = new Blob(
-      [markdown],
-      { type: "text/markdown" }
-    );
+  function handleDownload() {
+
+    const blob =
+      new Blob(
+
+        [markdown],
+
+        {
+          type:
+            "text/plain",
+        }
+
+      );
 
     const url =
-      URL.createObjectURL(blob);
+      URL.createObjectURL(
+        blob
+      );
 
     const a =
-      document.createElement("a");
+      document.createElement(
+        "a"
+      );
 
-    a.href = url;
+    a.href =
+      url;
 
     a.download =
-      `${typeLabel}-${productTitle}.md`
-        .toLowerCase()
-        .replace(/\s+/g, "-");
+      `${typeLabel}-${productTitle}.txt`;
 
     a.click();
 
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(
+      url
+    );
 
-    recordMonetizationMetric(module.id, "download");
+    recordMonetizationMetric(
+
+      module.id,
+
+      "download"
+
+    ).catch(() => {});
+
   }
+
 
   /*
   REGENERATE
   */
+
   async function handleRegenerate() {
+
     try {
-      setRegenerating(true);
+
+      setGenerating(true);
 
       await generateModuleContent({
-        moduleId: module.id,
-        moduleType: module.module_type,
-        title: productTitle,
-        topic: productTitle,
+
+        moduleId:
+          module.id,
+
+        moduleType:
+          module.module_type,
+
+        title:
+          productTitle,
+
+        topic:
+          productTitle,
+
       });
 
       await loadModule();
 
       toast({
-        title: "New content generated",
+
+        title:
+          "New version generated",
+
       });
 
-    } catch (e: any) {
+    } catch {
 
       toast({
-        title: "Generation failed",
-        description: e.message,
-        variant: "destructive",
+
+        title:
+          "Generation failed",
+
+        variant:
+          "destructive",
+
       });
 
     } finally {
 
-      setRegenerating(false);
+      setGenerating(false);
 
     }
+
   }
+
 
   /*
   LOADING UI
   */
-  if (loading) {
+
+  if (loading)
     return (
+
       <Card className="p-8 space-y-4">
-        <Skeleton className="h-6 w-40" />
+
+        <Skeleton className="h-8 w-48" />
+
         <Skeleton className="h-96 w-full" />
+
       </Card>
+
     );
-  }
+
 
   /*
   MAIN UI
   */
+
   return (
+
     <div className="space-y-6">
 
-      {/* HEADER */}
+      <Button
+        variant="outline"
+        onClick={
+          onBack
+        }
+      >
+        ← Back
+      </Button>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+
+      <div className="flex justify-between items-center">
 
         <div>
 
-          <Badge className="mb-2">
+          <Badge>
+
             {typeLabel}
+
           </Badge>
 
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold mt-1">
+
             {module.title}
+
           </h2>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <Calendar className="w-4 h-4"/>
-            {format(
-              new Date(module.created_at),
-              "MMM d, yyyy HH:mm"
-            )}
-          </div>
+          {currentVersion && (
+
+            <p className="text-xs text-muted-foreground">
+
+              Created:
+
+              {" "}
+
+              {new Date(
+
+                currentVersion.created_at
+
+              ).toLocaleString()}
+
+            </p>
+
+          )}
 
         </div>
+
 
         <div className="flex gap-2">
 
           <Button
+
             variant="outline"
-            size="sm"
-            onClick={handleRegenerate}
-            disabled={regenerating}
+
+            onClick={
+              handleRegenerate
+            }
+
+            disabled={
+              generating
+            }
+
           >
-            {regenerating
-              ? <Loader2 className="w-4 h-4 animate-spin"/>
-              : <RefreshCw className="w-4 h-4"/>}
-            Regenerate
+
+            {generating ?
+
+              <Loader2 className="w-4 h-4 animate-spin"/>
+
+              :
+
+              <RefreshCw className="w-4 h-4"/>
+
+            }
+
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-          >
-            {copied
-              ? <CheckCircle2 className="w-4 h-4 text-green-500"/>
-              : <Copy className="w-4 h-4"/>}
-            Copy
-          </Button>
 
           <Button
-            size="sm"
-            onClick={handleDownload}
+
+            variant="outline"
+
+            onClick={
+              handleCopy
+            }
+
           >
+
+            {copied ?
+
+              <CheckCircle2 className="w-4 h-4"/>
+
+              :
+
+              <Copy className="w-4 h-4"/>
+
+            }
+
+          </Button>
+
+
+          <Button
+
+            onClick={
+              handleDownload
+            }
+
+          >
+
             <Download className="w-4 h-4"/>
-            Download
+
           </Button>
 
         </div>
@@ -258,68 +478,103 @@ export default function ModulePreview({
       </div>
 
 
-      {/* VERSION SELECT */}
-
       {versions.length > 1 && (
 
         <div className="flex gap-2">
 
-          {versions.map((v) => (
+          {versions.map(
 
-            <Button
-              key={v.id}
-              size="sm"
-              variant={
-                selectedVersion === v.version_number
-                  ? "default"
-                  : "outline"
-              }
-              onClick={() =>
-                setSelectedVersion(
-                  v.version_number
-                )
-              }
-            >
-              Version {v.version_number}
-            </Button>
+            (v) => (
 
-          ))}
+              <Button
+
+                key={v.id}
+
+                variant={
+
+                  v.version_number ===
+
+                  selectedVersion
+
+                    ? "default"
+
+                    : "outline"
+
+                }
+
+                onClick={() =>
+
+                  setSelectedVersion(
+
+                    v.version_number
+
+                  )
+
+                }
+
+              >
+
+                v
+
+                {v.version_number}
+
+              </Button>
+
+            )
+
+          )}
 
         </div>
 
       )}
 
 
-      {/* CONTENT */}
+      <Card className="p-6">
 
-      <Card className="p-8">
+        {markdown ?
 
-        {markdown ? (
+          (
 
-          <div className="whitespace-pre-wrap text-sm leading-relaxed">
-            {markdown}
-          </div>
+            <textarea
 
-        ) : (
+              readOnly
 
-          <div className="text-center py-16 space-y-3">
+              value={
+                markdown
+              }
 
-            <p className="text-muted-foreground">
-              No content found.
+              className="w-full h-[500px] bg-transparent outline-none text-sm"
+
+            />
+
+          )
+
+          :
+
+          (
+
+            <p className="text-center">
+
+              {generating ?
+
+                "Generating..."
+
+                :
+
+                "No content"
+
+              }
+
             </p>
 
-            <Button
-              onClick={handleRegenerate}
-            >
-              Generate Content
-            </Button>
+          )
 
-          </div>
-
-        )}
+        }
 
       </Card>
 
     </div>
+
   );
-  }
+
+          }
