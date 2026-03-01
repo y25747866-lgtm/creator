@@ -156,18 +156,9 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
               title: `${label} — ${title}`,
             });
 
+          // 🔥 FIXED — ONLY moduleId is needed now!
           await generateModuleContent({
             moduleId: module.id,
-
-            moduleType: mt,
-
-            title,
-
-            topic,
-
-            description,
-
-            sourceContent,
           });
 
           setStatuses((prev) =>
@@ -224,8 +215,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
   return (
     <Card className="p-8 max-w-2xl mx-auto">
 
-      {/* STEP 1 */}
-
+      {/* STEP 1 - SELECT MODULES */}
       {step === "select" && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -233,105 +223,63 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           className="space-y-6"
         >
           <div>
-
             <div className="flex items-center gap-2 mb-1">
               <Megaphone className="w-5 h-5 text-primary" />
-
               <h2 className="text-xl font-bold">
                 Choose Marketing Assets
               </h2>
             </div>
-
             <p className="text-sm text-muted-foreground">
               Turn your ebook or idea into a complete marketing system.
             </p>
           </div>
 
-          {/* ebook select */}
-
           {ebooks.length > 0 && (
             <div>
-
               <label className="block text-sm font-medium mb-2">
                 Source Ebook (optional)
               </label>
-
               <select
-                value={
-                  sourceEbookId || ""
-                }
+                value={sourceEbookId || ""}
                 onChange={(e) =>
-                  setSourceEbookId(
-                    e.target.value || null
-                  )
+                  setSourceEbookId(e.target.value || null)
                 }
                 className="w-full h-10 px-3 rounded-lg border border-input bg-background"
               >
-                <option value="">
-                  Start from scratch
-                </option>
-
+                <option value="">Start from scratch</option>
                 {ebooks.map((eb) => (
-                  <option
-                    key={eb.id}
-                    value={eb.id}
-                  >
+                  <option key={eb.id} value={eb.id}>
                     {eb.title}
                   </option>
                 ))}
               </select>
-
             </div>
           )}
 
-          {/* module cards */}
-
           <div className="grid gap-3 sm:grid-cols-2">
-
             {MODULE_TYPES.map((mt) => {
-              const active =
-                selectedModules.includes(
-                  mt.value
-                );
-
+              const active = selectedModules.includes(mt.value);
               return (
                 <motion.label
-                  whileHover={{
-                    scale: 1.02,
-                  }}
+                  whileHover={{ scale: 1.02 }}
                   key={mt.value}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all
-
-                  ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
                     active
                       ? "border-primary bg-primary/5"
                       : "border-border"
-                  }
-                  `}
+                  }`}
                 >
                   <div className="flex gap-3">
-
                     <Checkbox
                       checked={active}
-                      onCheckedChange={() =>
-                        toggleModule(
-                          mt.value
-                        )
-                      }
+                      onCheckedChange={() => toggleModule(mt.value)}
                     />
-
                     <div>
-
-                      <div className="font-medium text-sm">
-                        {mt.label}
-                      </div>
-
+                      <div className="font-medium text-sm">{mt.label}</div>
                       <div className="text-xs text-muted-foreground">
                         {mt.description}
                       </div>
-
                     </div>
-
                   </div>
                 </motion.label>
               );
@@ -339,181 +287,95 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           </div>
 
           <div className="flex justify-end gap-3">
-
-            <Button
-              variant="ghost"
-              onClick={onCancel}
-            >
+            <Button variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
-
             <Button
-              onClick={
-                handleStartDetails
-              }
-              disabled={
-                selectedModules.length ===
-                0
-              }
+              onClick={handleStartDetails}
+              disabled={selectedModules.length === 0}
             >
               Next
             </Button>
-
           </div>
-
         </motion.div>
       )}
 
-      {/* STEP 2 */}
-
+      {/* STEP 2 - DETAILS */}
       {step === "details" && (
         <div className="space-y-6">
-
           <div className="flex items-center gap-2">
             <Rocket className="w-5 h-5 text-primary" />
-
             <h2 className="text-xl font-bold">
               Marketing Campaign Details
             </h2>
           </div>
 
           <div className="space-y-4">
-
             <div>
-              <label className="text-sm font-medium">
-                Campaign Name
-              </label>
-
+              <label className="text-sm font-medium">Campaign Name</label>
               <Input
                 value={title}
-                onChange={(e) =>
-                  setTitle(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
-
             <div>
-              <label className="text-sm font-medium">
-                Topic / Niche
-              </label>
-
+              <label className="text-sm font-medium">Topic / Niche</label>
               <Input
                 value={topic}
-                onChange={(e) =>
-                  setTopic(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setTopic(e.target.value)}
               />
             </div>
-
             <div>
-              <label className="text-sm font-medium">
-                Description
-              </label>
-
+              <label className="text-sm font-medium">Description</label>
               <Textarea
                 value={description}
-                onChange={(e) =>
-                  setDescription(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
-
           </div>
 
           <div className="flex justify-end gap-3">
-
-            <Button
-              variant="ghost"
-              onClick={() =>
-                setStep("select")
-              }
-            >
+            <Button variant="ghost" onClick={() => setStep("select")}>
               Back
             </Button>
-
-            <Button
-              onClick={
-                handleGenerate
-              }
-              className="gap-2"
-            >
+            <Button onClick={handleGenerate} className="gap-2">
               <Sparkles className="w-4 h-4" />
               Build Marketing System
             </Button>
-
           </div>
-
         </div>
       )}
 
-      {/* STEP 3 */}
-
+      {/* STEP 3 - GENERATING */}
       {step === "generating" && (
         <div className="space-y-6">
-
-          <h2 className="text-xl font-bold">
-            Building Your Marketing System
-          </h2>
-
+          <h2 className="text-xl font-bold">Building Your Marketing System</h2>
           <Progress value={progress} />
-
-          {statuses.map(
-            (s, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3"
-              >
-                {s.status ===
-                  "generating" && (
-                  <Loader2 className="animate-spin w-4 h-4" />
-                )}
-
-                {s.status ===
-                  "done" && (
-                  <CheckCircle2 className="text-green-500 w-4 h-4" />
-                )}
-
-                <span>
-                  {s.label}
-                </span>
-
-              </div>
-            )
-          )}
-
+          {statuses.map((s, i) => (
+            <div key={i} className="flex items-center gap-3">
+              {s.status === "generating" && (
+                <Loader2 className="animate-spin w-4 h-4" />
+              )}
+              {s.status === "done" && (
+                <CheckCircle2 className="text-green-500 w-4 h-4" />
+              )}
+              <span>{s.label}</span>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* STEP 4 */}
-
+      {/* STEP 4 - DONE (the screen you showed in screenshot) */}
       {step === "done" && (
         <div className="text-center space-y-4">
-
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-
-          <h2 className="text-xl font-bold">
-            Marketing System Ready
-          </h2>
-
+          <h2 className="text-xl font-bold">Marketing System Ready</h2>
           <p className="text-sm text-muted-foreground">
             {completed} assets created successfully.
           </p>
-
-          <Button
-            onClick={
-              onComplete
-            }
-            className="w-full"
-          >
+          <Button onClick={onComplete} className="w-full">
             View Assets
           </Button>
-
         </div>
       )}
 
