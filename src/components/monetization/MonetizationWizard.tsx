@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Rocket,
   Megaphone,
+  AlertCircle,
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -112,18 +113,23 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             title: `${label} — ${title}`,
           });
 
-          // ONLY moduleId — this is the key fix
           await generateModuleContent({ moduleId: module.id });
 
           setStatuses((prev) =>
             prev.map((s, idx) => (idx === i ? { ...s, status: "done" } : s))
           );
         } catch (err: any) {
+          const errorMsg = err.message || "Unknown error";
           setStatuses((prev) =>
             prev.map((s, idx) =>
-              idx === i ? { ...s, status: "error", error: err.message } : s
+              idx === i ? { ...s, status: "error", error: errorMsg } : s
             )
           );
+          toast({
+            title: `Failed ${label}`,
+            description: errorMsg,
+            variant: "destructive",
+          });
         }
       }
 
@@ -143,6 +149,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
   return (
     <Card className="p-8 max-w-2xl mx-auto">
+
       {/* STEP 1 - SELECT */}
       {step === "select" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -246,7 +253,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         </div>
       )}
 
-      {/* STEP 3 - GENERATING */}
+      {/* STEP 3 - GENERATING WITH ERROR VISIBILITY */}
       {step === "generating" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold">Building Your Marketing System</h2>
@@ -255,13 +262,15 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             <div key={i} className="flex items-center gap-3">
               {s.status === "generating" && <Loader2 className="animate-spin w-4 h-4" />}
               {s.status === "done" && <CheckCircle2 className="text-green-500 w-4 h-4" />}
-              <span>{s.label}</span>
+              {s.status === "error" && <AlertCircle className="text-red-500 w-4 h-4" />}
+              <span className="font-medium">{s.label}</span>
+              {s.error && <span className="text-red-500 text-xs ml-auto">({s.error})</span>}
             </div>
           ))}
         </div>
       )}
 
-      {/* STEP 4 - DONE (THIS IS THE SCREEN YOU SEE) */}
+      {/* STEP 4 - DONE */}
       {step === "done" && (
         <div className="text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
