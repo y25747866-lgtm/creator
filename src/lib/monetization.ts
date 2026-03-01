@@ -1,252 +1,275 @@
-import { supabase } from "@/integrations/supabase/client";
+// /src/lib/monetization.ts
 
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-async function getHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token || ""}`,
-    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  };
-}
+import { createClient } from "@supabase/supabase-js";
 
 /*
-MARKETING SYSTEM MODULE TYPES
+------------------------------------------------
+SUPABASE CLIENT
+------------------------------------------------
 */
 
-export const MODULE_TYPES = [
-  { value: "landing_page", label: "Landing Page", description: "High-converting sales page copy" },
-  { value: "email_sequence", label: "Email Campaign", description: "Welcome, nurture, and sales emails" },
-  { value: "lead_magnet", label: "Lead Magnet", description: "Free resource to capture emails" },
-  { value: "social_content", label: "Social Media Content", description: "Twitter, Instagram, TikTok posts" },
-  { value: "ad_copy", label: "Ad Copy", description: "Facebook, Google, TikTok ads" },
-  { value: "video_script", label: "Video Script", description: "YouTube, TikTok, Reel scripts" },
-  { value: "affiliate_funnel", label: "Affiliate Funnel", description: "Full affiliate promotion system" },
-  { value: "course", label: "Mini Course", description: "Course outline and lessons" },
-] as const;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
 
-export type ModuleType = typeof MODULE_TYPES[number]["value"];
-
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
 
 /*
-DATA TYPES
+------------------------------------------------
+MODULE TYPES
+------------------------------------------------
 */
 
-export interface MonetizationProduct {
-  id: string;
-  user_id: string;
-  title: string;
-  topic: string;
-  description: string | null;
-  source_type: string;
-  source_product_id: string | null;
-  created_at: string;
-  monetization_modules?: MonetizationModule[];
-}
+export type ModuleType =
+  | "landing_page"
+  | "email_sequence"
+  | "ad_copy"
+  | "social_content"
+  | "prompt_pack"
+  | "affiliate_funnel"
+  | "course"
+  | "lead_magnet";
 
-export interface MonetizationModule {
-  id: string;
-  product_id: string;
-  module_type: string;
-  title: string;
-  status: string;
-  created_at: string;
-}
-
-export interface MonetizationVersion {
-  id: string;
-  module_id: string;
-  content: { markdown: string };
-  prompt_used: string | null;
-  model_used: string | null;
-  version_number: number;
-  created_at: string;
-}
-
+export const MODULE_TYPES: {
+  value: ModuleType;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "landing_page",
+    label: "Landing Page",
+    description:
+      "High-converting sales page",
+  },
+  {
+    value: "email_sequence",
+    label: "Email Sequence",
+    description:
+      "Automated 5-email funnel",
+  },
+  {
+    value: "ad_copy",
+    label: "Ad Copy",
+    description:
+      "Facebook & Google ads",
+  },
+  {
+    value: "social_content",
+    label: "Social Content",
+    description:
+      "Posts for TikTok, X, Instagram",
+  },
+  {
+    value: "prompt_pack",
+    label: "Prompt Pack",
+    description:
+      "AI prompts for your niche",
+  },
+  {
+    value: "affiliate_funnel",
+    label: "Affiliate Funnel",
+    description:
+      "Complete affiliate system",
+  },
+  {
+    value: "course",
+    label: "Mini Course",
+    description:
+      "Turn into digital course",
+  },
+  {
+    value: "lead_magnet",
+    label: "Lead Magnet",
+    description:
+      "Free download to capture leads",
+  },
+];
 
 /*
+------------------------------------------------
 CREATE PRODUCT
+------------------------------------------------
 */
 
-export async function createMonetizationProduct(params: {
+export async function createMonetizationProduct({
+  title,
+  topic,
+  description,
+  sourceType,
+  sourceProductId,
+}: {
   title: string;
   topic: string;
   description?: string;
+  sourceType: "ebook" | "idea";
+  sourceProductId?: string;
 }) {
-  const headers = await getHeaders();
+  const { data, error } =
+    await supabase
+      .from("monetization_products")
+      .insert({
+        title,
+        topic,
+        description,
+        source_type: sourceType,
+        source_product_id:
+          sourceProductId || null,
+        status: "draft",
+      })
+      .select()
+      .single();
 
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=create-product`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(params),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to create campaign");
+  if (error) {
+    console.error(error);
+    throw error;
   }
 
-  return res.json();
+  return { product: data };
 }
 
-
 /*
+------------------------------------------------
 CREATE MODULE
+------------------------------------------------
 */
 
-export async function createMonetizationModule(params: {
+export async function createMonetizationModule({
+  productId,
+  moduleType,
+  title,
+}: {
   productId: string;
-  moduleType: string;
+  moduleType: ModuleType;
   title: string;
 }) {
-  const headers = await getHeaders();
+  const { data, error } =
+    await supabase
+      .from("monetization_modules")
+      .insert({
+        product_id: productId,
+        module_type: moduleType,
+        title,
+        status: "draft",
+      })
+      .select()
+      .single();
 
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=create-module`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        productId: params.productId,
-        moduleType: params.moduleType,
-        title: params.title,
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to create asset");
+  if (error) {
+    console.error(error);
+    throw error;
   }
 
-  return res.json();
+  return { module: data };
 }
 
-
 /*
-GENERATE CONTENT (FIXED)
-THIS IS THE MOST IMPORTANT FIX
+------------------------------------------------
+GENERATE MODULE CONTENT (EDGE FUNCTION)
+THIS IS THE MOST IMPORTANT PART
+------------------------------------------------
 */
 
-export async function generateModuleContent(params: {
+export async function generateModuleContent({
+  moduleId,
+}: {
   moduleId: string;
-  moduleType: string;
-  title: string;
-  topic: string;
-  description?: string;
-  sourceContent?: string;
 }) {
-
-  if (!params.moduleId)
-    throw new Error("Module ID missing");
-
-  const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=generate-module`,
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/generate-module-content`,
     {
       method: "POST",
-      headers,
-      body: JSON.stringify({
-        moduleId: params.moduleId,
-        moduleType: params.moduleType,
-        title: params.title,
-        topic: params.topic,
-        description: params.description || "",
-        sourceContent: params.sourceContent || "",
-      }),
-    }
-  );
 
-  if (!res.ok) {
+      headers: {
+        "Content-Type":
+          "application/json",
 
-    let message = "Generation failed";
+        Authorization:
+          `Bearer ${supabaseAnonKey}`,
+      },
 
-    try {
-      const err = await res.json();
-      message = err.error || message;
-    } catch {}
-
-    throw new Error(message);
-  }
-
-  return await res.json();
-}
-
-
-/*
-LIST PRODUCTS
-*/
-
-export async function listMonetizationProducts() {
-
-  const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=list-products`,
-    {
-      method: "GET",
-      headers,
-    }
-  );
-
-  if (!res.ok)
-    throw new Error("Failed to fetch campaigns");
-
-  return res.json();
-}
-
-
-/*
-GET MODULE CONTENT
-*/
-
-export async function getModuleWithVersions(moduleId: string) {
-
-  const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${moduleId}`,
-    {
-      method: "GET",
-      headers,
-    }
-  );
-
-  if (!res.ok)
-    throw new Error("Failed to fetch asset");
-
-  return res.json();
-}
-
-
-/*
-METRICS
-*/
-
-export async function recordMonetizationMetric(
-  moduleId: string,
-  eventType: string,
-  metadata?: Record<string, unknown>
-) {
-
-  const headers = await getHeaders();
-
-  await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=record-metric`,
-    {
-      method: "POST",
-      headers,
       body: JSON.stringify({
         moduleId,
-        eventType,
-        metadata,
       }),
     }
   );
+
+  if (!response.ok) {
+    const text =
+      await response.text();
+
+    console.error(
+      "Edge function error:",
+      text
+    );
+
+    throw new Error(text);
+  }
+
+  return await response.json();
+}
+
+/*
+------------------------------------------------
+GET MODULES FOR PRODUCT
+------------------------------------------------
+*/
+
+export async function getModules(
+  productId: string
+) {
+  const { data, error } =
+    await supabase
+      .from("monetization_modules")
+      .select("*")
+      .eq("product_id", productId)
+      .order("created_at", {
+        ascending: true,
+      });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/*
+------------------------------------------------
+GET MODULE CONTENT VERSIONS
+------------------------------------------------
+*/
+
+export async function getModuleVersions(
+  moduleId: string
+) {
+  const { data, error } =
+    await supabase
+      .from("monetization_versions")
+      .select("*")
+      .eq("module_id", moduleId)
+      .order("version_number", {
+        ascending: false,
+      });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/*
+------------------------------------------------
+DELETE MODULE
+------------------------------------------------
+*/
+
+export async function deleteModule(
+  moduleId: string
+) {
+  const { error } =
+    await supabase
+      .from("monetization_modules")
+      .delete()
+      .eq("id", moduleId);
+
+  if (error) throw error;
   }
