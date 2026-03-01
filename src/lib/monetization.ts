@@ -95,7 +95,7 @@ export async function createMonetizationProduct(params: {
 }
 
 /*
-CREATE MODULE
+CREATE MODULE — FIXED (this was the bug)
 */
 
 export async function createMonetizationModule(params: {
@@ -103,6 +103,11 @@ export async function createMonetizationModule(params: {
   moduleType: string;
   title: string;
 }) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+
+  if (!userId) throw new Error("User not authenticated. Please log in again.");
+
   const { data, error } = await supabase
     .from("monetization_modules")
     .insert({
@@ -110,17 +115,23 @@ export async function createMonetizationModule(params: {
       module_type: params.moduleType,
       title: params.title,
       status: "draft",
+      user_id: userId,   // ← THIS FIXES THE "undefined id" ERROR
     })
     .select()
     .single();
 
-  if (error) throw new Error(error.message || "Failed to create asset");
+  if (error) {
+    console.error("Module insert error:", error);
+    throw new Error(`Failed to create module: ${error.message}`);
+  }
+
+  if (!data) throw new Error("Module creation returned no data");
 
   return { module: data };
 }
 
 /*
-GENERATE CONTENT — CALLS YOUR DEDICATED FUNCTION
+GENERATE CONTENT
 */
 
 export async function generateModuleContent(params: {
@@ -135,9 +146,7 @@ export async function generateModuleContent(params: {
     {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        moduleId: params.moduleId,
-      }),
+      body: JSON.stringify({ moduleId: params.moduleId }),
     }
   );
 
@@ -174,7 +183,7 @@ export async function listMonetizationProducts() {
 }
 
 /*
-GET MODULE CONTENT — FIXED BROKEN URL
+GET MODULE CONTENT
 */
 
 export async function getModuleWithVersions(moduleId: string) {
@@ -216,4 +225,4 @@ export async function recordMonetizationMetric(
       }),
     }
   );
-                             }
+}
