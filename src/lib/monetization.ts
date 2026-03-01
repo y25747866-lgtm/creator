@@ -83,7 +83,7 @@ export async function createMonetizationProduct(params: any) {
 }
 
 /*
-CREATE MODULE — FIXED (no user_id, strong error handling)
+CREATE MODULE — FINAL FIXED VERSION (matches your frontend destructuring)
 */
 
 export async function createMonetizationModule(params: {
@@ -112,11 +112,11 @@ export async function createMonetizationModule(params: {
     throw new Error(`Module creation failed for ${params.moduleType} — no ID returned`);
   }
 
-  return { module: data };
+  return { module: data };   // ← THIS MATCHES YOUR FRONTEND `const { module } = await ...`
 }
 
 /*
-GENERATE CONTENT
+GENERATE CONTENT — CALLS YOUR DEDICATED FUNCTION
 */
 
 export async function generateModuleContent(params: {
