@@ -95,7 +95,7 @@ export async function createMonetizationProduct(params: {
 }
 
 /*
-CREATE MODULE — NOW USES DIRECT SUPABASE (fixes the missing action)
+CREATE MODULE
 */
 
 export async function createMonetizationModule(params: {
@@ -120,7 +120,7 @@ export async function createMonetizationModule(params: {
 }
 
 /*
-GENERATE CONTENT — CALLS YOUR DEDICATED FIXED FUNCTION
+GENERATE CONTENT — CALLS YOUR DEDICATED FUNCTION
 */
 
 export async function generateModuleContent(params: {
@@ -174,7 +174,7 @@ export async function listMonetizationProducts() {
 }
 
 /*
-GET MODULE CONTENT
+GET MODULE CONTENT — FIXED BROKEN URL
 */
 
 export async function getModuleWithVersions(moduleId: string) {
@@ -216,4 +216,4 @@ export async function recordMonetizationMetric(
       }),
     }
   );
-    }
+                             }
