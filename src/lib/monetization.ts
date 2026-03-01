@@ -95,7 +95,7 @@ export async function createMonetizationProduct(params: {
 }
 
 /*
-CREATE MODULE
+CREATE MODULE — NOW USES DIRECT SUPABASE (fixes the missing action)
 */
 
 export async function createMonetizationModule(params: {
@@ -103,31 +103,24 @@ export async function createMonetizationModule(params: {
   moduleType: string;
   title: string;
 }) {
-  const headers = await getHeaders();
+  const { data, error } = await supabase
+    .from("monetization_modules")
+    .insert({
+      product_id: params.productId,
+      module_type: params.moduleType,
+      title: params.title,
+      status: "draft",
+    })
+    .select()
+    .single();
 
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=create-module`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        productId: params.productId,
-        moduleType: params.moduleType,
-        title: params.title,
-      }),
-    }
-  );
+  if (error) throw new Error(error.message || "Failed to create asset");
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to create asset");
-  }
-
-  return res.json();
+  return { module: data };
 }
 
 /*
-GENERATE CONTENT — THIS WAS THE LAST PROBLEM
+GENERATE CONTENT — CALLS YOUR DEDICATED FIXED FUNCTION
 */
 
 export async function generateModuleContent(params: {
@@ -138,12 +131,12 @@ export async function generateModuleContent(params: {
   const headers = await getHeaders();
 
   const res = await fetch(
-    `${BASE_URL}/functions/v1/generate-module-content`,   // ← FIXED: calls the correct dedicated function
+    `${BASE_URL}/functions/v1/generate-module-content`,
     {
       method: "POST",
       headers,
       body: JSON.stringify({
-        moduleId: params.moduleId,   // ← ONLY moduleId, nothing else
+        moduleId: params.moduleId,
       }),
     }
   );
@@ -223,4 +216,4 @@ export async function recordMonetizationMetric(
       }),
     }
   );
-}
+    }
