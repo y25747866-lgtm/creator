@@ -42,55 +42,39 @@ interface GenerationStatus {
 
 const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
   const [step, setStep] = useState<Step>("select");
-
   const [selectedModules, setSelectedModules] = useState<ModuleType[]>([]);
-
   const [title, setTitle] = useState("");
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
-
   const [sourceEbookId, setSourceEbookId] = useState<string | null>(null);
-
   const [statuses, setStatuses] = useState<GenerationStatus[]>([]);
 
   const { toast } = useToast();
-
   const ebooks = useEbookStore((s) => s.ebooks);
-
   const selectedEbook = ebooks.find((e) => e.id === sourceEbookId);
 
   function toggleModule(val: ModuleType) {
     setSelectedModules((prev) =>
-      prev.includes(val)
-        ? prev.filter((v) => v !== val)
-        : [...prev, val]
+      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
     );
   }
 
   function handleStartDetails() {
     if (selectedModules.length === 0) {
-      toast({
-        title: "Select at least one marketing asset",
-        variant: "destructive",
-      });
+      toast({ title: "Select at least one marketing asset", variant: "destructive" });
       return;
     }
-
     if (selectedEbook) {
       setTitle(selectedEbook.title);
       setTopic(selectedEbook.topic);
       setDescription(selectedEbook.description || "");
     }
-
     setStep("details");
   }
 
   async function handleGenerate() {
     if (!title.trim() || !topic.trim()) {
-      toast({
-        title: "Title and topic required",
-        variant: "destructive",
-      });
+      toast({ title: "Title and topic required", variant: "destructive" });
       return;
     }
 
@@ -98,89 +82,46 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
     const initial = selectedModules.map((mt) => ({
       moduleType: mt,
-      label:
-        MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
+      label: MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
       status: "pending" as const,
     }));
 
     setStatuses(initial);
 
     try {
-      const { product } =
-        await createMonetizationProduct({
-          title,
-          topic,
-          description,
+      const { product } = await createMonetizationProduct({
+        title,
+        topic,
+        description,
+        sourceType: sourceEbookId ? "ebook" : "idea",
+        sourceProductId: sourceEbookId || undefined,
+      });
 
-          sourceType: sourceEbookId
-            ? "ebook"
-            : "idea",
-
-          sourceProductId:
-            sourceEbookId || undefined,
-        });
-
-      const sourceContent =
-        selectedEbook?.content || "";
-
-      for (
-        let i = 0;
-        i < selectedModules.length;
-        i++
-      ) {
+      for (let i = 0; i < selectedModules.length; i++) {
         const mt = selectedModules[i];
-
-        const label =
-          MODULE_TYPES.find(
-            (m) => m.value === mt
-          )?.label || mt;
+        const label = MODULE_TYPES.find((m) => m.value === mt)?.label || mt;
 
         setStatuses((prev) =>
-          prev.map((s, idx) =>
-            idx === i
-              ? {
-                  ...s,
-                  status: "generating",
-                }
-              : s
-          )
+          prev.map((s, idx) => (idx === i ? { ...s, status: "generating" } : s))
         );
 
         try {
-          const { module } =
-            await createMonetizationModule({
-              productId: product.id,
-
-              moduleType: mt,
-
-              title: `${label} — ${title}`,
-            });
-
-          // 🔥 FIXED — ONLY moduleId is needed now!
-          await generateModuleContent({
-            moduleId: module.id,
+          const { module } = await createMonetizationModule({
+            productId: product.id,
+            moduleType: mt,
+            title: `${label} — ${title}`,
           });
 
+          // ONLY moduleId — this is the key fix
+          await generateModuleContent({ moduleId: module.id });
+
           setStatuses((prev) =>
-            prev.map((s, idx) =>
-              idx === i
-                ? {
-                    ...s,
-                    status: "done",
-                  }
-                : s
-            )
+            prev.map((s, idx) => (idx === i ? { ...s, status: "done" } : s))
           );
         } catch (err: any) {
           setStatuses((prev) =>
             prev.map((s, idx) =>
-              idx === i
-                ? {
-                    ...s,
-                    status: "error",
-                    error: err.message,
-                  }
-                : s
+              idx === i ? { ...s, status: "error", error: err.message } : s
             )
           );
         }
@@ -193,41 +134,22 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         description: err.message,
         variant: "destructive",
       });
-
       setStep("details");
     }
   }
 
-  const completed =
-    statuses.filter(
-      (s) => s.status === "done"
-    ).length;
-
-  const progress =
-    statuses.length > 0
-      ? Math.round(
-          (completed /
-            statuses.length) *
-            100
-        )
-      : 0;
+  const completed = statuses.filter((s) => s.status === "done").length;
+  const progress = statuses.length > 0 ? Math.round((completed / statuses.length) * 100) : 0;
 
   return (
     <Card className="p-8 max-w-2xl mx-auto">
-
-      {/* STEP 1 - SELECT MODULES */}
+      {/* STEP 1 - SELECT */}
       {step === "select" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-6"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Megaphone className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold">
-                Choose Marketing Assets
-              </h2>
+              <h2 className="text-xl font-bold">Choose Marketing Assets</h2>
             </div>
             <p className="text-sm text-muted-foreground">
               Turn your ebook or idea into a complete marketing system.
@@ -236,14 +158,10 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
           {ebooks.length > 0 && (
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Source Ebook (optional)
-              </label>
+              <label className="block text-sm font-medium mb-2">Source Ebook (optional)</label>
               <select
                 value={sourceEbookId || ""}
-                onChange={(e) =>
-                  setSourceEbookId(e.target.value || null)
-                }
+                onChange={(e) => setSourceEbookId(e.target.value || null)}
                 className="w-full h-10 px-3 rounded-lg border border-input bg-background"
               >
                 <option value="">Start from scratch</option>
@@ -264,9 +182,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
                   whileHover={{ scale: 1.02 }}
                   key={mt.value}
                   className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    active
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
+                    active ? "border-primary bg-primary/5" : "border-border"
                   }`}
                 >
                   <div className="flex gap-3">
@@ -276,9 +192,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
                     />
                     <div>
                       <div className="font-medium text-sm">{mt.label}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {mt.description}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{mt.description}</div>
                     </div>
                   </div>
                 </motion.label>
@@ -290,10 +204,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             <Button variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
-            <Button
-              onClick={handleStartDetails}
-              disabled={selectedModules.length === 0}
-            >
+            <Button onClick={handleStartDetails} disabled={selectedModules.length === 0}>
               Next
             </Button>
           </div>
@@ -305,32 +216,21 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         <div className="space-y-6">
           <div className="flex items-center gap-2">
             <Rocket className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold">
-              Marketing Campaign Details
-            </h2>
+            <h2 className="text-xl font-bold">Marketing Campaign Details</h2>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Campaign Name</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div>
               <label className="text-sm font-medium">Topic / Niche</label>
-              <Input
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-              />
+              <Input value={topic} onChange={(e) => setTopic(e.target.value)} />
             </div>
             <div>
               <label className="text-sm font-medium">Description</label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
           </div>
 
@@ -353,19 +253,15 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           <Progress value={progress} />
           {statuses.map((s, i) => (
             <div key={i} className="flex items-center gap-3">
-              {s.status === "generating" && (
-                <Loader2 className="animate-spin w-4 h-4" />
-              )}
-              {s.status === "done" && (
-                <CheckCircle2 className="text-green-500 w-4 h-4" />
-              )}
+              {s.status === "generating" && <Loader2 className="animate-spin w-4 h-4" />}
+              {s.status === "done" && <CheckCircle2 className="text-green-500 w-4 h-4" />}
               <span>{s.label}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* STEP 4 - DONE (the screen you showed in screenshot) */}
+      {/* STEP 4 - DONE (THIS IS THE SCREEN YOU SEE) */}
       {step === "done" && (
         <div className="text-center space-y-4">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
@@ -378,7 +274,6 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           </Button>
         </div>
       )}
-
     </Card>
   );
 };
