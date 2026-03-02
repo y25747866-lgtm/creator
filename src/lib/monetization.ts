@@ -29,7 +29,7 @@ export const MODULE_TYPES = [
 export type ModuleType = typeof MODULE_TYPES[number]["value"];
 
 /*
-CREATE MODULE — FIXED (this was causing the undefined.id error)
+CREATE MODULE
 */
 
 export async function createMonetizationModule(params: {
@@ -58,7 +58,7 @@ export async function createMonetizationModule(params: {
     throw new Error(`Module creation failed for ${params.moduleType} — no ID returned`);
   }
 
-  return { module: data };   // ← EXACT SHAPE YOUR WIZARD EXPECTS
+  return { module: data };
 }
 
 /*
@@ -93,40 +93,73 @@ export async function generateModuleContent(params: {
   return await res.json();
 }
 
-/* Keep the rest of your functions */
+/*
+CREATE PRODUCT
+*/
+
 export async function createMonetizationProduct(params: any) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=create-product`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(params),
-  });
+
+  const res = await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=create-product`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(params),
+    }
+  );
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || "Failed to create product");
   }
+
   return res.json();
 }
+
+/*
+LIST PRODUCTS
+*/
 
 export async function listMonetizationProducts() {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=list-products`, {
-    method: "GET",
-    headers,
-  });
+
+  const res = await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=list-products`,
+    {
+      method: "GET",
+      headers,
+    }
+  );
+
   if (!res.ok) throw new Error("Failed to fetch campaigns");
+
   return res.json();
 }
 
+/*
+FIXED FUNCTION — THIS WAS THE BUG
+*/
+
 export async function getModuleWithVersions(moduleId: string) {
   const headers = await getHeaders();
-  const res = await fetch(`\( {BASE_URL}/functions/v1/monetization?action=get-module&moduleId= \){moduleId}`, {
-    method: "GET",
-    headers,
-  });
+
+  const res = await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${moduleId}`,
+    {
+      method: "GET",
+      headers,
+    }
+  );
+
   if (!res.ok) throw new Error("Failed to fetch asset");
+
   return res.json();
 }
+
+/*
+METRICS
+*/
 
 export async function recordMonetizationMetric(
   moduleId: string,
@@ -134,9 +167,13 @@ export async function recordMonetizationMetric(
   metadata?: Record<string, unknown>
 ) {
   const headers = await getHeaders();
-  await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ moduleId, eventType, metadata }),
-  });
-   }
+
+  await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=record-metric`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ moduleId, eventType, metadata }),
+    }
+  );
+}
