@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   MODULE_TYPES,
@@ -25,7 +26,6 @@ import {
 } from "@/lib/monetization";
 
 import { useEbookStore } from "@/hooks/useEbookStore";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   onComplete: () => void;
@@ -107,7 +107,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         );
 
         try {
-          // DIRECT INSERT — NO MORE LIB FUNCTION (this fixes the undefined id)
+          // DIRECT INSERT — THIS IS THE FINAL FIX
           const { data: moduleData, error } = await supabase
             .from("monetization_modules")
             .insert({
@@ -120,7 +120,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             .single();
 
           if (error) throw new Error(`Insert failed: ${error.message}`);
-          if (!moduleData || !moduleData.id) throw new Error("No ID returned from insert");
+          if (!moduleData || !moduleData.id) throw new Error("Insert succeeded but no ID returned");
 
           await generateModuleContent({ moduleId: moduleData.id });
 
@@ -158,7 +158,6 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
   return (
     <Card className="p-8 max-w-2xl mx-auto">
-
       {/* STEP 1 - SELECT */}
       {step === "select" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -262,7 +261,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         </div>
       )}
 
-      {/* STEP 3 - GENERATING WITH FULL ERROR VISIBILITY */}
+      {/* STEP 3 - GENERATING WITH FULL ERROR */}
       {step === "generating" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold">Building Your Marketing System</h2>
