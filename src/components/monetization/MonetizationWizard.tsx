@@ -107,7 +107,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         );
 
         try {
-          // DIRECT INSERT — THIS FIXES THE UNDEFINED ID ERROR
+          // DIRECT INSERT — NO MORE LIB FUNCTION (this fixes the undefined id)
           const { data: moduleData, error } = await supabase
             .from("monetization_modules")
             .insert({
@@ -120,9 +120,8 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             .single();
 
           if (error) throw new Error(`Insert failed: ${error.message}`);
-          if (!moduleData || !moduleData.id) throw new Error("Module created but no ID returned");
+          if (!moduleData || !moduleData.id) throw new Error("No ID returned from insert");
 
-          // NOW CALL AI
           await generateModuleContent({ moduleId: moduleData.id });
 
           setStatuses((prev) =>
@@ -263,7 +262,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         </div>
       )}
 
-      {/* STEP 3 - GENERATING WITH CLEAR ERROR */}
+      {/* STEP 3 - GENERATING WITH FULL ERROR VISIBILITY */}
       {step === "generating" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold">Building Your Marketing System</h2>
