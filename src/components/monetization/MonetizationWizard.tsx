@@ -21,11 +21,11 @@ import {
   MODULE_TYPES,
   ModuleType,
   createMonetizationProduct,
-  createMonetizationModule,
   generateModuleContent,
 } from "@/lib/monetization";
 
 import { useEbookStore } from "@/hooks/useEbookStore";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   onComplete: () => void;
@@ -107,13 +107,23 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         );
 
         try {
-          const { module } = await createMonetizationModule({
-            productId: product.id,
-            moduleType: mt,
-            title: `${label} — ${title}`,
-          });
+          // DIRECT INSERT — THIS FIXES THE UNDEFINED ID ERROR
+          const { data: moduleData, error } = await supabase
+            .from("monetization_modules")
+            .insert({
+              product_id: product.id,
+              module_type: mt,
+              title: `${label} — ${title}`,
+              status: "draft",
+            })
+            .select()
+            .single();
 
-          await generateModuleContent({ moduleId: module.id });
+          if (error) throw new Error(`Insert failed: ${error.message}`);
+          if (!moduleData || !moduleData.id) throw new Error("Module created but no ID returned");
+
+          // NOW CALL AI
+          await generateModuleContent({ moduleId: moduleData.id });
 
           setStatuses((prev) =>
             prev.map((s, idx) => (idx === i ? { ...s, status: "done" } : s))
@@ -253,7 +263,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         </div>
       )}
 
-      {/* STEP 3 - GENERATING WITH ERROR VISIBILITY */}
+      {/* STEP 3 - GENERATING WITH CLEAR ERROR */}
       {step === "generating" && (
         <div className="space-y-6">
           <h2 className="text-xl font-bold">Building Your Marketing System</h2>
