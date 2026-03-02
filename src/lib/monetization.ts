@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 async function getHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${session?.access_token || ""}`,
@@ -49,13 +52,12 @@ export async function createMonetizationModule(params: {
     .single();
 
   if (error) {
-    console.error("createMonetizationModule error:", error);
-    throw new Error(`Failed to create ${params.moduleType}: ${error.message}`);
+    console.error(error);
+    throw new Error(error.message);
   }
 
-  if (!data || !data.id) {
-    console.error("createMonetizationModule returned no data:", data);
-    throw new Error(`Module creation failed for ${params.moduleType} — no ID returned`);
+  if (!data?.id) {
+    throw new Error("Module created but no ID returned");
   }
 
   return { module: data };
@@ -77,24 +79,22 @@ export async function generateModuleContent(params: {
     {
       method: "POST",
       headers,
-      body: JSON.stringify({ moduleId: params.moduleId }),
+      body: JSON.stringify({
+        moduleId: params.moduleId,
+      }),
     }
   );
 
   if (!res.ok) {
-    let message = "Generation failed";
-    try {
-      const err = await res.json();
-      message = err.error || message;
-    } catch {}
-    throw new Error(message);
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Generation failed");
   }
 
-  return await res.json();
+  return res.json();
 }
 
 /*
-CREATE PRODUCT
+CREATE PRODUCT — ✅ FIXED RETURN SHAPE
 */
 
 export async function createMonetizationProduct(params: any) {
@@ -114,7 +114,13 @@ export async function createMonetizationProduct(params: any) {
     throw new Error(err.error || "Failed to create product");
   }
 
-  return res.json();
+  const data = await res.json();
+
+  if (!data?.id) {
+    throw new Error("Product created but no ID returned");
+  }
+
+  return { product: data }; // ✅ THIS FIXES YOUR CRASH
 }
 
 /*
@@ -132,13 +138,15 @@ export async function listMonetizationProducts() {
     }
   );
 
-  if (!res.ok) throw new Error("Failed to fetch campaigns");
+  if (!res.ok) {
+    throw new Error("Failed to fetch campaigns");
+  }
 
   return res.json();
 }
 
 /*
-FIXED FUNCTION — THIS WAS THE BUG
+GET MODULE
 */
 
 export async function getModuleWithVersions(moduleId: string) {
@@ -152,7 +160,9 @@ export async function getModuleWithVersions(moduleId: string) {
     }
   );
 
-  if (!res.ok) throw new Error("Failed to fetch asset");
+  if (!res.ok) {
+    throw new Error("Failed to fetch asset");
+  }
 
   return res.json();
 }
@@ -173,7 +183,11 @@ export async function recordMonetizationMetric(
     {
       method: "POST",
       headers,
-      body: JSON.stringify({ moduleId, eventType, metadata }),
+      body: JSON.stringify({
+        moduleId,
+        eventType,
+        metadata,
+      }),
     }
   );
-}
+  }
