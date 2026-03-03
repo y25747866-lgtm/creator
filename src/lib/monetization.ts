@@ -15,7 +15,9 @@ async function getHeaders() {
 }
 
 /*
-MARKETING SYSTEM MODULE TYPES
+==========================================
+MODULE TYPES
+==========================================
 */
 
 export const MODULE_TYPES = [
@@ -32,7 +34,41 @@ export const MODULE_TYPES = [
 export type ModuleType = typeof MODULE_TYPES[number]["value"];
 
 /*
+==========================================
+CREATE PRODUCT
+==========================================
+*/
+
+export async function createMonetizationProduct(params: any) {
+  const headers = await getHeaders();
+
+  const res = await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=create-product`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(params),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Failed to create product");
+  }
+
+  const data = await res.json();
+
+  if (!data?.id) {
+    throw new Error("Product created but no ID returned");
+  }
+
+  return { product: data };
+}
+
+/*
+==========================================
 CREATE MODULE
+==========================================
 */
 
 export async function createMonetizationModule(params: {
@@ -64,18 +100,22 @@ export async function createMonetizationModule(params: {
 }
 
 /*
-GENERATE CONTENT
+==========================================
+GENERATE MODULE CONTENT (FIXED)
+==========================================
 */
 
 export async function generateModuleContent(params: {
   moduleId: string;
 }) {
-  if (!params.moduleId) throw new Error("Module ID is required");
+  if (!params.moduleId) {
+    throw new Error("Module ID is required");
+  }
 
   const headers = await getHeaders();
 
   const res = await fetch(
-    `${BASE_URL}/functions/v1/generate-module-content`,
+    `${BASE_URL}/functions/v1/monetization?action=generate-module`,
     {
       method: "POST",
       headers,
@@ -94,37 +134,9 @@ export async function generateModuleContent(params: {
 }
 
 /*
-CREATE PRODUCT — ✅ FIXED RETURN SHAPE
-*/
-
-export async function createMonetizationProduct(params: any) {
-  const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=create-product`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(params),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to create product");
-  }
-
-  const data = await res.json();
-
-  if (!data?.id) {
-    throw new Error("Product created but no ID returned");
-  }
-
-  return { product: data }; // ✅ THIS FIXES YOUR CRASH
-}
-
-/*
+==========================================
 LIST PRODUCTS
+==========================================
 */
 
 export async function listMonetizationProducts() {
@@ -146,7 +158,9 @@ export async function listMonetizationProducts() {
 }
 
 /*
-GET MODULE
+==========================================
+GET MODULE + VERSIONS
+==========================================
 */
 
 export async function getModuleWithVersions(moduleId: string) {
@@ -168,7 +182,9 @@ export async function getModuleWithVersions(moduleId: string) {
 }
 
 /*
-METRICS
+==========================================
+RECORD METRIC
+==========================================
 */
 
 export async function recordMonetizationMetric(
@@ -190,4 +206,4 @@ export async function recordMonetizationMetric(
       }),
     }
   );
-  }
+}
