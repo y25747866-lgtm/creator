@@ -10,7 +10,6 @@ import {
   Loader2,
   Sparkles,
   CheckCircle2,
-  Rocket,
   Megaphone,
   AlertCircle,
 } from "lucide-react";
@@ -25,8 +24,6 @@ import {
   generateModuleContent,
 } from "@/lib/monetization";
 
-import { useEbookStore } from "@/hooks/useEbookStore";
-
 interface Props {
   onComplete: () => void;
   onCancel: () => void;
@@ -35,7 +32,7 @@ interface Props {
 type Step = "select" | "details" | "generating" | "done";
 
 interface GenerationStatus {
-  moduleType: string;
+  moduleType: ModuleType;
   label: string;
   status: "pending" | "generating" | "done" | "error";
   error?: string;
@@ -50,11 +47,12 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
   const [statuses, setStatuses] = useState<GenerationStatus[]>([]);
 
   const { toast } = useToast();
-  const ebooks = useEbookStore((s) => s.ebooks);
 
   function toggleModule(val: ModuleType) {
     setSelectedModules((prev) =>
-      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+      prev.includes(val)
+        ? prev.filter((v) => v !== val)
+        : [...prev, val]
     );
   }
 
@@ -80,16 +78,21 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
     setStep("generating");
 
-    const initial = selectedModules.map((mt) => ({
-      moduleType: mt,
-      label: MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
-      status: "pending" as const,
-    }));
+    const initialStatuses: GenerationStatus[] = selectedModules.map(
+      (mt) => ({
+        moduleType: mt,
+        label:
+          MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
+        status: "pending",
+      })
+    );
 
-    setStatuses(initial);
+    setStatuses(initialStatuses);
 
     try {
-      /* ✅ FIX — DO NOT destructure */
+      /* =========================
+         CREATE PRODUCT
+      ========================== */
       const product = await createMonetizationProduct({
         title,
         topic,
@@ -97,15 +100,20 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         sourceType: "idea",
       });
 
-      if (!product || !product.id) {
+      if (!product?.id) {
         throw new Error("Product creation failed — no ID returned");
       }
 
+      /* =========================
+         LOOP MODULES
+      ========================== */
       for (let i = 0; i < selectedModules.length; i++) {
-        const mt = selectedModules[i];
+        const moduleType = selectedModules[i];
         const label =
-          MODULE_TYPES.find((m) => m.value === mt)?.label || mt;
+          MODULE_TYPES.find((m) => m.value === moduleType)
+            ?.label || moduleType;
 
+        // set generating
         setStatuses((prev) =>
           prev.map((s, idx) =>
             idx === i ? { ...s, status: "generating" } : s
@@ -113,39 +121,43 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         );
 
         try {
-          const { module } = await createMonetizationModule({
+          const module = await createMonetizationModule({
             productId: product.id,
-            moduleType: mt,
+            moduleType,
             title: `${label} — ${title}`,
           });
 
-          if (!module || !module.id) {
-            throw new Error("Module created but no ID returned");
+          if (!module?.id) {
+            throw new Error(
+              "Module created but no ID returned"
+            );
           }
 
           await generateModuleContent({
             moduleId: module.id,
           });
 
+          // set done
           setStatuses((prev) =>
             prev.map((s, idx) =>
               idx === i ? { ...s, status: "done" } : s
             )
           );
         } catch (err: any) {
-          const msg = err.message || "Unknown error";
+          const message =
+            err?.message || "Module generation failed";
 
           setStatuses((prev) =>
             prev.map((s, idx) =>
               idx === i
-                ? { ...s, status: "error", error: msg }
+                ? { ...s, status: "error", error: message }
                 : s
             )
           );
 
           toast({
-            title: `Failed ${label}`,
-            description: msg,
+            title: `Failed: ${label}`,
+            description: message,
             variant: "destructive",
           });
         }
@@ -155,7 +167,8 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
     } catch (err: any) {
       toast({
         title: "Generation failed",
-        description: err.message,
+        description:
+          err?.message || "Unexpected error",
         variant: "destructive",
       });
 
@@ -180,13 +193,11 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           animate={{ opacity: 1 }}
           className="space-y-6"
         >
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Megaphone className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-bold">
-                Choose Marketing Assets
-              </h2>
-            </div>
+          <div className="flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold">
+              Choose Marketing Assets
+            </h2>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -226,13 +237,9 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button
-              variant="ghost"
-              onClick={onCancel}
-            >
+            <Button variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
-
             <Button onClick={handleStartDetails}>
               Next
             </Button>
@@ -294,10 +301,10 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
                 <AlertCircle className="w-4 h-4 text-red-500" />
               )}
 
-              {s.label}
+              <span>{s.label}</span>
 
               {s.error && (
-                <span className="text-red-500 text-xs">
+                <span className="text-xs text-red-500">
                   {s.error}
                 </span>
               )}
