@@ -103,4 +103,4 @@ export async function createMonetizationModule({
 
   console.log("✅ [Diplomat] Module created successfully:", data);
   return data;
-   }
+     }
