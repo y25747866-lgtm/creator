@@ -197,7 +197,7 @@ async function generateLongContent(
         },
         {
           role: "user",
-          content: `Create \( {config.chaptersNum} chapter titles for an ebook titled " \){title}" about "${topic}". \( {description ? `Vision: " \){description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
+          content: `Create ${config.chaptersNum} chapter titles for an ebook titled "${title}" about "${topic}". ${description ? `Vision: "${description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
         },
       ],
       max_tokens: 500,
@@ -239,7 +239,7 @@ async function generateLongContent(
   let fullContent = "";
 
   for (const batch of batches) {
-    const batchPrompt = `Continue writing the ebook "\( {title}" about " \){topic}".
+    const batchPrompt = `Continue writing the ebook "${title}" about "${topic}".
     
 Write the following chapters in full detail (1500-2000 words each):
 ${batch.map((ch) => `- ${ch}`).join("\n")}
@@ -322,7 +322,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Generating ${config.label} ebook for user \( {access.userId}: " \){sanitizedTitle}"`);
+    console.log(`Generating ${config.label} ebook for user ${access.userId}: "${sanitizedTitle}"`);
 
     const content = await generateContent(
       GROQ_API_KEY,
@@ -348,7 +348,7 @@ serve(async (req) => {
       Math.ceil(content.split(/\s+/).length / 250)
     );
 
-    console.log(`Generated \( {content.length} chars, \~ \){pages} pages`);
+    console.log(`Generated ${content.length} chars, ~ ${pages} pages`);
 
     return new Response(
       JSON.stringify({ title: sanitizedTitle, content, pages }),
