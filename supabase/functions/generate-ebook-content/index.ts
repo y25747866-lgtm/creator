@@ -105,8 +105,8 @@ INPUTS:
 - Title: "${title}"
 - Target Audience: ${targetAudience || "General readers interested in this topic"}
 - Tone: ${tone || "professional, educational"}
-- Length: \( {config.label} ( \){config.pageTarget} pages)
-\( {description ? `- Author's Vision: " \){description}"` : ""}
+- Length: ${config.label} (${config.pageTarget} pages)
+${description ? `- Author's Vision: "${description}"` : ""}
 
 OUTPUT REQUIREMENTS:
 
