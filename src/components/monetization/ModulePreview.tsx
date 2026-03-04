@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,558 +23,287 @@ import {
   recordMonetizationMetric,
 } from "@/lib/monetization";
 
-
 interface Props {
-
   module: MonetizationModule;
-
   productTitle: string;
-
   onBack: () => void;
-
 }
 
-
 export default function ModulePreview({
-
   module,
-
   productTitle,
-
   onBack,
-
 }: Props) {
-
   const { toast } = useToast();
 
   const [versions, setVersions] =
     useState<MonetizationVersion[]>([]);
-
   const [selectedVersion, setSelectedVersion] =
     useState<number | null>(null);
-
   const [loading, setLoading] =
     useState(true);
-
   const [generating, setGenerating] =
     useState(false);
-
   const [copied, setCopied] =
     useState(false);
 
-
   const typeLabel =
     MODULE_TYPES.find(
-      (m) =>
-        m.value ===
-        module.module_type
-    )?.label ||
-    module.module_type;
-
+      (m) => m.value === module.module_type
+    )?.label || module.module_type;
 
   /*
-  LOAD MODULE CONTENT
+  LOAD MODULE
   */
 
-  useEffect(() => {
-
-    loadModule();
-
-  }, [module.id]);
-
-
-  async function loadModule() {
-
+  const loadModule = useCallback(async () => {
     try {
-
       setLoading(true);
 
-      let res =
-        await getModuleWithVersions(
-          module.id
-        );
+      let res = await getModuleWithVersions(module.id);
 
-      /*
-      IF EMPTY → GENERATE FIRST VERSION
-      */
-
-      if (
-        !res.versions ||
-        res.versions.length === 0
-      ) {
-
+      if (!res?.versions || res.versions.length === 0) {
         setGenerating(true);
 
+        // ✅ FIX: only pass moduleId
         await generateModuleContent({
-
           moduleId: module.id,
-
-          moduleType:
-            module.module_type,
-
-          title:
-            productTitle,
-
-          topic:
-            productTitle,
-
         });
 
-        res =
-          await getModuleWithVersions(
-            module.id
-          );
-
+        res = await getModuleWithVersions(module.id);
         setGenerating(false);
-
       }
 
-      setVersions(
-        res.versions || []
-      );
+      const safeVersions = res?.versions ?? [];
+
+      setVersions(safeVersions);
 
       setSelectedVersion(
-
-        res.versions?.[0]
-          ?.version_number ||
-          null
-
+        safeVersions[0]?.version_number ?? null
       );
 
-      recordMonetizationMetric(
-
-        module.id,
-
-        "view"
-
-      ).catch(() => {});
-
-    } catch (err) {
-
+      recordMonetizationMetric(module.id, "view")
+        .catch(() => {});
+    } catch {
       toast({
-
-        title:
-          "Failed to load asset",
-
-        variant:
-          "destructive",
-
+        title: "Failed to load asset",
+        variant: "destructive",
       });
-
     } finally {
-
       setLoading(false);
-
     }
+  }, [module.id, toast]);
 
-  }
-
+  useEffect(() => {
+    loadModule();
+  }, [loadModule]);
 
   /*
   CURRENT VERSION
   */
 
-  const currentVersion =
-    useMemo(
-
-      () =>
-        versions.find(
-
-          (v) =>
-            v.version_number ===
-            selectedVersion
-
-        ),
-
-      [
-        versions,
-        selectedVersion,
-      ]
-
-    );
-
+  const currentVersion = useMemo(
+    () =>
+      versions.find(
+        (v) => v.version_number === selectedVersion
+      ),
+    [versions, selectedVersion]
+  );
 
   const markdown =
-    currentVersion?.content
-      ?.markdown ||
-    "";
-
+    currentVersion?.content?.markdown ?? "";
 
   /*
   COPY
   */
 
-  function handleCopy() {
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
 
-    navigator.clipboard.writeText(
-      markdown
-    );
+      setTimeout(() => setCopied(false), 2000);
 
-    setCopied(true);
-
-    setTimeout(
-      () =>
-        setCopied(false),
-      2000
-    );
-
-    recordMonetizationMetric(
-
-      module.id,
-
-      "copy"
-
-    ).catch(() => {});
-
+      recordMonetizationMetric(module.id, "copy")
+        .catch(() => {});
+    } catch {
+      toast({
+        title: "Copy failed",
+        variant: "destructive",
+      });
+    }
   }
-
 
   /*
   DOWNLOAD
   */
 
   function handleDownload() {
+    if (!markdown) return;
 
-    const blob =
-      new Blob(
+    const blob = new Blob([markdown], {
+      type: "text/plain",
+    });
 
-        [markdown],
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
 
-        {
-          type:
-            "text/plain",
-        }
+    a.href = url;
+    a.download = `${typeLabel}-${productTitle}.txt`;
 
-      );
-
-    const url =
-      URL.createObjectURL(
-        blob
-      );
-
-    const a =
-      document.createElement(
-        "a"
-      );
-
-    a.href =
-      url;
-
-    a.download =
-      `${typeLabel}-${productTitle}.txt`;
-
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
 
-    URL.revokeObjectURL(
-      url
-    );
+    URL.revokeObjectURL(url);
 
-    recordMonetizationMetric(
-
-      module.id,
-
-      "download"
-
-    ).catch(() => {});
-
+    recordMonetizationMetric(module.id, "download")
+      .catch(() => {});
   }
-
 
   /*
   REGENERATE
   */
 
   async function handleRegenerate() {
-
     try {
-
       setGenerating(true);
 
+      // ✅ FIX: only moduleId
       await generateModuleContent({
-
-        moduleId:
-          module.id,
-
-        moduleType:
-          module.module_type,
-
-        title:
-          productTitle,
-
-        topic:
-          productTitle,
-
+        moduleId: module.id,
       });
 
       await loadModule();
 
       toast({
-
-        title:
-          "New version generated",
-
+        title: "New version generated",
       });
-
     } catch {
-
       toast({
-
-        title:
-          "Generation failed",
-
-        variant:
-          "destructive",
-
+        title: "Generation failed",
+        variant: "destructive",
       });
-
     } finally {
-
       setGenerating(false);
-
     }
-
   }
 
-
   /*
-  LOADING UI
+  LOADING
   */
 
-  if (loading)
+  if (loading) {
     return (
-
       <Card className="p-8 space-y-4">
-
         <Skeleton className="h-8 w-48" />
-
         <Skeleton className="h-96 w-full" />
-
       </Card>
-
     );
-
+  }
 
   /*
   MAIN UI
   */
 
   return (
-
     <div className="space-y-6">
-
       <Button
         variant="outline"
-        onClick={
-          onBack
-        }
+        onClick={onBack}
       >
         ← Back
       </Button>
 
-
       <div className="flex justify-between items-center">
-
         <div>
-
-          <Badge>
-
-            {typeLabel}
-
-          </Badge>
+          <Badge>{typeLabel}</Badge>
 
           <h2 className="text-xl font-bold mt-1">
-
             {module.title}
-
           </h2>
 
           {currentVersion && (
-
             <p className="text-xs text-muted-foreground">
-
-              Created:
-
-              {" "}
-
+              Created{" "}
               {new Date(
-
                 currentVersion.created_at
-
               ).toLocaleString()}
-
             </p>
-
           )}
-
         </div>
-
 
         <div className="flex gap-2">
-
           <Button
-
             variant="outline"
-
-            onClick={
-              handleRegenerate
-            }
-
-            disabled={
-              generating
-            }
-
+            onClick={handleRegenerate}
+            disabled={generating}
           >
-
-            {generating ?
-
-              <Loader2 className="w-4 h-4 animate-spin"/>
-
-              :
-
-              <RefreshCw className="w-4 h-4"/>
-
-            }
-
+            {generating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
           </Button>
 
-
           <Button
-
             variant="outline"
-
-            onClick={
-              handleCopy
-            }
-
+            onClick={handleCopy}
+            disabled={!markdown}
           >
-
-            {copied ?
-
-              <CheckCircle2 className="w-4 h-4"/>
-
-              :
-
-              <Copy className="w-4 h-4"/>
-
-            }
-
+            {copied ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
           </Button>
-
 
           <Button
-
-            onClick={
-              handleDownload
-            }
-
+            onClick={handleDownload}
+            disabled={!markdown}
           >
-
-            <Download className="w-4 h-4"/>
-
+            <Download className="w-4 h-4" />
           </Button>
-
         </div>
-
       </div>
 
-
       {versions.length > 1 && (
-
         <div className="flex gap-2">
-
-          {versions.map(
-
-            (v) => (
-
-              <Button
-
-                key={v.id}
-
-                variant={
-
-                  v.version_number ===
-
-                  selectedVersion
-
-                    ? "default"
-
-                    : "outline"
-
-                }
-
-                onClick={() =>
-
-                  setSelectedVersion(
-
-                    v.version_number
-
-                  )
-
-                }
-
-              >
-
-                v
-
-                {v.version_number}
-
-              </Button>
-
-            )
-
-          )}
-
+          {versions.map((v) => (
+            <Button
+              key={v.id}
+              variant={
+                v.version_number === selectedVersion
+                  ? "default"
+                  : "outline"
+              }
+              onClick={() =>
+                setSelectedVersion(
+                  v.version_number
+                )
+              }
+            >
+              v{v.version_number}
+            </Button>
+          ))}
         </div>
-
       )}
 
-
       <Card className="p-6">
-
-        {markdown ?
-
-          (
-
-            <textarea
-
-              readOnly
-
-              value={
-                markdown
-              }
-
-              className="w-full h-[500px] bg-transparent outline-none text-sm"
-
-            />
-
-          )
-
-          :
-
-          (
-
-            <p className="text-center">
-
-              {generating ?
-
-                "Generating..."
-
-                :
-
-                "No content"
-
-              }
-
-            </p>
-
-          )
-
-        }
-
+        {markdown ? (
+          <textarea
+            readOnly
+            value={markdown}
+            className="w-full h-[500px] bg-transparent outline-none text-sm"
+          />
+        ) : (
+          <p className="text-center">
+            {generating
+              ? "Generating..."
+              : "No content"}
+          </p>
+        )}
       </Card>
-
     </div>
-
   );
-
-          }
+}
