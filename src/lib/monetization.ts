@@ -66,6 +66,10 @@ export async function createMonetizationProduct({
     throw new Error(`Diplomat product creation failed: ${error.message}`);
   }
 
+  if (!data?.id) {
+    throw new Error("Diplomat product creation failed — no ID returned");
+  }
+
   console.log("✅ [Diplomat] Product created successfully:", data);
   return data;
 }
@@ -99,6 +103,10 @@ export async function createMonetizationModule({
   if (error) {
     console.error("❌ [Diplomat] Module creation failed:", error);
     throw new Error(`Diplomat module creation failed: ${error.message}`);
+  }
+
+  if (!data?.id) {
+    throw new Error("Diplomat module creation failed — no ID returned");
   }
 
   console.log("✅ [Diplomat] Module created successfully:", data);
