@@ -15,7 +15,8 @@ import Pricing from "./pages/Pricing";
 import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
 import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
-import MonetizationDashboard from "./pages/dashboard/MonetizationDashboard";
+import MarketingStudio from "./pages/dashboard/MarketingStudio";
+import SalesPageBuilder from "./pages/dashboard/SalesPageBuilder";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ViewableRoute from "./components/ViewableRoute";
 
@@ -75,11 +76,19 @@ const App = () => (
               }
             />
             <Route
-              path="/dashboard/monetization"
+              path="/dashboard/marketing-studio"
               element={
-                <ProtectedRoute>
-                  <MonetizationDashboard />
-                </ProtectedRoute>
+                <ViewableRoute>
+                  <MarketingStudio />
+                </ViewableRoute>
+              }
+            />
+            <Route
+              path="/dashboard/sales-page-builder"
+              element={
+                <ViewableRoute>
+                  <SalesPageBuilder />
+                </ViewableRoute>
               }
             />
             <Route path="*" element={<NotFound />} />

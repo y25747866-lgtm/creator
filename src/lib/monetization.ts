@@ -2,48 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /*
 ==========================================
-ENV SAFETY
-==========================================
-*/
-
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-
-if (!BASE_URL) {
-  throw new Error("VITE_SUPABASE_URL is not defined");
-}
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY is not defined");
-}
-
-/*
-==========================================
-AUTH HEADERS
-==========================================
-*/
-
-async function getHeaders(): Promise<Record<string, string>> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    apikey: PUBLISHABLE_KEY,
-  };
-
-  // Only attach Authorization if token exists
-  if (session?.access_token) {
-    headers.Authorization = `Bearer ${session.access_token}`;
-  }
-
-  return headers;
-}
-
-/*
-==========================================
-MODULE TYPES
+MODULE TYPES (kept for backward compat)
 ==========================================
 */
 
@@ -62,35 +21,89 @@ export type ModuleType = typeof MODULE_TYPES[number]["value"];
 
 /*
 ==========================================
+TYPES
+==========================================
+*/
+
+export interface MonetizationModule {
+  id: string;
+  product_id: string;
+  module_type: string;
+  title: string;
+  status: string;
+  created_at: string;
+}
+
+export interface MonetizationVersion {
+  id: string;
+  module_id: string;
+  version_number: number;
+  content: { markdown?: string } & Record<string, unknown>;
+  model_used?: string | null;
+  created_at: string;
+}
+
+export interface MonetizationProduct {
+  id: string;
+  user_id: string;
+  title: string;
+  topic: string;
+  description?: string | null;
+  source_type: string;
+  created_at: string;
+  monetization_modules?: MonetizationModule[];
+}
+
+/*
+==========================================
+ENV SAFETY
+==========================================
+*/
+
+const BASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+if (!BASE_URL) throw new Error("VITE_SUPABASE_URL is not defined");
+if (!PUBLISHABLE_KEY) throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY is not defined");
+
+/*
+==========================================
+AUTH HEADERS
+==========================================
+*/
+
+async function getHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: PUBLISHABLE_KEY,
+  };
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+  return headers;
+}
+
+/*
+==========================================
 CREATE PRODUCT
 ==========================================
 */
 
 export async function createMonetizationProduct(params: Record<string, unknown>) {
   const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=create-product`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(params),
-    }
-  );
-
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=create-product`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(params),
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error((err as any)?.error || "Failed to create product");
   }
-
   const data = await res.json();
-
-  if (!data?.id) {
-    throw new Error("Product created but no ID returned");
-  }
-
-  // ✅ Return direct object (consistent pattern)
-  return data;
+  if (!data?.id && !data?.product?.id) throw new Error("Product created but no ID returned");
+  return data.product || data;
 }
 
 /*
@@ -115,15 +128,8 @@ export async function createMonetizationModule(params: {
     .select()
     .single();
 
-  if (error) {
-    console.error(error);
-    throw new Error(error.message);
-  }
-
-  if (!data?.id) {
-    throw new Error("Module created but no ID returned");
-  }
-
+  if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("Module created but no ID returned");
   return data;
 }
 
@@ -133,31 +139,18 @@ GENERATE MODULE CONTENT
 ==========================================
 */
 
-export async function generateModuleContent(params: {
-  moduleId: string;
-}) {
-  if (!params.moduleId) {
-    throw new Error("Module ID is required");
-  }
-
+export async function generateModuleContent(params: { moduleId: string }) {
+  if (!params.moduleId) throw new Error("Module ID is required");
   const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=generate-module`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        moduleId: params.moduleId,
-      }),
-    }
-  );
-
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=generate-module`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ moduleId: params.moduleId }),
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error((err as any)?.error || "Generation failed");
   }
-
   return res.json();
 }
 
@@ -169,19 +162,11 @@ LIST PRODUCTS
 
 export async function listMonetizationProducts() {
   const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=list-products`,
-    {
-      method: "GET",
-      headers,
-    }
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch campaigns");
-  }
-
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=list-products`, {
+    method: "GET",
+    headers,
+  });
+  if (!res.ok) throw new Error("Failed to fetch campaigns");
   return res.json();
 }
 
@@ -192,26 +177,13 @@ GET MODULE + VERSIONS
 */
 
 export async function getModuleWithVersions(moduleId: string) {
-  if (!moduleId) {
-    throw new Error("Module ID required");
-  }
-
+  if (!moduleId) throw new Error("Module ID required");
   const headers = await getHeaders();
-
   const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${encodeURIComponent(
-      moduleId
-    )}`,
-    {
-      method: "GET",
-      headers,
-    }
+    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${encodeURIComponent(moduleId)}`,
+    { method: "GET", headers }
   );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch asset");
-  }
-
+  if (!res.ok) throw new Error("Failed to fetch asset");
   return res.json();
 }
 
@@ -227,21 +199,10 @@ export async function recordMonetizationMetric(
   metadata?: Record<string, unknown>
 ) {
   const headers = await getHeaders();
-
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=record-metric`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        moduleId,
-        eventType,
-        metadata,
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    console.error("Metric recording failed");
-  }
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ moduleId, eventType, metadata }),
+  });
+  if (!res.ok) console.error("Metric recording failed");
 }
