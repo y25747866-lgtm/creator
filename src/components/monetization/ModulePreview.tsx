@@ -49,13 +49,26 @@ export default function ModulePreview({
 
   const typeLabel =
     MODULE_TYPES.find(
-      (m) => m.value === module.module_type
-    )?.label || module.module_type;
+      (m) => m.value === module?.module_type
+    )?.label || module?.module_type || "Unknown";
+
+  /*
+  SAFE DATE FORMATTER
+  */
+  function safeFormatDate(value: any) {
+    try {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleString();
+    } catch {
+      return "—";
+    }
+  }
 
   /*
   LOAD MODULE
   */
-
   const loadModule = useCallback(async () => {
     try {
       setLoading(true);
@@ -65,7 +78,6 @@ export default function ModulePreview({
       if (!res?.versions || res.versions.length === 0) {
         setGenerating(true);
 
-        // ✅ FIX: only pass moduleId
         await generateModuleContent({
           moduleId: module.id,
         });
@@ -74,7 +86,9 @@ export default function ModulePreview({
         setGenerating(false);
       }
 
-      const safeVersions = res?.versions ?? [];
+      const safeVersions = Array.isArray(res?.versions)
+        ? res.versions
+        : [];
 
       setVersions(safeVersions);
 
@@ -95,13 +109,14 @@ export default function ModulePreview({
   }, [module.id, toast]);
 
   useEffect(() => {
-    loadModule();
-  }, [loadModule]);
+    if (module?.id) {
+      loadModule();
+    }
+  }, [loadModule, module?.id]);
 
   /*
   CURRENT VERSION
   */
-
   const currentVersion = useMemo(
     () =>
       versions.find(
@@ -111,17 +126,19 @@ export default function ModulePreview({
   );
 
   const markdown =
-    currentVersion?.content?.markdown ?? "";
+    typeof currentVersion?.content?.markdown === "string"
+      ? currentVersion.content.markdown
+      : "";
 
   /*
   COPY
   */
-
   async function handleCopy() {
+    if (!markdown) return;
+
     try {
       await navigator.clipboard.writeText(markdown);
       setCopied(true);
-
       setTimeout(() => setCopied(false), 2000);
 
       recordMonetizationMetric(module.id, "copy")
@@ -137,7 +154,6 @@ export default function ModulePreview({
   /*
   DOWNLOAD
   */
-
   function handleDownload() {
     if (!markdown) return;
 
@@ -164,12 +180,10 @@ export default function ModulePreview({
   /*
   REGENERATE
   */
-
   async function handleRegenerate() {
     try {
       setGenerating(true);
 
-      // ✅ FIX: only moduleId
       await generateModuleContent({
         moduleId: module.id,
       });
@@ -190,9 +204,8 @@ export default function ModulePreview({
   }
 
   /*
-  LOADING
+  LOADING UI
   */
-
   if (loading) {
     return (
       <Card className="p-8 space-y-4">
@@ -205,13 +218,9 @@ export default function ModulePreview({
   /*
   MAIN UI
   */
-
   return (
     <div className="space-y-6">
-      <Button
-        variant="outline"
-        onClick={onBack}
-      >
+      <Button variant="outline" onClick={onBack}>
         ← Back
       </Button>
 
@@ -220,15 +229,15 @@ export default function ModulePreview({
           <Badge>{typeLabel}</Badge>
 
           <h2 className="text-xl font-bold mt-1">
-            {module.title}
+            {module?.title ?? "Untitled"}
           </h2>
 
           {currentVersion && (
             <p className="text-xs text-muted-foreground">
               Created{" "}
-              {new Date(
+              {safeFormatDate(
                 currentVersion.created_at
-              ).toLocaleString()}
+              )}
             </p>
           )}
         </div>
@@ -306,4 +315,4 @@ export default function ModulePreview({
       </Card>
     </div>
   );
-}
+         }
