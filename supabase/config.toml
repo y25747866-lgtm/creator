@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.monetization]
 verify_jwt = false
+
+[functions.generate-marketing]
+verify_jwt = false

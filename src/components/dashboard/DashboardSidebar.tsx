@@ -29,8 +29,8 @@ const DashboardSidebar = () => {
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator" },
-    { icon: Package, label: "Monetization Engine", path: "/dashboard/monetization" },
-    { icon: BarChart3, label: "Analytics", path: "/dashboard/products" },
+    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio" },
+    { icon: BarChart3, label: "Sales Page Builder", path: "/dashboard/sales-page-builder" },
     { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];

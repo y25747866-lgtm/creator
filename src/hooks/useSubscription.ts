@@ -10,7 +10,9 @@ export function useSubscription() {
     loading: false,
     subscription: {
       plan_type: "pro",
-      status: "active"
+      status: "active",
+      started_at: new Date().toISOString(),
+      expires_at: null as string | null,
     }
   };
 }
