@@ -81,8 +81,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
     const initialStatuses: GenerationStatus[] = selectedModules.map(
       (mt) => ({
         moduleType: mt,
-        label:
-          MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
+        label: MODULE_TYPES.find((m) => m.value === mt)?.label || mt,
         status: "pending",
       })
     );
@@ -93,6 +92,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
       /* =========================
          CREATE PRODUCT
       ========================== */
+
       const product = await createMonetizationProduct({
         title,
         topic,
@@ -100,20 +100,22 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
         sourceType: "idea",
       });
 
+      // Defensive check (safe, but shouldn’t trigger now)
       if (!product?.id) {
-        throw new Error("Product creation failed — no ID returned");
+        throw new Error("Product creation failed");
       }
 
       /* =========================
          LOOP MODULES
       ========================== */
+
       for (let i = 0; i < selectedModules.length; i++) {
         const moduleType = selectedModules[i];
         const label =
-          MODULE_TYPES.find((m) => m.value === moduleType)
-            ?.label || moduleType;
+          MODULE_TYPES.find((m) => m.value === moduleType)?.label ||
+          moduleType;
 
-        // set generating
+        // Update to generating
         setStatuses((prev) =>
           prev.map((s, idx) =>
             idx === i ? { ...s, status: "generating" } : s
@@ -128,24 +130,24 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           });
 
           if (!module?.id) {
-            throw new Error(
-              "Module created but no ID returned"
-            );
+            throw new Error("Module creation failed");
           }
 
           await generateModuleContent({
             moduleId: module.id,
           });
 
-          // set done
+          // Mark done
           setStatuses((prev) =>
             prev.map((s, idx) =>
               idx === i ? { ...s, status: "done" } : s
             )
           );
-        } catch (err: any) {
+        } catch (err: unknown) {
           const message =
-            err?.message || "Module generation failed";
+            err instanceof Error
+              ? err.message
+              : "Module generation failed";
 
           setStatuses((prev) =>
             prev.map((s, idx) =>
@@ -164,11 +166,15 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
       }
 
       setStep("done");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unexpected error";
+
       toast({
         title: "Generation failed",
-        description:
-          err?.message || "Unexpected error",
+        description: message,
         variant: "destructive",
       });
 
@@ -252,25 +258,19 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           <Input
             placeholder="Campaign name"
             value={title}
-            onChange={(e) =>
-              setTitle(e.target.value)
-            }
+            onChange={(e) => setTitle(e.target.value)}
           />
 
           <Input
             placeholder="Topic"
             value={topic}
-            onChange={(e) =>
-              setTopic(e.target.value)
-            }
+            onChange={(e) => setTopic(e.target.value)}
           />
 
           <Textarea
             placeholder="Description"
             value={description}
-            onChange={(e) =>
-              setDescription(e.target.value)
-            }
+            onChange={(e) => setDescription(e.target.value)}
           />
 
           <Button onClick={handleGenerate}>
@@ -285,10 +285,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           <Progress value={progress} />
 
           {statuses.map((s, i) => (
-            <div
-              key={i}
-              className="flex gap-2 items-center"
-            >
+            <div key={i} className="flex gap-2 items-center">
               {s.status === "generating" && (
                 <Loader2 className="animate-spin w-4 h-4" />
               )}
@@ -325,10 +322,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
             {completed} assets created successfully
           </p>
 
-          <Button
-            onClick={onComplete}
-            className="w-full"
-          >
+          <Button onClick={onComplete} className="w-full">
             View Assets
           </Button>
         </div>
