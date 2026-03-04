@@ -35,20 +35,11 @@ export type ModuleType = typeof MODULE_TYPES[number]["value"];
 
 /*
 ==========================================
-CREATE PRODUCT (Diplomat core)
+CREATE PRODUCT
 ==========================================
 */
 
-type CreateProductParams = {
-  title: string;
-  topic: string;
-  description?: string;
-  sourceType?: string;
-};
-
-export async function createMonetizationProduct(params: CreateProductParams) {
-  console.log("🚀 [Diplomat] Creating product:", params);
-
+export async function createMonetizationProduct(params: any) {
   const headers = await getHeaders();
 
   const res = await fetch(
@@ -62,33 +53,29 @@ export async function createMonetizationProduct(params: CreateProductParams) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    console.error("❌ [Diplomat] Product creation failed:", err);
-    throw new Error(`Diplomat product creation failed: ${err.error || "Unknown error"}`);
+    throw new Error(err.error || "Failed to create product");
   }
 
   const data = await res.json();
 
   if (!data?.id) {
-    throw new Error("Diplomat product created but no ID returned");
+    throw new Error("Product created but no ID returned");
   }
 
-  console.log("✅ [Diplomat] Product created successfully:", data);
   return { product: data };
 }
 
 /*
 ==========================================
-CREATE MODULE (Diplomat core)
+CREATE MODULE
 ==========================================
 */
 
 export async function createMonetizationModule(params: {
   productId: string;
-  moduleType: ModuleType;
+  moduleType: string;
   title: string;
 }) {
-  console.log("🚀 [Diplomat] Creating module:", params);
-
   const { data, error } = await supabase
     .from("monetization_modules")
     .insert({
@@ -101,16 +88,49 @@ export async function createMonetizationModule(params: {
     .single();
 
   if (error) {
-    console.error("❌ [Diplomat] Module creation failed:", error);
-    throw new Error(`Diplomat module creation failed: ${error.message}`);
+    console.error(error);
+    throw new Error(error.message);
   }
 
   if (!data?.id) {
-    throw new Error("Diplomat module created but no ID returned");
+    throw new Error("Module created but no ID returned");
   }
 
-  console.log("✅ [Diplomat] Module created successfully:", data);
   return { module: data };
+}
+
+/*
+==========================================
+GENERATE MODULE CONTENT (FIXED)
+==========================================
+*/
+
+export async function generateModuleContent(params: {
+  moduleId: string;
+}) {
+  if (!params.moduleId) {
+    throw new Error("Module ID is required");
+  }
+
+  const headers = await getHeaders();
+
+  const res = await fetch(
+    `${BASE_URL}/functions/v1/monetization?action=generate-module`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        moduleId: params.moduleId,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Generation failed");
+  }
+
+  return res.json();
 }
 
 /*
@@ -147,7 +167,7 @@ export async function getModuleWithVersions(moduleId: string) {
   const headers = await getHeaders();
 
   const res = await fetch(
-    `\( {BASE_URL}/functions/v1/monetization?action=get-module&moduleId= \){moduleId}`,
+    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${moduleId}`,
     {
       method: "GET",
       headers,
@@ -186,4 +206,4 @@ export async function recordMonetizationMetric(
       }),
     }
   );
-}
+    }
