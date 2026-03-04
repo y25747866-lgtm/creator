@@ -31,10 +31,10 @@ export const MODULE_TYPES = [
     label: "Lead Magnet",
     description: "Free downloadable offer",
   },
-];
+] as const;
 
 /* ===============================
-   CREATE PRODUCT
+   CREATE PRODUCT (Diplomat core)
 ================================= */
 
 export async function createMonetizationProduct({
@@ -48,6 +48,8 @@ export async function createMonetizationProduct({
   description?: string;
   sourceType: string;
 }) {
+  console.log("🚀 [Diplomat] Creating product:", { title, topic, sourceType });
+
   const { data, error } = await supabase
     .from("monetization_products")
     .insert({
@@ -60,15 +62,16 @@ export async function createMonetizationProduct({
     .single();
 
   if (error) {
-    console.error("Product insert error:", error);
-    throw error;
+    console.error("❌ [Diplomat] Product creation failed:", error);
+    throw new Error(`Diplomat product creation failed: ${error.message}`);
   }
 
+  console.log("✅ [Diplomat] Product created successfully:", data);
   return data;
 }
 
 /* ===============================
-   CREATE MODULE
+   CREATE MODULE (Diplomat core)
 ================================= */
 
 export async function createMonetizationModule({
@@ -80,6 +83,8 @@ export async function createMonetizationModule({
   moduleType: ModuleType;
   title: string;
 }) {
+  console.log("🚀 [Diplomat] Creating module:", { productId, moduleType, title });
+
   const { data, error } = await supabase
     .from("monetization_modules")
     .insert({
@@ -92,33 +97,10 @@ export async function createMonetizationModule({
     .single();
 
   if (error) {
-    console.error("Module insert error:", error);
-    throw error;
+    console.error("❌ [Diplomat] Module creation failed:", error);
+    throw new Error(`Diplomat module creation failed: ${error.message}`);
   }
 
-  return data;
-}
-
-/* ===============================
-   GENERATE MODULE CONTENT
-================================= */
-
-export async function generateModuleContent({
-  moduleId,
-}: {
-  moduleId: string;
-}) {
-  const { data, error } = await supabase.functions.invoke(
-    "generate-module-content",
-    {
-      body: { moduleId },
-    }
-  );
-
-  if (error) {
-    console.error("Edge function error:", error);
-    throw error;
-  }
-
+  console.log("✅ [Diplomat] Module created successfully:", data);
   return data;
    }
