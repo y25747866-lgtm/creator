@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
 import MarketingStudio from "./pages/dashboard/MarketingStudio";
 import SalesPageBuilder from "./pages/dashboard/SalesPageBuilder";
+import AnalyticsDashboard from "./pages/dashboard/AnalyticsDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ViewableRoute from "./components/ViewableRoute";
 
@@ -88,6 +89,14 @@ const App = () => (
               element={
                 <ViewableRoute>
                   <SalesPageBuilder />
+                </ViewableRoute>
+              }
+            />
+            <Route
+              path="/dashboard/analytics"
+              element={
+                <ViewableRoute>
+                  <AnalyticsDashboard />
                 </ViewableRoute>
               }
             />

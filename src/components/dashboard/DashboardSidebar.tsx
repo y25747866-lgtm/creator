@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ExternalLink,
   LogOut,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const DashboardSidebar = () => {
     { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator" },
     { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio" },
     { icon: BarChart3, label: "Sales Page Builder", path: "/dashboard/sales-page-builder" },
+    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics" },
     { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];

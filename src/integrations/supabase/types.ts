@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analytics_data: {
+        Row: {
+          data: Json
+          data_type: string
+          fetched_at: string
+          id: string
+          period_end: string | null
+          period_start: string | null
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          data_type: string
+          fetched_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          platform: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          data_type?: string
+          fetched_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ebook_products: {
         Row: {
           created_at: string
@@ -236,6 +293,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_connections: {
+        Row: {
+          api_key_encrypted: string
+          connected_at: string
+          id: string
+          last_sync_at: string | null
+          platform: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          connected_at?: string
+          id?: string
+          last_sync_at?: string | null
+          platform: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          connected_at?: string
+          id?: string
+          last_sync_at?: string | null
+          platform?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       product_feedback: {
         Row: {
