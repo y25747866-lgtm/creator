@@ -88,40 +88,58 @@ const SalesPageBuilder = () => {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
-          <p className="text-muted-foreground mt-1">Generate conversion-focused sales page copy with AI.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight">Sales Page Builder</h1>
+          <p className="text-muted-foreground mt-2 text-base">Generate conversion-focused sales page copy with AI.</p>
         </div>
 
-        <Card className="p-6 space-y-4">
-          <Input
-            placeholder="Product Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={loading}
-          />
-          <Textarea
-            placeholder="Product Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={loading}
-            rows={3}
-          />
-          <Input
-            placeholder="Target Audience (optional)"
-            value={targetAudience}
-            onChange={(e) => setTargetAudience(e.target.value)}
-            disabled={loading}
-          />
-          <Input
-            placeholder="Offer Details (optional, e.g. pricing, bonuses)"
-            value={offerDetails}
-            onChange={(e) => setOfferDetails(e.target.value)}
-            disabled={loading}
-          />
-          <Button onClick={generate} disabled={loading} className="gap-2">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Generate 3 Sales Page Drafts
-          </Button>
+        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Product Title</label>
+            <Input
+              placeholder="Your product name"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+              className="h-12 text-base rounded-xl border-border/60 focus-visible:ring-primary/40"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Product Description</label>
+            <Textarea
+              placeholder="Describe what your product does"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={loading}
+              rows={4}
+              className="text-base rounded-xl border-border/60 focus-visible:ring-primary/40 min-h-[120px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Target Audience <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <Input
+              placeholder="Who is this product for?"
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              disabled={loading}
+              className="h-12 text-base rounded-xl border-border/60 focus-visible:ring-primary/40"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Offer Details <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <Input
+              placeholder="e.g. pricing, bonuses, guarantees"
+              value={offerDetails}
+              onChange={(e) => setOfferDetails(e.target.value)}
+              disabled={loading}
+              className="h-12 text-base rounded-xl border-border/60 focus-visible:ring-primary/40"
+            />
+          </div>
+          <div className="pt-2">
+            <Button onClick={generate} disabled={loading} className="gap-2 h-12 px-6 rounded-xl">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              Generate 3 Sales Page Drafts
+            </Button>
+          </div>
         </Card>
 
         <AnimatePresence>
@@ -135,7 +153,7 @@ const SalesPageBuilder = () => {
                   exit={{ opacity: 0, y: -20 }}
                   layout
                 >
-                  <Card className="p-6 space-y-5">
+                  <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-6 space-y-5">
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary">Sales Page Draft</Badge>
                       <div className="flex gap-2">
@@ -150,30 +168,32 @@ const SalesPageBuilder = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 divide-y divide-border/40">
                       <div>
                         <h3 className="text-xl font-bold">{draft.headline}</h3>
                         <p className="text-muted-foreground mt-1">{draft.subheadline}</p>
                       </div>
 
-                      <div>
+                      <div className="pt-4">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">The Problem</p>
-                        <p className="text-sm whitespace-pre-wrap">{draft.problem}</p>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.problem}</p>
                       </div>
 
-                      <div>
+                      <div className="pt-4">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">The Solution</p>
-                        <p className="text-sm whitespace-pre-wrap">{draft.solution}</p>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.solution}</p>
                       </div>
 
-                      <div>
+                      <div className="pt-4">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Benefits</p>
-                        <p className="text-sm whitespace-pre-wrap">{draft.benefits}</p>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.benefits}</p>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Call to Action</p>
-                        <p className="font-medium text-primary">{draft.cta}</p>
+                      <div className="pt-4">
+                        <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Call to Action</p>
+                          <p className="font-medium text-primary">{draft.cta}</p>
+                        </div>
                       </div>
                     </div>
                   </Card>

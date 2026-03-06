@@ -251,11 +251,11 @@ ${body.sourceContent || ""}
       { status: 400, headers: corsHeaders }
     );
 
-  } catch (err) {
-
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
     return new Response(
       JSON.stringify({
-        error: err.message
+        error: msg
       }),
       {
         status: 500,

@@ -89,10 +89,11 @@ Return markdown.
       }),
       { headers: corsHeaders }
     );
-  } catch (err) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
     return new Response(
       JSON.stringify({
-        error: err.message,
+        error: msg,
       }),
       { headers: corsHeaders, status: 500 }
     );

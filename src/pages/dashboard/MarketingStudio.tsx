@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Copy, Trash2, RefreshCw, CheckCircle2, Sparkles } from "lucide-react";
+import { Loader2, Copy, Trash2, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,28 +78,37 @@ const MarketingStudio = () => {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
-          <p className="text-muted-foreground mt-1">Generate platform-optimized marketing content with AI.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight">Marketing Studio</h1>
+          <p className="text-muted-foreground mt-2 text-base">Generate platform-optimized marketing content with AI.</p>
         </div>
 
-        <Card className="p-6 space-y-4">
-          <Input
-            placeholder="Title (e.g. Launch of my SaaS tool)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={loading}
-          />
-          <Textarea
-            placeholder="Description (what is your product/offer about?)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={loading}
-            rows={3}
-          />
-          <div className="flex gap-3 items-end flex-wrap">
-            <div className="w-48">
+        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Title</label>
+            <Input
+              placeholder="e.g. Launch of my SaaS tool"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+              className="h-12 text-base rounded-xl border-border/60 focus-visible:ring-primary/40"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Description</label>
+            <Textarea
+              placeholder="What is your product/offer about?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={loading}
+              rows={4}
+              className="text-base rounded-xl border-border/60 focus-visible:ring-primary/40 min-h-[120px]"
+            />
+          </div>
+          <div className="flex gap-4 items-end flex-wrap pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Platform</label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading}>
-                <SelectTrigger>
+                <SelectTrigger className="w-48 h-12 rounded-xl border-border/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -108,9 +117,9 @@ const MarketingStudio = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={generate} disabled={loading} className="gap-2">
+            <Button onClick={generate} disabled={loading} className="gap-2 h-12 px-6 rounded-xl">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              Generate 3 Posts
+              Generate Posts
             </Button>
           </div>
         </Card>
@@ -120,7 +129,7 @@ const MarketingStudio = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid gap-4 md:grid-cols-1"
+              className="space-y-4"
             >
               {results.map((result) => (
                 <motion.div
@@ -130,7 +139,7 @@ const MarketingStudio = () => {
                   exit={{ opacity: 0, y: -20 }}
                   layout
                 >
-                  <Card className="p-6 space-y-4">
+                  <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary">{platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
                       <div className="flex gap-2">
@@ -145,22 +154,22 @@ const MarketingStudio = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hook</p>
+                    <div className="space-y-4 divide-y divide-border/40">
+                      <div className="pt-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Hook</p>
                         <p className="font-medium">{result.hook}</p>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Main Copy</p>
-                        <p className="whitespace-pre-wrap text-sm">{result.main_copy}</p>
+                      <div className="pt-4">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Main Copy</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.main_copy}</p>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
+                      <div className="pt-4">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">CTA</p>
                         <p className="text-sm font-medium text-primary">{result.cta}</p>
                       </div>
                       {result.hashtags && (
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hashtags</p>
+                        <div className="pt-4">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Hashtags</p>
                           <p className="text-sm text-muted-foreground">{result.hashtags}</p>
                         </div>
                       )}
