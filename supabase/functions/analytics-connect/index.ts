@@ -79,9 +79,10 @@ serve(async (req) => {
     return new Response(JSON.stringify({ success: true, message: "Connected successfully" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("analytics-connect error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
