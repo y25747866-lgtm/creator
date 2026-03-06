@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,9 +18,10 @@ import { Button } from "@/components/ui/button";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
