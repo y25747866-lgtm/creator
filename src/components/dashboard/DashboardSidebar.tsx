@@ -51,19 +51,19 @@ const DashboardSidebar = () => {
       initial={false}
       animate={{ width: collapsed ? 80 : 280 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 bottom-0 z-40 glass-panel border-r border-border/50 flex flex-col"
+      className="fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border flex flex-col"
     >
       {/* Logo */}
-      <div className="p-4 border-b border-border/50">
+      <div className="p-5 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-3">
-          <img src={nexoraLogo} alt="NexoraOS" className="w-10 h-10 shrink-0" />
+          <img src={nexoraLogo} alt="NexoraOS" className="w-9 h-9 shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="font-bold text-xl"
+                className="font-bold text-lg text-sidebar-foreground"
               >
                 NexoraOS
               </motion.span>
@@ -73,29 +73,36 @@ const DashboardSidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link key={item.path} to={item.path}>
               <motion.div
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
                   isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
-                whileHover={{ x: collapsed ? 0 : 4 }}
+                whileHover={{ x: collapsed ? 0 : 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-primary")} />
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebar-indicator"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full"
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
+                <item.icon className={cn("w-[18px] h-[18px] shrink-0 ml-1", isActive && "text-primary")} />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="font-medium"
+                      className="text-sm"
                     >
                       {item.label}
                     </motion.span>
@@ -115,27 +122,27 @@ const DashboardSidebar = () => {
               exit={{ opacity: 0 }}
               className="pt-6"
             >
-              <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              <p className="px-3 text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest mb-2">
                 Start your digital business today
               </p>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <a
                   href="https://whop.com/?a=zm1a"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
                 >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  <span className="font-medium text-sm">Whop</span>
+                  <ExternalLink className="w-4 h-4 shrink-0 ml-1" />
+                  <span className="text-sm">Whop</span>
                 </a>
                 <a
                   href="https://payhip.com?fp_ref=yesh-malik48"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
                 >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  <span className="font-medium text-sm">Payhip</span>
+                  <ExternalLink className="w-4 h-4 shrink-0 ml-1" />
+                  <span className="text-sm">Payhip</span>
                 </a>
               </div>
             </motion.div>
@@ -144,24 +151,24 @@ const DashboardSidebar = () => {
       </nav>
 
       {/* Sign Out & Collapse */}
-      <div className="p-4 border-t border-border/50 space-y-2">
+      <div className="p-3 border-t border-sidebar-border space-y-1">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleSignOut}
           className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            "w-full text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 rounded-lg",
             collapsed ? "justify-center px-2" : "justify-start"
           )}
         >
-          <LogOut className="w-5 h-5 shrink-0" />
+          <LogOut className="w-[18px] h-[18px] shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="ml-2"
+                className="ml-2 text-sm"
               >
                 Sign Out
               </motion.span>
@@ -172,14 +179,14 @@ const DashboardSidebar = () => {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center"
+          className="w-full justify-center rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground"
         >
           {collapsed ? (
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-[18px] h-[18px]" />
           ) : (
             <>
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              <span>Collapse</span>
+              <ChevronLeft className="w-[18px] h-[18px] mr-2" />
+              <span className="text-sm">Collapse</span>
             </>
           )}
         </Button>

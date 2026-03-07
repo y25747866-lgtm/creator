@@ -76,39 +76,39 @@ const MarketingStudio = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-[900px] mx-auto space-y-6">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Marketing Studio</h1>
-          <p className="text-muted-foreground mt-2 text-base">Generate platform-optimized marketing content with AI.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
         </div>
 
-        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-8 space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">Title</label>
+        <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
             <Input
               placeholder="e.g. Launch of my SaaS tool"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={loading}
-              className="h-12 text-base rounded-xl border-border/60 focus-visible:ring-primary/40"
+              className="h-10 text-sm rounded-lg"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">Description</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</label>
             <Textarea
               placeholder="What is your product/offer about?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
               rows={4}
-              className="text-base rounded-xl border-border/60 focus-visible:ring-primary/40 min-h-[120px]"
+              className="text-sm rounded-lg min-h-[100px]"
             />
           </div>
-          <div className="flex gap-4 items-end flex-wrap pt-2">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Platform</label>
+          <div className="flex gap-3 items-end flex-wrap pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform</label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading}>
-                <SelectTrigger className="w-48 h-12 rounded-xl border-border/60">
+                <SelectTrigger className="w-44 h-10 rounded-lg text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -117,7 +117,7 @@ const MarketingStudio = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={generate} disabled={loading} className="gap-2 h-12 px-6 rounded-xl">
+            <Button onClick={generate} disabled={loading} className="gap-2 h-10 px-5 rounded-lg text-sm">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               Generate Posts
             </Button>
@@ -134,42 +134,42 @@ const MarketingStudio = () => {
               {results.map((result) => (
                 <motion.div
                   key={result.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
+                  exit={{ opacity: 0, y: -16 }}
                   layout
                 >
-                  <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-6 space-y-4">
+                  <Card className="rounded-2xl border border-border shadow-sm p-5 space-y-4">
                     <div className="flex items-center justify-between">
-                      <Badge variant="secondary">{platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1">
-                          {copiedId === result.id ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                      <Badge variant="secondary" className="text-[10px]">{platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8">
+                          {copiedId === result.id ? <CheckCircle2 className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
                           Copy
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => deleteResult(result.id)} className="gap-1 text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" onClick={() => deleteResult(result.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive">
+                          <Trash2 className="w-3.5 h-3.5" />
                           Delete
                         </Button>
                       </div>
                     </div>
 
-                    <div className="space-y-4 divide-y divide-border/40">
-                      <div className="pt-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Hook</p>
-                        <p className="font-medium">{result.hook}</p>
+                    <div className="space-y-3 divide-y divide-border/50">
+                      <div className="pt-1">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hook</p>
+                        <p className="font-medium text-sm">{result.hook}</p>
                       </div>
-                      <div className="pt-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Main Copy</p>
+                      <div className="pt-3">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Main Copy</p>
                         <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.main_copy}</p>
                       </div>
-                      <div className="pt-4">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">CTA</p>
+                      <div className="pt-3">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
                         <p className="text-sm font-medium text-primary">{result.cta}</p>
                       </div>
                       {result.hashtags && (
-                        <div className="pt-4">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Hashtags</p>
+                        <div className="pt-3">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hashtags</p>
                           <p className="text-sm text-muted-foreground">{result.hashtags}</p>
                         </div>
                       )}
