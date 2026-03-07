@@ -82,12 +82,12 @@ const PricingSection = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Simple, Transparent <span className="gradient-text">Pricing</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
             Start free. Upgrade when you're ready to export and grow your digital business.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+        <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto items-start">
           {PLANS.map((plan, index) => (
             <motion.div
               key={plan.id}
@@ -95,71 +95,71 @@ const PricingSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               viewport={{ once: true }}
-              whileHover={{ y: -4 }}
-              className={plan.popular ? "md:-mt-4 md:mb-4" : ""}
+              whileHover={{ y: -3 }}
+              className={plan.popular ? "md:-mt-3 md:mb-3" : ""}
             >
               <Card
-                className={`bg-card p-8 relative h-full flex flex-col rounded-2xl border transition-shadow duration-300 ${
+                className={`bg-card p-7 relative h-full flex flex-col rounded-2xl border transition-all duration-200 ${
                   plan.popular
-                    ? "border-primary/50 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/15"
-                    : "border-border/60 shadow-sm hover:shadow-md"
+                    ? "border-primary/40 shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/15"
+                    : "border-border shadow-sm hover:shadow-md"
                 }`}
               >
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-primary text-primary-foreground text-xs font-semibold px-4 py-1.5 rounded-full whitespace-nowrap">
+                    <span className="bg-primary text-primary-foreground text-[10px] font-semibold px-3.5 py-1 rounded-full whitespace-nowrap">
                       {plan.badge}
                     </span>
                   </div>
                 )}
 
-                <div className="text-center mb-6">
+                <div className="text-center mb-5">
                   <div
-                    className={`inline-flex p-3 rounded-xl mb-4 ${
+                    className={`inline-flex p-2.5 rounded-xl mb-3 ${
                       plan.popular ? "bg-primary/10" : "bg-muted"
                     }`}
                   >
                     <plan.icon
-                      className={`w-6 h-6 ${
+                      className={`w-5 h-5 ${
                         plan.popular ? "text-primary" : "text-muted-foreground"
                       }`}
                     />
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <h3 className="text-xl font-bold mb-1.5">{plan.name}</h3>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
+                    <span className="text-3xl font-bold">{plan.price}</span>
+                    {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-1.5">
                     {plan.description}
                   </p>
                 </div>
 
-                <div className="border-t border-border/40 my-2" />
+                <div className="border-t border-border/40 my-1" />
 
-                <ul className="space-y-3 mb-8 flex-1 pt-4">
+                <ul className="space-y-2.5 mb-6 flex-1 pt-3">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
+                    <li key={i} className="flex items-start gap-2.5">
                       {feature.included ? (
-                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
                       ) : (
-                        <X className="w-4 h-4 text-muted-foreground/50 shrink-0 mt-0.5" />
+                        <X className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 mt-0.5" />
                       )}
-                      <span className={`text-sm ${feature.included ? "" : "text-muted-foreground/60"}`}>{feature.text}</span>
+                      <span className={`text-sm ${feature.included ? "" : "text-muted-foreground/50"}`}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Button
                   size="lg"
-                  className="w-full rounded-xl h-12"
+                  className="w-full rounded-lg h-10 text-sm"
                   variant={plan.popular ? "default" : "outline"}
                   onClick={() => navigate(plan.route)}
                 >
                   {plan.cta}
                 </Button>
                 {plan.note && (
-                  <p className="text-xs text-muted-foreground text-center mt-3">{plan.note}</p>
+                  <p className="text-[10px] text-muted-foreground text-center mt-2.5">{plan.note}</p>
                 )}
               </Card>
             </motion.div>

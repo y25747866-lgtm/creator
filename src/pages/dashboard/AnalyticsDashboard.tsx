@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Link2, Unlink, RefreshCw, DollarSign, ShoppingCart, Package, TrendingUp,
-  Send, Bot, User, Loader2, BarChart3, MessageSquare,
+  Send, Bot, User, Loader2, BarChart3,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from "recharts";
+import whopLogo from "@/assets/whop-logo.png";
+import payhipLogo from "@/assets/payhip-logo.png";
 
 // ─── Types ───
 interface PlatformConnection {
@@ -45,13 +47,13 @@ const PLATFORMS = [
     id: "whop",
     name: "Whop",
     description: "Connect your Whop store to track memberships, products, and revenue.",
-    logo: "https://cdn.whop.com/images/logo/whop-logo-icon-dark.png",
+    logo: whopLogo,
   },
   {
     id: "payhip",
     name: "Payhip",
     description: "Connect Payhip to track digital product sales and downloads.",
-    logo: "https://payhip.com/favicon.ico",
+    logo: payhipLogo,
   },
 ];
 
@@ -163,45 +165,45 @@ const AnalyticsDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-[1400px] mx-auto">
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Analytics Hub</h1>
-          <p className="text-muted-foreground mt-2 text-base">Connect your platforms, analyze sales, and get AI-powered business insights.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics Hub</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Connect your platforms, analyze sales, and get AI-powered business insights.</p>
         </div>
 
         {/* ─── Platform Connections ─── */}
-        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-8">
-          <h2 className="text-lg font-semibold mb-5">Platform Connections</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <Card className="rounded-2xl border border-border shadow-sm p-6">
+          <h2 className="text-base font-semibold mb-4">Platform Connections</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PLATFORMS.map((p) => {
               const connected = isConnected(p.id);
               const conn = connections.find((c) => c.platform === p.id);
               return (
-                <div key={p.id} className={`flex items-center gap-4 p-5 rounded-xl border transition-all ${connected ? "border-primary/30 bg-primary/5" : "border-border/50 bg-muted/30"}`}>
-                  <div className="w-12 h-12 rounded-xl bg-background border border-border/50 flex items-center justify-center shrink-0 p-2">
-                    <img src={p.logo} alt={p.name} className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <div key={p.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 ${connected ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:border-border/80"}`}>
+                  <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={p.logo} alt={p.name} className="w-8 h-8 object-contain rounded-lg" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{p.name}</h3>
-                      <Badge variant={connected ? "default" : "secondary"} className="text-xs">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="font-semibold text-sm">{p.name}</h3>
+                      <Badge variant={connected ? "default" : "secondary"} className="text-[10px] px-2 py-0">
                         {connected ? "Connected" : "Not Connected"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{p.description}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>
                     {conn?.last_sync_at && (
-                      <p className="text-xs text-muted-foreground mt-1">Last synced: {new Date(conn.last_sync_at).toLocaleString()}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Last synced: {new Date(conn.last_sync_at).toLocaleString()}</p>
                     )}
                   </div>
                   <div className="shrink-0">
                     {connected ? (
-                      <Button variant="outline" size="sm" onClick={() => handleDisconnect(p.id)} className="rounded-xl h-10 px-4">
-                        <Unlink className="w-4 h-4 mr-1.5" /> Disconnect
+                      <Button variant="outline" size="sm" onClick={() => handleDisconnect(p.id)} className="rounded-lg h-9 px-3 text-xs">
+                        <Unlink className="w-3.5 h-3.5 mr-1.5" /> Disconnect
                       </Button>
                     ) : (
-                      <Button size="sm" onClick={() => setConnectModal(p.id)} className="rounded-xl h-10 px-5">
-                        <Link2 className="w-4 h-4 mr-1.5" /> Connect
+                      <Button size="sm" onClick={() => setConnectModal(p.id)} className="rounded-lg h-9 px-4 text-xs">
+                        <Link2 className="w-3.5 h-3.5 mr-1.5" /> Connect
                       </Button>
                     )}
                   </div>
@@ -212,12 +214,12 @@ const AnalyticsDashboard = () => {
         </Card>
 
         {/* ─── Analytics Dashboard ─── */}
-        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl p-8">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold">Dashboard</h2>
+        <Card className="rounded-2xl border border-border shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold">Dashboard</h2>
             <div className="flex items-center gap-2">
               <Select value={platformFilter} onValueChange={(v) => setPlatformFilter(v)}>
-                <SelectTrigger className="w-[140px] rounded-xl h-10">
+                <SelectTrigger className="w-[130px] rounded-lg h-9 text-xs">
                   <SelectValue placeholder="Platform" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,38 +228,38 @@ const AnalyticsDashboard = () => {
                   <SelectItem value="payhip">Payhip</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={fetchAnalyticsData} disabled={loadingData || connections.length === 0} className="rounded-xl h-10 px-4">
-                <RefreshCw className={`w-4 h-4 mr-1.5 ${loadingData ? "animate-spin" : ""}`} /> Refresh
+              <Button variant="outline" size="sm" onClick={fetchAnalyticsData} disabled={loadingData || connections.length === 0} className="rounded-lg h-9 px-3 text-xs">
+                <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loadingData ? "animate-spin" : ""}`} /> Refresh
               </Button>
             </div>
           </div>
 
           {connections.length === 0 && !loadingConnections ? (
             <div className="py-16 text-center">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-                <BarChart3 className="w-8 h-8 text-muted-foreground" />
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <BarChart3 className="w-7 h-7 text-muted-foreground/60" />
               </div>
-              <h3 className="font-semibold text-lg mb-1">No platforms connected</h3>
-              <p className="text-muted-foreground text-sm">Connect Whop or Payhip above to start tracking your sales data.</p>
+              <h3 className="font-semibold text-sm mb-1">No platforms connected</h3>
+              <p className="text-muted-foreground text-xs max-w-sm mx-auto">Connect Whop or Payhip above to start tracking your sales data.</p>
             </div>
           ) : (
             <>
               {/* Metric Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                 {[
                   { label: "Total Revenue", value: analytics ? `$${analytics.summary.totalRevenue.toFixed(2)}` : "—", icon: DollarSign, color: "text-emerald-500" },
                   { label: "Total Sales", value: analytics?.summary.totalSales ?? "—", icon: ShoppingCart, color: "text-blue-500" },
                   { label: "Active Products", value: analytics?.summary.activeProducts ?? "—", icon: Package, color: "text-purple-500" },
                   { label: "Conversion Rate", value: analytics ? `${analytics.summary.conversionRate}%` : "—", icon: TrendingUp, color: "text-amber-500" },
                 ].map((m) => (
-                  <div key={m.label} className="p-5 rounded-xl border border-border/50 bg-muted/20">
+                  <div key={m.label} className="p-4 rounded-xl border border-border bg-card">
                     {loadingData ? (
-                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-14 w-full" />
                     ) : (
                       <>
-                        <div className="flex items-center gap-2 mb-2">
-                          <m.icon className={`w-4 h-4 ${m.color}`} />
-                          <span className="text-sm text-muted-foreground">{m.label}</span>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
+                          <span className="text-xs text-muted-foreground">{m.label}</span>
                         </div>
                         <p className="text-2xl font-bold">{m.value}</p>
                       </>
@@ -269,35 +271,35 @@ const AnalyticsDashboard = () => {
               {/* Charts */}
               {salesChartData.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                  <div className="rounded-xl border border-border/50 p-5">
-                    <h3 className="text-sm font-semibold mb-3">Revenue Trend</h3>
-                    <div className="h-64">
+                  <div className="rounded-xl border border-border p-4">
+                    <h3 className="text-xs font-semibold mb-3 text-muted-foreground">Revenue Trend</h3>
+                    <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={salesChartData}>
                           <defs>
                             <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
                               <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                          <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                          <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
                           <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#revGrad)" strokeWidth={2} name="Revenue ($)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border/50 p-5">
-                    <h3 className="text-sm font-semibold mb-3">Sales Volume</h3>
-                    <div className="h-64">
+                  <div className="rounded-xl border border-border p-4">
+                    <h3 className="text-xs font-semibold mb-3 text-muted-foreground">Sales Volume</h3>
+                    <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={salesChartData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                          <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                          <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
                           <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Sales" />
                         </BarChart>
                       </ResponsiveContainer>
@@ -308,18 +310,18 @@ const AnalyticsDashboard = () => {
 
               {/* Tables */}
               <Tabs defaultValue="products">
-                <TabsList>
-                  <TabsTrigger value="products">Products</TabsTrigger>
-                  <TabsTrigger value="orders">Sales History</TabsTrigger>
+                <TabsList className="mb-3">
+                  <TabsTrigger value="products" className="text-xs">Products</TabsTrigger>
+                  <TabsTrigger value="orders" className="text-xs">Sales History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="products">
-                  <div className="rounded-xl border border-border/50 overflow-hidden">
+                  <div className="rounded-xl border border-border overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Platform</TableHead>
+                          <TableHead className="text-xs">Product</TableHead>
+                          <TableHead className="text-xs">Price</TableHead>
+                          <TableHead className="text-xs">Platform</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -328,27 +330,27 @@ const AnalyticsDashboard = () => {
                         ) : analytics?.products?.length ? (
                           analytics.products.map((p, i) => (
                             <TableRow key={i}>
-                              <TableCell className="font-medium">{p.name}</TableCell>
-                              <TableCell>${p.price || "N/A"}</TableCell>
-                              <TableCell><Badge variant="outline" className="capitalize">{p.platform}</Badge></TableCell>
+                              <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                              <TableCell className="text-sm">${p.price || "N/A"}</TableCell>
+                              <TableCell><Badge variant="outline" className="capitalize text-[10px]">{p.platform}</Badge></TableCell>
                             </TableRow>
                           ))
                         ) : (
-                          <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No products found</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8 text-sm">No products found</TableCell></TableRow>
                         )}
                       </TableBody>
                     </Table>
                   </div>
                 </TabsContent>
                 <TabsContent value="orders">
-                  <div className="rounded-xl border border-border/50 overflow-hidden">
+                  <div className="rounded-xl border border-border overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Platform</TableHead>
+                          <TableHead className="text-xs">Product</TableHead>
+                          <TableHead className="text-xs">Amount</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-xs">Platform</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -357,14 +359,14 @@ const AnalyticsDashboard = () => {
                         ) : analytics?.orders?.length ? (
                           analytics.orders.map((o, i) => (
                             <TableRow key={i}>
-                              <TableCell className="font-medium">{o.product}</TableCell>
-                              <TableCell>${o.amount?.toFixed(2)}</TableCell>
-                              <TableCell>{o.date ? new Date(o.date).toLocaleDateString() : "N/A"}</TableCell>
-                              <TableCell><Badge variant="outline" className="capitalize">{o.platform}</Badge></TableCell>
+                              <TableCell className="font-medium text-sm">{o.product}</TableCell>
+                              <TableCell className="text-sm">${o.amount?.toFixed(2)}</TableCell>
+                              <TableCell className="text-sm">{o.date ? new Date(o.date).toLocaleDateString() : "N/A"}</TableCell>
+                              <TableCell><Badge variant="outline" className="capitalize text-[10px]">{o.platform}</Badge></TableCell>
                             </TableRow>
                           ))
                         ) : (
-                          <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No sales history found</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8 text-sm">No sales history found</TableCell></TableRow>
                         )}
                       </TableBody>
                     </Table>
@@ -376,75 +378,75 @@ const AnalyticsDashboard = () => {
         </Card>
 
         {/* ─── AI Business Assistant ─── */}
-        <Card className="bg-card shadow-sm border border-border/60 rounded-2xl overflow-hidden">
-          <div className="p-6 pb-4 border-b border-border/40">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+        <Card className="rounded-2xl border border-border shadow-sm overflow-hidden">
+          <div className="p-5 pb-3 border-b border-border">
+            <h2 className="text-base font-semibold flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Bot className="w-4 h-4 text-primary" />
               </div>
               AI Business Assistant
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">Ask questions about your sales data and get personalized business advice.</p>
+            <p className="text-xs text-muted-foreground mt-1 ml-[42px]">Ask questions about your sales data and get personalized business advice.</p>
           </div>
-          <ScrollArea className="h-[400px]">
-            <div className="p-5 space-y-4">
+          <ScrollArea className="h-[360px]">
+            <div className="p-5 space-y-3">
               {chatMessages.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                    <Bot className="w-7 h-7 text-primary" />
+                <div className="text-center py-10">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+                    <Bot className="w-6 h-6 text-primary" />
                   </div>
-                  <p className="text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
+                  <p className="text-sm text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) => (
-                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-full text-xs h-8 px-4">{q}</Button>
+                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-full text-[11px] h-7 px-3 hover:bg-primary/5 hover:border-primary/30 transition-colors">{q}</Button>
                     ))}
                   </div>
                 </div>
               )}
               {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-primary" />
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Bot className="w-3.5 h-3.5 text-primary" />
                     </div>
                   )}
-                  <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-sm"
-                      : "bg-muted rounded-bl-sm"
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted rounded-bl-md"
                   }`}>
                     {msg.content}
                   </div>
                   {msg.role === "user" && (
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="w-3.5 h-3.5" />
                     </div>
                   )}
                 </div>
               ))}
               {chatLoading && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="w-4 h-4 text-primary" />
+                <div className="flex gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Bot className="w-3.5 h-3.5 text-primary" />
                   </div>
-                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                  <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5">
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
           </ScrollArea>
-          <div className="border-t border-border/40 p-4">
+          <div className="border-t border-border p-4">
             <form onSubmit={(e) => { e.preventDefault(); handleSendChat(); }} className="flex gap-2">
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask about your business..."
                 disabled={chatLoading}
-                className="flex-1 h-12 rounded-xl border-border/60 focus-visible:ring-primary/40 text-base"
+                className="flex-1 h-10 rounded-lg text-sm"
               />
-              <Button type="submit" disabled={chatLoading || !chatInput.trim()} className="h-12 w-12 rounded-xl p-0">
+              <Button type="submit" disabled={chatLoading || !chatInput.trim()} className="h-10 w-10 rounded-lg p-0">
                 <Send className="w-4 h-4" />
               </Button>
             </form>
@@ -454,7 +456,7 @@ const AnalyticsDashboard = () => {
 
       {/* ─── Connect Modal ─── */}
       <Dialog open={!!connectModal} onOpenChange={() => { setConnectModal(null); setApiKeyInput(""); }}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Connect {connectModal ? PLATFORMS.find((p) => p.id === connectModal)?.name : ""}</DialogTitle>
             <DialogDescription>Enter your API key to connect your account. Your key is stored securely.</DialogDescription>
@@ -465,13 +467,13 @@ const AnalyticsDashboard = () => {
               placeholder="Paste your API key here..."
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
-              className="h-12 rounded-xl"
+              className="h-10 rounded-lg"
             />
             <div className="text-xs text-muted-foreground">
               {connectModal === "whop" && "Find your API key in Whop Dashboard → Developer Settings → API Keys"}
               {connectModal === "payhip" && "Find your API key in Payhip → Account Settings → API"}
             </div>
-            <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="w-full h-12 rounded-xl">
+            <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="w-full h-10 rounded-lg">
               {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
               {connecting ? "Verifying..." : "Connect Account"}
             </Button>
