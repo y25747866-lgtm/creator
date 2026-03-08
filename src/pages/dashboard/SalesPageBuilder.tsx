@@ -131,12 +131,9 @@ const SalesPageBuilder = () => {
         {isFreePlan && !accessLoading && (
           <UpgradeOverlay message="The Sales Page Builder is available on Creator and Pro plans. Upgrade to start generating high-converting sales pages." />
         )}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
           <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>
-          {isFreePlan && remaining !== null && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {remaining > 0 ? `${remaining} generation${remaining === 1 ? "" : "s"} remaining today` : "Daily limit reached — upgrade to continue"}
-            </p>
-          )}
         </div>
 
         <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
