@@ -34,8 +34,7 @@ const SalesPageBuilder = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
-
+  const { recordUsage, getRemainingUses, isFreePlan, hasPaidSubscription, loading: accessLoading } = useFeatureAccess();
   // Load saved results
   useEffect(() => {
     if (!user) return;
