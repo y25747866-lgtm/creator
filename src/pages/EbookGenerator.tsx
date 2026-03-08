@@ -450,7 +450,7 @@ const EbookGenerator = () => {
           )}
         </AnimatePresence>
       </div>
-      {isFreeUser && <TrialExpiredModal open={expired} />}
+      
     </div>
   );
 };
