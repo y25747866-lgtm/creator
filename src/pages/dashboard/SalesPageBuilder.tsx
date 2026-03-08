@@ -127,9 +127,10 @@ const SalesPageBuilder = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[900px] mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
+      <div className="relative max-w-[900px] mx-auto space-y-6">
+        {isFreePlan && !accessLoading && (
+          <UpgradeOverlay message="The Sales Page Builder is available on Creator and Pro plans. Upgrade to start generating high-converting sales pages." />
+        )}
           <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>
           {isFreePlan && remaining !== null && (
             <p className="text-xs text-muted-foreground mt-1">
