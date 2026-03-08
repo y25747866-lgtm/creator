@@ -8,6 +8,35 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, webhook-id, webhook-signature, webhook-timestamp",
 };
 
+type SubscriptionPlan = "creator" | "pro";
+
+function decodeBase64ToArrayBuffer(base64Value: string): ArrayBuffer {
+  const decoded = atob(base64Value);
+  const bytes = new Uint8Array(decoded.length);
+
+  for (let i = 0; i < decoded.length; i++) {
+    bytes[i] = decoded.charCodeAt(i);
+  }
+
+  return bytes.buffer;
+}
+
+function resolveWebhookSecretKey(secret: string): string | ArrayBuffer {
+  const trimmed = secret.trim();
+
+  // Whop standard format: whsec_<base64>
+  if (trimmed.startsWith("whsec_")) {
+    return decodeBase64ToArrayBuffer(trimmed.slice(6));
+  }
+
+  // Backwards compatibility for plain/base64 strings
+  try {
+    return decodeBase64ToArrayBuffer(trimmed);
+  } catch {
+    return trimmed;
+  }
+}
+
 function verifyWhopSignature(
   rawBody: string,
   headers: Headers,
@@ -30,14 +59,9 @@ function verifyWhopSignature(
       return false;
     }
 
-    // The secret from Whop starts with "whsec_" – strip prefix and base64-decode
-    const secretBytes = Uint8Array.from(
-      atob(secret.startsWith("whsec_") ? secret.slice(6) : secret),
-      (c) => c.charCodeAt(0),
-    );
-
+    const key = resolveWebhookSecretKey(secret);
     const toSign = `${msgId}.${timestamp}.${rawBody}`;
-    const hmac = createHmac("sha256", secretBytes);
+    const hmac = createHmac("sha256", key);
     hmac.update(toSign);
     const expectedSig = `v1,${hmac.digest("base64")}`;
 
@@ -48,6 +72,17 @@ function verifyWhopSignature(
     console.error("Signature verification error:", err);
     return false;
   }
+}
+
+function resolvePlanType(data: any): SubscriptionPlan {
+  const planId = data?.plan?.id || data?.product?.id || "";
+  const planName = `${data?.plan?.name || ""} ${data?.product?.name || ""}`.toLowerCase();
+
+  if (planId === "plan_PFB3YG5Pyzlme" || planName.includes("pro")) {
+    return "pro";
+  }
+
+  return "creator";
 }
 
 serve(async (req) => {
@@ -86,7 +121,6 @@ serve(async (req) => {
     // ── Activation ──────────────────────────────────────────────
     if (action === "membership.went_valid" || action === "payment.succeeded") {
       const email = data?.user?.email || data?.email;
-      const planId = data?.plan?.id || data?.product?.id;
 
       if (!email) {
         return new Response(
@@ -95,8 +129,9 @@ serve(async (req) => {
         );
       }
 
-      let planType = "monthly";
-      if (planId === "plan_xNlBWUTysLURE") planType = "annual";
+      const planType = resolvePlanType(data);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const whopUserId = data?.user?.id || data?.user_id || null;
 
       // Look up user
       const { data: profile, error: profileError } = await supabase
@@ -112,13 +147,6 @@ serve(async (req) => {
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-
-      const expiresAt =
-        planType === "annual"
-          ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-      const whopUserId = data?.user?.id || data?.user_id || null;
 
       const { error: subError } = await supabase
         .from("subscriptions")
@@ -164,7 +192,7 @@ serve(async (req) => {
         if (profile) {
           await supabase
             .from("subscriptions")
-            .update({ status: "cancelled" })
+            .update({ status: "cancelled", expires_at: new Date().toISOString() })
             .eq("user_id", profile.user_id);
 
           console.log("Subscription cancelled:", email);
@@ -191,3 +219,4 @@ serve(async (req) => {
     );
   }
 });
+
