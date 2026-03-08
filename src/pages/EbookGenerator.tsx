@@ -12,8 +12,8 @@ import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
-import { useFreeTrial } from "@/hooks/useFreeTrial";
-import TrialExpiredModal from "@/components/TrialExpiredModal";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
