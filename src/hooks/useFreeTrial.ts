@@ -1,12 +1,10 @@
 import { useSubscription } from "./useSubscription";
 
 export function useFreeTrial() {
-  const { hasActiveSubscription, loading: subLoading, subscription } = useSubscription();
-
-  const isFreeUser = !subLoading && (!hasActiveSubscription || subscription?.plan_type === "free");
+  const { hasPaidSubscription, loading: subLoading, isFreePlan } = useSubscription();
 
   return {
-    isFreeUser,
+    isFreeUser: !subLoading && isFreePlan,
     expired: false,
     remainingMs: Infinity,
     remainingMinutes: Infinity,
