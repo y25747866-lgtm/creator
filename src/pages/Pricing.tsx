@@ -10,6 +10,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useToast } from "@/hooks/use-toast";
+import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
 
 const PAYMENT_LINKS = {
   creator: "https://whop.com/checkout/5q5mTvNs1ODMBL3RPr-Z5Wp-Zly1-KwwP-lGktR6dgK7UO/",
@@ -129,11 +130,14 @@ const Pricing = () => {
     try {
       const { data } = await supabase
         .from("subscriptions")
-        .select("id, status, plan_type")
+        .select("id, status, plan_type, expires_at, updated_at")
         .eq("user_id", user.id)
-        .eq("status", "active")
-        .limit(1);
-      const paid = data?.find((s: any) => s.plan_type === "creator" || s.plan_type === "pro");
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const paid = !!data && isSubscriptionActive(data) && isPaidPlan(normalizePlanType(data.plan_type));
+
       if (paid) {
         navigate("/dashboard", { replace: true });
       } else {
@@ -144,6 +148,7 @@ const Pricing = () => {
     }
     setCheckingAccess(false);
   };
+
 
   useEffect(() => {
     if (!purchaseStarted || !isReady) return;
