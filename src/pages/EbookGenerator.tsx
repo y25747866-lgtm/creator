@@ -74,7 +74,8 @@ const EbookGenerator = () => {
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const navigate = useNavigate();
-  const { isFreeUser, expired } = useFreeTrial();
+  const { canUseFeature, recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
+  const { isFreePlan: isFreeUser } = useSubscription();
 
   const isGenerating = step !== "idle" && step !== "complete";
 
