@@ -25,20 +25,45 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
 
-    const { platform, apiKey } = await req.json();   // ← your Whop modal sends this
+    const { platform, apiKey, action } = await req.json();
 
-    if (platform !== "whop") throw new Error("Only Whop supported in this modal");
+    // Handle disconnect
+    if (action === "disconnect") {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await supabaseAdmin
+        .from("platform_connections")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("platform", platform);
 
-    if (!apiKey) throw new Error("API key is required");
+      return new Response(
+        JSON.stringify({ success: true, message: "Disconnected" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Verify with the exact endpoint from your GitHub code
-    const res = await fetch("https://api.whop.com/api/v5/company", {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    if (!platform || !apiKey) throw new Error("Platform and API key are required");
 
-    if (!res.ok) throw new Error("Invalid Whop API key");
+    // Verify API key based on platform
+    if (platform === "whop") {
+      const res = await fetch("https://api.whop.com/api/v5/company", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!res.ok) throw new Error("Invalid Whop API key");
+    } else if (platform === "payhip") {
+      // Payhip API verification
+      const res = await fetch("https://payhip.com/api/v1/products", {
+        headers: { "payhip-api-key": apiKey },
+      });
+      if (!res.ok) throw new Error("Invalid Payhip API key");
+    } else {
+      throw new Error("Unsupported platform");
+    }
 
-    // Use SERVICE ROLE for insert (bypasses RLS)
+    // Use SERVICE ROLE for upsert (bypasses RLS)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -48,15 +73,15 @@ serve(async (req) => {
       .from("platform_connections")
       .upsert({
         user_id: user.id,
-        platform: "whop",
-        api_key: apiKey,                 // ← matches your table column
+        platform,
+        api_key_encrypted: apiKey,
         status: "connected",
         connected_at: new Date().toISOString(),
       }, { onConflict: "user_id,platform" });
 
     if (upsertError) throw upsertError;
 
-    console.log(`✅ Whop connected for user ${user.id}`);
+    console.log(`✅ ${platform} connected for user ${user.id}`);
 
     return new Response(
       JSON.stringify({ success: true, message: "Connected successfully" }),
@@ -68,10 +93,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ error: msg }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

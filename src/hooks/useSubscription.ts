@@ -12,6 +12,8 @@ interface Subscription {
   whop_user_id: string | null;
 }
 
+export type PlanType = "free" | "creator" | "pro";
+
 export function useSubscription() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -36,7 +38,7 @@ export function useSubscription() {
         .maybeSingle();
 
       if (!error && data) {
-        // Check expiration
+        // Check expiration (free plans have no expiry)
         const isExpired = data.expires_at && new Date(data.expires_at) < new Date();
         setSubscription(isExpired ? null : data);
       } else {
@@ -48,9 +50,17 @@ export function useSubscription() {
     fetchSubscription();
   }, [user]);
 
+  const planType: PlanType = (subscription?.plan_type as PlanType) || "free";
+  const isPaidPlan = planType === "creator" || planType === "pro";
+
   return {
     hasActiveSubscription: !!subscription,
+    hasPaidSubscription: isPaidPlan,
     loading,
     subscription,
+    planType,
+    isFreePlan: planType === "free",
+    isCreatorPlan: planType === "creator",
+    isProPlan: planType === "pro",
   };
 }
