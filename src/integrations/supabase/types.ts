@@ -71,6 +71,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_usage: {
+        Row: {
+          count: number
+          feature: string
+          id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          feature: string
+          id?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          feature?: string
+          id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ebook_products: {
         Row: {
           created_at: string
@@ -464,6 +488,75 @@ export type Database = {
           email?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_marketing_results: {
+        Row: {
+          created_at: string
+          cta: string
+          hashtags: string | null
+          hook: string
+          id: string
+          main_copy: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cta?: string
+          hashtags?: string | null
+          hook?: string
+          id?: string
+          main_copy?: string
+          platform?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cta?: string
+          hashtags?: string | null
+          hook?: string
+          id?: string
+          main_copy?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_sales_page_results: {
+        Row: {
+          benefits: string
+          created_at: string
+          cta: string
+          headline: string
+          id: string
+          problem: string
+          solution: string
+          subheadline: string
+          user_id: string
+        }
+        Insert: {
+          benefits?: string
+          created_at?: string
+          cta?: string
+          headline?: string
+          id?: string
+          problem?: string
+          solution?: string
+          subheadline?: string
+          user_id: string
+        }
+        Update: {
+          benefits?: string
+          created_at?: string
+          cta?: string
+          headline?: string
+          id?: string
+          problem?: string
+          solution?: string
+          subheadline?: string
           user_id?: string
         }
         Relationships: []
