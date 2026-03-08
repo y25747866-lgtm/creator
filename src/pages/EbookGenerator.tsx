@@ -85,6 +85,10 @@ const EbookGenerator = () => {
       return;
     }
 
+    // Check free plan daily limit
+    const allowed = await recordUsage("ebook_generator");
+    if (!allowed) return;
+
     setStep("title");
     setErrorMsg(null);
     setEbookData(null);
