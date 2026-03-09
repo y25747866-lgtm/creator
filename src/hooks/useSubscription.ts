@@ -33,12 +33,16 @@ export function useSubscription() {
 
     setLoading(true);
 
+    const now = new Date().toISOString();
+
     const { data, error } = await supabase
       .from("subscriptions")
-      .select("id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id")
+      .select(
+        "id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id"
+      )
       .eq("user_id", user.id)
       .eq("status", "active")
-      .gt("expires_at", new Date().toISOString())
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -84,7 +88,7 @@ export function useSubscription() {
         },
         () => {
           void fetchSubscription();
-        },
+        }
       )
       .subscribe();
 
@@ -109,5 +113,4 @@ export function useSubscription() {
     isCreatorPlan: planType === "creator",
     isProPlan: planType === "pro",
   };
-}
-
+  }
