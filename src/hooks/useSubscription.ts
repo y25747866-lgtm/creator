@@ -4,9 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   type PlanType,
   isPaidPlan,
-  isSubscriptionActive,
   normalizePlanType,
-  normalizeSubscriptionStatus,
 } from "@/lib/subscription";
 
 interface Subscription {
@@ -39,7 +37,9 @@ export function useSubscription() {
       .from("subscriptions")
       .select("id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id")
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -49,13 +49,7 @@ export function useSubscription() {
       return;
     }
 
-    const normalized: Subscription = {
-      ...data,
-      plan_type: normalizePlanType(data.plan_type),
-      status: normalizeSubscriptionStatus(data.status),
-    };
-
-    setSubscription(isSubscriptionActive(normalized) ? normalized : null);
+    setSubscription(data);
     setLoading(false);
   }, [user]);
 
@@ -102,7 +96,7 @@ export function useSubscription() {
   }, [user, fetchSubscription]);
 
   const planType: PlanType = normalizePlanType(subscription?.plan_type);
-  const hasActiveSubscription = isSubscriptionActive(subscription);
+  const hasActiveSubscription = subscription !== null;
   const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
 
   return {

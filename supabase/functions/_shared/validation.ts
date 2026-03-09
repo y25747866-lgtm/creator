@@ -95,12 +95,14 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
     return { authorized: false, error: 'Invalid or expired token' };
   }
 
-  // Check for valid subscription row (status is normalized in code)
+  // Check for valid active + unexpired subscription
   const { data: subscription, error: subError } = await supabase
     .from('subscriptions')
     .select('id, status, expires_at')
     .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
+    .eq('status', 'active')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -111,19 +113,6 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
 
   if (!subscription) {
     return { authorized: false, error: 'No active subscription' };
-  }
-
-  const normalizedStatus = (subscription.status || '').toLowerCase();
-  if (normalizedStatus !== 'active') {
-    return { authorized: false, error: 'Subscription is not active' };
-  }
-
-  // Check if subscription has expired
-  if (subscription.expires_at) {
-    const expiresAt = new Date(subscription.expires_at);
-    if (expiresAt < new Date()) {
-      return { authorized: false, error: 'Subscription has expired' };
-    }
   }
 
   return { authorized: true, userId: user.id };

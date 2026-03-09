@@ -12,12 +12,15 @@ import {
   ExternalLink,
   LogOut,
   LineChart,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
@@ -26,6 +29,10 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { planType } = useSubscription();
+
+  const planLabel = planType === "pro" ? "Pro" : planType === "creator" ? "Creator" : "Free";
+  const planColor = planType === "pro" ? "bg-primary text-primary-foreground" : planType === "creator" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground";
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -53,20 +60,24 @@ const DashboardSidebar = () => {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="fixed left-0 top-0 bottom-0 z-40 bg-sidebar border-r border-sidebar-border flex flex-col"
     >
-      {/* Logo */}
+      {/* Logo & Plan Badge */}
       <div className="p-5 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-3">
           <img src={nexoraLogo} alt="NexoraOS" className="w-9 h-9 shrink-0" />
           <AnimatePresence>
             {!collapsed && (
-              <motion.span
+              <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="font-bold text-lg text-sidebar-foreground"
+                className="flex items-center gap-2"
               >
-                NexoraOS
-              </motion.span>
+                <span className="font-bold text-lg text-sidebar-foreground">NexoraOS</span>
+                <Badge className={cn("text-[10px] px-1.5 py-0 h-4 font-semibold", planColor)}>
+                  {planType !== "free" && <Crown className="w-2.5 h-2.5 mr-0.5" />}
+                  {planLabel}
+                </Badge>
+              </motion.div>
             )}
           </AnimatePresence>
         </Link>
