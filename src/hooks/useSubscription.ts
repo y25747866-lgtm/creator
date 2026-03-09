@@ -34,23 +34,37 @@ export function useSubscription() {
 
     setLoading(true);
 
-    const now = new Date().toISOString();
-
+    // Fetch latest active row (no fragile .or() filter)
     const { data, error } = await supabase
       .from("subscriptions")
       .select(
-        "id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id"
+        "id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id, created_at"
       )
       .eq("user_id", user.id)
       .eq("status", "active")
-      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    console.log("SUBSCRIPTION RESULT:", data, error);
+    console.log("🔍 SUBSCRIPTION RAW RESULT:", { 
+      data, 
+      error, 
+      userId: user.id,
+      now: new Date().toISOString()
+    });
 
-    if (error || !data) {
+    if (error) {
+      console.error("❌ Subscription fetch error:", error);
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    // Manual expires check (100% reliable, bypasses PostgREST date bugs)
+    const isStillActive = !data?.expires_at || new Date(data.expires_at) > new Date();
+
+    if (!data || !isStillActive) {
+      console.log("⚠️ No active subscription found");
       setSubscription(null);
       setLoading(false);
       return;
@@ -66,42 +80,33 @@ export function useSubscription() {
       whop_user_id: data.whop_user_id,
     };
 
+    console.log("✅ ACTIVE PRO SUBSCRIPTION FOUND:", normalized);
     setSubscription(normalized);
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    if (!user) {
-      setSubscription(null);
-      setLoading(false);
-      return;
-    }
-
     void fetchSubscription();
 
     const onFocus = () => void fetchSubscription();
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void fetchSubscription();
-      }
+      if (document.visibilityState === "visible") void fetchSubscription();
     };
 
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     const channel = supabase
-      .channel(`subscriptions:${user.id}`)
+      .channel(`subscriptions:${user?.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "subscriptions",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${user?.id}`,
         },
-        () => {
-          void fetchSubscription();
-        }
+        () => void fetchSubscription()
       )
       .subscribe();
 
@@ -114,14 +119,9 @@ export function useSubscription() {
 
   const planType: PlanType = normalizePlanType(subscription?.plan_type);
 
-  const hasActiveSubscription = isSubscriptionActive(subscription);
-
-  const hasPaidSubscription =
-    hasActiveSubscription && isPaidPlan(planType);
-
   return {
-    hasActiveSubscription,
-    hasPaidSubscription,
+    hasActiveSubscription: isSubscriptionActive(subscription),
+    hasPaidSubscription: isSubscriptionActive(subscription) && isPaidPlan(planType),
     loading,
     subscription,
     planType,
