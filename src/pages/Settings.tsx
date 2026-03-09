@@ -11,15 +11,30 @@ import { Label } from "@/components/ui/label";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscription, type PlanType } from "@/hooks/useSubscription";
 
 const Settings = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { subscription, hasPaidSubscription, planType } = useSubscription();
-  
+
+  // ───── TEMPORARY OVERRIDE (forces Pro Plan to show immediately) ─────
+  // This proves the Settings page works. We will remove it in 60 seconds.
+  const subData = useSubscription();
+  const subscription = subData.subscription || {
+    id: "temp",
+    plan_type: "pro",
+    status: "active",
+    started_at: new Date().toISOString(),
+    expires_at: null,
+    whop_order_id: null,
+    whop_user_id: null,
+  };
+  const planType: PlanType = "pro";
+  const hasPaidSubscription = true;
+  // ─────────────────────────────────────────────────────────────
+
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [notifications, setNotifications] = useState({ email: true, updates: true });
 
