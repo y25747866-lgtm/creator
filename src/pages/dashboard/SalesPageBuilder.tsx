@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useSubscription } from "@/hooks/useSubscription";   // ← CHANGED HERE
 import UpgradeOverlay from "@/components/UpgradeOverlay";
 
 interface SalesPageDraft {
@@ -35,7 +35,10 @@ const SalesPageBuilder = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { recordUsage, getRemainingUses, isFreePlan, hasPaidSubscription, loading: accessLoading } = useFeatureAccess();
+
+  // ✅ NOW USING THE WORKING HOOK (same one that fixed Settings)
+  const { hasPaidSubscription, isFreePlan, loading: subLoading } = useSubscription();
+
   // Load saved results
   useEffect(() => {
     if (!user) return;
@@ -61,8 +64,8 @@ const SalesPageBuilder = () => {
       return;
     }
 
-    const allowed = await recordUsage("sales_page_builder");
-    if (!allowed) return;
+    // TODO: If you still want usage limits later, add them here.
+    // For now we unlock completely for Pro (as you wanted)
 
     setLoading(true);
     try {
@@ -101,7 +104,7 @@ const SalesPageBuilder = () => {
   };
 
   const copyDraft = async (draft: SalesPageDraft) => {
-    const text = `# ${draft.headline}\n## ${draft.subheadline}\n\n### The Problem\n${draft.problem}\n\n### The Solution\n${draft.solution}\n\n### Benefits\n${draft.benefits}\n\n### ${draft.cta}`;
+    const text = `# ${draft.headline}\n## \( {draft.subheadline}\n\n### The Problem\n \){draft.problem}\n\n### The Solution\n\( {draft.solution}\n\n### Benefits\n \){draft.benefits}\n\n### ${draft.cta}`;
     await navigator.clipboard.writeText(text);
     setCopiedId(draft.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -123,14 +126,14 @@ const SalesPageBuilder = () => {
     toast({ title: "Deleted" });
   };
 
-  const remaining = getRemainingUses("sales_page_builder");
-
   return (
     <DashboardLayout>
       <div className="relative max-w-[900px] mx-auto space-y-6">
-        {isFreePlan && !accessLoading && (
+        {/* FIXED PAYWALL — only shows for free users */}
+        {isFreePlan && !subLoading && (
           <UpgradeOverlay message="The Sales Page Builder is available on Creator and Pro plans. Upgrade to start generating high-converting sales pages." />
         )}
+
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
           <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>
@@ -154,7 +157,11 @@ const SalesPageBuilder = () => {
             <Input placeholder="e.g. pricing, bonuses, guarantees" value={offerDetails} onChange={(e) => setOfferDetails(e.target.value)} disabled={loading} className="h-10 text-sm rounded-lg" />
           </div>
           <div className="pt-1">
-            <Button onClick={generate} disabled={loading || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
+            <Button 
+              onClick={generate} 
+              disabled={loading || (!hasPaidSubscription && isFreePlan)} 
+              className="gap-2 h-10 px-5 rounded-lg text-sm"
+            >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               Generate 3 Sales Page Drafts
             </Button>
