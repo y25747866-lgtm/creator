@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  type PlanType,
+  normalizePlanType,
+  isPaidPlan,
+  isSubscriptionActive,
+} from "@/lib/subscription";
 
 interface Subscription {
   id: string;
@@ -34,11 +40,18 @@ export function useSubscription() {
 
     console.log("🔍 RAW SUBSCRIPTION DATA:", data, "error:", error);
 
+    if (error) {
+      console.error("❌ Fetch error:", error);
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
     if (data) {
-      console.log("✅ PLAN FOUND:", data.plan_type);
+      console.log("✅ PLAN FOUND IN DB:", data.plan_type);
       setSubscription(data);
     } else {
-      console.log("⚠️ No subscription row found");
+      console.log("⚠️ No row in subscriptions table");
       setSubscription(null);
     }
     setLoading(false);
@@ -48,14 +61,19 @@ export function useSubscription() {
     void fetchSubscription();
   }, [user, fetchSubscription]);
 
-  const planType = (subscription?.plan_type || "free").toLowerCase() as "free" | "pro" | "creator";
+  // Use YOUR original functions (exactly as you wrote them)
+  const planType: PlanType = normalizePlanType(subscription?.plan_type);
+  const hasActiveSubscription = isSubscriptionActive(subscription);
+  const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
 
   return {
     subscription,
     planType,
-    hasPaidSubscription: planType === "pro" || planType === "creator",
-    isProPlan: planType === "pro",
+    hasActiveSubscription,
+    hasPaidSubscription,
     isFreePlan: planType === "free",
-    loading: false,
+    isCreatorPlan: planType === "creator",
+    isProPlan: planType === "pro",
+    loading,
   };
 }
