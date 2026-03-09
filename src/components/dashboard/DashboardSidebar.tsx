@@ -12,12 +12,15 @@ import {
   ExternalLink,
   LogOut,
   LineChart,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
@@ -26,6 +29,10 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { toast } = useToast();
+  const { planType } = useSubscription();
+
+  const planLabel = planType === "pro" ? "Pro" : planType === "creator" ? "Creator" : "Free";
+  const planColor = planType === "pro" ? "bg-primary text-primary-foreground" : planType === "creator" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground";
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
