@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
+import { normalizePlanType } from "@/lib/subscription";
 
 export async function checkAccess() {
   const {

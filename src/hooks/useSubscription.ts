@@ -4,9 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   type PlanType,
   isPaidPlan,
-  isSubscriptionActive,
   normalizePlanType,
-  normalizeSubscriptionStatus,
 } from "@/lib/subscription";
 
 interface Subscription {
