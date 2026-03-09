@@ -34,7 +34,6 @@ export function useSubscription() {
 
     setLoading(true);
 
-    // Fetch latest active row (no fragile .or() filter)
     const { data, error } = await supabase
       .from("subscriptions")
       .select(
@@ -49,8 +48,7 @@ export function useSubscription() {
     console.log("🔍 SUBSCRIPTION RAW RESULT:", { 
       data, 
       error, 
-      userId: user.id,
-      now: new Date().toISOString()
+      userId: user.id 
     });
 
     if (error) {
@@ -60,7 +58,6 @@ export function useSubscription() {
       return;
     }
 
-    // Manual expires check (100% reliable, bypasses PostgREST date bugs)
     const isStillActive = !data?.expires_at || new Date(data.expires_at) > new Date();
 
     if (!data || !isStillActive) {
@@ -129,4 +126,4 @@ export function useSubscription() {
     isCreatorPlan: planType === "creator",
     isProPlan: planType === "pro",
   };
-}
+         }
