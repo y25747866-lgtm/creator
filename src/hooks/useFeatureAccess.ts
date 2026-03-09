@@ -14,14 +14,17 @@ const FREE_DAILY_LIMITS: Record<string, number> = {
 
 export function useFeatureAccess() {
   const { user } = useAuth();
-  const { planType, isFreePlan, hasPaidSubscription, loading: subLoading } = useSubscription();
+  const { planType, hasPaidSubscription, loading: subLoading } = useSubscription();
   const { toast } = useToast();
   const [dailyUsage, setDailyUsage] = useState<Record<string, number>>({});
   const [usageLoading, setUsageLoading] = useState(false);
 
-  // Fetch today's usage for free plan users
+  const isFreePlan = planType === "free";
+
+  // Fetch today's usage ONLY for free users
   useEffect(() => {
     if (!user || !isFreePlan) return;
+
     const fetchUsage = async () => {
       setUsageLoading(true);
       const today = new Date().toISOString().split("T")[0];
@@ -30,8 +33,11 @@ export function useFeatureAccess() {
         .select("feature, count")
         .eq("user_id", user.id)
         .eq("used_at", today);
+      
       const usage: Record<string, number> = {};
-      data?.forEach((row: any) => { usage[row.feature] = row.count; });
+      data?.forEach((row: any) => { 
+        usage[row.feature] = row.count; 
+      });
       setDailyUsage(usage);
       setUsageLoading(false);
     };
@@ -39,7 +45,8 @@ export function useFeatureAccess() {
   }, [user, isFreePlan]);
 
   const recordUsage = useCallback(async (feature: Feature) => {
-    if (!user || !isFreePlan) return true;
+    if (!user || hasPaidSubscription) return true;   // Paid users always allowed
+
     const today = new Date().toISOString().split("T")[0];
     const currentCount = dailyUsage[feature] || 0;
     const limit = FREE_DAILY_LIMITS[feature];
@@ -53,7 +60,6 @@ export function useFeatureAccess() {
       return false;
     }
 
-    // Upsert usage count
     const { error } = await supabase
       .from("daily_usage")
       .upsert(
@@ -65,32 +71,30 @@ export function useFeatureAccess() {
       setDailyUsage((prev) => ({ ...prev, [feature]: currentCount + 1 }));
     }
     return true;
-  }, [user, isFreePlan, dailyUsage, toast]);
+  }, [user, hasPaidSubscription, dailyUsage, toast]);
 
   const canUseFeature = useCallback((feature: Feature): boolean => {
     if (subLoading) return false;
-    
-    // Downloads require paid plan
-    if (feature === "downloads" && isFreePlan) return false;
-    
-    // AI Assistant requires pro plan
-    if (feature === "ai_assistant" && planType !== "pro") return false;
+    if (hasPaidSubscription) return true;   // ← THIS UNLOCKS EVERYTHING FOR PRO
 
-    // Generation features have daily limits on free plan
-    if (isFreePlan && FREE_DAILY_LIMITS[feature]) {
+    // Free plan restrictions
+    if (feature === "downloads") return false;
+    if (feature === "ai_assistant") return false;
+
+    if (FREE_DAILY_LIMITS[feature]) {
       const currentCount = dailyUsage[feature] || 0;
       return currentCount < FREE_DAILY_LIMITS[feature];
     }
 
     return true;
-  }, [subLoading, isFreePlan, planType, dailyUsage]);
+  }, [subLoading, hasPaidSubscription, dailyUsage]);
 
   const getRemainingUses = useCallback((feature: Feature): number | null => {
-    if (!isFreePlan || !FREE_DAILY_LIMITS[feature]) return null;
+    if (hasPaidSubscription || !FREE_DAILY_LIMITS[feature]) return null;
     const limit = FREE_DAILY_LIMITS[feature];
     const used = dailyUsage[feature] || 0;
     return Math.max(0, limit - used);
-  }, [isFreePlan, dailyUsage]);
+  }, [hasPaidSubscription, dailyUsage]);
 
   return {
     canUseFeature,
@@ -101,4 +105,4 @@ export function useFeatureAccess() {
     hasPaidSubscription,
     loading: subLoading || usageLoading,
   };
-}
+  }
