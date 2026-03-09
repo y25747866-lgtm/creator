@@ -8,12 +8,14 @@ export async function checkAccess() {
 
   if (!user) return { hasAccess: false, planType: "free" as const };
 
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("id, plan_type, status, expires_at, user_id")
     .eq("user_id", user.id)
     .eq("status", "active")
-    .gt("expires_at", new Date().toISOString())
+    .or(`expires_at.is.null,expires_at.gt.${now}`)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -28,4 +30,3 @@ export async function checkAccess() {
     subscription: data,
   };
 }
-
