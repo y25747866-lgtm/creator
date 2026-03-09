@@ -58,4 +58,4 @@ export function useSubscription() {
     isFreePlan: planType === "free",
     loading: false,
   };
-    }
+}
