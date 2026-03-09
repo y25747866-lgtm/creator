@@ -48,6 +48,8 @@ export function useSubscription() {
       .limit(1)
       .maybeSingle();
 
+    console.log("SUBSCRIPTION RESULT:", data, error);
+
     if (error || !data) {
       setSubscription(null);
       setLoading(false);
