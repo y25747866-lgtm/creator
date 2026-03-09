@@ -12,11 +12,13 @@ export async function checkAccess() {
     .from("subscriptions")
     .select("id, plan_type, status, expires_at, user_id")
     .eq("user_id", user.id)
-    .order("updated_at", { ascending: false })
+    .eq("status", "active")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error || !data || !isSubscriptionActive(data)) {
+  if (error || !data) {
     return { hasAccess: false, planType: "free" as const };
   }
 

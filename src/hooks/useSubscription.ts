@@ -98,7 +98,7 @@ export function useSubscription() {
   }, [user, fetchSubscription]);
 
   const planType: PlanType = normalizePlanType(subscription?.plan_type);
-  const hasActiveSubscription = isSubscriptionActive(subscription);
+  const hasActiveSubscription = subscription !== null;
   const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
 
   return {
