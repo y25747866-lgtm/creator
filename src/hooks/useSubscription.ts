@@ -1,12 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  type PlanType,
-  isPaidPlan,
-  normalizePlanType,
-  isSubscriptionActive,
-} from "@/lib/subscription";
 
 interface Subscription {
   id: string;
@@ -17,8 +11,6 @@ interface Subscription {
   whop_order_id: string | null;
   whop_user_id: string | null;
 }
-
-export type { PlanType };
 
 export function useSubscription() {
   const { user } = useAuth();
@@ -32,98 +24,38 @@ export function useSubscription() {
       return;
     }
 
-    setLoading(true);
-
     const { data, error } = await supabase
       .from("subscriptions")
-      .select(
-        "id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id, created_at"
-      )
+      .select("*")
       .eq("user_id", user.id)
-      .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    console.log("🔍 SUBSCRIPTION RAW RESULT:", { 
-      data, 
-      error, 
-      userId: user.id 
-    });
+    console.log("🔍 RAW SUBSCRIPTION DATA:", data, "error:", error);
 
-    if (error) {
-      console.error("❌ Subscription fetch error:", error);
+    if (data) {
+      console.log("✅ PLAN FOUND:", data.plan_type);
+      setSubscription(data);
+    } else {
+      console.log("⚠️ No subscription row found");
       setSubscription(null);
-      setLoading(false);
-      return;
     }
-
-    const isStillActive = !data?.expires_at || new Date(data.expires_at) > new Date();
-
-    if (!data || !isStillActive) {
-      console.log("⚠️ No active subscription found");
-      setSubscription(null);
-      setLoading(false);
-      return;
-    }
-
-    const normalized: Subscription = {
-      id: data.id,
-      plan_type: data.plan_type,
-      status: data.status,
-      started_at: data.started_at,
-      expires_at: data.expires_at,
-      whop_order_id: data.whop_order_id,
-      whop_user_id: data.whop_user_id,
-    };
-
-    console.log("✅ ACTIVE PRO SUBSCRIPTION FOUND:", normalized);
-    setSubscription(normalized);
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
     void fetchSubscription();
-
-    const onFocus = () => void fetchSubscription();
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void fetchSubscription();
-    };
-
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    const channel = supabase
-      .channel(`subscriptions:${user?.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "subscriptions",
-          filter: `user_id=eq.${user?.id}`,
-        },
-        () => void fetchSubscription()
-      )
-      .subscribe();
-
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      void supabase.removeChannel(channel);
-    };
   }, [user, fetchSubscription]);
 
-  const planType: PlanType = normalizePlanType(subscription?.plan_type);
+  const planType = (subscription?.plan_type || "free").toLowerCase() as "free" | "pro" | "creator";
 
   return {
-    hasActiveSubscription: isSubscriptionActive(subscription),
-    hasPaidSubscription: isSubscriptionActive(subscription) && isPaidPlan(planType),
-    loading,
     subscription,
     planType,
-    isFreePlan: planType === "free",
-    isCreatorPlan: planType === "creator",
+    hasPaidSubscription: planType === "pro" || planType === "creator",
     isProPlan: planType === "pro",
+    isFreePlan: planType === "free",
+    loading: false,
   };
-         }
+    }
