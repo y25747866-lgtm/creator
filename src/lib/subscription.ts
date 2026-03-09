@@ -1,44 +1,126 @@
-export type PlanType = "free" | "creator" | "pro";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "./useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  type PlanType,
+  isPaidPlan,
+  normalizePlanType,
+} from "@/lib/subscription";
 
-type SubscriptionStatus = "active" | "cancelled" | "expired";
-
-const PLAN_ALIASES: Record<string, PlanType> = {
-  free: "free",
-  creator: "creator",
-  pro: "pro",
-  monthly: "creator",
-  annual: "creator",
-};
-
-export function normalizePlanType(planType?: string | null): PlanType {
-  if (!planType) return "free";
-  const normalized = planType.trim().toLowerCase();
-  return PLAN_ALIASES[normalized] ?? "free";
+interface Subscription {
+  id: string;
+  plan_type: string;
+  status: string;
+  started_at: string;
+  expires_at: string | null;
+  whop_order_id: string | null;
+  whop_user_id: string | null;
 }
 
-export function normalizeSubscriptionStatus(status?: string | null): SubscriptionStatus {
-  if (!status) return "cancelled";
-  const normalized = status.trim().toLowerCase();
+export type { PlanType };
 
-  if (normalized === "active") return "active";
-  if (normalized === "expired") return "expired";
-  if (normalized === "cancelled" || normalized === "canceled") return "cancelled";
+export function useSubscription() {
+  const { user } = useAuth();
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return "cancelled";
-}
+  const fetchSubscription = useCallback(async () => {
+    if (!user) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
 
-export function isSubscriptionActive(subscription?: { status?: string | null; expires_at?: string | null } | null): boolean {
-  if (!subscription) return false;
+    setLoading(true);
 
-  if (normalizeSubscriptionStatus(subscription.status) !== "active") {
-    return false;
-  }
+    const now = new Date().toISOString();
 
-  if (!subscription.expires_at) return true;
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select(
+        "id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id"
+      )
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  return new Date(subscription.expires_at) >= new Date();
-}
+    if (error || !data) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
 
-export function isPaidPlan(planType: PlanType): boolean {
-  return planType === "creator" || planType === "pro";
-}
+    const normalized: Subscription = {
+      id: data.id,
+      plan_type: data.plan_type,
+      status: data.status,
+      started_at: data.started_at,
+      expires_at: data.expires_at,
+      whop_order_id: data.whop_order_id,
+      whop_user_id: data.whop_user_id,
+    };
+
+    setSubscription(normalized);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    void fetchSubscription();
+
+    const onFocus = () => void fetchSubscription();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void fetchSubscription();
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    const channel = supabase
+      .channel(`subscriptions:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "subscriptions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void fetchSubscription();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void supabase.removeChannel(channel);
+    };
+  }, [user, fetchSubscription]);
+
+  const planType: PlanType = normalizePlanType(subscription?.plan_type);
+  const hasActiveSubscription = subscription !== null;
+  const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
+
+  return {
+    hasActiveSubscription,
+    hasPaidSubscription,
+    loading,
+    subscription,
+    planType,
+    isFreePlan: planType === "free",
+    isCreatorPlan: planType === "creator",
+    isProPlan: planType === "pro",
+  };
+    }
