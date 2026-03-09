@@ -5,6 +5,7 @@ import {
   type PlanType,
   isPaidPlan,
   normalizePlanType,
+  isSubscriptionActive,
 } from "@/lib/subscription";
 
 interface Subscription {
@@ -53,7 +54,17 @@ export function useSubscription() {
       return;
     }
 
-    setSubscription(data);
+    const normalized: Subscription = {
+      id: data.id,
+      plan_type: data.plan_type,
+      status: data.status,
+      started_at: data.started_at,
+      expires_at: data.expires_at,
+      whop_order_id: data.whop_order_id,
+      whop_user_id: data.whop_user_id,
+    };
+
+    setSubscription(normalized);
     setLoading(false);
   }, [user]);
 
@@ -100,8 +111,11 @@ export function useSubscription() {
   }, [user, fetchSubscription]);
 
   const planType: PlanType = normalizePlanType(subscription?.plan_type);
-  const hasActiveSubscription = subscription !== null;
-  const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
+
+  const hasActiveSubscription = isSubscriptionActive(subscription);
+
+  const hasPaidSubscription =
+    hasActiveSubscription && isPaidPlan(planType);
 
   return {
     hasActiveSubscription,
@@ -113,4 +127,4 @@ export function useSubscription() {
     isCreatorPlan: planType === "creator",
     isProPlan: planType === "pro",
   };
-  }
+}
