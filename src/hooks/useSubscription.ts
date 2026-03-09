@@ -39,7 +39,9 @@ export function useSubscription() {
       .from("subscriptions")
       .select("id, plan_type, status, started_at, expires_at, whop_order_id, whop_user_id")
       .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
+      .eq("status", "active")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -49,13 +51,7 @@ export function useSubscription() {
       return;
     }
 
-    const normalized: Subscription = {
-      ...data,
-      plan_type: normalizePlanType(data.plan_type),
-      status: normalizeSubscriptionStatus(data.status),
-    };
-
-    setSubscription(isSubscriptionActive(normalized) ? normalized : null);
+    setSubscription(data);
     setLoading(false);
   }, [user]);
 
