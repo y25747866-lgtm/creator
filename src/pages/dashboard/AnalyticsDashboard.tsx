@@ -34,7 +34,8 @@ const PLATFORMS = [
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isProPlan } = useSubscription();
+  const subscriptionData = useSubscription();
+  const isProPlan = subscriptionData?.isProPlan || subscriptionData?.hasPaidSubscription || false;
 
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -51,18 +52,27 @@ const AnalyticsDashboard = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { if (user) fetchConnections(); }, [user]);
-  useEffect() => { if (connections.length > 0) fetchAnalyticsData(); }, [connections]);
-  useEffect() => {
+  useEffect(() => { if (connections.length > 0) fetchAnalyticsData(); }, [connections]);
+  useEffect(() => {
     if (!user) return;
-    supabase.from("analytics_chat_messages").select("role, content, created_at").eq("user_id", user.id).order("created_at", { ascending: true }).limit(50).then(({ data }) => {
-      if (data) setChatMessages(data as ChatMessage[]);
-    });
+    supabase
+      .from("analytics_chat_messages")
+      .select("role, content, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(50)
+      .then(({ data }) => {
+        if (data) setChatMessages(data as ChatMessage[]);
+      });
   }, [user]);
-  useEffect() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
   const fetchConnections = async () => {
     setLoadingConnections(true);
-    const { data } = await supabase.from("platform_connections").select("platform, status, connected_at, last_sync_at").eq("user_id", user!.id);
+    const { data } = await supabase
+      .from("platform_connections")
+      .select("platform, status, connected_at, last_sync_at")
+      .eq("user_id", user!.id);
     setConnections((data as PlatformConnection[]) || []);
     setLoadingConnections(false);
   };
@@ -70,7 +80,9 @@ const AnalyticsDashboard = () => {
   const fetchAnalyticsData = async () => {
     setLoadingData(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-fetch", { body: { platform: platformFilter === "all" ? undefined : platformFilter } });
+      const { data, error } = await supabase.functions.invoke("analytics-fetch", {
+        body: { platform: platformFilter === "all" ? undefined : platformFilter },
+      });
       if (error) throw error;
       setAnalytics(data);
     } catch (e: any) {
@@ -83,7 +95,9 @@ const AnalyticsDashboard = () => {
     if (!apiKeyInput.trim() || !connectModal) return;
     setConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-connect", { body: { platform: connectModal, apiKey: apiKeyInput.trim() } });
+      const { data, error } = await supabase.functions.invoke("analytics-connect", {
+        body: { platform: connectModal, apiKey: apiKeyInput.trim() },
+      });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Connection failed");
       toast({ title: "Connected!", description: `${connectModal} account connected successfully.` });
@@ -118,7 +132,9 @@ const AnalyticsDashboard = () => {
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-chat", { body: { message: msg, analyticsContext: analytics } });
+      const { data, error } = await supabase.functions.invoke("analytics-chat", {
+        body: { message: msg, analyticsContext: analytics },
+      });
       if (error) throw error;
       setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch {
@@ -133,7 +149,9 @@ const AnalyticsDashboard = () => {
     if (!analytics?.orders?.length) return [];
     const grouped: Record<string, { date: string; revenue: number; sales: number }> = {};
     analytics.orders.forEach((o) => {
-      const date = o.date ? new Date(o.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Unknown";
+      const date = o.date
+        ? new Date(o.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+        : "Unknown";
       if (!grouped[date]) grouped[date] = { date, revenue: 0, sales: 0 };
       grouped[date].revenue += o.amount || 0;
       grouped[date].sales += 1;
@@ -141,14 +159,14 @@ const AnalyticsDashboard = () => {
     return Object.values(grouped).reverse().slice(-14);
   }, [analytics]);
 
-  console.log("isProPlan in AnalyticaDashboard:", isProPlan);  // ← DEBUG LINE (check console after reload)
-
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-[1400px] mx-auto">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analytics Hub</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Connect your platforms, analyze sales, and get AI-powered business insights.</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Connect your platforms, analyze sales, and get AI-powered business insights.
+          </p>
         </div>
 
         {/* Platform Connections */}
@@ -159,23 +177,47 @@ const AnalyticsDashboard = () => {
               const connected = isConnected(p.id);
               const conn = connections.find((c) => c.platform === p.id);
               return (
-                <div key={p.id} className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 ${connected ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:border-border/80"}`}>
+                <div
+                  key={p.id}
+                  className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 ${
+                    connected ? "border-primary/30 bg-primary/5" : "border-border bg-card hover:border-border/80"
+                  }`}
+                >
                   <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 overflow-hidden">
                     <img src={p.logo} alt={p.name} className="w-8 h-8 object-contain rounded-lg" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <h3 className="font-semibold text-sm">{p.name}</h3>
-                      <Badge variant={connected ? "default" : "secondary"} className="text-[10px] px-2 py-0">{connected ? "Connected" : "Not Connected"}</Badge>
+                      <Badge variant={connected ? "default" : "secondary"} className="text-[10px] px-2 py-0">
+                        {connected ? "Connected" : "Not Connected"}
+                      </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>
-                    {conn?.last_sync_at && <p className="text-[10px] text-muted-foreground mt-1">Last synced: {new Date(conn.last_sync_at).toLocaleString()}</p>}
+                    {conn?.last_sync_at && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Last synced: {new Date(conn.last_sync_at).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0">
                     {connected ? (
-                      <Button variant="outline" size="sm" onClick={() => handleDisconnect(p.id)} className="rounded-lg h-9 px-3 text-xs"><Unlink className="w-3.5 h-3.5 mr-1.5" /> Disconnect</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDisconnect(p.id)}
+                        className="rounded-lg h-9 px-3 text-xs"
+                      >
+                        <Unlink className="w-3.5 h-3.5 mr-1.5" /> Disconnect
+                      </Button>
                     ) : (
-                      <Button size="sm" onClick={() => setConnectModal(p.id)} className="rounded-lg h-9 px-4 text-xs"><Link2 className="w-3.5 h-3.5 mr-1.5" /> Connect</Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setConnectModal(p.id)}
+                        className="rounded-lg h-9 px-4 text-xs"
+                      >
+                        <Link2 className="w-3.5 h-3.5 mr-1.5" /> Connect
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -190,14 +232,22 @@ const AnalyticsDashboard = () => {
             <h2 className="text-base font-semibold">Dashboard</h2>
             <div className="flex items-center gap-2">
               <Select value={platformFilter} onValueChange={(v) => setPlatformFilter(v)}>
-                <SelectTrigger className="w-[130px] rounded-lg h-9 text-xs"><SelectValue placeholder="Platform" /></SelectTrigger>
+                <SelectTrigger className="w-[130px] rounded-lg h-9 text-xs">
+                  <SelectValue placeholder="Platform" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Platforms</SelectItem>
                   <SelectItem value="whop">Whop</SelectItem>
                   <SelectItem value="payhip">Payhip</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={fetchAnalyticsData} disabled={loadingData || connections.length === 0} className="rounded-lg h-9 px-3 text-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchAnalyticsData}
+                disabled={loadingData || connections.length === 0}
+                className="rounded-lg h-9 px-3 text-xs"
+              >
                 <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loadingData ? "animate-spin" : ""}`} /> Refresh
               </Button>
             </div>
@@ -205,9 +255,13 @@ const AnalyticsDashboard = () => {
 
           {connections.length === 0 && !loadingConnections ? (
             <div className="py-16 text-center">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3"><BarChart3 className="w-7 h-7 text-muted-foreground/60" /></div>
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <BarChart3 className="w-7 h-7 text-muted-foreground/60" />
+              </div>
               <h3 className="font-semibold text-sm mb-1">No platforms connected</h3>
-              <p className="text-muted-foreground text-xs max-w-sm mx-auto">Connect Whop or Payhip above to start tracking your sales data.</p>
+              <p className="text-muted-foreground text-xs max-w-sm mx-auto">
+                Connect Whop or Payhip above to start tracking your sales data.
+              </p>
             </div>
           ) : (
             <>
@@ -219,9 +273,14 @@ const AnalyticsDashboard = () => {
                   { label: "Conversion Rate", value: analytics ? `${analytics.summary.conversionRate}%` : "—", icon: TrendingUp, color: "text-amber-500" },
                 ].map((m) => (
                   <div key={m.label} className="p-4 rounded-xl border border-border bg-card">
-                    {loadingData ? <Skeleton className="h-14 w-full" /> : (
+                    {loadingData ? (
+                      <Skeleton className="h-14 w-full" />
+                    ) : (
                       <>
-                        <div className="flex items-center gap-2 mb-1.5"><m.icon className={`w-3.5 h-3.5 ${m.color}`} /><span className="text-xs text-muted-foreground">{m.label}</span></div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
+                          <span className="text-xs text-muted-foreground">{m.label}</span>
+                        </div>
                         <p className="text-2xl font-bold">{m.value}</p>
                       </>
                     )}
@@ -236,7 +295,12 @@ const AnalyticsDashboard = () => {
                     <div className="h-56">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={salesChartData}>
-                          <defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} /><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
+                          <defs>
+                            <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                           <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
@@ -271,11 +335,27 @@ const AnalyticsDashboard = () => {
                 <TabsContent value="products">
                   <div className="rounded-xl border border-border overflow-hidden">
                     <Table>
-                      <TableHeader><TableRow><TableHead className="text-xs">Product</TableHead><TableHead className="text-xs">Price</TableHead><TableHead className="text-xs">Platform</TableHead></TableRow></TableHeader>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Product</TableHead>
+                          <TableHead className="text-xs">Price</TableHead>
+                          <TableHead className="text-xs">Platform</TableHead>
+                        </TableRow>
+                      </TableHeader>
                       <TableBody>
-                        {loadingData ? <TableRow><TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell></TableRow> : analytics?.products?.length ? analytics.products.map((p, i) => (
-                          <TableRow key={i}><TableCell className="font-medium text-sm">{p.name}</TableCell><TableCell className="text-sm">${p.price || "N/A"}</TableCell><TableCell><Badge variant="outline" className="capitalize text-[10px]">{p.platform}</Badge></TableCell></TableRow>
-                        )) : <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8 text-sm">No products found</TableCell></TableRow>}
+                        {loadingData ? (
+                          <TableRow><TableCell colSpan={3}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                        ) : analytics?.products?.length ? (
+                          analytics.products.map((p, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                              <TableCell className="text-sm">${p.price || "N/A"}</TableCell>
+                              <TableCell><Badge variant="outline" className="capitalize text-[10px]">{p.platform}</Badge></TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8 text-sm">No products found</TableCell></TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -283,98 +363,27 @@ const AnalyticsDashboard = () => {
                 <TabsContent value="orders">
                   <div className="rounded-xl border border-border overflow-hidden">
                     <Table>
-                      <TableHeader><TableRow><TableHead className="text-xs">Product</TableHead><TableHead className="text-xs">Amount</TableHead><TableHead className="text-xs">Date</TableHead><TableHead className="text-xs">Platform</TableHead></TableRow></TableHeader>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Product</TableHead>
+                          <TableHead className="text-xs">Amount</TableHead>
+                          <TableHead className="text-xs">Date</TableHead>
+                          <TableHead className="text-xs">Platform</TableHead>
+                        </TableRow>
+                      </TableHeader>
                       <TableBody>
-                        {loadingData ? <TableRow><TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell></TableRow> : analytics?.orders?.length ? analytics.orders.map((o, i) => (
-                          <TableRow key={i}><TableCell className="font-medium text-sm">{o.product}</TableCell><TableCell className="text-sm">${o.amount?.toFixed(2)}</TableCell><TableCell className="text-sm">{o.date ? new Date(o.date).toLocaleDateString() : "N/A"}</TableCell><TableCell><Badge variant="outline" className="capitalize text-[10px]">{o.platform}</Badge></TableCell></TableRow>
-                        )) : <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8 text-sm">No sales history found</TableCell></TableRow>}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </>
-          )}
-        </Card>
-
-        {/* AI Business Assistant */}
-        <Card className="rounded-2xl border border-border shadow-sm overflow-hidden relative">
-          {!isProPlan && (
-            <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
-              <Lock className="w-8 h-8 text-muted-foreground mb-3" />
-              <p className="font-semibold text-sm mb-1">Pro Plan Required</p>
-              <p className="text-xs text-muted-foreground mb-3">AI Business Assistant is available on the Pro plan.</p>
-              <Button size="sm" onClick={() => window.location.href = "/pricing"}>Upgrade to Pro</Button>
-            </div>
-          )}
-          <div className="p-5 pb-3 border-b border-border">
-            <h2 className="text-base font-semibold flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"><Bot className="w-4 h-4 text-primary" /></div>
-              AI Business Assistant
-            </h2>
-            <p className="text-xs text-muted-foreground mt-1 ml-[42px]">Ask questions about your sales data and get personalized business advice.</p>
-          </div>
-          <ScrollArea className="h-[360px]">
-            <div className="p-5 space-y-3">
-              {chatMessages.length === 0 && (
-                <div className="text-center py-10">
-                  <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3"><Bot className="w-6 h-6 text-primary" /></div>
-                  <p className="text-sm text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) => (
-                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-lg text-xs h-8"> {q} </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  </div>
-                </div>
-              ))}
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-xl bg-muted">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-          </ScrollArea>
-          <div className="p-4 border-t border-border flex items-center gap-2">
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendChat()}
-              placeholder="Ask a question..."
-              disabled={chatLoading}
-              className="flex-1 rounded-lg h-9 text-sm"
-            />
-            <Button onClick={handleSendChat} disabled={chatLoading} className="rounded-lg h-9 px-4 text-xs">
-              <Send className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Connect {connectModal?.toUpperCase()}</DialogTitle>
-            <DialogDescription>Enter your API key to connect your account.</DialogDescription>
-          </DialogHeader>
-          <Input placeholder="API Key" value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)} disabled={connecting} className="h-9" />
-          <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="gap-2">
-            {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-            Connect
-          </Button>
-        </DialogContent>
-      </Dialog>
-    </DashboardLayout>
-  );
-};
-
-export default AnalyticsDashboard;
+                        {loadingData ? (
+                          <TableRow><TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                        ) : analytics?.orders?.length ? (
+                          analytics.orders.map((o, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-medium text-sm">{o.product}</TableCell>
+                              <TableCell className="text-sm">${o.amount?.toFixed(2)}</TableCell>
+                              <TableCell className="text-sm">{o.date ? new Date(o.date).toLocaleDateString() : "N/A"}</TableCell>
+                              <TableCell><Badge variant="outline" className="capitalize text-[10px]">{o.platform}</Badge></TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8 text-sm">No sales history found</TableCell></TableRow>
+                        )}
+           
