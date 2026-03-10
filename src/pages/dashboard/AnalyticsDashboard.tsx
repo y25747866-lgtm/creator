@@ -34,7 +34,9 @@ const PLATFORMS = [
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isProPlan } = useSubscription();
+  const { isProPlan, hasPaidSubscription } = useSubscription();
+
+  console.log("DEBUG Analytics - isProPlan:", isProPlan, "hasPaidSubscription:", hasPaidSubscription);
 
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
