@@ -141,6 +141,8 @@ const AnalyticsDashboard = () => {
     return Object.values(grouped).reverse().slice(-14);
   }, [analytics]);
 
+  console.log("isProPlan in AnalyticaDashboard:", isProPlan);  // ← DEBUG LINE (check console after reload)
+
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -319,55 +321,56 @@ const AnalyticsDashboard = () => {
                   <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3"><Bot className="w-6 h-6 text-primary" /></div>
                   <p className="text-sm text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) => (
-                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-full text-[11px] h-7 px-3 hover:bg-primary/5 hover:border-primary/30 transition-colors">{q}</Button>
+                    {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) =>
+                  <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-lg text-xs h-8"> {q} </Button>
                     ))}
                   </div>
                 </div>
               )}
               {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {msg.role === "assistant" && <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Bot className="w-3.5 h-3.5 text-primary" /></div>}
-                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"}`}>{msg.content}</div>
-                  {msg.role === "user" && <div className="w-7 h-7 rounded-lg bg-secondary flex items-center justify-center shrink-0 mt-0.5"><User className="w-3.5 h-3.5" /></div>}
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
                 </div>
               ))}
               {chatLoading && (
-                <div className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Bot className="w-3.5 h-3.5 text-primary" /></div>
-                  <div className="bg-muted rounded-2xl rounded-bl-md px-3.5 py-2.5"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-3 rounded-xl bg-muted">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
           </ScrollArea>
-          <div className="border-t border-border p-4">
-            <form onSubmit={(e) => { e.preventDefault(); handleSendChat(); }} className="flex gap-2">
-              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your business..." disabled={chatLoading || !isProPlan} className="flex-1 h-10 rounded-lg text-sm" />
-              <Button type="submit" disabled={chatLoading || !chatInput.trim() || !isProPlan} className="h-10 w-10 rounded-lg p-0"><Send className="w-4 h-4" /></Button>
-            </form>
+          <div className="p-4 border-t border-border flex items-center gap-2">
+            <Input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendChat()}
+              placeholder="Ask a question..."
+              disabled={chatLoading}
+              className="flex-1 rounded-lg h-9 text-sm"
+            />
+            <Button onClick={handleSendChat} disabled={chatLoading} className="rounded-lg h-9 px-4 text-xs">
+              <Send className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </Card>
       </div>
 
-      {/* Connect Modal */}
-      <Dialog open={!!connectModal} onOpenChange={() => { setConnectModal(null); setApiKeyInput(""); }}>
-        <DialogContent className="rounded-2xl">
+      <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Connect {connectModal ? PLATFORMS.find((p) => p.id === connectModal)?.name : ""}</DialogTitle>
-            <DialogDescription>Enter your API key to connect your account. Your key is stored securely.</DialogDescription>
+            <DialogTitle>Connect {connectModal?.toUpperCase()}</DialogTitle>
+            <DialogDescription>Enter your API key to connect your account.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <Input type="password" placeholder="Paste your API key here..." value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)} className="h-10 rounded-lg" />
-            <div className="text-xs text-muted-foreground">
-              {connectModal === "whop" && "Find your API key in Whop Dashboard → Developer Settings → API Keys"}
-              {connectModal === "payhip" && "Find your API key in Payhip → Account Settings → API"}
-            </div>
-            <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="w-full h-10 rounded-lg">
-              {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
-              {connecting ? "Verifying..." : "Connect Account"}
-            </Button>
-          </div>
+          <Input placeholder="API Key" value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)} disabled={connecting} className="h-9" />
+          <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="gap-2">
+            {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+            Connect
+          </Button>
         </DialogContent>
       </Dialog>
     </DashboardLayout>
