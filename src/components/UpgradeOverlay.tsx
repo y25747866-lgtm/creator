@@ -10,10 +10,9 @@ interface UpgradeOverlayProps {
 const UpgradeOverlay = ({ message }: UpgradeOverlayProps) => {
   const navigate = useNavigate();
   
-  // Uses the SAME hook that made Settings show Pro
   const { hasPaidSubscription } = useSubscription();
 
-  // Pro users see NOTHING (no lock anywhere)
+  // Pro users see nothing — no lock ever
   if (hasPaidSubscription) return null;
 
   return (
