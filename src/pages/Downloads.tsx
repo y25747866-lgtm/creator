@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Download, Image, Eye, Trash2, BookOpen, Lock } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -10,12 +10,21 @@ import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { format } from "date-fns";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Downloads = () => {
-  const { ebooks, removeEbook } = useEbookStore();
+  const allEbooks = useEbookStore((s) => s.ebooks);
+  const removeEbook = useEbookStore((s) => s.removeEbook);
   const [previewEbook, setPreviewEbook] = useState<Ebook | null>(null);
   const { isFreePlan } = useSubscription();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Only show ebooks belonging to the current user
+  const ebooks = useMemo(() => {
+    if (!user) return [];
+    return allEbooks.filter((e) => e.userId === user.id || !e.userId);
+  }, [allEbooks, user]);
 
   const guardedDownload = (fn: () => void) => {
     if (isFreePlan) {
