@@ -77,6 +77,7 @@ const EbookGenerator = () => {
   const navigate = useNavigate();
   const { canUseFeature, recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
   const { isFreePlan: isFreeUser } = useSubscription();
+  const { user } = useAuth();
 
   const isGenerating = step !== "idle" && step !== "complete";
 
