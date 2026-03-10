@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
