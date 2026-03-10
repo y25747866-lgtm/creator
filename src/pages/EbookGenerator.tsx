@@ -165,6 +165,7 @@ const EbookGenerator = () => {
         pages: contentData.pages,
         length: ebookLength,
         createdAt: new Date().toISOString(),
+        userId: user?.id,
       };
 
       addEbook(ebook);
