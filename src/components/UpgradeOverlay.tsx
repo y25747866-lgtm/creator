@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSubscription } from "@/hooks/useSubscription";   // ← THIS MAKES IT RESPECT YOUR REAL PRO PLAN
 
 interface UpgradeOverlayProps {
   message?: string;
@@ -8,6 +9,12 @@ interface UpgradeOverlayProps {
 
 const UpgradeOverlay = ({ message = "Upgrade to unlock full analytics access" }: UpgradeOverlayProps) => {
   const navigate = useNavigate();
+  
+  // ✅ Uses the SAME working hook as Settings (your real Supabase Pro row)
+  const { hasPaidSubscription } = useSubscription();
+
+  // If user is Pro → NEVER show the lock (anywhere in the app)
+  if (hasPaidSubscription) return null;
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">
