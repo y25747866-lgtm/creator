@@ -51,14 +51,14 @@ const AnalyticsDashboard = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { if (user) fetchConnections(); }, [user]);
-  useEffect(() => { if (connections.length > 0) fetchAnalyticsData(); }, [connections]);
-  useEffect(() => {
+  useEffect() => { if (connections.length > 0) fetchAnalyticsData(); }, [connections]);
+  useEffect() => {
     if (!user) return;
     supabase.from("analytics_chat_messages").select("role, content, created_at").eq("user_id", user.id).order("created_at", { ascending: true }).limit(50).then(({ data }) => {
       if (data) setChatMessages(data as ChatMessage[]);
     });
   }, [user]);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+  useEffect() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
 
   const fetchConnections = async () => {
     setLoadingConnections(true);
@@ -321,4 +321,60 @@ const AnalyticsDashboard = () => {
                   <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-3"><Bot className="w-6 h-6 text-primary" /></div>
                   <p className="text-sm text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) =>
+                    {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) => (
+                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="rounded-lg text-xs h-8"> {q} </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] p-3 rounded-xl bg-muted">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+          </ScrollArea>
+          <div className="p-4 border-t border-border flex items-center gap-2">
+            <Input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendChat()}
+              placeholder="Ask a question..."
+              disabled={chatLoading}
+              className="flex-1 rounded-lg h-9 text-sm"
+            />
+            <Button onClick={handleSendChat} disabled={chatLoading} className="rounded-lg h-9 px-4 text-xs">
+              <Send className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connect {connectModal?.toUpperCase()}</DialogTitle>
+            <DialogDescription>Enter your API key to connect your account.</DialogDescription>
+          </DialogHeader>
+          <Input placeholder="API Key" value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)} disabled={connecting} className="h-9" />
+          <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="gap-2">
+            {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+            Connect
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </DashboardLayout>
+  );
+};
+
+export default AnalyticsDashboard;
