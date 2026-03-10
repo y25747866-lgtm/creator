@@ -36,6 +36,7 @@ const Settings = () => {
   };
 
   const handleSignOut = async () => {
+    useEbookStore.getState().clearAllEbooks();
     await signOut();
     toast({ title: "Signed out", description: "You have been signed out successfully." });
     navigate("/");
