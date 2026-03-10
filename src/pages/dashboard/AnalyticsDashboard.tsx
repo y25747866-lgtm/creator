@@ -111,7 +111,7 @@ const AnalyticsDashboard = () => {
 
   const handleSendChat = async () => {
     if (!chatInput.trim() || chatLoading) return;
-    if (!isProPlan) {
+    if (!isProPlan && !hasPaidSubscription) {
       toast({ title: "Pro plan required", description: "AI Business Assistant is available on the Pro plan.", variant: "destructive" });
       return;
     }
