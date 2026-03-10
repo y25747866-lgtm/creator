@@ -34,7 +34,9 @@ const PLATFORMS = [
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isProPlan } = useSubscription();
+  const { isProPlan, hasPaidSubscription } = useSubscription();
+
+  console.log("DEBUG Analytics - isProPlan:", isProPlan, "hasPaidSubscription:", hasPaidSubscription);
 
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -109,7 +111,7 @@ const AnalyticsDashboard = () => {
 
   const handleSendChat = async () => {
     if (!chatInput.trim() || chatLoading) return;
-    if (!isProPlan) {
+    if (!isProPlan && !hasPaidSubscription) {
       toast({ title: "Pro plan required", description: "AI Business Assistant is available on the Pro plan.", variant: "destructive" });
       return;
     }
@@ -297,7 +299,7 @@ const AnalyticsDashboard = () => {
 
         {/* AI Business Assistant */}
         <Card className="rounded-2xl border border-border shadow-sm overflow-hidden relative">
-          {!isProPlan && (
+          {!isProPlan && !hasPaidSubscription && (
             <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
               <Lock className="w-8 h-8 text-muted-foreground mb-3" />
               <p className="font-semibold text-sm mb-1">Pro Plan Required</p>
@@ -320,4 +322,53 @@ const AnalyticsDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">Ask me anything about your sales performance, marketing strategies, or business growth!</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {["How are my sales trending?", "Which product performs best?", "How can I increase conversions?"].map((q) => (
-                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} classNam
+                      <Button key={q} variant="outline" size="sm" onClick={() => setChatInput(q)} className="text-xs rounded-lg">{q}</Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  {msg.role === "assistant" && <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Bot className="w-3.5 h-3.5 text-primary" /></div>}
+                  <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{msg.content}</div>
+                  {msg.role === "user" && <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5"><User className="w-3.5 h-3.5" /></div>}
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Bot className="w-3.5 h-3.5 text-primary" /></div>
+                  <div className="bg-muted rounded-xl px-3.5 py-2.5"><Loader2 className="w-4 h-4 animate-spin" /></div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+          </ScrollArea>
+          <div className="p-4 border-t border-border">
+            <div className="flex gap-2">
+              <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder="Ask about your business..." onKeyDown={(e) => e.key === "Enter" && handleSendChat()} className="rounded-lg text-sm" disabled={!isProPlan && !hasPaidSubscription} />
+              <Button onClick={handleSendChat} disabled={chatLoading || (!isProPlan && !hasPaidSubscription)} size="sm" className="rounded-lg px-3"><Send className="w-4 h-4" /></Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Connect Modal */}
+        <Dialog open={!!connectModal} onOpenChange={() => { setConnectModal(null); setApiKeyInput(""); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Connect {connectModal}</DialogTitle>
+              <DialogDescription>Enter your API key to connect your {connectModal} account.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <Input value={apiKeyInput} onChange={(e) => setApiKeyInput(e.target.value)} placeholder="Paste your API key here" type="password" />
+              <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()} className="w-full">
+                {connecting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</> : "Connect"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default AnalyticsDashboard;
