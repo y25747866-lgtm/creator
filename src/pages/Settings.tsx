@@ -18,21 +18,8 @@ const Settings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const subData = useSubscription();
-
-  // ───── FORCE PRO (this makes it show Pro immediately) ─────
-  const subscription = subData.subscription || {
-    id: "temp",
-    plan_type: "pro",
-    status: "active",
-    started_at: new Date().toISOString(),
-    expires_at: null,
-    whop_order_id: null,
-    whop_user_id: null,
-  };
-  const planType = "pro";
-  const hasPaidSubscription = true;
-  // ─────────────────────────────────────────────────────────────
+  const { subscription, planType, hasPaidSubscription } = useSubscription();
+  console.log("DEBUG Settings - planType:", planType, "hasPaidSubscription:", hasPaidSubscription);
 
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [notifications, setNotifications] = useState({ email: true, updates: true });
