@@ -12,6 +12,7 @@ import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useEbookStore } from "@/hooks/useEbookStore";
 
 const Settings = () => {
   const { theme, setTheme } = useTheme();
