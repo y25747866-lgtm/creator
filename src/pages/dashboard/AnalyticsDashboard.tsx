@@ -64,7 +64,7 @@ const AnalyticsDashboard = () => {
 
   const fetchConnections = async () => {
     setLoadingConnections(true);
-    const { data } = await supabase.from("platform_connections").select("platform, status, connected_at, last_sync_at").eq("user_id", user!.id);
+    const { data } = await supabase.from("platform_connections").select("platform, status, connected_at, last_sync_at").eq("user_id", user!.id).eq("status", "connected");
     setConnections((data as PlatformConnection[]) || []);
     setLoadingConnections(false);
   };
