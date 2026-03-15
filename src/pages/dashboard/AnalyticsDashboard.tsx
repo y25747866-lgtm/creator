@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,8 +36,6 @@ const AnalyticsDashboard = () => {
   const { toast } = useToast();
   const { isProPlan, hasPaidSubscription } = useSubscription();
 
-  console.log("DEBUG Analytics - isProPlan:", isProPlan, "hasPaidSubscription:", hasPaidSubscription);
-
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loadingConnections, setLoadingConnections] = useState(true);
@@ -46,64 +44,144 @@ const AnalyticsDashboard = () => {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [platformFilter, setPlatformFilter] = useState("all");
+  const [hasLoadedData, setHasLoadedData] = useState(false);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { if (user) fetchConnections(); }, [user]);
-  useEffect(() => { if (connections.length > 0) fetchAnalyticsData(); }, [connections]);
+  // ✅ FIX #1: Load connections only when user changes
   useEffect(() => {
-    if (!user) return;
-    supabase.from("analytics_chat_messages").select("role, content, created_at").eq("user_id", user.id).order("created_at", { ascending: true }).limit(50).then(({ data }) => {
-      if (data) setChatMessages(data as ChatMessage[]);
-    });
+    if (!user) {
+      setConnections([]);
+      setLoadingConnections(false);
+      return;
+    }
+    
+    const loadConnections = async () => {
+      setLoadingConnections(true);
+      try {
+        const { data } = await supabase
+          .from("platform_connections")
+          .select("platform, status, connected_at, last_sync_at")
+          .eq("user_id", user.id)
+          .eq("status", "connected");
+        setConnections((data as PlatformConnection[]) || []);
+      } catch (error) {
+        console.error("Error loading connections:", error);
+        setConnections([]);
+      } finally {
+        setLoadingConnections(false);
+      }
+    };
+
+    loadConnections();
   }, [user]);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages]);
+
+  // ✅ FIX #2: Load analytics data only when user or platformFilter changes (NOT when connections change)
+  useEffect(() => {
+    if (!user || connections.length === 0) {
+      setAnalytics(null);
+      setHasLoadedData(false);
+      return;
+    }
+
+    const loadAnalytics = async () => {
+      setLoadingData(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("analytics-fetch", {
+          body: { platform: platformFilter === "all" ? undefined : platformFilter }
+        });
+        if (error) throw error;
+        setAnalytics(data);
+        setHasLoadedData(true);
+      } catch (e: any) {
+        toast({ title: "Failed to fetch data", description: e.message, variant: "destructive" });
+        setAnalytics(null);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    loadAnalytics();
+  }, [user, platformFilter, connections.length]);
+
+  // ✅ FIX #3: Load chat messages only when user changes
+  useEffect(() => {
+    if (!user) {
+      setChatMessages([]);
+      return;
+    }
+
+    const loadChatMessages = async () => {
+      try {
+        const { data } = await supabase
+          .from("analytics_chat_messages")
+          .select("role, content, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(50);
+        if (data) setChatMessages(data as ChatMessage[]);
+      } catch (error) {
+        console.error("Error loading chat messages:", error);
+      }
+    };
+
+    loadChatMessages();
+  }, [user]);
+
+  // ✅ FIX #4: Scroll to bottom only when messages change
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   const fetchConnections = async () => {
+    if (!user) return;
     setLoadingConnections(true);
-    const { data } = await supabase.from("platform_connections").select("platform, status, connected_at, last_sync_at").eq("user_id", user!.id).eq("status", "connected");
-    setConnections((data as PlatformConnection[]) || []);
-    setLoadingConnections(false);
-  };
-
-  const fetchAnalyticsData = async () => {
-    setLoadingData(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-fetch", { body: { platform: platformFilter === "all" ? undefined : platformFilter } });
-      if (error) throw error;
-      setAnalytics(data);
-    } catch (e: any) {
-      toast({ title: "Failed to fetch data", description: e.message, variant: "destructive" });
+      const { data } = await supabase
+        .from("platform_connections")
+        .select("platform, status, connected_at, last_sync_at")
+        .eq("user_id", user.id)
+        .eq("status", "connected");
+      setConnections((data as PlatformConnection[]) || []);
+    } catch (error) {
+      console.error("Error fetching connections:", error);
+    } finally {
+      setLoadingConnections(false);
     }
-    setLoadingData(false);
   };
 
   const handleConnect = async () => {
     if (!apiKeyInput.trim() || !connectModal) return;
     setConnecting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-connect", { body: { platform: connectModal, apiKey: apiKeyInput.trim() } });
+      const { data, error } = await supabase.functions.invoke("analytics-connect", {
+        body: { platform: connectModal, apiKey: apiKeyInput.trim() }
+      });
       if (error) throw error;
       if (!data.success) throw new Error(data.error || "Connection failed");
       toast({ title: "Connected!", description: `${connectModal} account connected successfully.` });
       setConnectModal(null);
       setApiKeyInput("");
-      fetchConnections();
+      await fetchConnections();
     } catch (e: any) {
       toast({ title: "Connection failed", description: e.message, variant: "destructive" });
+    } finally {
+      setConnecting(false);
     }
-    setConnecting(false);
   };
 
   const handleDisconnect = async (platform: string) => {
     try {
-      await supabase.functions.invoke("analytics-connect", { body: { platform, action: "disconnect" } });
+      await supabase.functions.invoke("analytics-connect", {
+        body: { platform, action: "disconnect" }
+      });
       toast({ title: "Disconnected", description: `${platform} has been disconnected.` });
-      fetchConnections();
+      await fetchConnections();
       setAnalytics(null);
+      setHasLoadedData(false);
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     }
@@ -120,13 +198,17 @@ const AnalyticsDashboard = () => {
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analytics-chat", { body: { message: msg, analyticsContext: analytics } });
+      const { data, error } = await supabase.functions.invoke("analytics-chat", {
+        body: { message: msg, analyticsContext: analytics }
+      });
       if (error) throw error;
       setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-    } catch {
+    } catch (error) {
+      console.error("Chat error:", error);
       setChatMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
+    } finally {
+      setChatLoading(false);
     }
-    setChatLoading(false);
   };
 
   const isConnected = (platformId: string) => connections.some((c) => c.platform === platformId);
@@ -197,7 +279,7 @@ const AnalyticsDashboard = () => {
                   <SelectItem value="payhip">Payhip</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={fetchAnalyticsData} disabled={loadingData || connections.length === 0} className="rounded-lg h-9 px-3 text-xs">
+              <Button variant="outline" size="sm" onClick={() => { setHasLoadedData(false); }} disabled={loadingData || connections.length === 0} className="rounded-lg h-9 px-3 text-xs">
                 <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loadingData ? "animate-spin" : ""}`} /> Refresh
               </Button>
             </div>
