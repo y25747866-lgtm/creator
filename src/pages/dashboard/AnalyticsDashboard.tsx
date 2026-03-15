@@ -81,7 +81,14 @@ const AnalyticsDashboard = () => {
 
   // ✅ FIX #2: Load analytics data only when user or platformFilter changes (NOT when connections change)
   useEffect(() => {
-    if (!user || connections.length === 0) {
+    if (!user) {
+      setAnalytics(null);
+      setHasLoadedData(false);
+      return;
+    }
+
+    // Only load if we have connected platforms
+    if (connections.length === 0) {
       setAnalytics(null);
       setHasLoadedData(false);
       return;
@@ -105,7 +112,7 @@ const AnalyticsDashboard = () => {
     };
 
     loadAnalytics();
-  }, [user, platformFilter, connections.length]);
+  }, [user, platformFilter]);
 
   // ✅ FIX #3: Load chat messages only when user changes
   useEffect(() => {
