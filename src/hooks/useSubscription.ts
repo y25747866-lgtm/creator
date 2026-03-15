@@ -30,38 +30,38 @@ export function useSubscription() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    console.log("🔍 RAW SUBSCRIPTION DATA:", data, "error:", error);
+      if (error) {
+        console.error("❌ Fetch error:", error);
+        setSubscription(null);
+        return;
+      }
 
-    if (error) {
-      console.error("❌ Fetch error:", error);
+      if (data) {
+        setSubscription(data);
+      } else {
+        setSubscription(null);
+      }
+    } catch (err) {
+      console.error("❌ Unexpected error:", err);
       setSubscription(null);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (data) {
-      console.log("✅ PLAN FOUND IN DB:", data.plan_type);
-      setSubscription(data);
-    } else {
-      console.log("⚠️ No row in subscriptions table");
-      setSubscription(null);
-    }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
     void fetchSubscription();
-  }, [user, fetchSubscription]);
+  }, [user]);
 
-  // Use YOUR original functions (exactly as you wrote them)
   const planType: PlanType = normalizePlanType(subscription?.plan_type);
   const hasActiveSubscription = isSubscriptionActive(subscription);
   const hasPaidSubscription = hasActiveSubscription && isPaidPlan(planType);
