@@ -112,7 +112,7 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mixtral-8x7b-32768",
+        model: "llama-3.1-8b-instant",
         messages: [
           {
             role: "user",
