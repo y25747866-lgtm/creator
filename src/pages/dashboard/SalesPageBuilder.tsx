@@ -74,10 +74,11 @@ const SalesPageBuilder = () => {
       });
 
       if (error) throw new Error(error.message);
-      if (!data?.results || !Array.isArray(data.results)) throw new Error("Invalid response from AI");
+      const results = data?.data?.results || data?.results;
+      if (!results || !Array.isArray(results)) throw new Error("Invalid response from AI");
 
       const newDrafts: SalesPageDraft[] = [];
-      for (const r of data.results) {
+      for (const r of results) {
         const { data: saved, error: saveErr } = await supabase
           .from("saved_sales_page_results")
           .insert({
