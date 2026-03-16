@@ -112,7 +112,7 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "qwen/qwen3-32b",
+        model: "mixtral-8x7b-32768",
         messages: [
           {
             role: "user",
