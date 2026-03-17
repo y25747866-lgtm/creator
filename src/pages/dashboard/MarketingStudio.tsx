@@ -78,8 +78,12 @@ const MarketingStudio = () => {
       });
 
       if (error) throw new Error(error.message);
-      const results = data?.data?.results || data?.results;
-      if (!results || !Array.isArray(results)) throw new Error("Invalid response from AI");
+      console.log("Function response:", data);
+      const results = data?.results;
+      if (!results || !Array.isArray(results)) {
+        console.error("Invalid results:", data);
+        throw new Error("Invalid response from AI");
+      }
 
       const newResults: SocialResult[] = [];
       for (const r of results) {
