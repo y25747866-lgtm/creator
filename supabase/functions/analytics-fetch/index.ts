@@ -12,22 +12,32 @@ async function fetchWhopData(apiKey: string) {
   // Fetch products
   let products: any[] = [];
   try {
+    console.log("Fetching Whop products with key:", apiKey.substring(0, 10) + "...");
     const res = await fetch("https://api.whop.com/api/v5/company/products", { headers });
     if (res.ok) {
       const data = await res.json();
       products = data.data || [];
+      console.log("Whop products fetched:", products.length);
+    } else {
+      const errText = await res.text();
+      console.error("Whop products error:", res.status, errText);
     }
-  } catch (e) { console.error("Whop products fetch:", e); }
+  } catch (e) { console.error("Whop products fetch exception:", e); }
 
   // Fetch memberships (as orders proxy)
   let orders: any[] = [];
   try {
+    console.log("Fetching Whop memberships...");
     const res = await fetch("https://api.whop.com/api/v5/company/memberships?per=100", { headers });
     if (res.ok) {
       const data = await res.json();
       orders = data.data || [];
+      console.log("Whop memberships fetched:", orders.length);
+    } else {
+      const errText = await res.text();
+      console.error("Whop memberships error:", res.status, errText);
     }
-  } catch (e) { console.error("Whop orders fetch:", e); }
+  } catch (e) { console.error("Whop memberships fetch exception:", e); }
 
   const totalRevenue = orders.reduce((sum: number, o: any) => sum + (parseFloat(o.amount_total || "0") / 100), 0);
   const totalSales = orders.length;
@@ -52,22 +62,32 @@ async function fetchPayhipData(apiKey: string) {
 
   let products: any[] = [];
   try {
+    console.log("Fetching Payhip products with key:", apiKey.substring(0, 10) + "...");
     const res = await fetch("https://payhip.com/api/v1/product/list", { headers });
     if (res.ok) {
       const data = await res.json();
       products = data.data || data.products || [];
+      console.log("Payhip products fetched:", products.length);
+    } else {
+      const errText = await res.text();
+      console.error("Payhip products error:", res.status, errText);
     }
-  } catch (e) { console.error("Payhip products fetch:", e); }
+  } catch (e) { console.error("Payhip products fetch exception:", e); }
 
   // Fetch sales
   let sales: any[] = [];
   try {
+    console.log("Fetching Payhip sales...");
     const res = await fetch("https://payhip.com/api/v1/sale/list", { headers });
     if (res.ok) {
       const data = await res.json();
       sales = data.data || data.sales || [];
+      console.log("Payhip sales fetched:", sales.length);
+    } else {
+      const errText = await res.text();
+      console.error("Payhip sales error:", res.status, errText);
     }
-  } catch (e) { console.error("Payhip sales fetch:", e); }
+  } catch (e) { console.error("Payhip sales fetch exception:", e); }
 
   const totalRevenue = sales.reduce((sum: number, s: any) => sum + parseFloat(s.total || s.amount || "0"), 0);
   const totalSales = sales.length;
