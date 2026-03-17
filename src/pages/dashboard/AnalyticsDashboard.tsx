@@ -441,7 +441,7 @@ const AnalyticsDashboard = () => {
         </Card>
 
         {/* Connect Modal */}
-        <Dialog open={!!connectModal} onOpenChange={(open) => { console.log("Dialog open state:", open, "connectModal:", connectModal); if (!open) { setConnectModal(null); setApiKeyInput(""); } }} onOpenChange={(open) => { if (!open) { setConnectModal(null); setApiKeyInput(""); } }}>
+        <Dialog open={!!connectModal} onOpenChange={(open) => { if (!open) { setConnectModal(null); setApiKeyInput(""); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Connect {connectModal}</DialogTitle>
