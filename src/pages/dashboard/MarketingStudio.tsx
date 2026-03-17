@@ -116,9 +116,12 @@ const MarketingStudio = () => {
       }
 
       const newResults: SocialResult[] = [];
+      let savedCount = 0;
       console.log("Saving results to database:", results);
       
+      console.log("💾 About to insert", results.length, "results");
       for (const r of results) {
+        console.log("📝 Inserting result:", r);
         const { data: saved, error: saveErr } = await supabase
           .from("saved_marketing_results")
           .insert({
@@ -133,6 +136,7 @@ const MarketingStudio = () => {
           .single();
 
         if (saveErr) {
+          console.error("❌ Database insert failed:", saveErr);
           console.error("Save error:", saveErr);
         }
         
