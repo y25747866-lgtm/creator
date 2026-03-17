@@ -97,23 +97,27 @@ serve(async (req) => {
 
     // Build context from analytics data
     let dataContext = "";
-    if (analyticsContext) {
-      const { summary, products, orders } = analyticsContext;
+    console.log("analyticsContext:", analyticsContext);
+    if (analyticsContext && (analyticsContext.summary || analyticsContext.products?.length > 0 || analyticsContext.orders?.length > 0)) {
+      const { summary = {}, products = [], orders = [] } = analyticsContext;
       dataContext = `
 Here is the user's current business analytics data:
 
 SUMMARY:
-- Total Revenue: $${summary?.totalRevenue?.toFixed(2) || "0.00"}
-- Total Sales: ${summary?.totalSales || 0}
-- Active Products: ${summary?.activeProducts || 0}
-- Conversion Rate: ${summary?.conversionRate || 0}%
+- Total Revenue: $${(summary.totalRevenue || 0).toFixed(2)}
+- Total Sales: ${summary.totalSales || 0}
+- Active Products: ${summary.activeProducts || 0}
+- Conversion Rate: ${summary.conversionRate || 0}%
 
 TOP PRODUCTS:
-${(products || []).slice(0, 10).map((p: any, i: number) => `${i + 1}. ${p.name} - $${p.price || "N/A"} (${p.platform})`).join("\n")}
+${products.slice(0, 5).map((p: any, i: number) => `${i + 1}. ${p.name} - $${p.price || "N/A"} (${p.platform})`).join("\n") || "No products found"}
 
-RECENT ORDERS (last 10):
-${(orders || []).slice(0, 10).map((o: any) => `- ${o.product}: $${o.amount} on ${o.date ? new Date(o.date).toLocaleDateString() : "N/A"} (${o.platform})`).join("\n")}
+RECENT ORDERS:
+${orders.slice(0, 5).map((o: any) => `- ${o.product}: $${o.amount} on ${o.date ? new Date(o.date).toLocaleDateString() : "N/A"} (${o.platform})`).join("\n") || "No orders found"}
 `;
+      console.log("Data context built:", dataContext.substring(0, 200));
+    } else {
+      console.log("No analytics data provided");
     }
 
     // Get chat history
@@ -183,8 +187,12 @@ Guidelines:
     }
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content?.trim();
+    let reply = data.choices?.[0]?.message?.content?.trim();
     if (!reply) throw new Error("No response from AI");
+    
+    // Ensure reply is a string and not too long
+    reply = String(reply).substring(0, 10000);
+    console.log("AI reply length:", reply.length);
 
     // Save both messages to history
     await supabase.from("analytics_chat_messages").insert([
