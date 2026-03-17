@@ -219,9 +219,9 @@ const AnalyticsDashboard = () => {
         console.log("Fetched analytics data:", fetchedData);
       }
       
+      console.log("Sending to AI with context:", contextData);
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
         body: { message: msg, analyticsContext: contextData }
-      console.log("Sending to AI with context:", contextData);
       });
       if (error) throw error;
       setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
