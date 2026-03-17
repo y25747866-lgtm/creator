@@ -87,7 +87,7 @@ const MarketingStudio = () => {
           .from("saved_marketing_results")
           .insert({
             user_id: user!.id,
-            platform,
+            platform: platform,
             hook: r.hook || "",
             main_copy: r.main_copy || "",
             cta: r.cta || "",
