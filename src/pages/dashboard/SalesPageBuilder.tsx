@@ -82,6 +82,8 @@ const SalesPageBuilder = () => {
       }
 
       const newDrafts: SalesPageDraft[] = [];
+      console.log("Saving drafts to database:", results);
+      
       for (const r of results) {
         const { data: saved, error: saveErr } = await supabase
           .from("saved_sales_page_results")
@@ -94,13 +96,19 @@ const SalesPageBuilder = () => {
           .select()
           .single();
 
-        if (saved && !saveErr) {
+        if (saveErr) {
+          console.error("Save error:", saveErr);
+        }
+        
+        if (saved) {
+          console.log("Saved draft:", saved);
           newDrafts.push({ id: saved.id, headline: saved.headline, subheadline: saved.subheadline, problem: saved.problem, solution: saved.solution, benefits: saved.benefits, cta: saved.cta });
         }
       }
 
+      console.log("New drafts to display:", newDrafts);
       setDrafts((prev) => [...newDrafts, ...prev]);
-      toast({ title: "Sales page drafts generated!" });
+      toast({ title: "Sales page drafts generated!", description: `${newDrafts.length} drafts created` });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err?.message || "Unknown error", variant: "destructive" });
     } finally {

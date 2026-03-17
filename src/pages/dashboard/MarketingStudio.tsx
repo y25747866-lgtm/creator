@@ -86,6 +86,8 @@ const MarketingStudio = () => {
       }
 
       const newResults: SocialResult[] = [];
+      console.log("Saving results to database:", results);
+      
       for (const r of results) {
         const { data: saved, error: saveErr } = await supabase
           .from("saved_marketing_results")
@@ -100,7 +102,12 @@ const MarketingStudio = () => {
           .select()
           .single();
 
-        if (saved && !saveErr) {
+        if (saveErr) {
+          console.error("Save error:", saveErr);
+        }
+        
+        if (saved) {
+          console.log("Saved result:", saved);
           newResults.push({
             id: saved.id,
             hook: saved.hook,
@@ -112,8 +119,9 @@ const MarketingStudio = () => {
         }
       }
 
+      console.log("New results to display:", newResults);
       setResults((prev) => [...newResults, ...prev]);
-      toast({ title: "Content generated!" });
+      toast({ title: "Content generated!", description: `${newResults.length} posts created` });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err?.message || "Unknown error", variant: "destructive" });
     } finally {
