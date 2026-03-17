@@ -14,10 +14,12 @@ serve(async (req) => {
   try {
     const { platform, title, description, targetAudience, offerDetails } = await req.json();
 
+    console.log("📥 Request received:", { platform, title });
+
     // Validate required fields
     if (!platform || !title) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields", success: false }),
+        JSON.stringify({ error: "Missing required fields", success: false, results: [] }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -26,184 +28,107 @@ serve(async (req) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Missing authorization header", success: false }),
+        JSON.stringify({ error: "Missing authorization header", success: false, results: [] }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
-    console.log("🔑 GROQ_API_KEY exists:", !!groqApiKey);
     if (!groqApiKey) {
-      console.error("❌ GROQ_API_KEY not set in environment");
-      throw new Error("GROQ_API_KEY not configured");
+      console.error("❌ GROQ_API_KEY not configured, using fallback");
+      return generateFallbackResults(platform, title, description);
     }
 
-    console.log("🎯 Generating content for platform:", platform);
-    console.log("📝 Title:", title);
-
-    // Build prompt based on platform
+    // Build prompt
     let prompt = "";
     if (platform === "sales_page") {
-      prompt = `You are an expert sales copywriter. Create a compelling sales page for:
+      prompt = `Create 3 different sales page variations for:
 Title: ${title}
 Description: ${description}
-Target Audience: ${targetAudience}
-Offer Details: ${offerDetails}
+Target Audience: ${targetAudience || "General"}
+Offer Details: ${offerDetails || "Premium offer"}
 
-Generate exactly 3 different sales page variations. Each should have:
-- headline (catchy main headline)
-- subheadline (supporting headline)
-- problem (customer pain point)
-- solution (how your product solves it)
-- benefits (key benefits list)
-- cta (call to action text)
-
-Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
+For each variation, provide ONLY this JSON format (no other text):
+{"headline": "...", "subheadline": "...", "problem": "...", "solution": "...", "benefits": "...", "cta": "..."}`;
     } else {
-      prompt = `You are an expert social media marketer. Create engaging ${platform} posts for:
+      prompt = `Create 3 different ${platform} posts for:
 Product: ${title}
 Description: ${description}
 
-Generate exactly 3 different ${platform} posts. Each should have:
-- hook (attention-grabbing opening)
-- main_copy (body text)
-- cta (call to action)
-- hashtags (relevant hashtags)
-
-Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
+For each post, provide ONLY this JSON format (no other text):
+{"hook": "...", "main_copy": "...", "cta": "...", "hashtags": "..."}`;
     }
 
-    console.log("🤖 Calling Groq API...");
+    console.log("🤖 Calling Groq API with model: llama-3.1-8b-instant");
 
-    // Call Groq API
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${groqApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1200,
-      }),
-    });
-
-    if (!groqResponse.ok) {
-      const errorData = await groqResponse.json();
-      console.error("❌ Groq API error status:", groqResponse.status);
-      console.error("❌ Groq API error data:", errorData);
-      throw new Error(`Groq API error (${groqResponse.status}): ${errorData.error?.message || JSON.stringify(errorData)}`);
-    }
-
-    const groqData = await groqResponse.json();
-    console.log("✅ Groq API response received");
-
-    // Extract content from response
-    const content = groqData.choices?.[0]?.message?.content;
-    if (!content) {
-      console.error("❌ No content from AI model");
-      throw new Error("No content from AI model");
-    }
-
-    console.log("📄 Content from AI:", content.substring(0, 300));
-
-    // Parse JSON from response
-    let results = [];
-    
     try {
-      // Try to find JSON array in the response
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        results = JSON.parse(jsonMatch[0]);
-        console.log("✅ JSON parsed successfully, results count:", results.length);
-      } else {
-        console.warn("⚠️ No JSON array found in response");
-      }
-    } catch (parseError) {
-      console.error("⚠️ JSON parse error:", parseError);
-    }
+      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${groqApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+        }),
+      });
 
-    // Ensure we always have results
-    if (!Array.isArray(results) || results.length === 0) {
-      console.warn("⚠️ No valid results from AI, using fallback");
-      if (platform === "sales_page") {
-        results = [
-          {
-            headline: title,
-            subheadline: description || "Transform your business",
-            problem: "You need better results",
-            solution: "Our solution delivers exactly what you need",
-            benefits: "Save time, increase revenue, improve efficiency",
-            cta: "Get Started Today",
-          },
-          {
-            headline: `Discover ${title}`,
-            subheadline: "The solution you've been looking for",
-            problem: "Struggling with inefficiency",
-            solution: "We solve this with proven methods",
-            benefits: "Faster results, lower costs, better outcomes",
-            cta: "Start Your Free Trial",
-          },
-          {
-            headline: `Why Choose ${title}?`,
-            subheadline: "Industry-leading results guaranteed",
-            problem: "Competition is tough",
-            solution: "We give you the edge you need",
-            benefits: "Expert support, proven track record, guaranteed results",
-            cta: "Learn More",
-          },
-        ];
-      } else {
-        results = [
-          {
-            hook: `Just discovered something amazing about ${title}! 🤯`,
-            main_copy: description || "This changes everything. Check it out.",
-            cta: "Learn more",
-            hashtags: `#${platform} #${title.toLowerCase().replace(/\s+/g, '')}`,
-          },
-          {
-            hook: `Your life is about to change with ${title} ✨`,
-            main_copy: "Don't miss out on this opportunity.",
-            cta: "Tap the link",
-            hashtags: `#${platform} #trending`,
-          },
-          {
-            hook: `Why everyone is talking about ${title}...`,
-            main_copy: "Here's what you need to know.",
-            cta: "Swipe up",
-            hashtags: `#${platform} #mustread`,
-          },
-        ];
+      if (!groqResponse.ok) {
+        const errorData = await groqResponse.json();
+        console.error("❌ Groq API error:", errorData);
+        return generateFallbackResults(platform, title, description);
       }
-    }
 
-    console.log("✅ Returning results, count:", results.length);
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        results,
-        platform,
-        title,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const groqData = await groqResponse.json();
+      const content = groqData.choices?.[0]?.message?.content;
+
+      if (!content) {
+        console.error("❌ No content from Groq");
+        return generateFallbackResults(platform, title, description);
       }
-    );
+
+      console.log("✅ Groq response received, length:", content.length);
+
+      // Parse JSON results from content
+      const results = parseResults(content, platform, title, description);
+
+      if (results.length === 0) {
+        console.warn("⚠️ No results parsed, using fallback");
+        return generateFallbackResults(platform, title, description);
+      }
+
+      console.log("✅ Returning", results.length, "results");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          results,
+          platform,
+          title,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    } catch (apiError) {
+      console.error("❌ API call failed:", apiError);
+      return generateFallbackResults(platform, title, description);
+    }
   } catch (error: unknown) {
-    console.error("❌ Error in generate-marketing:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Unexpected error:", error);
     return new Response(
-      JSON.stringify({ 
-        error: message,
+      JSON.stringify({
+        error: error instanceof Error ? error.message : "Unknown error",
         success: false,
+        results: [],
       }),
       {
         status: 500,
@@ -212,3 +137,110 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
     );
   }
 });
+
+function parseResults(content: string, platform: string, title: string, description: string) {
+  const results = [];
+
+  // Try to find JSON objects in the content
+  const jsonMatches = content.match(/\{[^{}]*"[^"]*"[^{}]*\}/g) || [];
+
+  for (const match of jsonMatches) {
+    try {
+      const parsed = JSON.parse(match);
+      if (platform === "sales_page") {
+        if (parsed.headline && parsed.cta) {
+          results.push({
+            headline: parsed.headline || "",
+            subheadline: parsed.subheadline || "",
+            problem: parsed.problem || "",
+            solution: parsed.solution || "",
+            benefits: parsed.benefits || "",
+            cta: parsed.cta || "",
+          });
+        }
+      } else {
+        if (parsed.hook && parsed.cta) {
+          results.push({
+            hook: parsed.hook || "",
+            main_copy: parsed.main_copy || "",
+            cta: parsed.cta || "",
+            hashtags: parsed.hashtags || "",
+          });
+        }
+      }
+    } catch (e) {
+      // Skip invalid JSON
+    }
+  }
+
+  return results.slice(0, 3); // Return max 3 results
+}
+
+function generateFallbackResults(platform: string, title: string, description: string) {
+  let results = [];
+
+  if (platform === "sales_page") {
+    results = [
+      {
+        headline: `Transform Your Business with ${title}`,
+        subheadline: description || "The ultimate solution you've been waiting for",
+        problem: "You're struggling with inefficiency and lost revenue",
+        solution: `${title} solves this with cutting-edge technology`,
+        benefits: "Save time • Increase revenue • Improve efficiency",
+        cta: "Get Started Today",
+      },
+      {
+        headline: `Discover the Power of ${title}`,
+        subheadline: "Join thousands of successful users",
+        problem: "Your competition is ahead",
+        solution: `${title} gives you the competitive edge`,
+        benefits: "Expert support • Proven results • Guaranteed ROI",
+        cta: "Start Your Free Trial",
+      },
+      {
+        headline: `Why ${title} is the #1 Choice`,
+        subheadline: "Industry leaders trust us",
+        problem: "You need a solution you can rely on",
+        solution: `${title} delivers unmatched quality and support`,
+        benefits: "24/7 support • Money-back guarantee • Easy setup",
+        cta: "Learn More",
+      },
+    ];
+  } else {
+    results = [
+      {
+        hook: `🚀 Just discovered something amazing about ${title}!`,
+        main_copy: description || "This is exactly what I've been looking for. Game changer!",
+        cta: "Check it out",
+        hashtags: `#${platform} #${title.toLowerCase().replace(/\s+/g, "")} #mustread`,
+      },
+      {
+        hook: `💡 Your life is about to change with ${title}`,
+        main_copy: "Don't sleep on this opportunity. Seriously.",
+        cta: "Tap the link",
+        hashtags: `#${platform} #trending #innovation`,
+      },
+      {
+        hook: `🔥 Why everyone is talking about ${title}...`,
+        main_copy: "Here's what you need to know before it's too late.",
+        cta: "Swipe up",
+        hashtags: `#${platform} #viral #essential`,
+      },
+    ];
+  }
+
+  console.log("📤 Returning fallback results:", results.length);
+  return new Response(
+    JSON.stringify({
+      success: true,
+      results,
+      platform,
+      title,
+      fallback: true,
+    }),
+    {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
+}
