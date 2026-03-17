@@ -205,8 +205,20 @@ const AnalyticsDashboard = () => {
     setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
     setChatLoading(true);
     try {
+      // Fetch analytics data if not already loaded
+      let contextData = analytics;
+      if (!contextData) {
+        const { data: fetchedData, error: fetchError } = await supabase.functions.invoke("analytics-fetch", {
+          body: { platform: platformFilter === "all" ? undefined : platformFilter }
+        });
+        if (!fetchError) {
+          contextData = fetchedData;
+          setAnalytics(fetchedData);
+        }
+      }
+      
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
-        body: { message: msg, analyticsContext: analytics }
+        body: { message: msg, analyticsContext: contextData }
       });
       if (error) throw error;
       setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
