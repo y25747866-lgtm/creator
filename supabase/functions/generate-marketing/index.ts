@@ -152,6 +152,33 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
         console.log("✅ JSON parsed successfully, results count:", results.length);
       } else {
         console.warn("⚠️ No JSON array found in response, using fallback");
+        if (platform === "sales_page") {
+          results = [
+            {
+              headline: title,
+              subheadline: description,
+              problem: "Market need",
+              solution: "Our solution",
+              benefits: "Quality and value",
+              cta: "Get Started",
+            },
+          ];
+        } else {
+          results = [
+            {
+              hook: title,
+              main_copy: description,
+              cta: "Learn more",
+              hashtags: "#marketing",
+              platform: platform,
+            },
+          ];
+        }
+      }
+    } catch (parseError) {
+      console.error("⚠️ JSON parse error:", parseError);
+      // Return fallback data if parsing fails
+      if (platform === "sales_page") {
         results = [
           {
             headline: title,
@@ -160,30 +187,19 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
             solution: "Our solution",
             benefits: "Quality and value",
             cta: "Get Started",
+          },
+        ];
+      } else {
+        results = [
+          {
             hook: title,
             main_copy: description,
+            cta: "Learn more",
             hashtags: "#marketing",
             platform: platform,
           },
         ];
       }
-    } catch (parseError) {
-      console.error("⚠️ JSON parse error:", parseError);
-      // Return fallback data if parsing fails
-      results = [
-        {
-          headline: title,
-          subheadline: description,
-          problem: "Market need",
-          solution: "Our solution",
-          benefits: "Quality and value",
-          cta: "Get Started",
-          hook: title,
-          main_copy: description,
-          hashtags: "#marketing",
-          platform: platform,
-        },
-      ];
     }
 
     console.log("✅ Returning results");
