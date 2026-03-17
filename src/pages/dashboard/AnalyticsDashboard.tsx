@@ -209,14 +209,21 @@ const AnalyticsDashboard = () => {
       let contextData = analytics;
       console.log("Current analytics state:", analytics);
       if (!contextData) {
+        console.log("Fetching analytics data...");
         const { data: fetchedData, error: fetchError } = await supabase.functions.invoke("analytics-fetch", {
           body: { platform: platformFilter === "all" ? undefined : platformFilter }
         });
-        if (!fetchError) {
+        if (fetchError) {
+          console.error("Analytics fetch error:", fetchError);
+        }
+        if (!fetchedData || (fetchedData.products && fetchedData.products.length === 0)) {
+          console.warn("No analytics data returned, using empty data");
+          contextData = { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] };
+        } else {
           contextData = fetchedData;
           setAnalytics(fetchedData);
         }
-        console.log("Fetched analytics data:", fetchedData);
+        console.log("Fetched analytics data:", contextData);
       }
       
       console.log("Sending to AI with context:", contextData);
