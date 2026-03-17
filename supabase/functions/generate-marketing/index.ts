@@ -32,7 +32,9 @@ serve(async (req) => {
     }
 
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
+    console.log("🔑 GROQ_API_KEY exists:", !!groqApiKey);
     if (!groqApiKey) {
+      console.error("❌ GROQ_API_KEY not set in environment");
       throw new Error("GROQ_API_KEY not configured");
     }
 
@@ -95,8 +97,9 @@ Return ONLY a valid JSON array with exactly 3 objects. No other text.`;
 
     if (!groqResponse.ok) {
       const errorData = await groqResponse.json();
-      console.error("❌ Groq API error:", errorData);
-      throw new Error(`Groq API error: ${errorData.error?.message || "Unknown error"}`);
+      console.error("❌ Groq API error status:", groqResponse.status);
+      console.error("❌ Groq API error data:", errorData);
+      throw new Error(`Groq API error (${groqResponse.status}): ${errorData.error?.message || JSON.stringify(errorData)}`);
     }
 
     const groqData = await groqResponse.json();
