@@ -264,7 +264,7 @@ const AnalyticsDashboard = () => {
                     {connected ? (
                       <Button variant="outline" size="sm" onClick={() => handleDisconnect(p.id)} className="rounded-lg h-9 px-3 text-xs"><Unlink className="w-3.5 h-3.5 mr-1.5" /> Disconnect</Button>
                     ) : (
-                      <Button size="sm" onClick={() => setConnectModal(p.id)} className="rounded-lg h-9 px-4 text-xs"><Link2 className="w-3.5 h-3.5 mr-1.5" /> Connect</Button>
+                      <Button size="sm" onClick={() => { console.log("Opening modal for:", p.id); setConnectModal(p.id); }} className="rounded-lg h-9 px-4 text-xs"><Link2 className="w-3.5 h-3.5 mr-1.5" /> Connect</Button>
                     )}
                   </div>
                 </div>
@@ -441,7 +441,7 @@ const AnalyticsDashboard = () => {
         </Card>
 
         {/* Connect Modal */}
-        <Dialog open={!!connectModal} onOpenChange={() => { setConnectModal(null); setApiKeyInput(""); }}>
+        <Dialog open={!!connectModal} onOpenChange={(open) => { console.log("Dialog open state:", open, "connectModal:", connectModal); if (!open) { setConnectModal(null); setApiKeyInput(""); } }} onOpenChange={() => { setConnectModal(null); setApiKeyInput(""); }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Connect {connectModal}</DialogTitle>
