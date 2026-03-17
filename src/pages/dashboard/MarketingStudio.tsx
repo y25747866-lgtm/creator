@@ -136,6 +136,8 @@ const MarketingStudio = () => {
           .single();
 
         if (saveErr) {
+          console.error("❌ RLS or database error:", saveErr);
+          throw new Error(`Failed to save result: ${saveErr.message}`);
           console.error("❌ Database insert failed:", saveErr);
           console.error("Save error:", saveErr);
         }
