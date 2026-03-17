@@ -207,6 +207,7 @@ const AnalyticsDashboard = () => {
     try {
       // Fetch analytics data if not already loaded
       let contextData = analytics;
+      console.log("Current analytics state:", analytics);
       if (!contextData) {
         const { data: fetchedData, error: fetchError } = await supabase.functions.invoke("analytics-fetch", {
           body: { platform: platformFilter === "all" ? undefined : platformFilter }
@@ -215,10 +216,12 @@ const AnalyticsDashboard = () => {
           contextData = fetchedData;
           setAnalytics(fetchedData);
         }
+        console.log("Fetched analytics data:", fetchedData);
       }
       
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
         body: { message: msg, analyticsContext: contextData }
+      console.log("Sending to AI with context:", contextData);
       });
       if (error) throw error;
       setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
