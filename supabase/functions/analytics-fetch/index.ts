@@ -128,7 +128,7 @@ serve(async (req) => {
 
     for (const conn of connections) {
       if (platform && conn.platform !== platform) continue;
-      const apiKey = atob(conn.api_key_encrypted);
+      const apiKey = conn.api_key_encrypted;
       let platformData;
 
       if (conn.platform === "whop") {
