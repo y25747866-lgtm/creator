@@ -36,7 +36,7 @@ const MarketingStudio = () => {
   const { user } = useAuth();
   const { canUseFeature, recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
 
-  // Load saved results from DB
+  // Load saved results from DB with real-time subscription
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -59,6 +59,36 @@ const MarketingStudio = () => {
       setLoadingSaved(false);
     };
     load();
+
+    // Subscribe to real-time changes
+    const subscription = supabase
+      .channel(`marketing_results_${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "saved_marketing_results",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("New result inserted:", payload.new);
+          const newResult = {
+            id: payload.new.id,
+            hook: payload.new.hook,
+            main_copy: payload.new.main_copy,
+            cta: payload.new.cta,
+            hashtags: payload.new.hashtags,
+            platform: payload.new.platform,
+          };
+          setResults((prev) => [newResult, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user]);
 
   const generate = async () => {
@@ -129,17 +159,18 @@ const MarketingStudio = () => {
     }
   };
 
-  const copyResult = async (result: SocialResult) => {
+  const copyResult = (result: SocialResult) => {
     const text = `${result.hook}\n\n${result.main_copy}\n\n${result.cta}${result.hashtags ? `\n\n${result.hashtags}` : ""}`;
-    await navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text);
     setCopiedId(result.id);
     setTimeout(() => setCopiedId(null), 2000);
     toast({ title: "Copied to clipboard" });
   };
 
   const handleSelectText = (e: React.MouseEvent<HTMLDivElement>) => {
+    const e_currentTarget = e.currentTarget;
     const range = document.createRange();
-    range.selectNodeContents(e.currentTarget);
+    range.selectNodeContents(e_currentTarget);
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
