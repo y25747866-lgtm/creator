@@ -20,6 +20,7 @@ import SalesPageBuilder from "./pages/dashboard/SalesPageBuilder";
 import AnalyticsDashboard from "./pages/dashboard/AnalyticsDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ViewableRoute from "./components/ViewableRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +31,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
+          <ErrorBoundary>
+            <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
@@ -102,10 +104,11 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
+        </ErrorBoundary>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+</ThemeProvider>
 );
 
 export default App;
