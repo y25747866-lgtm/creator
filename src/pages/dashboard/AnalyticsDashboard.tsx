@@ -173,9 +173,11 @@ const AnalyticsDashboard = () => {
   // ✅ FIX #4: Scroll to bottom only when messages change
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" }).catch(() => {
-        // Ignore scroll errors
-      });
+      try {
+        chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+      } catch (error) {
+        console.error("Scroll error:", error);
+      }
     }
   }, [chatMessages]);
 

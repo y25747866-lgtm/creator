@@ -96,8 +96,11 @@ export default function ModulePreview({
         safeVersions[0]?.version_number ?? null
       );
 
-      recordMonetizationMetric(module.id, "view")
-        .catch(() => {});
+      try {
+        await recordMonetizationMetric(module.id, "view");
+      } catch (error) {
+        console.error("Failed to record view metric:", error);
+      }
     } catch {
       toast({
         title: "Failed to load asset",
@@ -141,8 +144,11 @@ export default function ModulePreview({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
 
-      recordMonetizationMetric(module.id, "copy")
-        .catch(() => {});
+      try {
+        await recordMonetizationMetric(module.id, "copy");
+      } catch (error) {
+        console.error("Failed to record copy metric:", error);
+      }
     } catch {
       toast({
         title: "Copy failed",
@@ -173,8 +179,11 @@ export default function ModulePreview({
 
     URL.revokeObjectURL(url);
 
-    recordMonetizationMetric(module.id, "download")
-      .catch(() => {});
+    try {
+      await recordMonetizationMetric(module.id, "download");
+    } catch (error) {
+      console.error("Failed to record download metric:", error);
+    }
   }
 
   /*

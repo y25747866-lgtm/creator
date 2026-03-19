@@ -197,12 +197,18 @@ export async function recordMonetizationMetric(
   moduleId: string,
   eventType: string,
   metadata?: Record<string, unknown>
-) {
-  const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ moduleId, eventType, metadata }),
-  });
-  if (!res.ok) console.error("Metric recording failed");
+): Promise<void> {
+  try {
+    const headers = await getHeaders();
+    const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ moduleId, eventType, metadata }),
+    });
+    if (!res.ok) {
+      console.error("Metric recording failed:", res.statusText);
+    }
+  } catch (error) {
+    console.error("Error recording monetization metric:", error);
+  }
 }

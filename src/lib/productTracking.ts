@@ -30,13 +30,20 @@ export async function createTrackedProduct(params: {
   return res.json();
 }
 
-export async function recordMetric(productId: string, metricType: string, value = 1, metadata?: Record<string, unknown>) {
-  const headers = await getHeaders();
-  await fetch(`${BASE_URL}/functions/v1/product-tracking?action=record-metric`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ productId, metricType, value, metadata }),
-  });
+export async function recordMetric(productId: string, metricType: string, value = 1, metadata?: Record<string, unknown>): Promise<void> {
+  try {
+    const headers = await getHeaders();
+    const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?action=record-metric`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ productId, metricType, value, metadata }),
+    });
+    if (!res.ok) {
+      console.error("Failed to record metric:", res.statusText);
+    }
+  } catch (error) {
+    console.error("Error recording metric:", error);
+  }
 }
 
 export async function submitFeedback(params: {

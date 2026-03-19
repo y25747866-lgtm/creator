@@ -17,7 +17,28 @@ export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
+    
+    // Bind methods for unhandled rejection handling
+    this.handleUnhandledRejection = this.handleUnhandledRejection.bind(this);
   }
+
+  componentDidMount() {
+    // Catch unhandled promise rejections
+    window.addEventListener("unhandledrejection", this.handleUnhandledRejection);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("unhandledrejection", this.handleUnhandledRejection);
+  }
+
+  handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+    console.error("Unhandled promise rejection:", event.reason);
+    const error = event.reason instanceof Error 
+      ? event.reason 
+      : new Error(String(event.reason));
+    this.setState({ hasError: true, error });
+    event.preventDefault();
+  };
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
@@ -43,9 +64,18 @@ export class ErrorBoundary extends Component<Props, State> {
                 <p className="text-sm text-muted-foreground mb-4">
                   {this.state.error?.message || "An unexpected error occurred. Please try again."}
                 </p>
-                <Button onClick={this.handleReset} variant="outline" size="sm">
-                  Try Again
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={this.handleReset} variant="outline" size="sm">
+                    Try Again
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    Reload Page
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

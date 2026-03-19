@@ -198,7 +198,7 @@ const EbookGenerator = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (isFreeUser) {
       toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
       return;
@@ -206,12 +206,16 @@ const EbookGenerator = () => {
     if (ebookData) {
       generatePDF(ebookData);
       if (ebookData.dbProductId) {
-        recordMetric(ebookData.dbProductId, "download").catch(() => {});
+        try {
+          await recordMetric(ebookData.dbProductId, "download");
+        } catch (error) {
+          console.error("Failed to record download metric:", error);
+        }
       }
     }
   };
 
-  const handleDownloadCover = () => {
+  const handleDownloadCover = async () => {
     if (isFreeUser) {
       toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
       return;
@@ -219,7 +223,11 @@ const EbookGenerator = () => {
     if (ebookData) {
       downloadCoverImage(ebookData);
       if (ebookData.dbProductId) {
-        recordMetric(ebookData.dbProductId, "cover_download").catch(() => {});
+        try {
+          await recordMetric(ebookData.dbProductId, "cover_download");
+        } catch (error) {
+          console.error("Failed to record cover download metric:", error);
+        }
       }
     }
   };
