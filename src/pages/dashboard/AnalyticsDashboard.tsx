@@ -200,41 +200,52 @@ const AnalyticsDashboard = () => {
       toast({ title: "Pro plan required", description: "AI Business Assistant is available on the Pro plan.", variant: "destructive" });
       return;
     }
+    
     const msg = chatInput.trim();
     setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", content: msg }]);
+    
+    // ✅ FIX: Add user message immediately with error handling
+    setChatMessages((prev) => [...prev, { role: "user", content: msg, created_at: new Date().toISOString() }]);
     setChatLoading(true);
+    
     try {
       // Fetch analytics data if not already loaded
       let contextData = analytics;
-      console.log("Current analytics state:", analytics);
+      
       if (!contextData) {
-        console.log("Fetching analytics data...");
         const { data: fetchedData, error: fetchError } = await supabase.functions.invoke("analytics-fetch", {
           body: { platform: platformFilter === "all" ? undefined : platformFilter }
         });
+        
         if (fetchError) {
           console.error("Analytics fetch error:", fetchError);
-        }
-        if (!fetchedData || (fetchedData.products && fetchedData.products.length === 0)) {
-          console.warn("No analytics data returned, using empty data");
           contextData = { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] };
-        } else {
+        } else if (fetchedData && typeof fetchedData === 'object') {
           contextData = fetchedData;
           setAnalytics(fetchedData);
+        } else {
+          contextData = { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] };
         }
-        console.log("Fetched analytics data:", contextData);
       }
       
-      console.log("Sending to AI with context:", contextData);
+      // ✅ FIX: Ensure contextData is valid before sending
+      if (!contextData || typeof contextData !== 'object') {
+        throw new Error("Invalid analytics context");
+      }
+      
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
         body: { message: msg, analyticsContext: contextData }
       });
+      
       if (error) throw error;
-      setChatMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      if (!data || !data.reply) throw new Error("No response from AI");
+      
+      // ✅ FIX: Add assistant message with error handling
+      setChatMessages((prev) => [...prev, { role: "assistant", content: String(data.reply), created_at: new Date().toISOString() }]);
     } catch (error) {
       console.error("Chat error:", error);
-      setChatMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
+      const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred. Please try again.";
+      setChatMessages((prev) => [...prev, { role: "assistant", content: `Sorry, I encountered an error: ${errorMsg}`, created_at: new Date().toISOString() }]);
     } finally {
       setChatLoading(false);
     }
@@ -264,7 +275,10 @@ const AnalyticsDashboard = () => {
 
         {/* Platform Connections */}
         <Card className="rounded-2xl border border-border shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4">Platform Connections</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold">Platform Connections</h2>
+            <Badge variant="outline" className="text-xs">{connections.length} connected</Badge>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PLATFORMS.map((p) => {
               const connected = isConnected(p.id);
@@ -277,10 +291,18 @@ const AnalyticsDashboard = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <h3 className="font-semibold text-sm">{p.name}</h3>
+                      {/* ✅ FIX: Add visual connection indicator */}
+                      <div className={`w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-gray-400"}`} />
                       <Badge variant={connected ? "default" : "secondary"} className="text-[10px] px-2 py-0">{connected ? "Connected" : "Not Connected"}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-1">{p.description}</p>
-                    {conn?.last_sync_at && <p className="text-[10px] text-muted-foreground mt-1">Last synced: {new Date(conn.last_sync_at).toLocaleString()}</p>}
+                    {/* ✅ FIX: Display connection and sync status */}
+                    {conn && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-[10px] text-muted-foreground">Connected: {new Date(conn.connected_at).toLocaleString()}</p>
+                        {conn.last_sync_at && <p className="text-[10px] text-muted-foreground">Last synced: {new Date(conn.last_sync_at).toLocaleString()}</p>}
+                      </div>
+                    )}
                   </div>
                   <div className="shrink-0">
                     {connected ? (
@@ -339,6 +361,28 @@ const AnalyticsDashboard = () => {
                   </div>
                 ))}
               </div>
+
+              {/* ✅ FIX: Add account data display section */}
+              {connections.length > 0 && analytics && (
+                <div className="rounded-xl border border-border p-4 mb-6 bg-card/50">
+                  <h3 className="text-xs font-semibold mb-3 text-muted-foreground">Connected Account Data</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {connections.map((conn) => {
+                      const platformData = analytics.products.filter((p: any) => p.platform === conn.platform);
+                      return (
+                        <div key={conn.platform} className="p-3 rounded-lg bg-background border border-border/50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <p className="text-xs font-semibold capitalize">{conn.platform}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Products: {platformData.length}</p>
+                          <p className="text-xs text-muted-foreground">Last sync: {conn.last_sync_at ? new Date(conn.last_sync_at).toLocaleDateString() : "Never"}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {salesChartData.length > 0 && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -438,20 +482,32 @@ const AnalyticsDashboard = () => {
                   </div>
                 </div>
               )}
-{chatMessages.map((msg, i) => {
-                try {
-                  return (
-                    <div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                      {msg.role === "assistant" && <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Bot className="w-3.5 h-3.5 text-primary" /></div>}
-                      <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{String(msg.content || "")}</div>
-                      {msg.role === "user" && <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5"><User className="w-3.5 h-3.5" /></div>}
-                    </div>
-                  );
-                } catch (e) {
-                  console.error("Chat render error:", e);
-                  return <div key={i} className="text-red-500 text-xs p-2">Error displaying message</div>;
-                }
-              })}
+            {chatMessages.map((msg, i) => {
+              // ✅ FIX: Add comprehensive null/undefined checks
+              if (!msg || typeof msg !== 'object') {
+                return <div key={i} className="text-xs text-muted-foreground p-2">Invalid message data</div>;
+              }
+              
+              const role = msg.role || "user";
+              const content = msg.content ? String(msg.content).trim() : "";
+              
+              if (!content) {
+                return <div key={i} className="text-xs text-muted-foreground p-2">Empty message</div>;
+              }
+              
+              try {
+                return (
+                  <div key={i} className={`flex gap-2.5 ${role === "user" ? "justify-end" : "justify-start"}`}>
+                    {role === "assistant" && <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"><Bot className="w-3.5 h-3.5 text-primary" /></div>}
+                    <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm break-words ${role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{content}</div>
+                    {role === "user" && <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5"><User className="w-3.5 h-3.5" /></div>}
+                  </div>
+                );
+              } catch (e) {
+                console.error("Chat render error:", e);
+                return <div key={i} className="text-xs text-muted-foreground p-2">Error displaying message</div>;
+              }
+            })}
               {chatLoading && (
                 <div className="flex gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Bot className="w-3.5 h-3.5 text-primary" /></div>
