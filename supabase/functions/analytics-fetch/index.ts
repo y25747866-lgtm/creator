@@ -6,6 +6,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function checkUserSubscription(supabase: any, userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return false;
+
+    const now = new Date();
+    const endDate = data.end_date ? new Date(data.end_date) : null;
+    const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+
+    const isActive = (!endDate || endDate > now) && (!expiresAt || expiresAt > now);
+
+    if (!isActive) {
+      // Auto-update status to expired
+      await supabase
+        .from("subscriptions")
+        .update({ status: "expired" })
+        .eq("id", data.id)
+        .catch((err: any) => console.error("Failed to update expired status:", err));
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error checking subscription:", err);
+    return false;
+  }
+}
+
 async function fetchWhopData(apiKey: string) {
   const headers = { Authorization: `Bearer ${apiKey}` };
   let products: any[] = [];
@@ -152,6 +188,20 @@ serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) throw new Error("Unauthorized");
+
+    // ✅ CHECK SUBSCRIPTION ACCESS
+    const hasAccess = await checkUserSubscription(supabase, user.id);
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ 
+        error: "Subscription expired or inactive. Please upgrade your plan.",
+        summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, 
+        products: [], 
+        orders: [] 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const body = await req.json();
     const { platform } = body;

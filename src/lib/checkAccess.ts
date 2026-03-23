@@ -21,15 +21,32 @@ export async function checkAccess() {
     return { hasAccess: false, planType: "free" as const };
   }
 
-  const isStillActive = !data.expires_at || new Date(data.expires_at) > new Date();
+  const now = new Date();
+
+  // Check both end_date (new column) and expires_at (old column)
+  const endDate = data.end_date ? new Date(data.end_date) : null;
+  const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+
+  const isStillActive =
+    (!endDate || endDate > now) && (!expiresAt || expiresAt > now);
 
   if (!isStillActive) {
+    // Auto-update status to expired
+    await supabase
+      .from("subscriptions")
+      .update({ status: "expired" })
+      .eq("id", data.id)
+      .catch((err) => console.error("Failed to update expired status:", err));
+
     return { hasAccess: false, planType: "free" as const };
   }
 
+  // Use new 'plan' column if available, fallback to 'plan_type'
+  const planValue = data.plan || data.plan_type;
+
   return {
     hasAccess: true,
-    planType: normalizePlanType(data.plan_type),
+    planType: normalizePlanType(planValue),
     subscription: data,
   };
 }

@@ -21,6 +21,7 @@ import nexoraLogo from "@/assets/nexora-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { getPlanDisplayName } from "@/lib/subscription";
 import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
@@ -29,16 +30,30 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { toast } = useToast();
-  const { planType } = useSubscription();
+  const { planType, hasPaidSubscription } = useSubscription();
 
-  const planLabel = planType === "pro" ? "Pro" : planType === "creator" ? "Creator" : "Free";
-  const planColor = planType === "pro" ? "bg-primary text-primary-foreground" : planType === "creator" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground";
+  // Get display name from subscription library
+  const planLabel = getPlanDisplayName(planType);
+  const planColor =
+    planType === "pro"
+      ? "bg-primary text-primary-foreground"
+      : planType === "creator"
+        ? "bg-accent text-accent-foreground"
+        : "bg-muted text-muted-foreground";
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator" },
+    {
+      icon: BookOpen,
+      label: "AI Product Generator",
+      path: "/dashboard/ebook-generator",
+    },
     { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio" },
-    { icon: BarChart3, label: "Sales Page Builder", path: "/dashboard/sales-page-builder" },
+    {
+      icon: BarChart3,
+      label: "Sales Page Builder",
+      path: "/dashboard/sales-page-builder",
+    },
     { icon: LineChart, label: "Analytics", path: "/dashboard/analytics" },
     { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
@@ -72,9 +87,18 @@ const DashboardSidebar = () => {
                 exit={{ opacity: 0, x: -10 }}
                 className="flex items-center gap-2"
               >
-                <span className="font-bold text-lg text-sidebar-foreground">NexoraOS</span>
-                <Badge className={cn("text-[10px] px-1.5 py-0 h-4 font-semibold", planColor)}>
-                  {planType !== "free" && <Crown className="w-2.5 h-2.5 mr-0.5" />}
+                <span className="font-bold text-lg text-sidebar-foreground">
+                  NexoraOS
+                </span>
+                <Badge
+                  className={cn(
+                    "text-[10px] px-1.5 py-0 h-4 font-semibold",
+                    planColor
+                  )}
+                >
+                  {hasPaidSubscription && (
+                    <Crown className="w-2.5 h-2.5 mr-0.5" />
+                  )}
                   {planLabel}
                 </Badge>
               </motion.div>
@@ -106,7 +130,12 @@ const DashboardSidebar = () => {
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
-                <item.icon className={cn("w-[18px] h-[18px] shrink-0 ml-1", isActive && "text-primary")} />
+                <item.icon
+                  className={cn(
+                    "w-[18px] h-[18px] shrink-0 ml-1",
+                    isActive && "text-primary"
+                  )}
+                />
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span

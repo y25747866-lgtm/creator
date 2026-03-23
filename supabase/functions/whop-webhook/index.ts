@@ -148,15 +148,18 @@ serve(async (req) => {
         );
       }
 
+      // Use new schema: plan, start_date, end_date
       const { error: subError } = await supabase
         .from("subscriptions")
         .upsert(
           {
             user_id: profile.user_id,
-            plan_type: planType,
+            plan: planType,
             status: "active",
             whop_order_id: data?.id || null,
             whop_user_id: whopUserId,
+            start_date: new Date().toISOString(),
+            end_date: expiresAt.toISOString(),
             started_at: new Date().toISOString(),
             expires_at: expiresAt.toISOString(),
           },
@@ -192,7 +195,11 @@ serve(async (req) => {
         if (profile) {
           await supabase
             .from("subscriptions")
-            .update({ status: "cancelled", expires_at: new Date().toISOString() })
+            .update({
+              status: "cancelled",
+              end_date: new Date().toISOString(),
+              expires_at: new Date().toISOString(),
+            })
             .eq("user_id", profile.user_id);
 
           console.log("Subscription cancelled:", email);
@@ -219,4 +226,3 @@ serve(async (req) => {
     );
   }
 });
-
