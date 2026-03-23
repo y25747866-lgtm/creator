@@ -1,47 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, content-type",
-};
-
-async function checkUserSubscription(supabase: any, userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !data) return false;
-
-    const now = new Date();
-    const endDate = data.end_date ? new Date(data.end_date) : null;
-    const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
-
-    const isActive = (!endDate || endDate > now) && (!expiresAt || expiresAt > now);
-
-    if (!isActive) {
-      // Auto-update status to expired
-      await supabase
-        .from("subscriptions")
-        .update({ status: "expired" })
-        .eq("id", data.id)
-        .catch((err: any) => console.error("Failed to update expired status:", err));
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error("Error checking subscription:", err);
-    return false;
-  }
-}
+import { verifyAccess, corsHeaders, errorResponse } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,52 +8,20 @@ serve(async (req) => {
   }
 
   try {
-    const { platform, title, description, targetAudience, offerDetails } = await req.json();
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || "Unauthorized", 401);
+    }
+
+    const body = await req.json();
+    const { platform, title, description, targetAudience, offerDetails } = body;
 
     console.log("📥 Request received:", { platform, title });
 
     // Validate required fields
     if (!platform || !title) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields", success: false, results: [] }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get user from auth header
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header", success: false, results: [] }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ✅ CHECK SUBSCRIPTION ACCESS
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", success: false, results: [] }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const hasAccess = await checkUserSubscription(supabase, user.id);
-    if (!hasAccess) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Subscription expired or inactive. Please upgrade your plan.",
-          success: false, 
-          results: [] 
-        }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse("Missing required fields", 400);
     }
 
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
@@ -188,17 +115,7 @@ For each post, provide ONLY this JSON format (no other text):
     }
   } catch (error: unknown) {
     console.error("❌ Unexpected error:", error);
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-        success: false,
-        results: [],
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    return errorResponse(error instanceof Error ? error.message : "Unknown error", 500);
   }
 });
 

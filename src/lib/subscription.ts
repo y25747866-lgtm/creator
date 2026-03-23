@@ -73,6 +73,9 @@ export function isSubscriptionActive(
     }
   }
 
+  // If status is 'active' and we have no expiration date, it's considered active (lifetime or manual)
+  // But if we have an expiration date and it's in the past, we return false above.
+  
   return true;
 }
 

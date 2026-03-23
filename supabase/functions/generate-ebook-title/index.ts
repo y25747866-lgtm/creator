@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication and subscription
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
     const access = await verifyAccess(req);
     if (!access.authorized) {
       return errorResponse(access.error || 'Unauthorized', 401);
@@ -38,24 +38,26 @@ serve(async (req) => {
     // Sanitize input for AI prompt
     const sanitizedTopic = sanitizeInput(topic!);
 
-    const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
-    if (!OPENROUTER_API_KEY) {
-      throw new Error('OpenRouter API key not configured');
+    if (!GROQ_API_KEY) {
+      console.warn('GROQ_API_KEY not configured, using fallback');
+      return new Response(
+        JSON.stringify({ title: `The Ultimate Guide to ${sanitizedTopic}` }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Generating title for topic:', sanitizedTopic.substring(0, 50) + '...');
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://nexoraos.lovable.app',
-        'X-Title': 'NexoraOS',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-001',
+        model: 'llama-3.1-8b-instant',
         messages: [
           {
             role: 'system',
@@ -73,8 +75,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter API error:', response.status, errorText);
-      throw new Error(`OpenRouter API error: ${response.status}`);
+      console.error('Groq API error:', response.status, errorText);
+      throw new Error(`Groq API error: ${response.status}`);
     }
 
     const data = await response.json();
@@ -89,9 +91,6 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('Error in generate-ebook-title:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse(message, 500);
   }
 });

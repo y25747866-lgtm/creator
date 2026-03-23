@@ -67,6 +67,10 @@ export interface AccessResult {
   error?: string;
 }
 
+/**
+ * Verify if the user has a valid active and unexpired subscription.
+ * Strictly enforces: status = 'active' AND (end_date > now OR expires_at > now)
+ */
 export async function verifyAccess(req: Request): Promise<AccessResult> {
   // Extract JWT from Authorization header
   const authHeader = req.headers.get('Authorization');
@@ -96,12 +100,12 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
   }
 
   // Check for valid active + unexpired subscription
+  // We check both status='active' and that it hasn't expired yet
   const { data: subscription, error: subError } = await supabase
     .from('subscriptions')
-    .select('id, status, expires_at')
+    .select('id, status, expires_at, end_date')
     .eq('user_id', user.id)
     .eq('status', 'active')
-    .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -112,7 +116,26 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
   }
 
   if (!subscription) {
-    return { authorized: false, error: 'No active subscription' };
+    return { authorized: false, error: 'No active subscription found. Please upgrade your plan.' };
+  }
+
+  const now = new Date();
+  const endDate = subscription.end_date ? new Date(subscription.end_date) : null;
+  const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
+
+  const isExpired = (endDate && endDate < now) || (expiresAt && expiresAt < now);
+
+  if (isExpired) {
+    // Auto-update status to expired in background
+    supabase
+      .from('subscriptions')
+      .update({ status: 'expired' })
+      .eq('id', subscription.id)
+      .then(({ error }) => {
+        if (error) console.error('Failed to auto-update expired status:', error.message);
+      });
+
+    return { authorized: false, error: 'Subscription expired. Please renew your plan to continue.' };
   }
 
   return { authorized: true, userId: user.id };

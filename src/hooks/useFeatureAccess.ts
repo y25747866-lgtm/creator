@@ -14,14 +14,16 @@ const FREE_DAILY_LIMITS: Record<string, number> = {
 
 export function useFeatureAccess() {
   const { user } = useAuth();
-  const { planType, hasPaidSubscription, loading: subLoading } = useSubscription();
+  const { planType, hasPaidSubscription, loading: subLoading, subscription } = useSubscription();
   const { toast } = useToast();
   const [dailyUsage, setDailyUsage] = useState<Record<string, number>>({});
   const [usageLoading, setUsageLoading] = useState(false);
 
-  const isFreePlan = planType === "free";
+  // An expired user should be treated as a free user
+  const isExpired = subscription?.status === "expired";
+  const isFreePlan = planType === "free" || isExpired;
 
-  // Fetch today's usage ONLY for free users
+  // Fetch today's usage for free/expired users
   useEffect(() => {
     if (!user || !isFreePlan) return;
 
@@ -45,7 +47,8 @@ export function useFeatureAccess() {
   }, [user, isFreePlan]);
 
   const recordUsage = useCallback(async (feature: Feature) => {
-    if (!user || hasPaidSubscription) return true;   // Paid users always allowed
+    // Paid active users always allowed
+    if (!user || (hasPaidSubscription && !isExpired)) return true;
 
     const today = new Date().toISOString().split("T")[0];
     const currentCount = dailyUsage[feature] || 0;
@@ -53,8 +56,10 @@ export function useFeatureAccess() {
 
     if (limit && currentCount >= limit) {
       toast({
-        title: "Free plan limit reached",
-        description: "Upgrade to continue generating.",
+        title: isExpired ? "Subscription Expired" : "Free plan limit reached",
+        description: isExpired 
+          ? "Please renew your subscription to continue using premium features."
+          : "Upgrade to continue generating.",
         variant: "destructive",
       });
       return false;
@@ -71,30 +76,33 @@ export function useFeatureAccess() {
       setDailyUsage((prev) => ({ ...prev, [feature]: currentCount + 1 }));
     }
     return true;
-  }, [user, hasPaidSubscription, dailyUsage, toast]);
+  }, [user, hasPaidSubscription, isExpired, dailyUsage, toast]);
 
   const canUseFeature = useCallback((feature: Feature): boolean => {
     if (subLoading) return false;
-    if (hasPaidSubscription) return true;   // ← THIS UNLOCKS EVERYTHING FOR PRO
+    
+    // Paid active users always allowed
+    if (hasPaidSubscription && !isExpired) return true;
 
-    // Free plan restrictions
+    // Free/Expired plan restrictions
     if (feature === "downloads") return false;
     if (feature === "ai_assistant") return false;
+    if (feature === "analytics") return false; // Analytics is premium
 
     if (FREE_DAILY_LIMITS[feature]) {
       const currentCount = dailyUsage[feature] || 0;
       return currentCount < FREE_DAILY_LIMITS[feature];
     }
 
-    return true;
-  }, [subLoading, hasPaidSubscription, dailyUsage]);
+    return false; // Default to blocked for premium features
+  }, [subLoading, hasPaidSubscription, isExpired, dailyUsage]);
 
   const getRemainingUses = useCallback((feature: Feature): number | null => {
-    if (hasPaidSubscription || !FREE_DAILY_LIMITS[feature]) return null;
+    if ((hasPaidSubscription && !isExpired) || !FREE_DAILY_LIMITS[feature]) return null;
     const limit = FREE_DAILY_LIMITS[feature];
     const used = dailyUsage[feature] || 0;
     return Math.max(0, limit - used);
-  }, [hasPaidSubscription, dailyUsage]);
+  }, [hasPaidSubscription, isExpired, dailyUsage]);
 
   return {
     canUseFeature,
@@ -102,7 +110,8 @@ export function useFeatureAccess() {
     getRemainingUses,
     planType,
     isFreePlan,
-    hasPaidSubscription,
+    isExpired,
+    hasPaidSubscription: hasPaidSubscription && !isExpired,
     loading: subLoading || usageLoading,
   };
-  }
+}

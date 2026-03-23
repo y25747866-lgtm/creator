@@ -135,8 +135,11 @@ export async function checkFeatureAccess(
 ): Promise<boolean> {
   const access = await checkUserAccess();
 
+  // If subscription is expired or inactive, deny access to premium features
   if (!access.hasAccess) {
-    return false;
+    // Only allow free features if they don't have an active subscription
+    const freeFeatures = ["basic_ebook_generation", "basic_marketing"];
+    return freeFeatures.includes(featureName);
   }
 
   // Define feature access by plan

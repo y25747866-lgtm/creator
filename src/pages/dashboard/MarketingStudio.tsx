@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, AlertCircle } from "lucide-center";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,9 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { 
+  Loader2 as LoaderIcon, 
+  Copy as CopyIcon, 
+  Trash2 as TrashIcon, 
+  CheckCircle2 as CheckIcon, 
+  Sparkles as SparklesIcon, 
+  AlertCircle as AlertIcon 
+} from "lucide-react";
 
 interface SocialResult {
   id: string;
@@ -34,9 +43,11 @@ const MarketingStudio = () => {
   const [loadingSaved, setLoadingSaved] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { canUseFeature, recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
+  const { canUseFeature, recordUsage, getRemainingUses, isFreePlan, isExpired, hasPaidSubscription } = useFeatureAccess();
 
-  // Load saved results from DB with real-time subscription
+  const hasAccess = hasPaidSubscription || (isFreePlan && !isExpired);
+
+  // Load saved results from DB
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -61,7 +72,7 @@ const MarketingStudio = () => {
     load();
 
     // Subscribe to real-time changes
-    const subscription = supabase
+    const channel = supabase
       .channel(`marketing_results_${user.id}`)
       .on(
         "postgres_changes",
@@ -72,7 +83,6 @@ const MarketingStudio = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("New result inserted:", payload.new);
           const newResult = {
             id: payload.new.id,
             hook: payload.new.hook,
@@ -87,7 +97,7 @@ const MarketingStudio = () => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [user]);
 
@@ -97,7 +107,7 @@ const MarketingStudio = () => {
       return;
     }
 
-    // Check usage limits for free plan
+    // Check usage limits
     const allowed = await recordUsage("marketing_studio");
     if (!allowed) return;
 
@@ -108,20 +118,14 @@ const MarketingStudio = () => {
       });
 
       if (error) throw new Error(error.message);
-      console.log("Function response:", data);
-      const results = data?.results;
-      if (!results || !Array.isArray(results)) {
-        console.error("Invalid results:", data);
+      
+      const resultsData = data?.results;
+      if (!resultsData || !Array.isArray(resultsData)) {
         throw new Error("Invalid response from AI");
       }
 
       const newResults: SocialResult[] = [];
-      let savedCount = 0;
-      console.log("Saving results to database:", results);
-      
-      console.log("💾 About to insert", results.length, "results");
-      for (const r of results) {
-        console.log("📝 Inserting result:", r);
+      for (const r of resultsData) {
         const { data: saved, error: saveErr } = await supabase
           .from("saved_marketing_results")
           .insert({
@@ -135,15 +139,9 @@ const MarketingStudio = () => {
           .select()
           .single();
 
-        if (saveErr) {
-          console.error("❌ RLS or database error:", saveErr);
-          throw new Error(`Failed to save result: ${saveErr.message}`);
-          console.error("❌ Database insert failed:", saveErr);
-          console.error("Save error:", saveErr);
-        }
+        if (saveErr) throw new Error(`Failed to save result: ${saveErr.message}`);
         
         if (saved) {
-          console.log("Saved result:", saved);
           newResults.push({
             id: saved.id,
             hook: saved.hook,
@@ -155,7 +153,6 @@ const MarketingStudio = () => {
         }
       }
 
-      console.log("New results to display:", newResults);
       setResults((prev) => [...newResults, ...prev]);
       toast({ title: "Content generated!", description: `${newResults.length} posts created` });
     } catch (err: any) {
@@ -173,15 +170,6 @@ const MarketingStudio = () => {
     toast({ title: "Copied to clipboard" });
   };
 
-  const handleSelectText = (e: React.MouseEvent<HTMLDivElement>) => {
-    const e_currentTarget = e.currentTarget;
-    const range = document.createRange();
-    range.selectNodeContents(e_currentTarget);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-  };
-
   const deleteResult = async (id: string) => {
     await supabase.from("saved_marketing_results").delete().eq("id", id);
     setResults((prev) => prev.filter((r) => r.id !== id));
@@ -193,96 +181,100 @@ const MarketingStudio = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-[900px] mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
-          {isFreePlan && remaining !== null && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {remaining > 0 ? `${remaining} generation${remaining === 1 ? "" : "s"} remaining today` : "Daily limit reached — upgrade to continue"}
-            </p>
-          )}
-        </div>
-
-        <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
-            <Input placeholder="e.g. Launch of my SaaS tool" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading} className="h-10 text-sm rounded-lg" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</label>
-            <Textarea placeholder="What is your product/offer about?" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading} rows={4} className="text-sm rounded-lg min-h-[100px]" />
-          </div>
-          <div className="flex gap-3 items-end flex-wrap pt-1">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform</label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading}>
-                <SelectTrigger className="w-44 h-10 rounded-lg text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="x">X (Twitter)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={generate} disabled={loading || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              Generate Posts
-            </Button>
-          </div>
-        </Card>
-
-        {/* Saved Results */}
-        {results.length > 0 && (
+      <div className="relative min-h-[calc(100vh-4rem)]">
+        {isExpired && <UpgradeOverlay />}
+        
+        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${isExpired ? 'opacity-50 pointer-events-none' : ''}`}>
           <div>
-            <h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2>
+            <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
+            {isFreePlan && !isExpired && remaining !== null && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {remaining > 0 ? `${remaining} generation${remaining === 1 ? "" : "s"} remaining today` : "Daily limit reached — upgrade to continue"}
+              </p>
+            )}
           </div>
-        )}
 
-        <AnimatePresence>
+          <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
+              <Input placeholder="e.g. Launch of my SaaS tool" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading} className="h-10 text-sm rounded-lg" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</label>
+              <Textarea placeholder="What is your product/offer about?" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading} rows={4} className="text-sm rounded-lg min-h-[100px]" />
+            </div>
+            <div className="flex gap-3 items-end flex-wrap pt-1">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform</label>
+                <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading}>
+                  <SelectTrigger className="w-44 h-10 rounded-lg text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="x">X (Twitter)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={generate} disabled={loading || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
+                {loading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
+                Generate Posts
+              </Button>
+            </div>
+          </Card>
+
+          {/* Saved Results */}
           {results.length > 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-              {results.map((result) => (
-                <motion.div key={result.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
-                  <Card className="rounded-2xl border border-border shadow-sm p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8">
-                          {copiedId === result.id ? <CheckCircle2 className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
-                          Copy
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(result.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-3 divide-y divide-border/50 cursor-text" onClick={handleSelectText}>
-                      <div className="pt-1">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hook</p>
-                        <p className="font-medium text-sm">{result.hook}</p>
-                      </div>
-                      <div className="pt-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Main Copy</p>
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.main_copy}</p>
-                      </div>
-                      <div className="pt-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
-                        <p className="text-sm font-medium text-primary">{result.cta}</p>
-                      </div>
-                      {result.hashtags && (
-                        <div className="pt-3">
-                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hashtags</p>
-                          <p className="text-sm text-muted-foreground">{result.hashtags}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
+            <div>
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2>
+            </div>
           )}
-        </AnimatePresence>
+
+          <AnimatePresence>
+            {results.length > 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                {results.map((result) => (
+                  <motion.div key={result.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
+                    <Card className="rounded-2xl border border-border shadow-sm p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8">
+                            {copiedId === result.id ? <CheckIcon className="w-3.5 h-3.5 text-primary" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                            Copy
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(result.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive">
+                            <TrashIcon className="w-3.5 h-3.5" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-3 divide-y divide-border/50">
+                        <div className="pt-1">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hook</p>
+                          <p className="font-medium text-sm">{result.hook}</p>
+                        </div>
+                        <div className="pt-3">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Main Copy</p>
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.main_copy}</p>
+                        </div>
+                        <div className="pt-3">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
+                          <p className="text-sm font-medium text-primary">{result.cta}</p>
+                        </div>
+                        {result.hashtags && (
+                          <div className="pt-3">
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hashtags</p>
+                            <p className="text-sm text-muted-foreground">{result.hashtags}</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Delete Confirmation */}

@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+import { verifyAccess, corsHeaders, errorResponse } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,17 +8,21 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization header");
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || "Unauthorized", 401);
+    }
 
+    const authHeader = req.headers.get("Authorization");
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader! } } }
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) throw new Error("Unauthorized");
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) throw new Error("User not found after verification");
 
     const body = await req.json();
     const { platform, apiKey, action } = body;
@@ -114,13 +113,6 @@ serve(async (req) => {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("❌ analytics-connect error:", msg);
-
-    return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: msg 
-      }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(msg, 400);
   }
 });

@@ -1,26 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { verifyAccess, corsHeaders, errorResponse } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization header");
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
+    const access = await verifyAccess(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || "Unauthorized", 401);
+    }
 
+    const authHeader = req.headers.get("Authorization");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader! } } }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) throw new Error("Unauthorized");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not found after verification");
 
     const body = await req.json();
     const { message, analyticsContext } = body;
@@ -173,20 +173,15 @@ Guidelines:
       throw new Error("No response from AI");
     }
     
-    // Ensure reply is a string and reasonable length
     reply = String(reply).substring(0, 10000);
     console.log("✅ AI reply generated, length:", reply.length);
 
     // Save both messages to history
     try {
-      const { error: insertError } = await supabase.from("analytics_chat_messages").insert([
+      await supabase.from("analytics_chat_messages").insert([
         { user_id: user.id, role: "user", content: message },
         { user_id: user.id, role: "assistant", content: reply },
       ]);
-      
-      if (insertError) {
-        console.warn("⚠️ Error saving chat messages:", insertError);
-      }
     } catch (e) {
       console.error("❌ Error saving chat messages:", e);
     }
@@ -197,9 +192,6 @@ Guidelines:
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("❌ analytics-chat error:", e);
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(msg, 500);
   }
 });
