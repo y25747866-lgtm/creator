@@ -11,14 +11,19 @@ import { format } from "date-fns";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 
 const Downloads = () => {
   const allEbooks = useEbookStore((s) => s.ebooks);
   const removeEbook = useEbookStore((s) => s.removeEbook);
   const [previewEbook, setPreviewEbook] = useState<Ebook | null>(null);
-  const { isFreePlan } = useSubscription();
+  
+  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const isExpired = subscription?.status === "expired";
+  const hasAccess = hasPaidSubscription && !isExpired;
 
   // Only show ebooks belonging to the current user
   const ebooks = useMemo(() => {
@@ -27,8 +32,12 @@ const Downloads = () => {
   }, [allEbooks, user]);
 
   const guardedDownload = (fn: () => void) => {
-    if (isFreePlan) {
-      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+    if (!hasAccess) {
+      toast({ 
+        title: "Upgrade Required", 
+        description: isExpired ? "Your subscription has expired." : "Downloads are available on paid plans.", 
+        variant: "destructive" 
+      });
       return;
     }
     fn();
@@ -36,62 +45,69 @@ const Downloads = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h1 className="text-3xl font-bold mb-2">Download History</h1>
-          <p className="text-muted-foreground">Access and manage all your generated ebooks.</p>
-          {isFreePlan && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2.5">
-              <Lock className="w-4 h-4" />
-              Downloads & Exports require a paid plan.
-              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => window.location.href = "/pricing"}>Upgrade</Button>
+      <div className="space-y-8 relative">
+        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
+        {!hasAccess && !subLoading && (
+          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to access your downloads." : "Downloads and exports are premium features. Upgrade to download your generated ebooks."} />
+        )}
+
+        <div className={!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <h1 className="text-3xl font-bold mb-2">Download History</h1>
+            <p className="text-muted-foreground">Access and manage all your generated ebooks.</p>
+            {!hasAccess && !subLoading && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2.5">
+                <Lock className="w-4 h-4" />
+                {isExpired ? "Subscription expired." : "Downloads & Exports require a paid plan."}
+                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => window.location.href = "/pricing"}>Upgrade</Button>
+              </div>
+            )}
+          </motion.div>
+
+          {ebooks.length === 0 ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+              <Card className="glass-panel p-12 text-center">
+                <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-semibold mb-2">No ebooks yet</h3>
+                <p className="text-muted-foreground mb-6">Create your first ebook to see it here.</p>
+                <Button onClick={() => (window.location.href = "/dashboard/ebook-generator")}>Create Ebook</Button>
+              </Card>
+            </motion.div>
+          ) : (
+            <div className="grid gap-6">
+              {ebooks.map((ebook, index) => (
+                <motion.div key={ebook.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }}>
+                  <Card className="glass-panel p-6">
+                    <div className="flex flex-col md:flex-row gap-6">
+                      <div className="w-full md:w-32 shrink-0">
+                        {ebook.coverImageUrl ? (
+                          <img src={ebook.coverImageUrl} alt={ebook.title} className="w-full rounded-lg shadow-md" />
+                        ) : (
+                          <div className="w-full aspect-[3/4] rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center p-2">
+                            <BookOpen className="w-8 h-8 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2">{ebook.title}</h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                          <span>Pages: ~{ebook.pages}</span>
+                          <span>Created: {format(new Date(ebook.createdAt), "MMM d, yyyy")}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          <Button size="sm" onClick={() => guardedDownload(() => generatePDF(ebook))} disabled={!hasAccess}><Download className="w-4 h-4 mr-2" />PDF</Button>
+                          <Button size="sm" variant="outline" onClick={() => guardedDownload(() => downloadCoverImage(ebook))} disabled={!ebook.coverImageUrl || !hasAccess}><Image className="w-4 h-4 mr-2" />Cover</Button>
+                          <Button size="sm" variant="outline" onClick={() => setPreviewEbook(ebook)}><Eye className="w-4 h-4 mr-2" />Preview</Button>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeEbook(ebook.id)}><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           )}
-        </motion.div>
-
-        {ebooks.length === 0 ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <Card className="glass-panel p-12 text-center">
-              <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No ebooks yet</h3>
-              <p className="text-muted-foreground mb-6">Create your first ebook to see it here.</p>
-              <Button onClick={() => (window.location.href = "/dashboard/ebook-generator")}>Create Ebook</Button>
-            </Card>
-          </motion.div>
-        ) : (
-          <div className="grid gap-6">
-            {ebooks.map((ebook, index) => (
-              <motion.div key={ebook.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }}>
-                <Card className="glass-panel p-6">
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-32 shrink-0">
-                      {ebook.coverImageUrl ? (
-                        <img src={ebook.coverImageUrl} alt={ebook.title} className="w-full rounded-lg shadow-md" />
-                      ) : (
-                        <div className="w-full aspect-[3/4] rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center p-2">
-                          <BookOpen className="w-8 h-8 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{ebook.title}</h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                        <span>Pages: ~{ebook.pages}</span>
-                        <span>Created: {format(new Date(ebook.createdAt), "MMM d, yyyy")}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <Button size="sm" onClick={() => guardedDownload(() => generatePDF(ebook))}><Download className="w-4 h-4 mr-2" />PDF</Button>
-                        <Button size="sm" variant="outline" onClick={() => guardedDownload(() => downloadCoverImage(ebook))} disabled={!ebook.coverImageUrl}><Image className="w-4 h-4 mr-2" />Cover</Button>
-                        <Button size="sm" variant="outline" onClick={() => setPreviewEbook(ebook)}><Eye className="w-4 h-4 mr-2" />Preview</Button>
-                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeEbook(ebook.id)}><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
+        </div>
 
         <Dialog open={!!previewEbook} onOpenChange={() => setPreviewEbook(null)}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

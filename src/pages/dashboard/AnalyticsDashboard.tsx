@@ -56,7 +56,7 @@ const PLATFORMS = [
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isProPlan, hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
+  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
   const hasAccess = hasPaidSubscription && !isExpired;
@@ -285,9 +285,9 @@ const AnalyticsDashboard = () => {
         <div className="p-8 space-y-8">
           <Skeleton className="h-12 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 w-full" />)}
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
           </div>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[400px] rounded-xl" />
         </div>
       </DashboardLayout>
     );
@@ -295,370 +295,415 @@ const AnalyticsDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="relative min-h-[calc(100vh-4rem)]">
-        {!hasAccess && <UpgradeOverlay />}
-        
-        <div className={`p-4 md:p-8 space-y-8 ${!hasAccess ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-8 max-w-7xl mx-auto relative">
+        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
+        {!hasAccess && (
+          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using Analytics." : "Analytics is a premium feature. Upgrade to track your revenue and get AI-powered insights."} />
+        )}
+
+        <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Business Analytics</h1>
-              <p className="text-muted-foreground">Connect your platforms to see your real-time business performance.</p>
+              <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Track your sales, revenue, and product performance across platforms.
+              </p>
             </div>
-            
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Select value={platformFilter} onValueChange={setPlatformFilter}>
                 <SelectTrigger className="w-[180px]">
-                  <BarChart3 className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="All Platforms" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Platforms</SelectItem>
-                  {connections.map(c => (
-                    <SelectItem key={c.platform} value={c.platform}>
-                      {c.platform.charAt(0).toUpperCase() + c.platform.slice(1)}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="whop">Whop</SelectItem>
+                  <SelectItem value="payhip">Payhip</SelectItem>
                 </SelectContent>
               </Select>
-              
-              <Button variant="outline" size="icon" onClick={() => window.location.reload()} disabled={loadingData}>
-                <RefreshCw className={`w-4 h-4 ${loadingData ? 'animate-spin' : ''}`} />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => {
+                  if (connections.length > 0) {
+                    setAnalytics(null);
+                    setHasLoadedData(false);
+                    // This will trigger the useEffect to reload
+                  }
+                }}
+                disabled={loadingData || connections.length === 0}
+              >
+                <RefreshCw className={cn("w-4 h-4", loadingData && "animate-spin")} />
               </Button>
             </div>
           </div>
 
-          {/* Connection Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Connection Status */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {PLATFORMS.map(platform => {
               const connection = connections.find(c => c.platform === platform.id);
               const isConnected = !!connection;
               
               return (
-                <Card key={platform.id} className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <Card key={platform.id} className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+                  <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center p-2">
+                      <div className="w-12 h-12 rounded-xl bg-white p-2 flex items-center justify-center shadow-sm">
                         <img src={platform.logo} alt={platform.name} className="w-full h-full object-contain" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">{platform.name}</h3>
-                        <Badge variant={isConnected ? "default" : "secondary"}>
-                          {isConnected ? "Connected" : "Not Connected"}
-                        </Badge>
+                        <h3 className="font-bold text-lg">{platform.name}</h3>
+                        <p className="text-xs text-muted-foreground max-w-[200px]">{platform.description}</p>
                       </div>
                     </div>
-                    
                     {isConnected ? (
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDisconnect(platform.id)}>
-                        <Unlink className="w-4 h-4 mr-2" />
-                        Disconnect
-                      </Badge>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
+                          Connected
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 text-[10px] text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDisconnect(platform.id)}
+                        >
+                          <Unlink className="w-3 h-3 mr-1" />
+                          Disconnect
+                        </Button>
+                      </div>
                     ) : (
-                      <Button size="sm" onClick={() => setConnectModal(platform.id)}>
-                        <Link2 className="w-4 h-4 mr-2" />
+                      <Button 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => setConnectModal(platform.id)}
+                        disabled={!hasAccess}
+                      >
+                        <Link2 className="w-4 h-4" />
                         Connect
                       </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{platform.description}</p>
+                  {isConnected && connection.last_sync_at && (
+                    <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</span>
+                    </div>
+                  )}
                 </Card>
               );
             })}
           </div>
 
-          {/* Stats Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-6 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <DollarSign className="w-4 h-4 text-primary" />
+          {/* Analytics Content */}
+          {!hasLoadedData && !loadingData ? (
+            <Card className="p-12 border-2 border-dashed flex flex-col items-center justify-center text-center bg-muted/20 rounded-3xl">
+              <div className="w-20 h-20 rounded-2xl bg-primary/5 flex items-center justify-center mb-6">
+                <BarChart3 className="w-10 h-10 text-primary/40" />
               </div>
-              <p className="text-2xl font-bold">
-                {loadingData ? <Skeleton className="h-8 w-24" /> : `$${analytics?.summary.totalRevenue.toLocaleString() || "0"}`}
+              <h3 className="text-2xl font-bold mb-2">No Data to Display</h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-8">
+                {connections.length === 0 
+                  ? "Connect your Whop or Payhip account to start tracking your business performance."
+                  : "We're ready to fetch your data. Click the refresh button to sync."}
               </p>
+              {connections.length === 0 && (
+                <div className="flex gap-3">
+                  <Button onClick={() => setConnectModal("whop")} disabled={!hasAccess}>Connect Whop</Button>
+                  <Button variant="outline" onClick={() => setConnectModal("payhip")} disabled={!hasAccess}>Connect Payhip</Button>
+                </div>
+              )}
             </Card>
-            <Card className="p-6 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                <ShoppingCart className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-2xl font-bold">
-                {loadingData ? <Skeleton className="h-8 w-24" /> : analytics?.summary.totalSales.toLocaleString() || "0"}
-              </p>
-            </Card>
-            <Card className="p-6 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Active Products</p>
-                <Package className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-2xl font-bold">
-                {loadingData ? <Skeleton className="h-8 w-24" /> : analytics?.summary.activeProducts.toLocaleString() || "0"}
-              </p>
-            </Card>
-            <Card className="p-6 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">Conversion Rate</p>
-                <TrendingUp className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-2xl font-bold">
-                {loadingData ? <Skeleton className="h-8 w-24" /> : `${analytics?.summary.conversionRate.toFixed(1) || "0"}%`}
-              </p>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Analytics Content */}
-            <div className="lg:col-span-2 space-y-8">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-6">Revenue Overview</h3>
-                <div className="h-[300px] w-full">
-                  {loadingData ? (
-                    <Skeleton className="w-full h-full" />
-                  ) : revenueData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={revenueData}>
-                        <defs>
-                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                          itemStyle={{ color: 'hsl(var(--primary))' }}
-                        />
-                        <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
-                      <BarChart3 className="w-12 h-12 mb-2 opacity-20" />
-                      <p>No sales data to display yet</p>
+          ) : (
+            <div className="space-y-8">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-6 bg-primary/5 border-primary/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <DollarSign className="w-4 h-4 text-primary" />
                     </div>
-                  )}
-                </div>
-              </Card>
-
-              <Tabs defaultValue="products" className="w-full">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="products">Products</TabsTrigger>
-                  <TabsTrigger value="orders">Recent Orders</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="products">
-                  <Card>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product Name</TableHead>
-                          <TableHead>Platform</TableHead>
-                          <TableHead className="text-right">Price</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loadingData ? (
-                          [1, 2, 3].map(i => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : analytics?.products.length ? (
-                          analytics.products.map((product, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-medium">{product.name}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="capitalize">{product.platform}</Badge>
-                              </TableCell>
-                              <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                              No products found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="orders">
-                  <Card>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loadingData ? (
-                          [1, 2, 3].map(i => (
-                            <TableRow key={i}>
-                              <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
-                            </TableRow>
-                          ))
-                        ) : analytics?.orders.length ? (
-                          analytics.orders.map((order, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-medium">{order.product}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {new Date(order.date).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-right font-medium text-green-600">
-                                +${order.amount.toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                              No orders found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {/* AI Advisor Sidebar */}
-            <div className="space-y-4">
-              <Card className="flex flex-col h-[600px] border-primary/20 shadow-lg shadow-primary/5">
-                <div className="p-4 border-b bg-primary/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold">AI Business Advisor</h3>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Revenue</span>
                   </div>
-                  {!isProPlan && !hasPaidSubscription && <Lock className="w-4 h-4 text-muted-foreground" />}
-                </div>
-                
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {chatMessages.length === 0 && (
-                      <div className="text-center py-8 space-y-2">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                          <Bot className="w-6 h-6 text-primary" />
-                        </div>
-                        <p className="text-sm font-medium">I'm your Business Growth Partner</p>
-                        <p className="text-xs text-muted-foreground px-4">
-                          Ask me anything about your sales data, product pricing, or marketing strategies.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {chatMessages.map((msg, i) => (
-                      <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          msg.role === 'assistant' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        }`}>
-                          {msg.role === 'assistant' ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                        </div>
-                        <div className={`rounded-2xl p-3 text-sm max-w-[85%] ${
-                          msg.role === 'assistant' ? 'bg-muted' : 'bg-primary text-primary-foreground'
-                        }`}>
-                          {msg.content}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {chatLoading && (
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                          <Bot className="w-4 h-4" />
-                        </div>
-                        <div className="bg-muted rounded-2xl p-3 flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span className="text-xs">Analyzing data...</span>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={chatEndRef} />
+                  <div className="text-2xl font-bold">
+                    {loadingData ? <Skeleton className="h-8 w-24" /> : `$${analytics?.summary.totalRevenue.toLocaleString()}`}
                   </div>
-                </ScrollArea>
-                
-                <div className="p-4 border-t">
-                  <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); handleSendChat(); }}>
-                    <Input 
-                      placeholder={hasAccess ? "Ask for insights..." : "Upgrade to use AI"} 
-                      value={chatInput} 
-                      onChange={(e) => setChatInput(e.target.value)}
-                      disabled={chatLoading || !hasAccess}
-                      className="rounded-full"
-                    />
-                    <Button type="submit" size="icon" disabled={chatLoading || !chatInput.trim() || !hasAccess} className="rounded-full">
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </form>
+                </Card>
+                <Card className="p-6 bg-primary/5 border-primary/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <ShoppingCart className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Sales</span>
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {loadingData ? <Skeleton className="h-8 w-16" /> : analytics?.summary.totalSales.toLocaleString()}
+                  </div>
+                </Card>
+                <Card className="p-6 bg-primary/5 border-primary/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Package className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Products</span>
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {loadingData ? <Skeleton className="h-8 w-12" /> : analytics?.summary.activeProducts}
+                  </div>
+                </Card>
+                <Card className="p-6 bg-primary/5 border-primary/10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conv. Rate</span>
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {loadingData ? <Skeleton className="h-8 w-16" /> : `${analytics?.summary.conversionRate}%`}
+                  </div>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Charts & Tables */}
+                <div className="lg:col-span-8 space-y-8">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-bold mb-6">Revenue Overview</h3>
+                    <div className="h-[300px] w-full">
+                      {loadingData ? (
+                        <Skeleton className="w-full h-full rounded-xl" />
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={revenueData}>
+                            <defs>
+                              <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                            <XAxis 
+                              dataKey="date" 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}}
+                              dy={10}
+                            />
+                            <YAxis 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}}
+                              tickFormatter={(val) => `$${val}`}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--card))', 
+                                borderColor: 'hsl(var(--border))',
+                                borderRadius: '12px',
+                                fontSize: '12px'
+                              }} 
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="amount" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={2}
+                              fillOpacity={1} 
+                              fill="url(#colorRev)" 
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </Card>
+
+                  <Tabs defaultValue="products" className="w-full">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="products">Top Products</TabsTrigger>
+                      <TabsTrigger value="orders">Recent Orders</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="products">
+                      <Card className="overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product</TableHead>
+                              <TableHead className="text-right">Sales</TableHead>
+                              <TableHead className="text-right">Revenue</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {loadingData ? (
+                              [1, 2, 3].map(i => (
+                                <TableRow key={i}>
+                                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                  <TableCell><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
+                                  <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
+                                </TableRow>
+                              ))
+                            ) : analytics?.products.map((product, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="font-medium">{product.name}</TableCell>
+                                <TableCell className="text-right">{product.sales}</TableCell>
+                                <TableCell className="text-right font-bold">${product.revenue.toLocaleString()}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="orders">
+                      <Card className="overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead>Customer</TableHead>
+                              <TableHead>Product</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {loadingData ? (
+                              [1, 2, 3].map(i => (
+                                <TableRow key={i}>
+                                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                  <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
+                                </TableRow>
+                              ))
+                            ) : analytics?.orders.map((order, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {new Date(order.date).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-xs font-medium">{order.customer}</TableCell>
+                                <TableCell className="text-xs">{order.product}</TableCell>
+                                <TableCell className="text-right font-bold">${order.amount.toLocaleString()}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-              </Card>
-              
-              <Card className="p-4 bg-primary/5 border-none">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  <strong>Pro Tip:</strong> Connect both Whop and Payhip to get a unified view of your entire digital business.
-                </p>
-              </Card>
+
+                {/* AI Advisor Sidebar */}
+                <div className="lg:col-span-4">
+                  <Card className="h-[600px] flex flex-col border-primary/20 bg-primary/5 backdrop-blur-sm overflow-hidden">
+                    <div className="p-4 border-b border-primary/10 flex items-center gap-3 bg-primary/10">
+                      <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                        <Bot className="w-5 h-5 text-primary-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold">AI Business Advisor</h3>
+                        <p className="text-[10px] text-primary/70 font-medium">Analyzing your performance...</p>
+                      </div>
+                    </div>
+                    
+                    <ScrollArea className="flex-1 p-4">
+                      <div className="space-y-4">
+                        {chatMessages.length === 0 && (
+                          <div className="text-center py-8 px-4">
+                            <Bot className="w-10 h-10 text-primary/20 mx-auto mb-3" />
+                            <p className="text-xs text-muted-foreground">
+                              Ask me anything about your sales data, product performance, or growth strategies.
+                            </p>
+                          </div>
+                        )}
+                        {chatMessages.map((msg, i) => (
+                          <div key={i} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                            <div className={cn(
+                              "w-6 h-6 rounded-full flex items-center justify-center shrink-0",
+                              msg.role === "user" ? "bg-primary" : "bg-muted border border-border"
+                            )}>
+                              {msg.role === "user" ? <User className="w-3 h-3 text-primary-foreground" /> : <Bot className="w-3 h-3 text-primary" />}
+                            </div>
+                            <div className={cn(
+                              "p-3 rounded-2xl text-xs max-w-[85%]",
+                              msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border rounded-tl-none"
+                            )}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        ))}
+                        {chatLoading && (
+                          <div className="flex gap-3">
+                            <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center">
+                              <Bot className="w-3 h-3 text-primary" />
+                            </div>
+                            <div className="p-3 rounded-2xl bg-card border border-border rounded-tl-none">
+                              <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                            </div>
+                          </div>
+                        )}
+                        <div ref={chatEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    <div className="p-4 border-t border-primary/10 bg-background/50">
+                      <div className="relative">
+                        <Input 
+                          placeholder="Ask about your data..." 
+                          className="pr-10 text-xs h-9 rounded-xl border-primary/20 focus-visible:ring-primary/30"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                          disabled={chatLoading || !hasAccess}
+                        />
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="absolute right-1 top-1 h-7 w-7 text-primary hover:bg-primary/10"
+                          onClick={handleSendChat}
+                          disabled={chatLoading || !chatInput.trim() || !hasAccess}
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      </div>
 
-      {/* Connect Modal */}
-      <Dialog open={!!connectModal} onOpenChange={(open) => !open && setConnectModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Connect {connectModal?.charAt(0).toUpperCase()}{connectModal?.slice(1)}</DialogTitle>
-            <DialogDescription>
-              Enter your API key to sync your products and sales data.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">API Key</label>
-              <Input 
-                type="password" 
-                placeholder="Enter your API key" 
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-              />
-              <p className="text-[10px] text-muted-foreground">
-                {connectModal === 'whop' ? (
-                  <>You can find this in your Whop Settings &gt; Developer &gt; API Keys.</>
-                ) : (
-                  <>You can find this in your Payhip Settings &gt; API Keys.</>
-                )}
-              </p>
+        {/* Connect Modal */}
+        <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Connect {connectModal === 'whop' ? 'Whop' : 'Payhip'}</DialogTitle>
+              <DialogDescription>
+                Enter your API key to sync your {connectModal} data.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium">API Key</label>
+                <Input 
+                  type="password" 
+                  placeholder="Enter your API key" 
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Your API key is encrypted and stored securely.
+                </p>
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={handleConnect}
+                disabled={connecting || !apiKeyInput.trim()}
+              >
+                {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
+                Connect Account
+              </Button>
             </div>
-          </div>
-          
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setConnectModal(null)}>Cancel</Button>
-            <Button onClick={handleConnect} disabled={connecting || !apiKeyInput.trim()}>
-              {connecting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Connect Account
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </DashboardLayout>
   );
 };
 
-export default () => (
-  <ErrorBoundary>
-    <AnalyticsDashboard />
-  </ErrorBoundary>
-);
+export default AnalyticsDashboard;

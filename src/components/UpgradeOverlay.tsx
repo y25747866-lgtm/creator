@@ -7,7 +7,7 @@ interface UpgradeOverlayProps {
   message?: string;
 }
 
-const UpgradeOverlay = ({ message }: UpgradeOverlayProps) => {
+export const UpgradeOverlay = ({ message }: UpgradeOverlayProps) => {
   const navigate = useNavigate();
   
   const { hasPaidSubscription, subscription } = useSubscription();

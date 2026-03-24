@@ -13,6 +13,7 @@ import {
   LogOut,
   LineChart,
   Crown,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,10 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { toast } = useToast();
-  const { planType, hasPaidSubscription } = useSubscription();
+  const { planType, hasPaidSubscription, subscription } = useSubscription();
+
+  const isExpired = subscription?.status === "expired";
+  const hasAccess = hasPaidSubscription && !isExpired;
 
   // Get display name from subscription library
   const planLabel = getPlanDisplayName(planType);
@@ -42,21 +46,23 @@ const DashboardSidebar = () => {
         : "bg-muted text-muted-foreground";
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", premium: false },
     {
       icon: BookOpen,
       label: "AI Product Generator",
       path: "/dashboard/ebook-generator",
+      premium: true,
     },
-    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio" },
+    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio", premium: true },
     {
       icon: BarChart3,
       label: "Sales Page Builder",
       path: "/dashboard/sales-page-builder",
+      premium: true,
     },
-    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics" },
-    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads" },
-    { icon: Settings, label: "Settings", path: "/dashboard/settings" },
+    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics", premium: true },
+    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads", premium: true },
+    { icon: Settings, label: "Settings", path: "/dashboard/settings", premium: false },
   ];
 
   const handleSignOut = async () => {
@@ -111,6 +117,8 @@ const DashboardSidebar = () => {
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const isLocked = item.premium && !hasAccess;
+          
           return (
             <Link key={item.path} to={item.path}>
               <motion.div
@@ -118,7 +126,8 @@ const DashboardSidebar = () => {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                  isLocked && "opacity-60"
                 )}
                 whileHover={{ x: collapsed ? 0 : 2 }}
                 whileTap={{ scale: 0.98 }}
@@ -130,22 +139,30 @@ const DashboardSidebar = () => {
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
-                <item.icon
-                  className={cn(
-                    "w-[18px] h-[18px] shrink-0 ml-1",
-                    isActive && "text-primary"
+                <div className="relative">
+                  <item.icon
+                    className={cn(
+                      "w-[18px] h-[18px] shrink-0 ml-1",
+                      isActive && "text-primary"
+                    )}
+                  />
+                  {isLocked && (
+                    <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5">
+                      <Lock className="w-2 h-2 text-muted-foreground" />
+                    </div>
                   )}
-                />
+                </div>
                 <AnimatePresence>
                   {!collapsed && (
-                    <motion.span
+                    <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm"
+                      className="flex items-center justify-between flex-1"
                     >
-                      {item.label}
-                    </motion.span>
+                      <span className="text-sm">{item.label}</span>
+                      {isLocked && <Lock className="w-3 h-3 text-muted-foreground/50" />}
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>

@@ -152,7 +152,7 @@ async function generateContent(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",   // ← Changed to Groq model
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: getSystemPrompt(config) },
         { role: "user", content: getUserPrompt(title, topic, description, config, category, targetAudience, tone) },
@@ -284,9 +284,17 @@ serve(async (req) => {
   }
 
   try {
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
     const access = await verifyAccess(req);
-    if (!access.authorized) {
-      return errorResponse(access.error || "Unauthorized", 401);
+    
+    // HARD ENFORCEMENT: Check status and end_date
+    const now = new Date();
+    const isExpired = access.subscription?.status === 'expired' || 
+                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
+
+    if (!access.authorized || isExpired) {
+      console.log("Subscription check failed:", access.subscription);
+      return errorResponse('Subscription expired', 403);
     }
 
     let body: { topic?: string; title?: string; description?: string; length?: string; category?: string; targetAudience?: string; tone?: string };
@@ -317,12 +325,16 @@ serve(async (req) => {
     if (!GROQ_API_KEY) {
       console.log("No API key - generating fallback content");
       return new Response(
-        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
+        JSON.stringify({
+          content: `# ${sanitizedTitle}\n\n## Introduction\n\nThis is a placeholder for the ebook content about ${sanitizedTopic}. To generate full content, please configure your GROQ_API_KEY.`,
+          title: sanitizedTitle,
+          topic: sanitizedTopic
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Generating ${config.label} ebook for user ${access.userId}: "${sanitizedTitle}"`);
+    console.log("Generating ebook content for:", sanitizedTitle.substring(0, 30) + "...");
 
     const content = await generateContent(
       GROQ_API_KEY,
@@ -335,102 +347,15 @@ serve(async (req) => {
       sanitizedTone
     );
 
-    if (!content || content.length < 500) {
-      console.log("Content too short, using fallback");
-      return new Response(
-        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const pages = Math.max(
-      parseInt(config.pageTarget.split("-")[0]),
-      Math.ceil(content.split(/\s+/).length / 250)
-    );
-
-    console.log(`Generated ${content.length} chars, ~ ${pages} pages`);
+    console.log("Generated content successfully, length:", content.length);
 
     return new Response(
-      JSON.stringify({ title: sanitizedTitle, content, pages }),
+      JSON.stringify({ content, title: sanitizedTitle, topic: sanitizedTopic }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Error in generate-ebook-content:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(message, 500);
   }
 });
-
-function generateFallbackContent(title: string, topic: string): { title: string; content: string; pages: number } {
-  const safeTitle = title.replace(/[<>]/g, "");
-  const safeTopic = topic.replace(/[<>]/g, "");
-
-  const content = `# Introduction
-
-Welcome to "${safeTitle}". This comprehensive guide will walk you through everything you need to know about ${safeTopic}.
-
-In today's rapidly evolving world, understanding ${safeTopic} has become more important than ever. Whether you're a beginner just starting out or someone looking to deepen your knowledge, this ebook will provide you with valuable insights and practical strategies.
-
-## What You'll Learn
-
-Throughout this guide, you will discover:
-- The fundamental concepts and principles of ${safeTopic}
-- Practical strategies you can implement immediately
-- Common mistakes to avoid and how to overcome challenges
-- Expert tips and best practices from industry leaders
-
-# Chapter 1: Understanding the Basics
-
-Before diving deep into ${safeTopic}, it's essential to build a strong foundation. This chapter covers the core concepts that will serve as building blocks for your journey.
-
-## Core Concepts
-
-The first step in mastering ${safeTopic} is understanding its fundamental principles. These concepts form the backbone of everything else you'll learn in this guide.
-
-### Getting Started
-
-Every expert was once a beginner. The key is to start with the right mindset and approach. Focus on understanding the "why" behind each concept, not just the "how."
-
-### Building Your Foundation
-
-A solid foundation will help you progress faster and avoid common pitfalls. Take your time with this chapter and make sure you truly understand each concept before moving forward.
-
-# Chapter 2: Practical Strategies
-
-Now that you understand the basics, it's time to put that knowledge into action. This chapter provides step-by-step strategies you can implement right away.
-
-## Strategy 1: Start Small
-
-Don't try to do everything at once. Begin with one small step and build momentum from there.
-
-## Strategy 2: Learn from Others
-
-Find mentors, join communities, and learn from those who have already achieved what you're working toward.
-
-## Strategy 3: Track Your Progress
-
-What gets measured gets improved. Keep track of your progress and celebrate your wins.
-
-# Conclusion
-
-Congratulations on completing this guide! You now have a solid understanding of ${safeTopic} and practical strategies to implement what you've learned.
-
-## Key Takeaways
-
-1. Start with a strong foundation in the basics
-2. Implement practical strategies consistently
-3. Expect and prepare for challenges
-4. Continue learning and growing
-
-Remember: the best time to start was yesterday. The second best time is now.
-
----
-
-*Generated by NexoraOS*
-`;
-
-  return { title: safeTitle, content, pages: 12 };
-  }

@@ -193,16 +193,17 @@ serve(async (req) => {
           .maybeSingle();
 
         if (profile) {
+          // HARD ENFORCEMENT: Set status to 'expired' and end_date to now
           await supabase
             .from("subscriptions")
             .update({
-              status: "cancelled",
+              status: "expired",
               end_date: new Date().toISOString(),
               expires_at: new Date().toISOString(),
             })
             .eq("user_id", profile.user_id);
 
-          console.log("Subscription cancelled:", email);
+          console.log("Subscription set to expired:", email);
         }
       }
 

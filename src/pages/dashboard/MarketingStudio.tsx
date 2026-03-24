@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, AlertCircle } from "lucide-center";
+import { 
+  Loader2 as LoaderIcon, 
+  Copy as CopyIcon, 
+  Trash2 as TrashIcon, 
+  CheckCircle2 as CheckIcon, 
+  Sparkles as SparklesIcon, 
+  AlertCircle as AlertIcon 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,14 +21,7 @@ import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { 
-  Loader2 as LoaderIcon, 
-  Copy as CopyIcon, 
-  Trash2 as TrashIcon, 
-  CheckCircle2 as CheckIcon, 
-  Sparkles as SparklesIcon, 
-  AlertCircle as AlertIcon 
-} from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface SocialResult {
   id: string;
@@ -43,13 +43,18 @@ const MarketingStudio = () => {
   const [loadingSaved, setLoadingSaved] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { canUseFeature, recordUsage, getRemainingUses, isFreePlan, isExpired, hasPaidSubscription } = useFeatureAccess();
+  const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
+  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
-  const hasAccess = hasPaidSubscription || (isFreePlan && !isExpired);
+  const isExpired = subscription?.status === "expired";
+  const hasAccess = hasPaidSubscription && !isExpired;
 
   // Load saved results from DB
   useEffect(() => {
-    if (!user) return;
+    if (!user || !hasAccess) {
+      setLoadingSaved(false);
+      return;
+    }
     const load = async () => {
       setLoadingSaved(true);
       const { data } = await supabase
@@ -99,9 +104,18 @@ const MarketingStudio = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, hasAccess]);
 
   const generate = async () => {
+    if (!hasAccess) {
+      toast({ 
+        title: "Upgrade Required", 
+        description: isExpired ? "Your subscription has expired." : "Marketing Studio is a premium feature.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     if (!title.trim()) {
       toast({ title: "Title is required", variant: "destructive" });
       return;
@@ -182,9 +196,12 @@ const MarketingStudio = () => {
   return (
     <DashboardLayout>
       <div className="relative min-h-[calc(100vh-4rem)]">
-        {isExpired && <UpgradeOverlay />}
+        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
+        {!hasAccess && !subLoading && (
+          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Marketing Studio." : "The Marketing Studio is a premium feature. Upgrade to start generating platform-optimized content."} />
+        )}
         
-        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${isExpired ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${!hasAccess && !subLoading ? 'opacity-50 pointer-events-none' : ''}`}>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
             <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
@@ -198,16 +215,16 @@ const MarketingStudio = () => {
           <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
-              <Input placeholder="e.g. Launch of my SaaS tool" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading} className="h-10 text-sm rounded-lg" />
+              <Input placeholder="e.g. Launch of my SaaS tool" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading || !hasAccess} className="h-10 text-sm rounded-lg" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</label>
-              <Textarea placeholder="What is your product/offer about?" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading} rows={4} className="text-sm rounded-lg min-h-[100px]" />
+              <Textarea placeholder="What is your product/offer about?" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading || !hasAccess} rows={4} className="text-sm rounded-lg min-h-[100px]" />
             </div>
             <div className="flex gap-3 items-end flex-wrap pt-1">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform</label>
-                <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading}>
+                <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading || !hasAccess}>
                   <SelectTrigger className="w-44 h-10 rounded-lg text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="instagram">Instagram</SelectItem>
@@ -215,7 +232,7 @@ const MarketingStudio = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={generate} disabled={loading || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
+              <Button onClick={generate} disabled={loading || !hasAccess || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
                 {loading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
                 Generate Posts
               </Button>

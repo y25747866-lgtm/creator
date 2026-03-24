@@ -15,6 +15,7 @@ import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
+import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
@@ -75,10 +76,12 @@ const EbookGenerator = () => {
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const navigate = useNavigate();
-  const { canUseFeature, recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
-  const { isFreePlan: isFreeUser } = useSubscription();
+  const { recordUsage } = useFeatureAccess();
+  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
   const { user } = useAuth();
 
+  const isExpired = subscription?.status === "expired";
+  const hasAccess = hasPaidSubscription && !isExpired;
   const isGenerating = step !== "idle" && step !== "complete";
 
   const startGeneration = async () => {
@@ -199,8 +202,8 @@ const EbookGenerator = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (isFreeUser) {
-      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+    if (!hasAccess) {
+      toast({ title: "Upgrade Required", description: isExpired ? "Your subscription has expired." : "Downloads are available on paid plans.", variant: "destructive" });
       return;
     }
     if (ebookData) {
@@ -216,8 +219,8 @@ const EbookGenerator = () => {
   };
 
   const handleDownloadCover = async () => {
-    if (isFreeUser) {
-      toast({ title: "Upgrade Required", description: "Downloads are available on paid plans.", variant: "destructive" });
+    if (!hasAccess) {
+      toast({ title: "Upgrade Required", description: isExpired ? "Your subscription has expired." : "Downloads are available on paid plans.", variant: "destructive" });
       return;
     }
     if (ebookData) {
@@ -244,8 +247,13 @@ const EbookGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
+    <div className="min-h-screen bg-background text-foreground relative">
+      {/* HARD UI LOCK FOR EXPIRED USERS */}
+      {isExpired && !subLoading && (
+        <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the AI Product Generator." />
+      )}
+
+      <div className={cn("max-w-3xl mx-auto px-4 py-12 sm:py-16", isExpired && "opacity-50 pointer-events-none")}>
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
@@ -281,32 +289,50 @@ const EbookGenerator = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button onClick={handleDownloadPDF} size="lg" className="gap-2">
+                  <Button onClick={handleDownloadPDF} size="lg" className="gap-2" disabled={!hasAccess}>
                     <Download className="w-5 h-5" />
                     Download PDF
                   </Button>
                   {ebookData.coverImageUrl && (
-                    <Button onClick={handleDownloadCover} variant="outline" size="lg" className="gap-2">
+                    <Button onClick={handleDownloadCover} variant="outline" size="lg" className="gap-2" disabled={!hasAccess}>
                       <ImageIcon className="w-5 h-5" />
                       Download Cover
                     </Button>
                   )}
                 </div>
 
-                <div className="mt-8 pt-6 border-t flex flex-col gap-3">
-                  <Button
-                    onClick={() => navigate("/dashboard/monetization")}
-                    variant="outline"
-                    className="w-full gap-2"
-                  >
-                    <Package className="w-5 h-5" />
-                    Monetize This Ebook
-                  </Button>
-                  <Button onClick={resetForm} variant="ghost" className="w-full">
-                    Generate Another Ebook
+                <div className="mt-8 pt-8 border-t border-border/50 text-center">
+                  <Button variant="ghost" onClick={resetForm}>
+                    Create Another Ebook
                   </Button>
                 </div>
               </Card>
+            </motion.div>
+          ) : isGenerating ? (
+            <motion.div
+              key="generating"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="text-center py-12"
+            >
+              <div className="mb-8">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 relative">
+                  <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-3 h-3 text-primary-foreground" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold mb-2">{STEP_LABELS[step]}</h2>
+                <p className="text-muted-foreground">This typically takes 30-60 seconds.</p>
+              </div>
+              
+              <div className="max-w-md mx-auto">
+                <Progress value={STEP_PROGRESS[step]} className="h-2 mb-2" />
+                <p className="text-xs text-muted-foreground text-right font-medium">
+                  {STEP_PROGRESS[step]}% Complete
+                </p>
+              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -314,150 +340,91 @@ const EbookGenerator = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
             >
-              <Card className="p-8 sm:p-10">
-                <div className="space-y-8">
-                  {/* Topic */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Topic *</label>
-                    <Input
-                      placeholder="e.g., How to build passive income with digital products"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      disabled={isGenerating}
-                      className="h-12 text-base"
-                    />
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">Category *</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      disabled={isGenerating}
-                      className="w-full h-12 px-3 rounded-lg border border-input bg-background text-base"
-                    >
-                      <option value="">Select a category</option>
-                      {CATEGORY_OPTIONS.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Target Audience */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Target Audience <span className="text-muted-foreground font-normal">(optional)</span>
+              <Card className="p-6 sm:p-8 border-border/50 bg-card/50 backdrop-blur-sm">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      What is your ebook about?
                     </label>
                     <Input
-                      placeholder="e.g., Beginners who want to start an online business"
-                      value={targetAudience}
-                      onChange={(e) => setTargetAudience(e.target.value)}
-                      disabled={isGenerating}
-                      className="h-12 text-base"
+                      placeholder="e.g. Passive income strategies for 2024"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      className="h-12 text-lg"
                     />
                   </div>
 
-                  {/* Tone */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">Tone</label>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                      {TONE_OPTIONS.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => setTone(t.value)}
-                          disabled={isGenerating}
-                          className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
-                            tone === t.value
-                              ? "border-primary bg-primary/5 text-primary"
-                              : "border-border hover:border-primary/40 text-muted-foreground"
-                          } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold">Category</label>
+                      <select
+                        className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                      >
+                        <option value="">Select Category</option>
+                        {CATEGORY_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold">Tone</label>
+                      <select
+                        className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        value={tone}
+                        onChange={(e) => setTone(e.target.value)}
+                      >
+                        {TONE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Description <span className="text-muted-foreground font-normal">(optional)</span>
-                    </label>
-                    <Textarea
-                      placeholder="Describe what you want the book to cover, specific chapters, or any special requirements..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      disabled={isGenerating}
-                      rows={3}
-                      className="text-base resize-none"
-                    />
-                  </div>
-
-                  {/* Length Selector */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-3">Book Length</label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Ebook Length</label>
                     <div className="grid grid-cols-3 gap-3">
                       {LENGTH_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => setEbookLength(opt.value)}
-                          disabled={isGenerating}
-                          className={`relative p-4 rounded-xl border-2 text-center transition-all ${
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
                             ebookLength === opt.value
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-border hover:border-primary/40"
-                          } ${isGenerating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                              ? "border-primary bg-primary/5 text-primary"
+                              : "border-border hover:border-primary/30"
+                          )}
                         >
-                          <div className="text-2xl mb-1">{opt.icon}</div>
-                          <div className="font-semibold text-sm">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.pages}</div>
+                          <span className="text-xl mb-1">{opt.icon}</span>
+                          <span className="text-xs font-bold">{opt.label}</span>
+                          <span className="text-[10px] opacity-70">{opt.pages}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Progress */}
-                  {isGenerating && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="space-y-3"
-                    >
-                      <Progress value={STEP_PROGRESS[step]} className="h-2" />
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {STEP_LABELS[step]}
-                      </div>
-                    </motion.div>
-                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold">Additional Context (Optional)</label>
+                    <Textarea
+                      placeholder="Add specific points you want the AI to cover..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="min-h-[100px] resize-none"
+                    />
+                  </div>
 
-                  {/* Error */}
-                  {errorMsg && (
-                    <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  {/* Submit */}
                   <Button
                     onClick={startGeneration}
-                    disabled={isGenerating || !topic.trim() || !category}
                     size="lg"
-                    className="w-full h-14 text-base font-semibold gap-2"
+                    className="w-full h-14 text-lg font-bold gap-2 shadow-lg shadow-primary/20"
+                    disabled={isGenerating}
                   >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <BookOpen className="w-5 h-5" />
-                        Generate Ebook
-                      </>
-                    )}
+                    <Sparkles className="w-5 h-5" />
+                    Generate My Ebook
                   </Button>
                 </div>
               </Card>
@@ -465,7 +432,6 @@ const EbookGenerator = () => {
           )}
         </AnimatePresence>
       </div>
-      
     </div>
   );
 };

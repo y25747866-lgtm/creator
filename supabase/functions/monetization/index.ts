@@ -1,23 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, apikey, content-type",
-};
-
-function getUserId(req: Request): string | null {
-  try {
-    const auth = req.headers.get("authorization");
-    if (!auth) return null;
-    const token = auth.replace("Bearer ", "");
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.sub;
-  } catch {
-    return null;
-  }
-}
+import { verifyAccess, errorResponse, corsHeaders } from "../_shared/validation.ts";
 
 function getSupabase() {
   return createClient(
@@ -38,17 +21,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
+    const access = await verifyAccess(req);
+    
+    // HARD ENFORCEMENT: Check status and end_date
+    const now = new Date();
+    const isExpired = access.subscription?.status === 'expired' || 
+                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
 
+    if (!access.authorized || isExpired) {
+      console.log("Subscription check failed:", access.subscription);
+      return errorResponse('Subscription expired', 403);
+    }
+
+    const userId = access.userId;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
-
-    const userId = getUserId(req);
-
-    if (!userId)
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: corsHeaders }
-      );
 
     const sb = getSupabase();
 
@@ -79,7 +67,7 @@ serve(async (req) => {
           success: true,
           product: data
         }),
-        { headers: corsHeaders }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -101,7 +89,7 @@ serve(async (req) => {
       if (!product)
         return new Response(
           JSON.stringify({ error: "Product not found" }),
-          { status: 404, headers: corsHeaders }
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
 
       const { data, error } = await sb
@@ -122,7 +110,7 @@ serve(async (req) => {
           success: true,
           module: data
         }),
-        { headers: corsHeaders }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -220,7 +208,7 @@ ${body.sourceContent || ""}
           content,
           version
         }),
-        { headers: corsHeaders }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -242,26 +230,15 @@ ${body.sourceContent || ""}
         JSON.stringify({
           products: data
         }),
-        { headers: corsHeaders }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    return new Response(
-      JSON.stringify({ error: "Unknown action" }),
-      { status: 400, headers: corsHeaders }
-    );
+    return errorResponse("Unknown action", 400);
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    return new Response(
-      JSON.stringify({
-        error: msg
-      }),
-      {
-        status: 500,
-        headers: corsHeaders
-      }
-    );
+    return errorResponse(msg, 500);
   }
 
 });

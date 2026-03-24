@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
-};
+import { verifyAccess, errorResponse, corsHeaders } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,6 +8,19 @@ serve(async (req) => {
   }
 
   try {
+    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
+    const access = await verifyAccess(req);
+    
+    // HARD ENFORCEMENT: Check status and end_date
+    const now = new Date();
+    const isExpired = access.subscription?.status === 'expired' || 
+                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
+
+    if (!access.authorized || isExpired) {
+      console.log("Subscription check failed:", access.subscription);
+      return errorResponse('Subscription expired', 403);
+    }
+
     const { moduleId, moduleType, title, topic } = await req.json();
 
     const supabase = createClient(
@@ -87,15 +96,10 @@ Return markdown.
       JSON.stringify({
         success: true,
       }),
-      { headers: corsHeaders }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    return new Response(
-      JSON.stringify({
-        error: msg,
-      }),
-      { headers: corsHeaders, status: 500 }
-    );
+    return errorResponse(msg, 500);
   }
 });
