@@ -113,10 +113,6 @@ const MarketingStudio = () => {
       return;
     }
 
-    // Check free plan daily limit
-    const allowed = await recordUsage("marketing_studio");
-    if (!allowed) return;
-
     if (!title.trim()) {
       toast({ title: "Title is required", variant: "destructive" });
       return;
