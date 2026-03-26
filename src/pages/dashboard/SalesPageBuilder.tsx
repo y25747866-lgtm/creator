@@ -63,14 +63,14 @@ const SalesPageBuilder = () => {
   }, [user, hasAccess]);
 
   const generate = async () => {
-    if (!hasAccess) {
-      toast({
-        title: "Upgrade Required",
-        description: isExpired ? "Your subscription has expired." : "Sales Page Builder is a premium feature.",
-        variant: "destructive"
-      });
+    if (isExpired) {
+      toast({ title: "Subscription Expired", description: "Please renew your subscription.", variant: "destructive" });
       return;
     }
+
+    // Check free plan daily limit
+    const allowed = await recordUsage("sales_page_builder");
+    if (!allowed) return;
 
     if (!title.trim()) {
       toast({ title: "Product title is required", variant: "destructive" });
