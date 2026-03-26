@@ -45,7 +45,7 @@ const SalesPageBuilder = () => {
 
   // Load saved results
   useEffect(() => {
-    if (!user || !hasAccess) return;
+    if (!user) return;
     const load = async () => {
       const { data } = await supabase
         .from("saved_sales_page_results")
