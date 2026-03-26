@@ -38,9 +38,10 @@ const SalesPageBuilder = () => {
   const { user } = useAuth();
 
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
+  const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
   
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
+  const hasAccess = !isExpired || hasPaidSubscription;
 
   // Load saved results
   useEffect(() => {
