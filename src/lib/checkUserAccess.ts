@@ -77,11 +77,11 @@ export async function checkUserAccess(): Promise<UserAccessResult> {
 
     if (isExpired) {
       // Auto-update status to expired
-      await supabase
+      const { error: updateErr } = await supabase
         .from("subscriptions")
         .update({ status: "expired" })
-        .eq("id", subscription.id)
-        .catch((err) => console.error("Failed to update expired status:", err));
+        .eq("id", subscription.id);
+      if (updateErr) console.error("Failed to update expired status:", updateErr);
 
       return {
         hasAccess: false,

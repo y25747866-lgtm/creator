@@ -32,11 +32,11 @@ export async function checkAccess() {
 
   if (!isStillActive) {
     // Auto-update status to expired
-    await supabase
+    const { error: updateErr } = await supabase
       .from("subscriptions")
       .update({ status: "expired" })
-      .eq("id", data.id)
-      .catch((err) => console.error("Failed to update expired status:", err));
+      .eq("id", data.id);
+    if (updateErr) console.error("Failed to update expired status:", updateErr);
 
     return { hasAccess: false, planType: "free" as const };
   }
