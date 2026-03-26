@@ -148,12 +148,12 @@ const SalesPageBuilder = () => {
   return (
     <DashboardLayout>
       <div className="relative max-w-[900px] mx-auto space-y-6">
-        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
-        {!hasAccess && !subLoading && (
-          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Sales Page Builder." : "The Sales Page Builder is available on Creator and Pro plans. Upgrade to start generating high-converting sales pages."} />
+        {/* LOCK ONLY FOR EXPIRED USERS */}
+        {isExpired && !subLoading && (
+          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Sales Page Builder." />
         )}
 
-        <div className={!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}>
+        <div className={isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
             <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>
