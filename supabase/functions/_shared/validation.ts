@@ -160,6 +160,34 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
   return { authorized: true, userId: user.id };
 }
 
+/**
+ * Auth-only verification (no subscription check).
+ * Use for features available on free tier with client-side rate limiting.
+ */
+export async function verifyAuthOnly(req: Request): Promise<AccessResult> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { authorized: false, error: 'Missing authorization' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { authorized: false, error: 'Server configuration error' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return { authorized: false, error: 'Invalid or expired token' };
+  }
+
+  return { authorized: true, userId: user.id };
+}
+
 // Create error response with CORS headers
 export function errorResponse(message: string, status: number = 400): Response {
   return new Response(

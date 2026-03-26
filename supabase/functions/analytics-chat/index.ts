@@ -6,17 +6,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
     const access = await verifyAccess(req);
-    
-    // HARD ENFORCEMENT: Check status and end_date
-    const now = new Date();
-    const isExpired = access.subscription?.status === 'expired' || 
-                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
-
-    if (!access.authorized || isExpired) {
-      console.log("Subscription check failed:", access.subscription);
-      return errorResponse('Subscription expired', 403);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Subscription required', 403);
     }
 
     const authHeader = req.headers.get("Authorization");
