@@ -63,13 +63,11 @@ export function useSubscription() {
 
         if (isExpired && data.status === "active") {
           // Auto-update status to expired
-          await supabase
+          const { error: updateErr } = await supabase
             .from("subscriptions")
             .update({ status: "expired" })
-            .eq("id", data.id)
-            .catch((err) =>
-              console.error("Failed to update expired status:", err)
-            );
+            .eq("id", data.id);
+          if (updateErr) console.error("Failed to update expired status:", updateErr);
 
           // Update local state
           data.status = "expired";

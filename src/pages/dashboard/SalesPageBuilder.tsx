@@ -12,6 +12,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 
 interface SalesPageDraft {
@@ -37,13 +38,14 @@ const SalesPageBuilder = () => {
   const { user } = useAuth();
 
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
+  const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
   
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
+  const hasAccess = !isExpired || hasPaidSubscription;
 
   // Load saved results
   useEffect(() => {
-    if (!user || !hasAccess) return;
+    if (!user) return;
     const load = async () => {
       const { data } = await supabase
         .from("saved_sales_page_results")
@@ -61,14 +63,14 @@ const SalesPageBuilder = () => {
   }, [user, hasAccess]);
 
   const generate = async () => {
-    if (!hasAccess) {
-      toast({
-        title: "Upgrade Required",
-        description: isExpired ? "Your subscription has expired." : "Sales Page Builder is a premium feature.",
-        variant: "destructive"
-      });
+    if (isExpired) {
+      toast({ title: "Subscription Expired", description: "Please renew your subscription.", variant: "destructive" });
       return;
     }
+
+    // Check free plan daily limit
+    const allowed = await recordUsage("sales_page_builder");
+    if (!allowed) return;
 
     if (!title.trim()) {
       toast({ title: "Product title is required", variant: "destructive" });
@@ -146,12 +148,12 @@ const SalesPageBuilder = () => {
   return (
     <DashboardLayout>
       <div className="relative max-w-[900px] mx-auto space-y-6">
-        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
-        {!hasAccess && !subLoading && (
-          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Sales Page Builder." : "The Sales Page Builder is available on Creator and Pro plans. Upgrade to start generating high-converting sales pages."} />
+        {/* LOCK ONLY FOR EXPIRED USERS */}
+        {isExpired && !subLoading && (
+          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Sales Page Builder." />
         )}
 
-        <div className={!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}>
+        <div className={isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
             <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>

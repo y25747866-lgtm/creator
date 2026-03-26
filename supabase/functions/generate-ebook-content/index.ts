@@ -3,7 +3,7 @@ import {
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
-  verifyAccess, 
+  verifyAuthOnly, 
   errorResponse 
 } from "../_shared/validation.ts";
 
@@ -284,17 +284,9 @@ serve(async (req) => {
   }
 
   try {
-    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
-    const access = await verifyAccess(req);
-    
-    // HARD ENFORCEMENT: Check status and end_date
-    const now = new Date();
-    const isExpired = access.subscription?.status === 'expired' || 
-                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
-
-    if (!access.authorized || isExpired) {
-      console.log("Subscription check failed:", access.subscription);
-      return errorResponse('Subscription expired', 403);
+    const access = await verifyAuthOnly(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Authentication required', 401);
     }
 
     let body: { topic?: string; title?: string; description?: string; length?: string; category?: string; targetAudience?: string; tone?: string };

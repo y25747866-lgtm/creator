@@ -16,6 +16,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { cn } from "@/lib/utils";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
@@ -81,7 +82,8 @@ const EbookGenerator = () => {
   const { user } = useAuth();
 
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
+  // Free users can use with daily limits (enforced by recordUsage)
+  const hasAccess = !isExpired || hasPaidSubscription;
   const isGenerating = step !== "idle" && step !== "complete";
 
   const startGeneration = async () => {

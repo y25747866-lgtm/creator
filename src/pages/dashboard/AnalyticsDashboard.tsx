@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Link2, Unlink, RefreshCw, DollarSign, ShoppingCart, Package, TrendingUp,

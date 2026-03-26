@@ -160,7 +160,7 @@ export default function ModulePreview({
   /*
   DOWNLOAD
   */
-  function handleDownload() {
+  async function handleDownload() {
     if (!markdown) return;
 
     const blob = new Blob([markdown], {

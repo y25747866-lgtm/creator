@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyAccess, corsHeaders, errorResponse } from "../_shared/validation.ts";
+import { verifyAuthOnly, corsHeaders, errorResponse } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -8,17 +8,9 @@ serve(async (req) => {
   }
 
   try {
-    // ✅ STRICT SUBSCRIPTION ENFORCEMENT
-    const access = await verifyAccess(req);
-    
-    // HARD ENFORCEMENT: Check status and end_date
-    const now = new Date();
-    const isExpired = access.subscription?.status === 'expired' || 
-                     (access.subscription?.end_date && new Date(access.subscription.end_date) < now);
-
-    if (!access.authorized || isExpired) {
-      console.log("Subscription check failed:", access.subscription);
-      return errorResponse('Subscription expired', 403);
+    const access = await verifyAuthOnly(req);
+    if (!access.authorized) {
+      return errorResponse(access.error || 'Authentication required', 401);
     }
 
     const body = await req.json();
