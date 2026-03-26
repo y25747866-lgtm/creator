@@ -197,12 +197,12 @@ const MarketingStudio = () => {
   return (
     <DashboardLayout>
       <div className="relative min-h-[calc(100vh-4rem)]">
-        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
-        {!hasAccess && !subLoading && (
-          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Marketing Studio." : "The Marketing Studio is a premium feature. Upgrade to start generating platform-optimized content."} />
+        {/* LOCK ONLY FOR EXPIRED USERS */}
+        {isExpired && !subLoading && (
+          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Marketing Studio." />
         )}
         
-        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${!hasAccess && !subLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${isExpired && !subLoading ? 'opacity-50 pointer-events-none' : ''}`}>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
             <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
