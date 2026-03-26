@@ -16,6 +16,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { cn } from "@/lib/utils";
 
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship",
