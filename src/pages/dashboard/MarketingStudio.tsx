@@ -108,14 +108,14 @@ const MarketingStudio = () => {
   }, [user, hasAccess]);
 
   const generate = async () => {
-    if (!hasAccess) {
-      toast({ 
-        title: "Upgrade Required", 
-        description: isExpired ? "Your subscription has expired." : "Marketing Studio is a premium feature.", 
-        variant: "destructive" 
-      });
+    if (isExpired) {
+      toast({ title: "Subscription Expired", description: "Please renew your subscription.", variant: "destructive" });
       return;
     }
+
+    // Check free plan daily limit
+    const allowed = await recordUsage("marketing_studio");
+    if (!allowed) return;
 
     if (!title.trim()) {
       toast({ title: "Title is required", variant: "destructive" });
