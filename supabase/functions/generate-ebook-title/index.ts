@@ -3,7 +3,7 @@ import {
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
-  verifyAccess, 
+  verifyAuthOnly, 
   errorResponse 
 } from "../_shared/validation.ts";
 
