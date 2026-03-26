@@ -43,11 +43,12 @@ const MarketingStudio = () => {
   const [loadingSaved, setLoadingSaved] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
+  const { recordUsage, getRemainingUses, isFreePlan, canUseFeature } = useFeatureAccess();
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
+  // Free users can use with daily limits; only block if expired
+  const hasAccess = !isExpired || hasPaidSubscription;
 
   // Load saved results from DB
   useEffect(() => {
