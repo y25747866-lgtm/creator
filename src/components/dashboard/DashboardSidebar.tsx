@@ -35,8 +35,9 @@ const DashboardSidebar = () => {
 
   const isExpired = subscription?.status === "expired";
   const hasAccess = hasPaidSubscription && !isExpired;
+  const isCreatorOrAbove = (planType === "creator" || planType === "pro") && !isExpired;
+  const isProPlan = planType === "pro" && !isExpired;
 
-  // Get display name from subscription library
   const planLabel = getPlanDisplayName(planType);
   const planColor =
     planType === "pro"
@@ -45,24 +46,15 @@ const DashboardSidebar = () => {
         ? "bg-accent text-accent-foreground"
         : "bg-muted text-muted-foreground";
 
+  // access: "free" = available to all, "creator" = creator+pro, "pro" = pro only
   const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", premium: false },
-    {
-      icon: BookOpen,
-      label: "AI Product Generator",
-      path: "/dashboard/ebook-generator",
-      premium: true,
-    },
-    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio", premium: true },
-    {
-      icon: BarChart3,
-      label: "Sales Page Builder",
-      path: "/dashboard/sales-page-builder",
-      premium: true,
-    },
-    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics", premium: true },
-    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads", premium: true },
-    { icon: Settings, label: "Settings", path: "/dashboard/settings", premium: false },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", access: "free" as const },
+    { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator", access: "free" as const },
+    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio", access: "free" as const },
+    { icon: BarChart3, label: "Sales Page Builder", path: "/dashboard/sales-page-builder", access: "free" as const },
+    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics", access: "free" as const },
+    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads", access: "creator" as const },
+    { icon: Settings, label: "Settings", path: "/dashboard/settings", access: "free" as const },
   ];
 
   const handleSignOut = async () => {
@@ -72,6 +64,19 @@ const DashboardSidebar = () => {
       description: "You have been signed out successfully.",
     });
     navigate("/");
+  };
+
+  const isLocked = (access: "free" | "creator" | "pro") => {
+    if (access === "free") return false;
+    if (access === "creator") return !isCreatorOrAbove;
+    if (access === "pro") return !isProPlan;
+    return false;
+  };
+
+  const getBadge = (access: "free" | "creator" | "pro") => {
+    if (access === "pro") return "PRO";
+    if (access === "creator") return "CREATOR";
+    return null;
   };
 
   return (
@@ -117,7 +122,8 @@ const DashboardSidebar = () => {
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
-          const isLocked = item.premium && !hasAccess;
+          const locked = isLocked(item.access);
+          const badge = getBadge(item.access);
           
           return (
             <Link key={item.path} to={item.path}>
@@ -127,7 +133,7 @@ const DashboardSidebar = () => {
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                  isLocked && "opacity-60"
+                  locked && "opacity-50"
                 )}
                 whileHover={{ x: collapsed ? 0 : 2 }}
                 whileTap={{ scale: 0.98 }}
@@ -146,7 +152,7 @@ const DashboardSidebar = () => {
                       isActive && "text-primary"
                     )}
                   />
-                  {isLocked && (
+                  {locked && (
                     <div className="absolute -top-1 -right-1 bg-background rounded-full p-0.5">
                       <Lock className="w-2 h-2 text-muted-foreground" />
                     </div>
@@ -161,7 +167,11 @@ const DashboardSidebar = () => {
                       className="flex items-center justify-between flex-1"
                     >
                       <span className="text-sm">{item.label}</span>
-                      {isLocked && <Lock className="w-3 h-3 text-muted-foreground/50" />}
+                      {locked && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-bold border-primary/30 text-primary">
+                          {badge}
+                        </Badge>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

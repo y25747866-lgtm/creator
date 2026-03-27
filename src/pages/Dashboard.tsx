@@ -1,14 +1,12 @@
 import { motion } from "framer-motion";
-import { BookOpen, Download, TrendingUp, Zap, Lock } from "lucide-react";
+import { BookOpen, Download, TrendingUp, Zap } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { useSubscription } from "@/hooks/useSubscription";
-import { cn } from "@/lib/utils";
 
 const Dashboard = () => {
   const { hasPaidSubscription, subscription } = useSubscription();
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
 
   const stats = [
     {
@@ -16,28 +14,24 @@ const Dashboard = () => {
       label: "Ebooks Created",
       value: "0",
       color: "from-indigo-500 to-purple-500",
-      premium: true,
     },
     {
       icon: Download,
       label: "Total Downloads",
       value: "0",
       color: "from-purple-500 to-pink-500",
-      premium: true,
     },
     {
       icon: TrendingUp,
       label: "This Month",
       value: "0",
       color: "from-blue-500 to-indigo-500",
-      premium: true,
     },
     {
       icon: Zap,
       label: "AI Credits",
-      value: hasAccess ? "∞" : "0",
+      value: hasPaidSubscription && !isExpired ? "∞" : "1/day",
       color: "from-violet-500 to-purple-500",
-      premium: true,
     },
   ];
 
@@ -54,43 +48,34 @@ const Dashboard = () => {
             Your digital product command center. Start creating today.
           </p>
           {isExpired && (
-            <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500">
-              <Lock className="w-5 h-5" />
-              <p className="text-sm font-medium">Your subscription has expired. Premium features are currently locked.</p>
+            <div className="mt-4 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 text-destructive">
+              <p className="text-sm font-medium">Your subscription has expired. Some premium features are locked.</p>
             </div>
           )}
         </motion.div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
-            const isLocked = stat.premium && !hasAccess;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className={cn("glass-panel p-6 hover-lift relative overflow-hidden", isLocked && "opacity-60")}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
-                      <stat.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                    </div>
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              <Card className="glass-panel p-6 hover-lift relative overflow-hidden">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
+                    <stat.icon className="w-6 h-6 text-white" />
                   </div>
-                  {isLocked && (
-                    <div className="absolute top-2 right-2">
-                      <Lock className="w-3 h-3 text-muted-foreground/50" />
-                    </div>
-                  )}
-                </Card>
-              </motion.div>
-            );
-          })}
+                  <div>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
         </div>
 
         {/* Quick Actions */}
@@ -102,10 +87,7 @@ const Dashboard = () => {
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card 
-              className={cn(
-                "glass-panel p-6 hover-lift cursor-pointer group relative overflow-hidden",
-                !hasAccess && "opacity-60"
-              )} 
+              className="glass-panel p-6 hover-lift cursor-pointer group relative overflow-hidden"
               onClick={() => window.location.href = '/dashboard/ebook-generator'}
             >
               <div className="flex items-center gap-4">
@@ -119,18 +101,10 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
-              {!hasAccess && (
-                <div className="absolute top-4 right-4">
-                  <Lock className="w-4 h-4 text-muted-foreground/50" />
-                </div>
-              )}
             </Card>
 
             <Card 
-              className={cn(
-                "glass-panel p-6 hover-lift cursor-pointer group relative overflow-hidden",
-                !hasAccess && "opacity-60"
-              )} 
+              className="glass-panel p-6 hover-lift cursor-pointer group relative overflow-hidden"
               onClick={() => window.location.href = '/dashboard/downloads'}
             >
               <div className="flex items-center gap-4">
@@ -144,16 +118,11 @@ const Dashboard = () => {
                   </p>
                 </div>
               </div>
-              {!hasAccess && (
-                <div className="absolute top-4 right-4">
-                  <Lock className="w-4 h-4 text-muted-foreground/50" />
-                </div>
-              )}
             </Card>
           </div>
         </motion.div>
 
-        {/* Recent Activity Placeholder */}
+        {/* Recent Activity */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

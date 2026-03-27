@@ -2,34 +2,34 @@ import { motion } from "framer-motion";
 
 const Background3D = () => {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      {/* Primary gradient mesh */}
+    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
+      {/* Primary gradient mesh - indigo */}
       <motion.div
-        className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full opacity-20 dark:opacity-10 blur-[120px] animate-float-slow"
+        className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] animate-float-slow"
         style={{
-          background: "radial-gradient(circle, hsl(243 75% 59% / 0.3) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(91, 79, 232, 0.15) 0%, transparent 70%)",
         }}
         initial={{ scale: 0.8 }}
         animate={{ scale: [0.8, 1.1, 0.8] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Secondary gradient mesh */}
+      {/* Secondary gradient mesh - cyan */}
       <motion.div
-        className="absolute top-[30%] right-[-20%] w-[50vw] h-[50vw] rounded-full opacity-15 dark:opacity-8 blur-[100px] animate-float"
+        className="absolute top-[30%] right-[-20%] w-[50vw] h-[50vw] rounded-full blur-[100px] animate-float"
         style={{
-          background: "radial-gradient(circle, hsl(262 83% 58% / 0.3) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(0, 255, 209, 0.06) 0%, transparent 70%)",
         }}
         initial={{ scale: 1 }}
         animate={{ scale: [1, 0.9, 1] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Tertiary accent */}
+      {/* Tertiary accent - amber */}
       <motion.div
-        className="absolute bottom-[-10%] left-[20%] w-[40vw] h-[40vw] rounded-full opacity-10 dark:opacity-5 blur-[120px] animate-float-slower"
+        className="absolute bottom-[-10%] left-[20%] w-[40vw] h-[40vw] rounded-full blur-[120px] animate-float-slower"
         style={{
-          background: "radial-gradient(circle, hsl(220 80% 50% / 0.3) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(245, 158, 11, 0.04) 0%, transparent 70%)",
         }}
         initial={{ scale: 0.9 }}
         animate={{ scale: [0.9, 1.05, 0.9] }}
@@ -38,7 +38,7 @@ const Background3D = () => {
 
       {/* Subtle noise texture */}
       <div 
-        className="absolute inset-0 opacity-[0.012] dark:opacity-[0.02]"
+        className="absolute inset-0 opacity-[0.015]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
