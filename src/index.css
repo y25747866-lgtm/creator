@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&f[]=satoshi@300,400,500,700,900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -44,6 +45,14 @@
     --sidebar-accent-foreground: 240 6% 10%;
     --sidebar-border: 240 6% 92%;
     --sidebar-ring: 243 75% 59%;
+
+    /* Landing page specific */
+    --landing-bg: 240 20% 4%;
+    --landing-card: 0 0% 100% / 0.04;
+    --landing-border: 0 0% 100% / 0.08;
+    --neon-indigo: 243 75% 59%;
+    --neon-cyan: 168 100% 50%;
+    --neon-amber: 38 92% 50%;
   }
 
   .dark {
@@ -112,6 +121,54 @@
   .hover-lift {
     @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
   }
+
+  /* Landing page dark components */
+  .landing-section {
+    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+  }
+
+  .landing-heading {
+    font-family: 'Clash Display', 'Inter', system-ui, sans-serif;
+  }
+
+  .landing-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+  }
+
+  .landing-card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .landing-card-hover:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .indigo-glow {
+    box-shadow: 0 0 30px rgba(91, 79, 232, 0.3), 0 0 60px rgba(91, 79, 232, 0.1);
+  }
+
+  .indigo-glow-sm {
+    box-shadow: 0 0 15px rgba(91, 79, 232, 0.25);
+  }
+
+  .indigo-text-glow {
+    text-shadow: 0 0 40px rgba(91, 79, 232, 0.5), 0 0 80px rgba(91, 79, 232, 0.2);
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background-size: 200% 100%;
+    animation: shimmer-sweep 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-sweep {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
 
 @layer utilities {
@@ -164,5 +221,23 @@
     100% {
       background-position: 0% 50%;
     }
+  }
+
+  .animate-count-up {
+    animation: count-fade 0.6s ease-out;
+  }
+
+  @keyframes count-fade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
 }
