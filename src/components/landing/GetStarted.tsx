@@ -21,51 +21,50 @@ const GetStarted = () => {
   }, []);
 
   return (
-    <section id="get-started" ref={sectionRef} className="py-[100px] px-6">
-      <div className="max-w-5xl mx-auto">
+    <section id="get-started" ref={sectionRef} className="py-[140px] px-6 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-cyan-500/5 rounded-3xl" />
+      </div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
         <div
-          className="relative overflow-hidden rounded-3xl p-12 md:p-20 text-center animate-up"
+          className="relative overflow-hidden rounded-3xl p-16 md:p-24 text-center animate-up"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(91, 79, 232, 0.3) 0%, rgba(13, 13, 31, 0.95) 70%)',
-            border: '1px solid rgba(91, 79, 232, 0.2)',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(34, 211, 238, 0.04))',
+            border: '1px solid rgba(99, 102, 241, 0.2)',
+            boxShadow: '0 30px 60px -12px rgba(99, 102, 241, 0.2), inset 0 0 30px rgba(99, 102, 241, 0.05)',
           }}
         >
           <div className="relative z-10">
-            <div className="relative w-24 h-24 mx-auto mb-10">
+            <div className="relative w-32 h-32 mx-auto mb-12">
               {/* Pulse Ring */}
-              <div className="absolute inset-0 rounded-full bg-[var(--accent)] animate-pulse-ring" />
-              <div className="relative w-full h-full rounded-2xl flex items-center justify-center z-10" style={{
-                background: 'linear-gradient(135deg, #5B4FE8, #7C3AED)',
-                boxShadow: '0 0 40px rgba(91, 79, 232, 0.5)',
-              }}>
-                <Rocket className="w-12 h-12 text-white" />
+              <div className="absolute inset-0 rounded-full bg-indigo-500 animate-pulse-ring" />
+              <div className="relative w-full h-full rounded-3xl flex items-center justify-center z-10 glass-button">
+                <Rocket className="w-16 h-16 text-white" />
               </div>
             </div>
 
-            <h2 className="text-[clamp(32px,5vw,56px)] font-bold mb-6 landing-heading text-[var(--text-primary)]">
-              Ready to Build Your <br />
-              <span style={{ color: 'var(--accent)' }}>AI-Powered Business?</span>
+            <h2 className="text-[clamp(40px,6vw,64px)] font-[900] mb-8 landing-heading leading-tight">
+              <span className="text-gradient">Ready to Build</span>
+              <br />
+              <span className="accent-gradient">Your Billion-Dollar Business?</span>
             </h2>
             
-            <p className="text-[clamp(16px,2vw,20px)] text-[var(--text-muted)] max-w-2xl mx-auto mb-12 landing-section">
-              Start with a free account. Create products, explore monetization, 
-              and see why NexoraOS is the only platform that turns one idea into an entire business system.
+            <p className="text-[clamp(18px,2vw,22px)] text-white/70 max-w-3xl mx-auto mb-14 landing-section leading-relaxed">
+              Start with a free account today. Create your first product in minutes and begin generating revenue immediately. No credit card required.
             </p>
 
             <Link to="/dashboard">
-              <button className="text-base px-10 py-5 rounded-xl font-bold text-white transition-all hover:scale-105 landing-section" style={{
-                background: 'var(--accent)',
-                boxShadow: '0 0 40px rgba(91, 79, 232, 0.5)',
-              }}>
-                Start Your Free Trial →
-                <ArrowRight className="inline ml-2 w-5 h-5" />
+              <button className="glass-button text-lg px-12 py-6 landing-section mb-8 inline-block">
+                Start Your Free Trial Now
+                <ArrowRight className="inline ml-3 w-6 h-6" />
               </button>
             </Link>
 
-            <div className="flex items-center justify-center gap-8 mt-10 text-sm font-medium text-[var(--cyan)] landing-section flex-wrap">
-              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Free forever</span>
-              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> No credit card</span>
-              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> 2-minute setup</span>
+            <div className="flex items-center justify-center gap-10 text-base font-semibold text-white/70 landing-section flex-wrap">
+              <span className="flex items-center gap-3"><Check className="w-6 h-6 text-indigo-400" /> Free forever</span>
+              <span className="flex items-center gap-3"><Check className="w-6 h-6 text-indigo-400" /> No credit card</span>
+              <span className="flex items-center gap-3"><Check className="w-6 h-6 text-indigo-400" /> 2-minute setup</span>
             </div>
           </div>
         </div>

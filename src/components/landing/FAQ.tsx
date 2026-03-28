@@ -38,13 +38,19 @@ const FAQ = () => {
   }, []);
 
   return (
-    <section id="faq" ref={sectionRef} className="py-[100px] px-6">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-16 animate-up">
-          <h2 className="text-[clamp(32px,5vw,56px)] font-bold mb-4 landing-heading text-[var(--text-primary)]">
-            Frequently Asked <span style={{ color: 'var(--accent)' }}>Questions</span>
+    <section id="faq" ref={sectionRef} className="py-[140px] px-6 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-3xl mx-auto relative z-10">
+        <div className="text-center mb-20 animate-up">
+          <h2 className="text-[clamp(40px,6vw,64px)] font-[900] mb-6 landing-heading leading-tight">
+            <span className="text-gradient">Frequently Asked</span>
+            <br />
+            <span className="accent-gradient">Questions</span>
           </h2>
-          <p className="text-[clamp(16px,2vw,20px)] text-[var(--text-muted)] max-w-2xl mx-auto landing-section">
+          <p className="text-[clamp(18px,2vw,22px)] text-white/60 max-w-2xl mx-auto landing-section">
             Everything you need to know about NexoraOS.
           </p>
         </div>
@@ -55,12 +61,12 @@ const FAQ = () => {
               <AccordionItem 
                 key={index} 
                 value={`item-${index}`}
-                className="border border-[var(--border)] rounded-xl px-6 bg-[var(--bg-card)] transition-all data-[state=open]:border-[var(--accent)] data-[state=open]:border-l-[3px] data-[state=open]:bg-[rgba(91,79,232,0.06)]"
+                className="premium-card !p-8 !border-white/10 data-[state=open]:!border-indigo-500/40 data-[state=open]:!bg-indigo-500/5"
               >
-                <AccordionTrigger className="text-[var(--text-primary)] font-semibold hover:no-underline py-6 text-left landing-heading">
+                <AccordionTrigger className="text-white font-[800] hover:no-underline py-6 text-left landing-heading text-lg">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-[var(--text-muted)] pb-6 landing-section leading-relaxed">
+                <AccordionContent className="text-white/70 pb-6 text-base landing-section leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

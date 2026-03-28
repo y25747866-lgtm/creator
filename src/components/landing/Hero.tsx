@@ -10,51 +10,57 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 py-[120px] pb-[80px]">
-      <div className="max-w-5xl mx-auto text-center relative z-10">
+    <section className="relative min-h-screen flex items-center justify-center px-6 py-[140px] pb-[100px] overflow-hidden">
+      {/* Gradient Orbs Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-6xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8"
-          style={{ background: 'rgba(91, 79, 232, 0.15)', border: '1px solid rgba(91, 79, 232, 0.3)' }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="inline-flex items-center gap-3 px-6 py-3 rounded-full mb-10 border border-indigo-500/20 bg-indigo-500/5 backdrop-blur-sm"
         >
-          <Sparkles className="w-4 h-4 text-[#5B4FE8]" />
-          <span className="text-sm font-medium text-[var(--text-primary)]/80 landing-section">
-            AI Product Business Operating System
+          <Sparkles className="w-5 h-5 text-indigo-400" />
+          <span className="text-sm font-semibold text-white/90 landing-section">
+            The Operating System for Digital Creators
           </span>
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-[clamp(42px,8vw,80px)] font-[800] tracking-tight mb-6 landing-heading leading-[1.1]"
+          transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+          className="text-[clamp(48px,10vw,96px)] font-[900] tracking-tighter mb-8 landing-heading leading-[1.05]"
         >
-          <span className="text-[var(--text-primary)]">Turn Ideas Into</span>
+          <span className="text-gradient">Turn Ideas Into</span>
           <br />
-          <span className="indigo-text-glow" style={{ color: 'var(--accent)' }}>Scalable Digital Businesses</span>
+          <span className="accent-gradient">Billion-Dollar Businesses</span>
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-[clamp(16px,2vw,20px)] text-[var(--text-muted)] max-w-2xl mx-auto mb-8 landing-section"
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          className="text-[clamp(18px,2.5vw,24px)] text-white/70 max-w-3xl mx-auto mb-12 landing-section leading-relaxed"
         >
-          NexoraOS is the AI-powered OS that creates products, 
-          monetizes them into 8+ revenue streams, and auto-improves — all without manual work.
+          The world's most powerful AI-driven platform for creating, monetizing, and scaling digital products. From idea to revenue in minutes.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25 }}
-          className="flex items-center justify-center gap-6 mb-10 flex-wrap max-w-[90vw] mx-auto"
+          transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+          className="flex items-center justify-center gap-8 mb-14 flex-wrap max-w-[90vw] mx-auto"
         >
           {pillars.map((p, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-[var(--text-muted)] landing-section">
-              <p.icon className="w-4 h-4 text-[var(--cyan)]" />
+            <div key={i} className="flex items-center gap-3 text-base text-white/60 landing-section font-medium">
+              <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                <p.icon className="w-5 h-5 text-indigo-400" />
+              </div>
               <span>{p.text}</span>
             </div>
           ))}
@@ -63,24 +69,20 @@ const Hero = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-12"
         >
           <Link to="/dashboard">
-            <button className="text-base px-8 py-4 rounded-xl font-semibold text-white transition-all hover:scale-105 landing-section" style={{
-              background: 'var(--accent)',
-              boxShadow: '0 0 40px rgba(91, 79, 232, 0.5)',
-            }}>
-              Start Your Free Trial →
-              <ArrowRight className="inline ml-2 w-5 h-5" />
+            <button className="glass-button text-lg px-10 py-5 landing-section">
+              Start Building Free
+              <ArrowRight className="inline ml-3 w-6 h-6" />
             </button>
           </Link>
           <a href="#features">
-            <button className="text-base px-8 py-4 rounded-xl font-semibold text-[var(--text-primary)]/80 transition-all hover:text-[var(--text-primary)] landing-section" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
+            <button className="px-10 py-5 rounded-2xl text-lg font-bold text-white/90 transition-all hover:text-white landing-section border border-white/10 hover:border-indigo-500/30 bg-white/5 hover:bg-indigo-500/5" style={{
+              backdropFilter: 'blur(12px)',
             }}>
-              Explore the OS
+              Explore the Platform
             </button>
           </a>
         </motion.div>
@@ -88,12 +90,12 @@ const Hero = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex items-center justify-center gap-6 text-xs text-[var(--cyan)] landing-section flex-wrap"
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="flex items-center justify-center gap-8 text-sm font-semibold text-white/60 landing-section flex-wrap"
         >
-          <span className="flex items-center gap-1"><Check className="w-3 h-3" /> Free forever</span>
-          <span className="flex items-center gap-1"><Check className="w-3 h-3" /> No credit card</span>
-          <span className="flex items-center gap-1"><Check className="w-3 h-3" /> 2-minute setup</span>
+          <span className="flex items-center gap-2"><Check className="w-5 h-5 text-cyan-400" /> Free forever</span>
+          <span className="flex items-center gap-2"><Check className="w-5 h-5 text-cyan-400" /> No credit card</span>
+          <span className="flex items-center gap-2"><Check className="w-5 h-5 text-cyan-400" /> 2-minute setup</span>
         </motion.div>
       </div>
     </section>

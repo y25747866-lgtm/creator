@@ -57,18 +57,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           className="relative z-10 min-h-screen transition-all duration-300"
           style={{ marginLeft: collapsed ? 80 : 280 }}
         >
-          <header className="sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border)] px-8 py-4">
-            <div className="flex items-center justify-end gap-3">
+          <header className="sticky top-0 z-30 bg-[var(--bg-primary)]/70 backdrop-blur-2xl border-b border-white/10 px-8 py-5">
+            <div className="flex items-center justify-end gap-4">
               <button 
                 onClick={toggleTheme}
-                className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all bg-[var(--bg-card)] border border-[var(--border)]"
+                className="p-3 rounded-xl text-white/60 hover:text-white transition-all bg-white/5 border border-white/10 hover:border-indigo-500/30 hover:bg-indigo-500/5"
               >
                 {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
             </div>
           </header>
           
-          <div className="p-8">
+          <div className="p-10">
             {children}
           </div>
         </main>

@@ -9,49 +9,53 @@ const XLogo = ({ className }: { className?: string }) => (
 
 const Footer = () => {
   return (
-    <footer className="py-[60px] px-6 pb-[40px] border-t border-[var(--border)]">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
+    <footer className="py-[80px] px-6 border-t border-white/10 relative">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-16 mb-16">
           {/* Left: Logo + Tagline */}
           <div className="max-w-xs">
-            <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <img src="/src/assets/nexora-logo.png" alt="NexoraOS Logo" className="w-8 h-8 rounded-lg" />
-              <span className="font-bold text-lg text-[var(--text-primary)] landing-heading">NexoraOS</span>
+            <Link to="/" className="flex items-center gap-3 mb-6">
+              <img src="/src/assets/nexora-logo.png" alt="NexoraOS Logo" className="w-10 h-10 rounded-xl" />
+              <span className="font-[900] text-xl text-white landing-heading">NexoraOS</span>
             </Link>
-            <p className="text-[var(--text-muted)] text-sm landing-section">
-              "The OS the internet runs on."
+            <p className="text-white/60 text-base landing-section leading-relaxed">
+              The operating system for building billion-dollar digital businesses. From idea to revenue in minutes.
             </p>
           </div>
 
           {/* Center: Links */}
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-wrap gap-8">
-              <a href="#features" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Features</a>
-              <a href="#pricing" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Pricing</a>
-              <a href="#faq" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">FAQ</a>
-              <Link to="/dashboard" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Dashboard</Link>
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-wrap gap-12">
+              <a href="#features" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Features</a>
+              <a href="#pricing" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Pricing</a>
+              <a href="#faq" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">FAQ</a>
+              <Link to="/dashboard" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Dashboard</Link>
             </div>
-            <div className="flex flex-wrap gap-8">
-              <Link to="/privacy" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Privacy Policy</Link>
-              <Link to="/terms" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Terms of Service</Link>
-              <Link to="/contact" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Contact</Link>
+            <div className="flex flex-wrap gap-12">
+              <Link to="/privacy" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Privacy Policy</Link>
+              <Link to="/terms" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Terms of Service</Link>
+              <Link to="/contact" className="text-base text-white/70 hover:text-white transition-colors landing-section font-medium">Contact</Link>
             </div>
           </div>
 
           {/* Right: Socials */}
-          <div className="flex gap-4">
-            <a href="#" className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all hover:shadow-[0_0_20px_rgba(91,79,232,0.2)]">
-              <Instagram className="w-5 h-5" />
+          <div className="flex gap-6">
+            <a href="#" className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all">
+              <Instagram className="w-6 h-6" />
             </a>
-            <a href="#" className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all hover:shadow-[0_0_20px_rgba(91,79,232,0.2)]">
-              <XLogo className="w-5 h-5" />
+            <a href="#" className="p-4 rounded-2xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all">
+              <XLogo className="w-6 h-6" />
             </a>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-[var(--border)] text-center">
-          <p className="text-[var(--text-muted)] text-xs landing-section">
-            © {new Date().getFullYear()} NexoraOS. All rights reserved.
+        <div className="pt-12 border-t border-white/10 text-center">
+          <p className="text-white/50 text-sm landing-section">
+            © {new Date().getFullYear()} NexoraOS. All rights reserved. Built for creators, by creators.
           </p>
         </div>
       </div>
