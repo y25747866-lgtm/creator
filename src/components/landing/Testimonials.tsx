@@ -1,71 +1,87 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Star } from "lucide-react";
 
 const testimonials = [
   {
     initials: "AK",
-    name: "Alex Kim",
-    role: "Digital Creator",
+    name: "Amir Khalid",
+    role: "Digital Creator · Dubai",
     stars: 5,
     quote: "I generated my first ebook in under 5 minutes. NexoraOS literally turned my idea into a sellable product before my coffee got cold.",
   },
   {
     initials: "SR",
-    name: "Sarah Rodriguez",
-    role: "Online Entrepreneur",
+    name: "Sofia Reyes",
+    role: "Online Entrepreneur · Mexico City",
     stars: 5,
     quote: "Made my first $500 in the first week. The monetization engine creates everything — sales pages, email sequences, the whole funnel.",
   },
   {
     initials: "MJ",
-    name: "Marcus Johnson",
-    role: "Content Creator",
+    name: "Marcus J.",
+    role: "Content Creator · Atlanta",
     stars: 5,
     quote: "I used to spend 20+ hours creating a single product. Now NexoraOS does it in minutes. It's like having a full product team on autopilot.",
   },
 ];
 
 const Testimonials = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.1 });
-    if (ref.current) observer.observe(ref.current);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const animatedElements = sectionRef.current?.querySelectorAll('.animate-up');
+    animatedElements?.forEach(el => observer.observe(el));
+
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section ref={ref} className="py-24 px-4">
+    <section id="testimonials" ref={sectionRef} className="py-[80px] px-6">
       <div className="max-w-6xl mx-auto">
-        <div className={`text-center mb-16 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-3xl md:text-5xl font-bold landing-heading text-white">
-            What Creators Are Saying
+        <div className="text-center mb-16 animate-up">
+          <h2 className="text-[clamp(32px,5vw,56px)] font-bold mb-4 landing-heading text-[var(--text-primary)]">
+            Loved by <span style={{ color: 'var(--accent)' }}>Creators</span> Worldwide
           </h2>
+          <p className="text-[clamp(16px,2vw,20px)] text-[var(--text-muted)] max-w-2xl mx-auto landing-section">
+            Join thousands of creators who are scaling their businesses with NexoraOS.
+          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <div
-              key={t.name}
-              className={`landing-card landing-card-hover p-6 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-              style={{ transitionDelay: `${i * 100 + 200}ms`, borderTop: '2px solid rgba(91, 79, 232, 0.3)' }}
+        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-x-visible pb-8 md:pb-0 snap-x snap-mandatory scrollbar-hide">
+          {testimonials.map((t, index) => (
+            <div 
+              key={t.name} 
+              className="min-w-[300px] md:min-w-0 flex-shrink-0 snap-center bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-8 animate-up"
+              style={{ 
+                transitionDelay: `${index * 100}ms`,
+                borderTop: '2px solid var(--accent)'
+              }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white landing-heading" style={{ background: 'linear-gradient(135deg, #5B4FE8, #7C3AED)' }}>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full bg-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] font-bold">
                   {t.initials}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white landing-heading">{t.name}</div>
-                  <div className="text-xs text-white/40 landing-section">{t.role}</div>
+                  <h4 className="text-[var(--text-primary)] font-bold landing-heading">{t.name}</h4>
+                  <p className="text-[var(--text-muted)] text-xs landing-section">{t.role}</p>
                 </div>
               </div>
-              <div className="flex gap-0.5 mb-3">
-                {Array.from({ length: t.stars }).map((_, j) => (
-                  <Star key={j} className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+              <div className="flex gap-1 mb-4">
+                {[...Array(t.stars)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
                 ))}
               </div>
-              <p className="text-sm text-white/60 leading-relaxed landing-section">"{t.quote}"</p>
+              <p className="text-[14px] italic text-[var(--text-primary)]/80 leading-relaxed landing-section">
+                "{t.quote}"
+              </p>
             </div>
           ))}
         </div>

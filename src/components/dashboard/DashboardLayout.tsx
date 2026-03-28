@@ -1,7 +1,7 @@
 import { ReactNode, useState, createContext, useContext, useEffect } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import Background3D from "@/components/Background3D";
-import ThemeToggle from "@/components/ThemeToggle";
+import { Moon, Sun } from "lucide-react";
 
 interface SidebarContextType {
   collapsed: boolean;
@@ -21,6 +21,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [collapsed, setCollapsedState] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_KEY) === "true"; } catch { return false; }
   });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+  };
 
   const setCollapsed = (v: boolean) => {
     setCollapsedState(v);
@@ -29,17 +47,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      <div className="min-h-screen bg-background">
-        <Background3D />
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+        <div className="fixed inset-0 z-0">
+          <Background3D />
+        </div>
         <DashboardSidebar />
         
         <main
-          className="min-h-screen transition-all duration-300"
+          className="relative z-10 min-h-screen transition-all duration-300"
           style={{ marginLeft: collapsed ? 80 : 280 }}
         >
-          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50 px-8 py-4">
+          <header className="sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border)] px-8 py-4">
             <div className="flex items-center justify-end gap-3">
-              <ThemeToggle />
+              <button 
+                onClick={toggleTheme}
+                className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all bg-[var(--bg-card)] border border-[var(--border)]"
+              >
+                {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
             </div>
           </header>
           

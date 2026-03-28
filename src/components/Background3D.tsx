@@ -1,49 +1,82 @@
-import { motion } from "framer-motion";
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 
 const Background3D = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+
+    // Create particles
+    const geometry = new THREE.BufferGeometry();
+    const isMobile = window.innerWidth < 768;
+    const count = isMobile ? 80 : 200;
+    const positions = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) {
+      positions[i] = (Math.random() - 0.5) * 20;
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: 0x5B4FE8,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.8
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+    camera.position.z = 5;
+
+    // Mouse parallax
+    let mouseX = 0, mouseY = 0;
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 0.5;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 0.5;
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      particles.rotation.y += 0.001;
+      particles.rotation.x += 0.0005;
+      camera.position.x += (mouseX - camera.position.x) * 0.05;
+      camera.position.y += (-mouseY - camera.position.y) * 0.05;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Responsive resize
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style={{ background: '#080810' }}>
-      {/* Primary gradient mesh - indigo */}
-      <motion.div
-        className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] animate-float-slow"
-        style={{
-          background: "radial-gradient(circle, rgba(91, 79, 232, 0.15) 0%, transparent 70%)",
-        }}
-        initial={{ scale: 0.8 }}
-        animate={{ scale: [0.8, 1.1, 0.8] }}
-        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {/* Secondary gradient mesh - cyan */}
-      <motion.div
-        className="absolute top-[30%] right-[-20%] w-[50vw] h-[50vw] rounded-full blur-[100px] animate-float"
-        style={{
-          background: "radial-gradient(circle, rgba(0, 255, 209, 0.06) 0%, transparent 70%)",
-        }}
-        initial={{ scale: 1 }}
-        animate={{ scale: [1, 0.9, 1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {/* Tertiary accent - amber */}
-      <motion.div
-        className="absolute bottom-[-10%] left-[20%] w-[40vw] h-[40vw] rounded-full blur-[120px] animate-float-slower"
-        style={{
-          background: "radial-gradient(circle, rgba(245, 158, 11, 0.04) 0%, transparent 70%)",
-        }}
-        initial={{ scale: 0.9 }}
-        animate={{ scale: [0.9, 1.05, 0.9] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {/* Subtle noise texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
-    </div>
+    <div 
+      id="hero-canvas" 
+      ref={containerRef} 
+      className="absolute top-0 left-0 width-full height-full -z-10 pointer-events-none"
+      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
+    />
   );
 };
 

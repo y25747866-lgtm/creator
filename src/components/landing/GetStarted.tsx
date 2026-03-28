@@ -1,58 +1,71 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowRight, Rocket, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const GetStarted = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.2 });
-    if (ref.current) observer.observe(ref.current);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    const animatedElements = sectionRef.current?.querySelectorAll('.animate-up');
+    animatedElements?.forEach(el => observer.observe(el));
+
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section ref={ref} className="py-24 px-4">
-      <div className="max-w-4xl mx-auto">
+    <section id="get-started" ref={sectionRef} className="py-[100px] px-6">
+      <div className="max-w-5xl mx-auto">
         <div
-          className={`relative overflow-hidden rounded-3xl p-8 md:p-16 text-center transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+          className="relative overflow-hidden rounded-3xl p-12 md:p-20 text-center animate-up"
           style={{
-            background: 'linear-gradient(135deg, rgba(91, 79, 232, 0.1) 0%, rgba(0, 255, 209, 0.05) 100%)',
-            border: '1px solid rgba(91, 79, 232, 0.15)',
+            background: 'radial-gradient(ellipse at center, rgba(91, 79, 232, 0.3) 0%, rgba(13, 13, 31, 0.95) 70%)',
+            border: '1px solid rgba(91, 79, 232, 0.2)',
           }}
         >
           <div className="relative z-10">
-            <div className="w-20 h-20 mx-auto mb-8 rounded-2xl flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, #5B4FE8, #7C3AED)',
-            }}>
-              <Rocket className="w-10 h-10 text-white" />
+            <div className="relative w-24 h-24 mx-auto mb-10">
+              {/* Pulse Ring */}
+              <div className="absolute inset-0 rounded-full bg-[var(--accent)] animate-pulse-ring" />
+              <div className="relative w-full h-full rounded-2xl flex items-center justify-center z-10" style={{
+                background: 'linear-gradient(135deg, #5B4FE8, #7C3AED)',
+                boxShadow: '0 0 40px rgba(91, 79, 232, 0.5)',
+              }}>
+                <Rocket className="w-12 h-12 text-white" />
+              </div>
             </div>
 
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 landing-heading">
-              <span className="text-white">Ready to Build Your</span>
-              <br />
-              <span style={{ color: '#5B4FE8' }}>AI-Powered Business?</span>
+            <h2 className="text-[clamp(32px,5vw,56px)] font-bold mb-6 landing-heading text-[var(--text-primary)]">
+              Ready to Build Your <br />
+              <span style={{ color: 'var(--accent)' }}>AI-Powered Business?</span>
             </h2>
             
-            <p className="text-lg text-white/50 max-w-xl mx-auto mb-10 landing-section">
+            <p className="text-[clamp(16px,2vw,20px)] text-[var(--text-muted)] max-w-2xl mx-auto mb-12 landing-section">
               Start with a free account. Create products, explore monetization, 
               and see why NexoraOS is the only platform that turns one idea into an entire business system.
             </p>
 
             <Link to="/dashboard">
-              <button className="text-base px-10 py-4 rounded-xl font-semibold text-white indigo-glow transition-all hover:scale-105 landing-section" style={{
-                background: 'linear-gradient(135deg, #5B4FE8, #7C3AED)',
+              <button className="text-base px-10 py-5 rounded-xl font-bold text-white transition-all hover:scale-105 landing-section" style={{
+                background: 'var(--accent)',
+                boxShadow: '0 0 40px rgba(91, 79, 232, 0.5)',
               }}>
-                Start Your Free Trial
+                Start Your Free Trial →
                 <ArrowRight className="inline ml-2 w-5 h-5" />
               </button>
             </Link>
 
-            <div className="flex items-center justify-center gap-6 mt-6 text-xs text-white/30 landing-section">
-              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-[#00FFD1]" /> Free forever</span>
-              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-[#00FFD1]" /> No credit card</span>
-              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-[#00FFD1]" /> 2-minute setup</span>
+            <div className="flex items-center justify-center gap-8 mt-10 text-sm font-medium text-[var(--cyan)] landing-section flex-wrap">
+              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Free forever</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> No credit card</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4" /> 2-minute setup</span>
             </div>
           </div>
         </div>

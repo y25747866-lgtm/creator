@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Instagram } from "lucide-react";
 
 const XLogo = ({ className }: { className?: string }) => (
@@ -8,38 +9,48 @@ const XLogo = ({ className }: { className?: string }) => (
 
 const Footer = () => {
   return (
-    <footer className="py-12 px-4" style={{ borderTop: '1px solid rgba(91, 79, 232, 0.15)' }}>
+    <footer className="py-[60px] px-6 pb-[40px] border-t border-[var(--border)]">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          <div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-[#00FFD1]/20 flex items-center justify-center">
-                <span className="text-[#00FFD1] font-bold text-sm landing-heading">N</span>
-              </div>
-              <span className="font-bold text-lg text-white landing-heading">NexoraOS</span>
+        <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
+          {/* Left: Logo + Tagline */}
+          <div className="max-w-xs">
+            <Link to="/" className="flex items-center gap-2.5 mb-4">
+              <img src="/src/assets/nexora-logo.png" alt="NexoraOS Logo" className="w-8 h-8 rounded-lg" />
+              <span className="font-bold text-lg text-[var(--text-primary)] landing-heading">NexoraOS</span>
+            </Link>
+            <p className="text-[var(--text-muted)] text-sm landing-section">
+              "The OS the internet runs on."
+            </p>
+          </div>
+
+          {/* Center: Links */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap gap-8">
+              <a href="#features" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Features</a>
+              <a href="#pricing" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Pricing</a>
+              <a href="#faq" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">FAQ</a>
+              <Link to="/dashboard" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Dashboard</Link>
             </div>
-            <p className="text-xs text-white/30 landing-section">The OS the internet runs on.</p>
+            <div className="flex flex-wrap gap-8">
+              <Link to="/privacy" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Privacy Policy</Link>
+              <Link to="/terms" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Terms of Service</Link>
+              <Link to="/contact" className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors landing-section">Contact</Link>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6 text-sm text-white/40 landing-section">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-            <a href="/dashboard" className="hover:text-white transition-colors">Dashboard</a>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <a href="#" className="w-9 h-9 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.06)' }} aria-label="Instagram">
-              <Instagram className="w-4 h-4" />
+          {/* Right: Socials */}
+          <div className="flex gap-4">
+            <a href="#" className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all hover:shadow-[0_0_20px_rgba(91,79,232,0.2)]">
+              <Instagram className="w-5 h-5" />
             </a>
-            <a href="#" className="w-9 h-9 rounded-full flex items-center justify-center text-white/40 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.06)' }} aria-label="X">
-              <XLogo className="w-3.5 h-3.5" />
+            <a href="#" className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--accent)] transition-all hover:shadow-[0_0_20px_rgba(91,79,232,0.2)]">
+              <XLogo className="w-5 h-5" />
             </a>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          <p className="text-xs text-white/20 landing-section">
+        <div className="pt-8 border-t border-[var(--border)] text-center">
+          <p className="text-[var(--text-muted)] text-xs landing-section">
             © {new Date().getFullYear()} NexoraOS. All rights reserved.
           </p>
         </div>
