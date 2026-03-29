@@ -20,10 +20,10 @@ import {
   WinningStoreIcon,
   DetoxIcon,
   SixFigureIcon,
-  CreatorHubIcon,
-  ScaleUpIcon,
-  LaunchPadIcon,
-  GrowthLabIcon
+  EliteMastermindIcon,
+  DigitalEmpireIcon,
+  TrafficSecretsIcon,
+  ConversionKingIcon
 } from '@/components/LogoIcons';
 
 const Landing = () => {
@@ -282,14 +282,14 @@ const Landing = () => {
       {/* Logo Marquee Section */}
       <LogoMarquee
         logos={[
-          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-8 h-8" /> },
-          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-8 h-8" /> },
-          { id: 'detox', name: 'DETOX1/1', icon: <DetoxIcon className="w-8 h-8" /> },
-          { id: 'six-figure', name: 'Six Figure Sales Rep', icon: <SixFigureIcon className="w-8 h-8" /> },
-          { id: 'creator-hub', name: 'Creator Hub', icon: <CreatorHubIcon className="w-8 h-8" /> },
-          { id: 'scale-up', name: 'Scale Up Academy', icon: <ScaleUpIcon className="w-8 h-8" /> },
-          { id: 'launch-pad', name: 'Launch Pad Pro', icon: <LaunchPadIcon className="w-8 h-8" /> },
-          { id: 'growth-lab', name: 'Growth Lab', icon: <GrowthLabIcon className="w-8 h-8" /> },
+          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-10 h-10" /> },
+          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-10 h-10" /> },
+          { id: 'detox', name: 'DETOX1/1', icon: <DetoxIcon className="w-10 h-10" /> },
+          { id: 'six-figure', name: 'Six Figure Sales Rep', icon: <SixFigureIcon className="w-10 h-10" /> },
+          { id: 'elite-mastermind', name: 'Elite Mastermind', icon: <EliteMastermindIcon className="w-10 h-10" /> },
+          { id: 'digital-empire', name: 'Digital Empire', icon: <DigitalEmpireIcon className="w-10 h-10" /> },
+          { id: 'traffic-secrets', name: 'Traffic Secrets', icon: <TrafficSecretsIcon className="w-10 h-10" /> },
+          { id: 'conversion-king', name: 'Conversion King', icon: <ConversionKingIcon className="w-10 h-10" /> },
         ]}
         speed={40}
       />
