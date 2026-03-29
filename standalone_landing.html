@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoraOS — The Operating System for Digital Creators</title>
+    <meta name="description" content="Turn ideas into scalable digital businesses. The world's most powerful AI-driven platform for creators.">
+    
+    <!-- Typography -->
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@700,800&f[]=satoshi@400,500,600&display=swap">
+    
+    <style>
+        :root {
+            /* Dark mode defaults */
+            --bg-base: #07071A;
+            --bg-surface: #0D0D2B;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-glow: radial-gradient(ellipse at 50% 0%, rgba(91,79,232,0.25) 0%, transparent 70%);
+            --text-primary: #F0F0FF;
+            --text-muted: #7B7BA8;
+            --text-gradient: linear-gradient(135deg, #FFFFFF 0%, #A78BFA 50%, #00FFD1 100%);
+            --accent: #5B4FE8;
+            --accent-light: #7C6FF0;
+            --accent-glow: 0 0 40px rgba(91,79,232,0.4);
+            --cyan: #00FFD1;
+            --cyan-glow: 0 0 20px rgba(0,255,209,0.3);
+            --border: rgba(255,255,255,0.07);
+            --border-accent: rgba(91,79,232,0.4);
+            --particle-color: #5B4FE8;
+            --particle-line: rgba(0,255,209,0.12);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #F4F3FF;
+            --bg-surface: #EEEEFF;
+            --bg-card: rgba(0,0,0,0.03);
+            --bg-glow: radial-gradient(ellipse at 50% 0%, rgba(91,79,232,0.12) 0%, transparent 70%);
+            --text-primary: #0D0D2B;
+            --text-muted: #5555AA;
+            --text-gradient: linear-gradient(135deg, #0D0D2B 0%, #5B4FE8 50%, #0099AA 100%);
+            --accent: #4338CA;
+            --accent-light: #5B4FE8;
+            --accent-glow: 0 0 30px rgba(67,56,202,0.25);
+            --cyan: #0099AA;
+            --border: rgba(0,0,0,0.08);
+            --border-accent: rgba(67,56,202,0.3);
+            --particle-color: #4338CA;
+            --particle-line: rgba(0,153,170,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
+
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 { 
+            font-family: 'Clash Display', sans-serif; 
+            letter-spacing: -0.03em; 
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Utilities */
+        .gradient-text {
+            background: var(--text-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: var(--accent-glow);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 60px rgba(91,79,232,0.5);
+        }
+
+        .btn-ghost {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--border-accent);
+            background: var(--bg-card);
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(7,7,26,0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        [data-theme="light"] .navbar {
+            background: rgba(244,243,255,0.7);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Clash Display', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        [data-theme="dark"] .icon-sun { display: none; }
+        [data-theme="light"] .icon-moon { display: none; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-base);
+            padding-top: 80px;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80vw;
+            height: 80vw;
+            background: var(--bg-glow);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #particle-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            max-width: 900px;
+            padding: 0 24px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            border: 1px solid var(--border-accent);
+            background: rgba(91,79,232,0.08);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .hero-headline {
+            font-size: clamp(44px, 9vw, 88px);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+        }
+
+        .hero-sub {
+            font-size: clamp(18px, 2.5vw, 22px);
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 32px;
+        }
+
+        .hero-pills {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+
+        .hero-pills span {
+            padding: 6px 14px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 32px 0 16px;
+        }
+
+        .hero-trust {
+            font-size: 12px;
+            color: var(--cyan);
+            opacity: 0.8;
+            margin-top: 16px;
+        }
+
+        /* Ticker */
+        .ticker {
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 0;
+            background: var(--bg-surface);
+            position: relative;
+            z-index: 10;
+        }
+
+        .ticker-track {
+            display: flex;
+            gap: 48px;
+            animation: ticker 30s linear infinite;
+            white-space: nowrap;
+            width: max-content;
+        }
+
+        @keyframes ticker {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .ticker-item span {
+            color: var(--accent);
+        }
+
+        /* Sections General */
+        section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-item {
+            background: var(--bg-base);
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--cyan);
+            letter-spacing: -0.03em;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(91,79,232,0.12);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(91,79,232,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: var(--accent);
+        }
+
+        .feature-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Pricing */
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .toggle-label.active {
+            color: var(--text-primary);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card.popular {
+            background: rgba(91,79,232,0.08);
+            border: 1px solid rgba(91,79,232,0.5);
+            box-shadow: 0 0 60px rgba(91,79,232,0.2), inset 0 0 30px rgba(91,79,232,0.05);
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: var(--accent-glow);
+        }
+
+        .pricing-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .pricing-price {
+            font-size: 48px;
+            font-weight: 800;
+            font-family: 'Clash Display', sans-serif;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .pricing-price span {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .pricing-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .pricing-features li svg {
+            color: var(--cyan);
+            flex-shrink: 0;
+        }
+
+        /* Founder */
+        .founder-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 48px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .founder-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 800;
+            color: white;
+            box-shadow: var(--accent-glow);
+            font-family: 'Clash Display', sans-serif;
+        }
+
+        .founder-name {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .founder-role {
+            font-size: 14px;
+            color: var(--accent-light);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .founder-bio {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .founder-quote {
+            font-style: italic;
+            font-size: 20px;
+            color: var(--text-primary);
+            line-height: 1.5;
+            font-family: 'Clash Display', sans-serif;
+            border-left: 3px solid var(--accent);
+            padding-left: 20px;
+        }
+
+        /* Testimonials */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            border-top: 2px solid var(--accent);
+        }
+
+        .testimonial-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .user-info h4 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .stars {
+            color: #F59E0B;
+            display: flex;
+            gap: 2px;
+            margin-bottom: 16px;
+        }
+
+        .testimonial-quote {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-accent);
+            border-radius: 24px;
+            padding: 80px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-top: 60px;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .cta-section::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(ellipse, rgba(91,79,232,0.15) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        /* FAQ */
+        .faq-list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.open {
+            border-color: var(--border-accent);
+            border-left: 4px solid var(--accent);
+            background: rgba(91,79,232,0.04);
+        }
+
+        .faq-question {
+            padding: 20px 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.7;
+            padding: 0 24px;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+            padding: 0 24px 20px;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 80px 24px 40px;
+            background: var(--bg-base);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 60px;
+        }
+
+        .footer-logo {
+            font-family: 'Clash Display', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-tagline {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 300px;
+        }
+
+        .footer-col h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .footer-links a {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Animations */
+        .animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 992px) {
+            .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-card.popular { transform: scale(1); }
+            .features-grid { grid-template-columns: 1fr; }
+            .founder-card { grid-template-columns: 1fr; text-align: center; }
+            .founder-avatar { margin: 0 auto; }
+            .founder-quote { border-left: none; border-top: 3px solid var(--accent); padding-left: 0; padding-top: 20px; }
+            .testimonials-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .hero-headline { font-size: 48px; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 20px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="#" class="nav-logo">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 2L29.8564 10V26L16 34L2.14359 26V10L16 2Z" stroke="#00FFD1" stroke-width="2"/>
+                <circle cx="16" cy="18" r="6" fill="#5B4FE8"/>
+                <circle cx="16" cy="18" r="2" fill="#00FFD1"/>
+            </svg>
+            <span>NexoraOS</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="/dashboard">Dashboard</a>
+        </div>
+        <div class="nav-actions">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span class="icon-moon">🌙</span>
+                <span class="icon-sun">☀️</span>
+            </button>
+            <a href="/dashboard" class="btn-primary">Get Started →</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-glow"></div>
+        <canvas id="particle-canvas"></canvas>
+        <div class="hero-content">
+            <div class="hero-badge animate">⚡ The Operating System for Digital Creators</div>
+            <h1 class="hero-headline animate">
+                Turn Ideas Into<br>
+                <span class="gradient-text">Scalable Digital Businesses</span>
+            </h1>
+            <p class="hero-sub animate">
+                The world's most powerful AI-driven platform for creating,
+                monetizing, and scaling digital products. From idea to revenue in minutes.
+            </p>
+            <div class="hero-pills animate">
+                <span>⚡ Create Products</span>
+                <span>↗ Monetize Instantly</span>
+                <span>↻ Self-Improve & Scale</span>
+            </div>
+            <div class="hero-ctas animate">
+                <a href="/dashboard" class="btn-primary">Start Building Free →</a>
+                <a href="#features" class="btn-ghost">Explore the Platform</a>
+            </div>
+            <p class="hero-trust animate">✓ Free forever &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ 2-minute setup</p>
+        </div>
+    </section>
+
+    <div class="ticker">
+        <div class="ticker-track">
+            <div class="ticker-item"><span>NEW:</span> AI Ebook Generator 2.0 is live</div>
+            <div class="ticker-item"><span>JOIN:</span> 12,000+ creators building on Nexora</div>
+            <div class="ticker-item"><span>EARN:</span> $2.4M+ paid out to creators this month</div>
+            <div class="ticker-item"><span>SCALE:</span> Automate your entire marketing workflow</div>
+            <!-- Duplicate for seamless loop -->
+            <div class="ticker-item"><span>NEW:</span> AI Ebook Generator 2.0 is live</div>
+            <div class="ticker-item"><span>JOIN:</span> 12,000+ creators building on Nexora</div>
+            <div class="ticker-item"><span>EARN:</span> $2.4M+ paid out to creators this month</div>
+            <div class="ticker-item"><span>SCALE:</span> Automate your entire marketing workflow</div>
+        </div>
+    </div>
+
+    <section id="features" class="container">
+        <div class="section-header animate">
+            <h2 class="section-title">The Complete <span class="gradient-text">Creator OS</span></h2>
+            <p class="section-desc">Everything you need to build a digital empire, powered by cutting-edge AI.</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card animate">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-name">AI Ebook Generator</h3>
+                <p class="feature-desc">Turn any topic into a 50-page professional ebook in minutes. Complete with titles, chapters, and cover art.</p>
+            </div>
+            <div class="feature-card animate">
+                <div class="feature-icon">💰</div>
+                <h3 class="feature-name">Instant Monetization</h3>
+                <p class="feature-desc">Connect to Whop, Gumroad, or Payhip instantly. Generate sales pages and marketing copy that converts.</p>
+            </div>
+            <div class="feature-card animate">
+                <div class="feature-icon">📈</div>
+                <h3 class="feature-name">Advanced Analytics</h3>
+                <p class="feature-desc">Track every sale, click, and conversion. Understand your audience with AI-powered behavioral insights.</p>
+            </div>
+            <div class="feature-card animate">
+                <div class="feature-icon">🤖</div>
+                <h3 class="feature-name">Self-Improving Assets</h3>
+                <p class="feature-desc">Our AI monitors feedback and automatically suggests updates to your products to keep them top-tier.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number" data-target="12400" data-suffix="+">0</div>
+            <div class="stat-label">Active Creators</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="45000" data-suffix="+">0</div>
+            <div class="stat-label">Products Generated</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="98" data-suffix="%">0</div>
+            <div class="stat-label">Satisfaction Rate</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="2400000" data-suffix="$">0</div>
+            <div class="stat-label">Creator Earnings</div>
+        </div>
+    </div>
+
+    <section id="pricing" class="container">
+        <div class="section-header animate">
+            <h2 class="section-title">Ready to <span class="gradient-text">Scale?</span></h2>
+            <p class="section-desc">Choose the plan that fits your ambition. Switch anytime.</p>
+        </div>
+
+        <div class="pricing-toggle animate">
+            <span class="toggle-label active" id="label-monthly">Monthly</span>
+            <label class="switch">
+                <input type="checkbox" id="pricing-switch" onchange="togglePricing()">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="label-yearly">Yearly (Save 20%)</span>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- Free -->
+            <div class="pricing-card animate">
+                <div class="pricing-name">Free</div>
+                <div class="pricing-price">$0<span>/mo</span></div>
+                <p class="pricing-desc">Perfect for exploring the power of AI creation.</p>
+                <ul class="pricing-features">
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> 1 AI Product / Month</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Standard Marketing Studio</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Basic Analytics</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Community Support</li>
+                </ul>
+                <a href="/dashboard" class="btn-ghost" style="width: 100%; justify-content: center;">Get Started</a>
+            </div>
+
+            <!-- Creator -->
+            <div class="pricing-card popular animate">
+                <div class="popular-badge">MOST POPULAR</div>
+                <div class="pricing-name">Creator</div>
+                <div class="pricing-price" id="price-creator">$29<span>/mo</span></div>
+                <p class="pricing-desc">For serious creators building a real business.</p>
+                <ul class="pricing-features">
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> 10 AI Products / Month</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Advanced Marketing Suite</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Full Analytics Dashboard</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Priority Email Support</li>
+                </ul>
+                <a href="/dashboard" class="btn-primary" style="width: 100%; justify-content: center;">Go Creator →</a>
+            </div>
+
+            <!-- Pro -->
+            <div class="pricing-card animate">
+                <div class="pricing-name">Pro</div>
+                <div class="pricing-price" id="price-pro">$79<span>/mo</span></div>
+                <p class="pricing-desc">The ultimate OS for scaling digital empires.</p>
+                <ul class="pricing-features">
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Unlimited AI Products</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Custom Branding & Assets</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Team Collaboration</li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> 1-on-1 Strategy Calls</li>
+                </ul>
+                <a href="/dashboard" class="btn-ghost" style="width: 100%; justify-content: center;">Go Pro</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="founder-card animate">
+            <div class="founder-avatar">YM</div>
+            <div class="founder-content">
+                <h3 class="founder-name">Yesh Malik</h3>
+                <p class="founder-role">Founder, NexoraOS</p>
+                <p class="founder-bio">
+                    After years of juggling multiple tools and spending countless hours on repetitive tasks, 
+                    I built NexoraOS — the unified platform that puts creators first. One system to create, 
+                    monetize, and scale your entire digital business.
+                </p>
+                <p class="founder-quote">"I built the tool I always needed — and now it's yours."</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="section-header animate">
+            <h2 class="section-title">Loved by <span class="gradient-text">Creators</span></h2>
+            <p class="section-desc">Join thousands of creators scaling their businesses to 6 and 7 figures.</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card animate">
+                <div class="testimonial-user">
+                    <div class="user-avatar">AK</div>
+                    <div class="user-info">
+                        <h4>Amir Khalid</h4>
+                        <p>Digital Creator · Dubai</p>
+                    </div>
+                </div>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-quote">"NexoraOS transformed my entire business. I went from struggling to make $500/month to generating $50k+ in just 3 months."</p>
+            </div>
+            <div class="testimonial-card animate">
+                <div class="testimonial-user">
+                    <div class="user-avatar">SR</div>
+                    <div class="user-info">
+                        <h4>Sofia Reyes</h4>
+                        <p>Online Entrepreneur · Mexico City</p>
+                    </div>
+                </div>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-quote">"The monetization engine is pure genius. Every product I create automatically generates revenue from 8 different streams."</p>
+            </div>
+            <div class="testimonial-card animate">
+                <div class="testimonial-user">
+                    <div class="user-avatar">MJ</div>
+                    <div class="user-info">
+                        <h4>Marcus J.</h4>
+                        <p>Content Creator · Atlanta</p>
+                    </div>
+                </div>
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-quote">"I used to spend 100+ hours per product. Now NexoraOS does it in minutes. The ROI is absolutely insane."</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <div class="cta-section animate">
+            <h2 class="hero-headline" style="font-size: clamp(32px, 6vw, 56px);">Ready to Build Your <span class="gradient-text">Empire?</span></h2>
+            <p class="hero-sub" style="margin-bottom: 40px;">Join 12,000+ creators who have already made the switch to NexoraOS.</p>
+            <a href="/dashboard" class="btn-primary" style="padding: 16px 40px; font-size: 18px;">Get Started for Free →</a>
+        </div>
+    </section>
+
+    <section id="faq" class="container">
+        <div class="section-header animate">
+            <h2 class="section-title">Common <span class="gradient-text">Questions</span></h2>
+            <p class="section-desc">Everything you need to know about NexoraOS.</p>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What is NexoraOS?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    NexoraOS is an all-in-one digital product operating system designed for creators, founders, and online entrepreneurs. It provides AI-powered tools to create, manage, and scale digital products like ebooks, guides, and more.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How does the AI Ebook Generator work?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Simply enter a topic, and our AI automatically generates a professional title, creates comprehensive content, and designs a stunning cover. The entire ebook is then compiled into a downloadable PDF.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I customize the generated content?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Yes! While our AI creates a solid foundation, you maintain full control over the final product. You can review, edit, and enhance any generated content before downloading.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Is my data secure?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Absolutely. We use enterprise-grade security measures to protect your data and content. All generated products are stored securely and accessible only to you.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    What platforms can I sell on?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    You can sell your products on any platform — Whop, Gumroad, Payhip, Shopify, your own website, and more. NexoraOS generates export-ready assets compatible with all major marketplaces.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    How is NexoraOS different?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    NexoraOS is a complete operating system, not just a single tool. It combines AI product generation, monetization, analytics, and feedback intelligence into one unified platform.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Can I cancel anytime?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Yes, you can cancel your subscription at any time. You'll retain access to your current plan features until the end of your billing period.
+                </div>
+            </div>
+            <div class="faq-item animate">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Do you offer a free trial?
+                    <span class="faq-chevron">▼</span>
+                </div>
+                <div class="faq-answer">
+                    NexoraOS offers a free plan that lets you generate 1 product per month. It's free forever — no trial, no credit card required.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2L29.8564 10V26L16 34L2.14359 26V10L16 2Z" stroke="#00FFD1" stroke-width="2"/>
+                            <circle cx="16" cy="18" r="6" fill="#5B4FE8"/>
+                        </svg>
+                        NexoraOS
+                    </div>
+                    <p class="footer-tagline">The world's most powerful AI-driven platform for creating, monetizing, and scaling digital products.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Platform</h4>
+                    <div class="footer-links">
+                        <a href="#features">Features</a>
+                        <a href="#pricing">Pricing</a>
+                        <a href="/dashboard">Dashboard</a>
+                        <a href="/auth">Login</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <div class="footer-links">
+                        <a href="#">Documentation</a>
+                        <a href="#">Creator Blog</a>
+                        <a href="#">Community</a>
+                        <a href="#">Affiliate</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <div class="footer-links">
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NexoraOS. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" style="margin-left: 20px; color: var(--text-muted); text-decoration: none;">Twitter</a>
+                    <a href="#" style="margin-left: 20px; color: var(--text-muted); text-decoration: none;">Instagram</a>
+                    <a href="#" style="margin-left: 20px; color: var(--text-muted); text-decoration: none;">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('nexora-theme', next);
+        }
+
+        // Restore Theme
+        (function() {
+            const saved = localStorage.getItem('nexora-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+
+        // Particles
+        (function() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let mouse = { x: null, y: null };
+            let W, H;
+
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const isMobile = window.innerWidth < 768;
+            const COUNT = isMobile ? 60 : 120;
+
+            function getAccentColor() {
+                return getComputedStyle(document.documentElement)
+                    .getPropertyValue('--particle-color').trim() || '#5B4FE8';
+            }
+
+            function hexToRgb(hex) {
+                hex = hex.replace('#','');
+                const r = parseInt(hex.substring(0,2),16);
+                const g = parseInt(hex.substring(2,4),16);
+                const b = parseInt(hex.substring(4,6),16);
+                return `${r},${g},${b}`;
+            }
+
+            for(let i = 0; i < COUNT; i++) {
+                particles.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    size: Math.random() * 3 + 1.5,
+                    opacity: Math.random() * 0.6 + 0.2
+                });
+            }
+
+            document.addEventListener('mousemove', e => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+                const color = hexToRgb(getAccentColor());
+
+                particles.forEach((p, i) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if(p.x < 0 || p.x > W) p.vx *= -1;
+                    if(p.y < 0 || p.y > H) p.vy *= -1;
+
+                    if(mouse.x) {
+                        const dx = p.x - mouse.x;
+                        const dy = p.y - mouse.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 100) {
+                            p.x += dx * 0.03;
+                            p.y += dy * 0.03;
+                        }
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${color},${p.opacity})`;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = `rgba(${color},0.5)`;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    for(let j = i + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.strokeStyle = `rgba(${color},${0.15 * (1 - dist/120)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                });
+
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // Scroll Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if(entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.animate').forEach((el, i) => {
+            el.style.transitionDelay = (i % 5) * 100 + 'ms';
+            observer.observe(el);
+        });
+
+        // Stat Counter
+        function animateCounter(el) {
+            const target = parseInt(el.dataset.target);
+            const suffix = el.dataset.suffix || '';
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+            const timer = setInterval(() => {
+                current += step;
+                if(current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                el.textContent = Math.floor(current).toLocaleString() + suffix;
+            }, 16);
+        }
+
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    animateCounter(entry.target);
+                    statObserver.unobserve(entry.target);
+                }
+            });
+        });
+        document.querySelectorAll('.stat-number').forEach(el => statObserver.observe(el));
+
+        // Pricing Toggle
+        function togglePricing() {
+            const isYearly = document.getElementById('pricing-switch').checked;
+            const creatorPrice = document.getElementById('price-creator');
+            const proPrice = document.getElementById('price-pro');
+            const labelMonthly = document.getElementById('label-monthly');
+            const labelYearly = document.getElementById('label-yearly');
+
+            if (isYearly) {
+                creatorPrice.innerHTML = '$23<span>/mo</span>';
+                proPrice.innerHTML = '$63<span>/mo</span>';
+                labelYearly.classList.add('active');
+                labelMonthly.classList.remove('active');
+            } else {
+                creatorPrice.innerHTML = '$29<span>/mo</span>';
+                proPrice.innerHTML = '$79<span>/mo</span>';
+                labelMonthly.classList.add('active');
+                labelYearly.classList.remove('active');
+            }
+        }
+
+        // FAQ Toggle
+        function toggleFaq(el) {
+            const item = el.parentElement;
+            item.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

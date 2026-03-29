@@ -1,6 +1,6 @@
 import { ReactNode, useState, createContext, useContext, useEffect } from "react";
 import DashboardSidebar from "./DashboardSidebar";
-import Background3D from "@/components/Background3D";
+import CanvasParticles from "@/components/CanvasParticles";
 import { Moon, Sun } from "lucide-react";
 
 interface SidebarContextType {
@@ -49,7 +49,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <div className="fixed inset-0 z-0">
-          <Background3D />
+          <CanvasParticles />
         </div>
         <DashboardSidebar />
         

@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&f[]=satoshi@300,400,500,700,900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700,800&f[]=satoshi@300,400,500,600,700,900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,176 +7,170 @@
 
 @layer base {
   :root {
-    /* Billion Dollar Palette - Deep Obsidian & Royal Indigo */
-    --bg-primary: #050508;
-    --bg-secondary: #0A0A12;
-    --bg-card: rgba(255, 255, 255, 0.03);
-    --text-primary: #FFFFFF;
-    --text-muted: #94A3B8;
-    --accent: #6366F1;
-    --accent-glow: rgba(99, 102, 241, 0.4);
-    --cyan: #22D3EE;
-    --border: rgba(255, 255, 255, 0.06);
-    
-    /* Shadcn UI compatibility */
-    --background: 240 10% 2%;
-    --foreground: 0 0% 100%;
-    --card: 240 10% 4%;
-    --card-foreground: 0 0% 100%;
-    --popover: 240 10% 2%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 239 84% 67%;
+    /* NexoraOS Final Design Palette - Dark Luxury */
+    --bg-base: #07071A;
+    --bg-surface: #0D0D2B;
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --bg-glow: radial-gradient(ellipse at 50% 0%, rgba(91, 79, 232, 0.25) 0%, transparent 70%);
+    --text-primary: #F0F0FF;
+    --text-muted: #7B7BA8;
+    --text-gradient: linear-gradient(135deg, #FFFFFF 0%, #A78BFA 50%, #00FFD1 100%);
+    --accent: #5B4FE8;
+    --accent-light: #7C6FF0;
+    --accent-glow: 0 0 40px rgba(91, 79, 232, 0.4);
+    --cyan: #00FFD1;
+    --cyan-glow: 0 0 20px rgba(0, 255, 209, 0.3);
+    --border: rgba(255, 255, 255, 0.07);
+    --border-accent: rgba(91, 79, 232, 0.4);
+    --particle-color: #5B4FE8;
+    --particle-line: rgba(0, 255, 209, 0.12);
+
+    /* Shadcn UI compatibility (mapping to new palette) */
+    --background: 240 63% 7%;
+    --foreground: 240 100% 97%;
+    --card: 240 53% 11%;
+    --card-foreground: 240 100% 97%;
+    --popover: 240 63% 7%;
+    --popover-foreground: 240 100% 97%;
+    --primary: 245 78% 61%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 6%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 10% 6%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 239 84% 67%;
+    --secondary: 240 53% 11%;
+    --secondary-foreground: 240 100% 97%;
+    --muted: 240 53% 11%;
+    --muted-foreground: 240 25% 57%;
+    --accent: 245 78% 61%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 10% 8%;
-    --input: 240 10% 8%;
-    --ring: 239 84% 67%;
+    --border: 240 10% 12%;
+    --input: 240 10% 12%;
+    --ring: 245 78% 61%;
     --radius: 1rem;
   }
 
   [data-theme="light"] {
-    --bg-primary: #FAFAFF;
-    --bg-secondary: #F0F0F9;
-    --bg-card: rgba(0, 0, 0, 0.02);
-    --text-primary: #0F172A;
-    --text-muted: #64748B;
-    --accent: #4F46E5;
-    --accent-glow: rgba(79, 70, 229, 0.2);
-    --cyan: #0891B2;
-    --border: rgba(0, 0, 0, 0.06);
+    --bg-base: #F4F3FF;
+    --bg-surface: #EEEEFF;
+    --bg-card: rgba(0, 0, 0, 0.03);
+    --bg-glow: radial-gradient(ellipse at 50% 0%, rgba(91, 79, 232, 0.12) 0%, transparent 70%);
+    --text-primary: #0D0D2B;
+    --text-muted: #5555AA;
+    --text-gradient: linear-gradient(135deg, #0D0D2B 0%, #5B4FE8 50%, #0099AA 100%);
+    --accent: #4338CA;
+    --accent-light: #5B4FE8;
+    --accent-glow: 0 0 30px rgba(67, 56, 202, 0.25);
+    --cyan: #0099AA;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-accent: rgba(67, 56, 202, 0.3);
+    --particle-color: #4338CA;
+    --particle-line: rgba(0, 153, 170, 0.15);
 
-    /* Shadcn UI compatibility */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 243 75% 59%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%;
+    /* Shadcn UI compatibility (light) */
+    --background: 245 100% 98%;
+    --foreground: 240 53% 11%;
+    --card: 240 100% 97%;
+    --card-foreground: 240 53% 11%;
+    --popover: 245 100% 98%;
+    --popover-foreground: 240 53% 11%;
+    --primary: 245 58% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 100% 94%;
+    --secondary-foreground: 240 53% 11%;
+    --muted: 240 100% 94%;
+    --muted-foreground: 240 33% 50%;
+    --accent: 245 58% 45%;
+    --accent-foreground: 0 0% 100%;
+    --border: 240 20% 90%;
+    --input: 240 20% 90%;
+    --ring: 245 58% 45%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
-    transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
   }
 
   body {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-base);
     color: var(--text-primary);
     font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
-    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    position: relative;
     overflow-x: hidden;
   }
 
-  /* Premium Noise Overlay */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.02;
-    pointer-events: none;
-    z-index: 9999;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Clash Display', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.03em;
   }
 }
 
 @layer components {
-  .landing-section {
-    font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+  .gradient-text {
+    background: var(--text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
   }
 
-  .landing-heading {
-    font-family: 'Clash Display', 'Inter', system-ui, sans-serif;
-    letter-spacing: -0.03em;
-    font-weight: 700;
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300;
+    background: var(--accent);
+    color: white;
+    box-shadow: var(--accent-glow);
   }
 
-  .premium-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 32px;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  .btn-primary:hover {
+    @apply -translate-y-0.5;
+    box-shadow: 0 0 60px rgba(91, 79, 232, 0.5);
   }
 
-  .premium-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5), 0 18px 36px -18px rgba(99, 102, 241, 0.2);
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 border border-border;
+    color: var(--text-primary);
+    background: transparent;
   }
 
-  .animate-up {
+  .btn-ghost:hover {
+    @apply bg-white/5 border-indigo-500/30;
+  }
+
+  .animate {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .animate-up.visible {
+  .animate.visible {
     opacity: 1;
     transform: translateY(0);
   }
-
-  .glass-button {
-    @apply relative overflow-hidden px-8 py-4 rounded-2xl font-bold transition-all duration-300;
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 10px 20px -5px var(--accent-glow);
-  }
-
-  .glass-button:hover {
-    @apply scale-105;
-    box-shadow: 0 20px 40px -10px var(--accent-glow);
-  }
-
-  .glass-button::after {
-    content: "";
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
-  }
-
-  .glass-button:hover::after {
-    @apply opacity-100;
-    animation: shine 1.5s infinite;
-  }
-
-  @keyframes shine {
-    0% { left: -100%; }
-    100% { left: 100%; }
-  }
 }
 
-@layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/40;
-  }
+/* Custom animations for the new design */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
-  .accent-gradient {
-    @apply bg-gradient-to-br from-indigo-400 via-indigo-500 to-purple-600;
-  }
+.ticker-track {
+  display: flex;
+  gap: 48px;
+  animation: ticker 30s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+
+/* Noise overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 9999;
 }

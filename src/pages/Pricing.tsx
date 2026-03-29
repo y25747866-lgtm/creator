@@ -4,7 +4,7 @@ import { Check, X, Zap, Crown, Rocket, ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import Background3D from "@/components/Background3D";
+import CanvasParticles from "@/components/CanvasParticles";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,7 +164,7 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <Background3D />
+      <CanvasParticles />
       <div className="relative z-10 min-h-screen">
         <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
           <div className="container mx-auto px-6 py-4">
