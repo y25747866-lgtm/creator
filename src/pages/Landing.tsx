@@ -279,6 +279,21 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Logo Marquee Section */}
+      <LogoMarquee
+        logos={[
+          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-8 h-8" /> },
+          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-8 h-8" /> },
+          { id: 'detox', name: 'DETOX1/1', icon: <DetoxIcon className="w-8 h-8" /> },
+          { id: 'six-figure', name: 'Six Figure Sales Rep', icon: <SixFigureIcon className="w-8 h-8" /> },
+          { id: 'creator-hub', name: 'Creator Hub', icon: <CreatorHubIcon className="w-8 h-8" /> },
+          { id: 'scale-up', name: 'Scale Up Academy', icon: <ScaleUpIcon className="w-8 h-8" /> },
+          { id: 'launch-pad', name: 'Launch Pad Pro', icon: <LaunchPadIcon className="w-8 h-8" /> },
+          { id: 'growth-lab', name: 'Growth Lab', icon: <GrowthLabIcon className="w-8 h-8" /> },
+        ]}
+        speed={40}
+      />
+
       {/* Workflow Section */}
       <section className="py-24 border-b border-white/10">
         <div className="container-wide px-6">
@@ -302,21 +317,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-
-      {/* Logo Marquee Section */}
-      <LogoMarquee
-        logos={[
-          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-8 h-8" /> },
-          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-8 h-8" /> },
-          { id: 'detox', name: 'DETOX1/1', icon: <DetoxIcon className="w-8 h-8" /> },
-          { id: 'six-figure', name: 'Six Figure Sales Rep', icon: <SixFigureIcon className="w-8 h-8" /> },
-          { id: 'creator-hub', name: 'Creator Hub', icon: <CreatorHubIcon className="w-8 h-8" /> },
-          { id: 'scale-up', name: 'Scale Up Academy', icon: <ScaleUpIcon className="w-8 h-8" /> },
-          { id: 'launch-pad', name: 'Launch Pad Pro', icon: <LaunchPadIcon className="w-8 h-8" /> },
-          { id: 'growth-lab', name: 'Growth Lab', icon: <GrowthLabIcon className="w-8 h-8" /> },
-        ]}
-        speed={40}
-      />
 
       {/* Pricing Section */}
       <section id="pricing" className="py-24 border-b border-white/10">
