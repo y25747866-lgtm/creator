@@ -1,77 +1,68 @@
 import React from 'react';
 
-export const PersonalBrandBlueprintIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M18.9 7a8 8 0 0 1 1.1 5v1a6 6 0 0 0 .8 3" />
-    <path d="M8 11a4 4 0 0 1 8 0v1a10 10 0 0 0 .8 4" />
-    <path d="M12 11v2a14 14 0 0 0 .8 4.7" />
-    <path d="M22 11c0-5.52-4.48-10-10-10S2 5.48 2 11" />
-    <path d="M5 11a7 7 0 0 1 14 0" />
-    <path d="M12 11a4 4 0 0 1 4 4" />
-    <path d="M12 11v1" />
+export const WebDesignFastTrackIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 200 80" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 20 L55 50 L35 55 L25 35 Z" fill="#ccc" />
+    <path d="M45 15 L60 45 L40 50 L30 30 Z" fill="#fff" />
+    <path d="M30 10 Q50 5 70 15" stroke="#fff" strokeWidth="2" fill="none" />
+    <rect x="75" y="10" width="5" height="5" fill="#fff" transform="rotate(15 75 10)" />
+    <rect x="25" y="15" width="5" height="5" fill="#fff" transform="rotate(-15 25 15)" />
+    <text x="85" y="35" fontFamily="Impact, sans-serif" fontSize="22" fontStyle="italic" fill="#fff">WEB DESIGN</text>
+    <text x="82" y="60" fontFamily="Impact, sans-serif" fontSize="22" fontStyle="italic" fill="#fff">FAST TRACK</text>
   </svg>
 );
 
-export const WinningStoreIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M6 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5z" />
-    <path d="M6 12h12" />
-    <path d="M9 15l3 3 3-3" />
-    <path d="M12 3v15" />
-    <circle cx="12" cy="9" r="2" />
+export const PenToProfitIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 160 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 10 L25 10 L25 40 L20 45 Z" />
+    <path d="M18 42 L27 42 L22 52 Z" />
+    <text x="15" y="35" fontFamily="Arial, sans-serif" fontSize="24" fontWeight="bold" fill="currentColor">$</text>
+    <text x="40" y="25" fontFamily="Arial Black, sans-serif" fontSize="16" fill="currentColor">PEN TO</text>
+    <text x="40" y="45" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">PROFIT</text>
+    <path d="M40 50 Q80 55 120 50" stroke="currentColor" strokeWidth="2" fill="none" />
   </svg>
 );
 
-export const DetoxIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <path d="M9 12l2 2 4-4" />
+export const DigitalLaunchpadIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 180 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <text x="10" y="25" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">DIGITAL</text>
+    <text x="10" y="50" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">LAUNCHPAD</text>
+    <path d="M120 40 Q150 35 170 15 L160 15 L170 15 L170 25" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M165 10 L175 15 L165 20 Z" />
   </svg>
 );
 
-export const SixFigureIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2v20" />
-    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    <path d="M18 12l-3-3 3 3 3 3-3-3z" />
+export const AgencyNavigatorIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 180 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 30 L40 10 L35 50 L25 35 Z" />
+    <text x="50" y="25" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">AGENCY</text>
+    <text x="50" y="50" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">NAVIGATOR</text>
   </svg>
 );
 
-export const EliteMastermindIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
-    <path d="M5 20h14" />
+export const PersonalBrandBlueprintIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 200 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15 45 Q10 45 10 35 Q10 20 25 15 Q40 10 40 30 Q40 45 30 45 M20 40 Q15 40 15 30 Q15 20 25 20 Q35 20 35 30" stroke="currentColor" strokeWidth="2" fill="none" />
+    <text x="55" y="25" fontFamily="Arial, sans-serif" fontSize="14" fill="currentColor">PERSONAL BRAND</text>
+    <text x="55" y="50" fontFamily="Arial Black, sans-serif" fontSize="20" fill="currentColor">BLUEPRINT</text>
   </svg>
 );
 
-export const DigitalEmpireIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 21h18" />
-    <path d="M5 21V7l8-4v18" />
-    <path d="M13 21V11l6 3v7" />
-    <path d="M9 9h1" />
-    <path d="M9 12h1" />
-    <path d="M9 15h1" />
-    <path d="M9 18h1" />
+export const WinningStoreIcon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 180 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 20 Q20 10 35 10 Q50 10 50 20 L55 20 L60 50 L15 50 L20 20 Z" />
+    <text x="30" y="42" fontFamily="Arial Black, sans-serif" fontSize="22" fill="#000">$</text>
+    <text x="65" y="25" fontFamily="Arial Black, sans-serif" fontSize="16" fill="currentColor">THE</text>
+    <text x="65" y="42" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">WINNING</text>
+    <text x="65" y="58" fontFamily="Arial Black, sans-serif" fontSize="18" fill="currentColor">STORE</text>
   </svg>
 );
 
-export const TrafficSecretsIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 3l4.5 4.5" />
-    <path d="M21 3l-4.5 4.5" />
-    <path d="M3 21l4.5-4.5" />
-    <path d="M21 21l-4.5-4.5" />
-    <path d="M12 8v8" />
-    <path d="M8 12h8" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-export const ConversionKingIcon: React.FC<{ className?: string }> = ({ className = 'w-8 h-8' }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-    <path d="M21 2l-2 2" />
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 18l-3.5-3.5 1.5-1.5 2 2 5-5 1.5 1.5L12 18z" />
+export const Detox101Icon: React.FC<{ className?: string }> = ({ className = 'w-12 h-12' }) => (
+  <svg viewBox="0 0 160 60" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <text x="10" y="45" fontFamily="Impact, sans-serif" fontSize="32" fill="currentColor">DETOX</text>
+    <text x="95" y="45" fontFamily="Impact, sans-serif" fontSize="42" fill="currentColor">1</text>
+    <path d="M115 15 L125 15 L120 55 Z" />
+    <text x="130" y="45" fontFamily="Impact, sans-serif" fontSize="42" fill="currentColor">1</text>
   </svg>
 );

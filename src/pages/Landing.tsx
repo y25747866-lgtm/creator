@@ -16,14 +16,13 @@ import {
 } from 'lucide-react';
 import LogoMarquee from '@/components/LogoMarquee';
 import {
+  WebDesignFastTrackIcon,
+  PenToProfitIcon,
+  DigitalLaunchpadIcon,
+  AgencyNavigatorIcon,
   PersonalBrandBlueprintIcon,
   WinningStoreIcon,
-  DetoxIcon,
-  SixFigureIcon,
-  EliteMastermindIcon,
-  DigitalEmpireIcon,
-  TrafficSecretsIcon,
-  ConversionKingIcon
+  Detox101Icon
 } from '@/components/LogoIcons';
 
 const Landing = () => {
@@ -282,14 +281,13 @@ const Landing = () => {
       {/* Logo Marquee Section */}
       <LogoMarquee
         logos={[
-          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-10 h-10" /> },
-          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-10 h-10" /> },
-          { id: 'detox', name: 'DETOX1/1', icon: <DetoxIcon className="w-10 h-10" /> },
-          { id: 'six-figure', name: 'Six Figure Sales Rep', icon: <SixFigureIcon className="w-10 h-10" /> },
-          { id: 'elite-mastermind', name: 'Elite Mastermind', icon: <EliteMastermindIcon className="w-10 h-10" /> },
-          { id: 'digital-empire', name: 'Digital Empire', icon: <DigitalEmpireIcon className="w-10 h-10" /> },
-          { id: 'traffic-secrets', name: 'Traffic Secrets', icon: <TrafficSecretsIcon className="w-10 h-10" /> },
-          { id: 'conversion-king', name: 'Conversion King', icon: <ConversionKingIcon className="w-10 h-10" /> },
+          { id: 'web-design', name: 'Web Design Fast Track', icon: <WebDesignFastTrackIcon className="w-32 h-12" /> },
+          { id: 'pen-to-profit', name: 'Pen to Profit', icon: <PenToProfitIcon className="w-28 h-12" /> },
+          { id: 'digital-launchpad', name: 'Digital Launchpad', icon: <DigitalLaunchpadIcon className="w-32 h-12" /> },
+          { id: 'agency-navigator', name: 'Agency Navigator', icon: <AgencyNavigatorIcon className="w-32 h-12" /> },
+          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-32 h-12" /> },
+          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-28 h-12" /> },
+          { id: 'detox-101', name: 'DETOX 101', icon: <Detox101Icon className="w-28 h-12" /> },
         ]}
         speed={40}
       />
