@@ -43,7 +43,7 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
                 transition={{ delay: i * 0.1, duration: 0.5 }}
                 className="flex items-center justify-center p-6 bg-[#0F172A]/40 border border-white/5 rounded-xl"
               >
-                <div className="text-white/60">
+                <div className="text-white/60 w-full max-w-[120px]">
                   {logo.icon}
                 </div>
               </motion.div>
@@ -55,9 +55,9 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
   }
 
   return (
-    <section className="py-24 border-b border-white/10 bg-[#05050D] overflow-hidden">
-      <div className="container-wide px-6 mb-16">
-        <h2 className="text-2xl md:text-3xl font-medium text-center font-clash text-[#EFF0F4] opacity-80 tracking-tight">
+    <section className="py-32 border-b border-white/10 bg-[#05050D] overflow-hidden">
+      <div className="container-wide px-6 mb-20">
+        <h2 className="text-3xl md:text-4xl font-medium text-center font-clash text-[#EFF0F4] opacity-90 tracking-tight">
           Hundreds of class-leading digital products created with NexoraOS
         </h2>
       </div>
@@ -77,7 +77,7 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
         {/* Marquee container */}
         <div className="flex overflow-hidden group">
           <div 
-            className={`flex gap-12 py-4 animate-marquee ${isPaused ? 'pause-animation' : ''}`}
+            className={`flex gap-16 py-8 animate-marquee ${isPaused ? 'pause-animation' : ''}`}
             style={{ animationDuration: `${speed}s` }}
           >
             {duplicatedLogos.map((logo, i) => (
@@ -88,11 +88,11 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
                 <motion.div
                   whileHover={{ 
                     scale: 1.08,
-                    filter: 'drop-shadow(0 0 15px rgba(10, 38, 230, 0.4))'
+                    filter: 'drop-shadow(0 0 20px rgba(10, 38, 230, 0.3))'
                   }}
-                  className="flex items-center justify-center p-8 rounded-2xl border border-white/5 bg-white/[0.02] transition-all duration-500 cursor-pointer group/logo"
+                  className="flex items-center justify-center px-12 py-10 rounded-3xl border border-white/5 bg-white/[0.02] transition-all duration-500 cursor-pointer group/logo min-w-[280px]"
                 >
-                  <div className="text-white/75 group-hover/logo:text-[#0A26E6] transition-colors duration-300">
+                  <div className="text-white/75 group-hover/logo:text-white transition-colors duration-300 w-full h-16 flex items-center justify-center">
                     {logo.icon}
                   </div>
                 </motion.div>
@@ -103,8 +103,8 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
       </div>
 
       {/* Subtle footer text */}
-      <div className="mt-16 flex justify-center">
-        <div className="px-4 py-1.5 rounded-full border border-white/5 bg-white/[0.02] text-[11px] uppercase tracking-[0.2em] text-[#6B7280] font-medium">
+      <div className="mt-20 flex justify-center">
+        <div className="px-6 py-2 rounded-full border border-white/5 bg-white/[0.02] text-[12px] uppercase tracking-[0.3em] text-[#6B7280] font-medium">
           Trusted by 2,500+ Digital Entrepreneurs
         </div>
       </div>

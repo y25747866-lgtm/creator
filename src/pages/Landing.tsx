@@ -281,13 +281,13 @@ const Landing = () => {
       {/* Logo Marquee Section */}
       <LogoMarquee
         logos={[
-          { id: 'web-design', name: 'Web Design Fast Track', icon: <WebDesignFastTrackIcon className="w-32 h-12" /> },
-          { id: 'pen-to-profit', name: 'Pen to Profit', icon: <PenToProfitIcon className="w-28 h-12" /> },
-          { id: 'digital-launchpad', name: 'Digital Launchpad', icon: <DigitalLaunchpadIcon className="w-32 h-12" /> },
-          { id: 'agency-navigator', name: 'Agency Navigator', icon: <AgencyNavigatorIcon className="w-32 h-12" /> },
-          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon className="w-32 h-12" /> },
-          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon className="w-28 h-12" /> },
-          { id: 'detox-101', name: 'DETOX 101', icon: <Detox101Icon className="w-28 h-12" /> },
+          { id: 'web-design', name: 'Web Design Fast Track', icon: <WebDesignFastTrackIcon /> },
+          { id: 'pen-to-profit', name: 'Pen to Profit', icon: <PenToProfitIcon /> },
+          { id: 'digital-launchpad', name: 'Digital Launchpad', icon: <DigitalLaunchpadIcon /> },
+          { id: 'agency-navigator', name: 'Agency Navigator', icon: <AgencyNavigatorIcon /> },
+          { id: 'personal-brand', name: 'Personal Brand Blueprint', icon: <PersonalBrandBlueprintIcon /> },
+          { id: 'winning-store', name: 'The Winning Store', icon: <WinningStoreIcon /> },
+          { id: 'detox-101', name: 'DETOX 101', icon: <Detox101Icon /> },
         ]}
         speed={40}
       />
