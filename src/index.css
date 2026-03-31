@@ -42,6 +42,16 @@
     --border: 240 5% 15%;
     --input: 240 5% 15%;
     --ring: 232 92% 47%;
+
+    /* Sidebar Variables */
+    --sidebar-background: 240 37% 3%;
+    --sidebar-foreground: 225 25% 95%;
+    --sidebar-primary: 232 92% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 11%;
+    --sidebar-accent-foreground: 225 25% 95%;
+    --sidebar-border: 240 5% 15%;
+    --sidebar-ring: 232 92% 47%;
   }
 }
 

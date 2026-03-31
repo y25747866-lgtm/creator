@@ -14,10 +14,12 @@ import {
   LineChart,
   Crown,
   Lock,
+  User as UserIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import nexoraLogo from "@/assets/nexora-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +31,7 @@ const DashboardSidebar = () => {
   const { collapsed, setCollapsed } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { toast } = useToast();
   const { planType, hasPaidSubscription, subscription } = useSubscription();
 
@@ -217,46 +219,77 @@ const DashboardSidebar = () => {
         </AnimatePresence>
       </nav>
 
-      {/* Sign Out & Collapse */}
-      <div className="p-3 border-t border-sidebar-border space-y-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSignOut}
-          className={cn(
-            "w-full text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 rounded-lg",
-            collapsed ? "justify-center px-2" : "justify-start"
-          )}
-        >
-          <LogOut className="w-[18px] h-[18px] shrink-0" />
+      {/* User Profile & Sign Out */}
+      <div className="p-3 border-t border-sidebar-border space-y-2">
+        <div className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50",
+          collapsed ? "justify-center px-2" : "justify-start"
+        )}>
+          <Avatar className="h-8 w-8 border border-primary/20">
+            <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || "User"} />
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <UserIcon className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
           <AnimatePresence>
             {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="ml-2 text-sm"
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="flex flex-col overflow-hidden"
               >
-                Sign Out
-              </motion.span>
+                <span className="text-sm font-medium text-sidebar-foreground truncate">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"}
+                </span>
+                <span className="text-[10px] text-sidebar-foreground/50 truncate">
+                  {user?.email}
+                </span>
+              </motion.div>
             )}
           </AnimatePresence>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-[18px] h-[18px]" />
-          ) : (
-            <>
-              <ChevronLeft className="w-[18px] h-[18px] mr-2" />
-              <span className="text-sm">Collapse</span>
-            </>
-          )}
-        </Button>
+        </div>
+
+        <div className="space-y-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className={cn(
+              "w-full text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 rounded-lg",
+              collapsed ? "justify-center px-2" : "justify-start"
+            )}
+          >
+            <LogOut className="w-[18px] h-[18px] shrink-0" />
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="ml-2 text-sm"
+                >
+                  Sign Out
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full justify-center rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground"
+          >
+            {collapsed ? (
+              <ChevronRight className="w-[18px] h-[18px]" />
+            ) : (
+              <>
+                <ChevronLeft className="w-[18px] h-[18px] mr-2" />
+                <span className="text-sm">Collapse</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </motion.aside>
   );
