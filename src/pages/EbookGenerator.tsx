@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Loader2, Download, Sparkles, FileText, Image as ImageIcon, CheckCircle2, Package, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
