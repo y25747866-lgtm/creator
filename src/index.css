@@ -7,51 +7,66 @@
 
 @layer base {
   :root {
-    /* NexoraOS Premium Editorial Palette */
-    --bg-base: #05050D;
-    --bg-surface: #0F172A;
-    --bg-card: #0F172A;
-    
-    --text-primary: #EFF0F4;
-    --text-muted: #9EA4C0;
-    --text-label: #6B7280;
-    
-    --accent: #0A26E6;
-    --accent-hover: #081eb8;
-    
-    --border: rgba(255, 255, 255, 0.08);
     --radius: 0.75rem;
 
-    /* Shadcn UI compatibility */
+    /* Light theme */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 98%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 245 72% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 245 72% 57%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 245 72% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 245 72% 57%;
+  }
+
+  .dark {
     --background: 240 37% 3%;
     --foreground: 225 25% 95%;
     --card: 222 47% 11%;
     --card-foreground: 225 25% 95%;
     --popover: 240 37% 3%;
     --popover-foreground: 225 25% 95%;
-    --primary: 232 92% 47%;
+    --primary: 245 72% 57%;
     --primary-foreground: 0 0% 100%;
     --secondary: 222 47% 11%;
     --secondary-foreground: 225 25% 95%;
     --muted: 222 47% 11%;
     --muted-foreground: 228 20% 69%;
-    --accent: 232 92% 47%;
+    --accent: 245 72% 57%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 5% 15%;
     --input: 240 5% 15%;
-    --ring: 232 92% 47%;
-
-    /* Sidebar Variables */
+    --ring: 245 72% 57%;
     --sidebar-background: 240 37% 3%;
     --sidebar-foreground: 225 25% 95%;
-    --sidebar-primary: 232 92% 47%;
+    --sidebar-primary: 245 72% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 47% 11%;
     --sidebar-accent-foreground: 225 25% 95%;
     --sidebar-border: 240 5% 15%;
-    --sidebar-ring: 232 92% 47%;
+    --sidebar-ring: 245 72% 57%;
   }
 }
 
