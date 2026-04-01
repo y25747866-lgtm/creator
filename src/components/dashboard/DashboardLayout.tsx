@@ -1,7 +1,8 @@
-import { ReactNode, useState, createContext, useContext, useEffect } from "react";
+import { ReactNode, useState, createContext, useContext } from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import CanvasParticles from "@/components/CanvasParticles";
 import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 interface SidebarContextType {
   collapsed: boolean;
@@ -21,23 +22,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [collapsed, setCollapsedState] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_KEY) === "true"; } catch { return false; }
   });
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    } else {
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const setCollapsed = (v: boolean) => {
@@ -47,7 +35,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="fixed inset-0 z-0">
           <CanvasParticles />
         </div>
@@ -57,13 +45,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           className="relative z-10 min-h-screen transition-all duration-300"
           style={{ marginLeft: collapsed ? 80 : 280 }}
         >
-          <header className="sticky top-0 z-30 bg-[var(--bg-primary)]/70 backdrop-blur-2xl border-b border-white/10 px-8 py-5">
+          <header className="sticky top-0 z-30 bg-background/70 backdrop-blur-2xl border-b border-border px-8 py-5">
             <div className="flex items-center justify-end gap-4">
               <button 
                 onClick={toggleTheme}
-                className="p-3 rounded-xl text-white/60 hover:text-white transition-all bg-white/5 border border-white/10 hover:border-indigo-500/30 hover:bg-indigo-500/5"
+                className="p-3 rounded-xl text-muted-foreground hover:text-foreground transition-all bg-muted/50 border border-border hover:border-primary/30 hover:bg-primary/5"
               >
-                {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
             </div>
           </header>
