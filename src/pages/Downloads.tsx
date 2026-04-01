@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
+import { recordMetric } from "@/lib/productTracking";
 import { format } from "date-fns";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +32,7 @@ const Downloads = () => {
     return allEbooks.filter((e) => e.userId === user.id || !e.userId);
   }, [allEbooks, user]);
 
-  const guardedDownload = (fn: () => void) => {
+  const guardedDownload = (fn: () => void, ebook?: Ebook, metricType?: string) => {
     if (!hasAccess) {
       toast({ 
         title: "Upgrade Required", 
@@ -41,6 +42,14 @@ const Downloads = () => {
       return;
     }
     fn();
+    // Record download metric
+    if (ebook?.dbProductId && metricType) {
+      try {
+        recordMetric(ebook.dbProductId, metricType);
+      } catch (err) {
+        console.error("Failed to record metric:", err);
+      }
+    }
   };
 
   return (
@@ -95,9 +104,9 @@ const Downloads = () => {
                           <span>Created: {format(new Date(ebook.createdAt), "MMM d, yyyy")}</span>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                          <Button size="sm" onClick={() => guardedDownload(() => generatePDF(ebook))} disabled={!hasAccess}><Download className="w-4 h-4 mr-2" />PDF</Button>
-                          <Button size="sm" variant="outline" onClick={() => guardedDownload(() => downloadCoverImage(ebook))} disabled={!ebook.coverImageUrl || !hasAccess}><Image className="w-4 h-4 mr-2" />Cover</Button>
-                          <Button size="sm" variant="outline" onClick={() => setPreviewEbook(ebook)}><Eye className="w-4 h-4 mr-2" />Preview</Button>
+                          <Button size="sm" onClick={() => guardedDownload(() => generatePDF(ebook), ebook, "download")} disabled={!hasAccess}><Download className="w-4 h-4 mr-2" />PDF</Button>
+                          <Button size="sm" variant="outline" onClick={() => guardedDownload(() => downloadCoverImage(ebook), ebook, "cover_download")} disabled={!ebook.coverImageUrl || !hasAccess}><Image className="w-4 h-4 mr-2" />Cover</Button>
+                          <Button size="sm" variant="outline" onClick={() => { setPreviewEbook(ebook); if (ebook.dbProductId) { try { recordMetric(ebook.dbProductId, "view"); } catch {} } }}><Eye className="w-4 h-4 mr-2" />Preview</Button>
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeEbook(ebook.id)}><Trash2 className="w-4 h-4" /></Button>
                         </div>
                       </div>
@@ -115,6 +124,11 @@ const Downloads = () => {
             {previewEbook?.coverImageUrl && (
               <div className="mb-6"><img src={previewEbook.coverImageUrl} alt={previewEbook.title} className="w-48 mx-auto rounded-lg shadow-lg" /></div>
             )}
+            {/* Record view metric when preview is opened */}
+            {previewEbook && previewEbook.dbProductId && (() => {
+              try { recordMetric(previewEbook.dbProductId, "view"); } catch {}
+              return null;
+            })()}
             <div className="prose prose-sm dark:prose-invert max-w-none">
               {previewEbook?.content.split("\n").map((line, i) => {
                 if (line.startsWith("# ")) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.replace("# ", "")}</h1>;

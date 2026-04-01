@@ -198,6 +198,14 @@ const EbookGenerator = () => {
           pages: ebook.pages,
         });
         ebook.dbProductId = product?.id;
+        // Record initial view metric when ebook is created
+        if (product?.id) {
+          try {
+            await recordMetric(product.id, "view");
+          } catch (err) {
+            console.warn("Failed to record initial view metric:", err);
+          }
+        }
       } catch (trackErr) {
         console.warn("Product tracking save failed:", trackErr);
       }
