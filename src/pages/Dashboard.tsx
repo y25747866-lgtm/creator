@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BookOpen, Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -77,6 +78,11 @@ const Dashboard = () => {
     let ratingCount = 0;
     let trend: "up" | "down" | "neutral" = "neutral";
 
+    let totalRecentDownloads = 0;
+    let totalPreviousDownloads = 0;
+    const now = Date.now();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+
     products.forEach((product) => {
       totalEbooks++;
       const metrics = metricsCache[product.id] ?? [];
@@ -89,11 +95,25 @@ const Dashboard = () => {
         avgRating += agg.avgRating;
         ratingCount++;
       }
-      // Use the trend from the first product with metrics
-      if (trend === "neutral" && agg.trend !== "neutral") {
-        trend = agg.trend;
-      }
+
+      // Aggregate raw download counts for trend calculation
+      const recent = metrics
+        .filter((m) => (m.metric_type === "download" || m.metric_type === "cover_download") && new Date(m.recorded_at).getTime() > now - weekMs)
+        .reduce((s, m) => s + m.value, 0);
+      const previous = metrics
+        .filter(
+          (m) =>
+            (m.metric_type === "download" || m.metric_type === "cover_download") &&
+            new Date(m.recorded_at).getTime() > now - 2 * weekMs &&
+            new Date(m.recorded_at).getTime() <= now - weekMs
+        )
+        .reduce((s, m) => s + m.value, 0);
+      
+      totalRecentDownloads += recent;
+      totalPreviousDownloads += previous;
     });
+
+    trend = totalRecentDownloads > totalPreviousDownloads ? "up" : totalRecentDownloads < totalPreviousDownloads ? "down" : "neutral";
 
     return {
       ebooksCreated: totalEbooks,
@@ -178,6 +198,12 @@ const Dashboard = () => {
 
   const stats = [
     {
+      icon: BookOpen,
+      label: "Ebooks Created",
+      value: aggregatedStats.ebooksCreated.toLocaleString(),
+      color: "from-indigo-500 to-purple-500",
+    },
+    {
       icon: Eye,
       label: "Total Views",
       value: aggregatedStats.totalViews.toLocaleString(),
@@ -196,12 +222,6 @@ const Dashboard = () => {
         ? `${((aggregatedStats.totalDownloads / aggregatedStats.totalViews) * 100).toFixed(1)}%`
         : "0%",
       color: "from-orange-500 to-red-500",
-    },
-    {
-      icon: Zap,
-      label: "AI Credits",
-      value: aggregatedStats.aiCredits.toString(),
-      color: "from-violet-500 to-purple-500",
     },
   ];
 
@@ -224,6 +244,10 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg border border-border">
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="text-xs font-medium">AI Credits: {aggregatedStats.aiCredits}</span>
+            </div>
             <Button size="sm" className="gap-2">
               Export
             </Button>
@@ -253,6 +277,12 @@ const Dashboard = () => {
                   {stat.label === "Total Downloads" && (
                     <div className="flex items-center gap-1 text-sm font-medium">
                       <TrendIcon trend={aggregatedStats.trend} />
+                      <span className={cn(
+                        "text-xs",
+                        aggregatedStats.trend === "up" ? "text-green-600" : aggregatedStats.trend === "down" ? "text-red-600" : "text-muted-foreground"
+                      )}>
+                        {aggregatedStats.trend === "up" ? "Growing" : aggregatedStats.trend === "down" ? "Declining" : "Stable"}
+                      </span>
                     </div>
                   )}
                 </div>
