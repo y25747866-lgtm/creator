@@ -437,6 +437,7 @@ const EbookGenerator = () => {
         </AnimatePresence>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 
