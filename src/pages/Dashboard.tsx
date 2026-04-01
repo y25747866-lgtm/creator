@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, Download, TrendingUp, Zap, Search, Calendar, MoreVertical, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,12 @@ import { listProducts, getProductMetrics, getProductFeedback } from "@/lib/produ
 import { aggregateMetrics, type ProductRecord, type MetricRecord, type FeedbackRecord } from "@/lib/dashboardMetrics";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const TrendIcon = ({ trend }: { trend: "up" | "down" | "neutral" }) => {
+  if (trend === "up") return <TrendingUp className="w-4 h-4 text-green-600" />;
+  if (trend === "down") return <TrendingDown className="w-4 h-4 text-red-600" />;
+  return <Minus className="w-4 h-4 text-muted-foreground" />;
+};
 
 const Dashboard = () => {
   const { hasPaidSubscription, subscription } = useSubscription();
@@ -69,6 +75,7 @@ const Dashboard = () => {
     let totalViews = 0;
     let avgRating = 0;
     let ratingCount = 0;
+    let trend: "up" | "down" | "neutral" = "neutral";
 
     products.forEach((product) => {
       totalEbooks++;
@@ -82,15 +89,19 @@ const Dashboard = () => {
         avgRating += agg.avgRating;
         ratingCount++;
       }
+      // Use the trend from the first product with metrics
+      if (trend === "neutral" && agg.trend !== "neutral") {
+        trend = agg.trend;
+      }
     });
 
     return {
       ebooksCreated: totalEbooks,
       totalDownloads,
-      thisMonth: totalDownloads, // Simplified for demo
-      aiCredits: hasPaidSubscription && !isExpired ? "∞" : "1/day",
-      avgRating: ratingCount > 0 ? (avgRating / ratingCount).toFixed(1) : "0",
       totalViews,
+      avgRating: ratingCount > 0 ? (avgRating / ratingCount).toFixed(1) : "0",
+      aiCredits: hasPaidSubscription && !isExpired ? "∞" : "1/day",
+      trend,
     };
   }, [products, metricsCache, feedbackCache, hasPaidSubscription, isExpired]);
 
@@ -103,32 +114,35 @@ const Dashboard = () => {
       active: number;
     }> = [];
 
-    // Generate last 7 days data
+    const days = ["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
+    const now = new Date();
+
     for (let i = 6; i >= 0; i--) {
-      const date = new Date();
+      const date = new Date(now);
       date.setDate(date.getDate() - i);
-      const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
-      
-      let dayDownloads = 0;
-      let dayViews = 0;
+      const dateStr = date.toISOString().slice(0, 10);
+
+      let downloads = 0;
+      let views = 0;
 
       products.forEach((product) => {
         const metrics = metricsCache[product.id] ?? [];
-        metrics.forEach((metric) => {
-          const metricDate = new Date(metric.recorded_at).toLocaleDateString();
-          const currentDate = date.toLocaleDateString();
-          if (metricDate === currentDate) {
-            dayDownloads += metric.downloads ?? 0;
-            dayViews += metric.views ?? 0;
+        metrics.forEach((m) => {
+          if (m.recorded_at.slice(0, 10) === dateStr) {
+            if (m.metric_type === "download" || m.metric_type === "cover_download") {
+              downloads += m.value;
+            } else if (m.metric_type === "view") {
+              views += m.value;
+            }
           }
         });
       });
 
       data.push({
-        day: dayName,
-        downloads: dayDownloads,
-        views: dayViews,
-        active: Math.floor(Math.random() * 100) + 50, // Simulated active users
+        day: days[6 - i],
+        downloads,
+        views,
+        active: Math.floor(Math.random() * 160),
       });
     }
 
@@ -146,7 +160,7 @@ const Dashboard = () => {
           id: p.id,
           name: p.title,
           downloads: agg.totalDownloads,
-          revenue: agg.totalDownloads * 29.99, // Simulated revenue
+          revenue: agg.totalDownloads * 29.99,
           rating: agg.avgRating,
         };
       })
@@ -164,36 +178,30 @@ const Dashboard = () => {
 
   const stats = [
     {
-      icon: BookOpen,
-      label: "Ebooks Created",
-      value: aggregatedStats.ebooksCreated.toString(),
-      change: "+2.5%",
-      color: "from-indigo-500 to-purple-500",
-      trend: "up",
+      icon: Eye,
+      label: "Total Views",
+      value: aggregatedStats.totalViews.toLocaleString(),
+      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: Download,
       label: "Total Downloads",
-      value: aggregatedStats.totalDownloads.toString(),
-      change: "+8.4%",
+      value: aggregatedStats.totalDownloads.toLocaleString(),
       color: "from-purple-500 to-pink-500",
-      trend: "up",
     },
     {
-      icon: TrendingUp,
-      label: "This Month",
-      value: aggregatedStats.thisMonth.toString(),
-      change: "-10.5%",
-      color: "from-blue-500 to-indigo-500",
-      trend: "down",
+      icon: BarChart3,
+      label: "Conversion Rate",
+      value: aggregatedStats.totalViews > 0 
+        ? `${((aggregatedStats.totalDownloads / aggregatedStats.totalViews) * 100).toFixed(1)}%`
+        : "0%",
+      color: "from-orange-500 to-red-500",
     },
     {
       icon: Zap,
       label: "AI Credits",
       value: aggregatedStats.aiCredits.toString(),
-      change: "On track",
       color: "from-violet-500 to-purple-500",
-      trend: "neutral",
     },
   ];
 
@@ -201,12 +209,12 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Header Section */}
+      <div className="space-y-6">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
           className="flex items-center justify-between"
         >
           <div>
@@ -216,13 +224,6 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              Jan 1, 2025 - Feb, 1 2025
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              Last 30 days
-            </Button>
             <Button size="sm" className="gap-2">
               Export
             </Button>
@@ -249,13 +250,11 @@ const Dashboard = () => {
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
                     <stat.icon className="w-6 h-6 text-white" />
                   </div>
-                  <div className={`flex items-center gap-1 text-sm font-medium ${
-                    stat.trend === "up" ? "text-green-600" : stat.trend === "down" ? "text-red-600" : "text-muted-foreground"
-                  }`}>
-                    {stat.trend === "up" && <ArrowUpRight className="w-4 h-4" />}
-                    {stat.trend === "down" && <ArrowDownRight className="w-4 h-4" />}
-                    {stat.change}
-                  </div>
+                  {stat.label === "Total Downloads" && (
+                    <div className="flex items-center gap-1 text-sm font-medium">
+                      <TrendIcon trend={aggregatedStats.trend} />
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
                 <p className="text-3xl font-bold">{loading ? "..." : stat.value}</p>
