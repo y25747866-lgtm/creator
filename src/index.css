@@ -76,8 +76,7 @@
   }
 
   body {
-    background-color: var(--bg-base);
-    color: var(--text-primary);
+    @apply bg-background text-foreground;
     font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -87,7 +86,6 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Clash Display', 'Inter', system-ui, sans-serif;
     letter-spacing: -0.02em;
-    color: var(--text-primary);
   }
 }
 
