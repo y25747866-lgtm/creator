@@ -6,31 +6,10 @@ import {
   Cpu, Zap, TrendingUp, Users, Star, DollarSign,
   Lightbulb, Rocket, ChevronDown, ChevronUp,
   BookOpen, Megaphone, Target, Download, RefreshCw,
-  GitBranch, Share2, LayoutDashboard, MessageSquare
+  GitBranch, Share2, LayoutDashboard, MessageSquare,
+  Quote
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
-
-/* ─── Animated Counter ─── */
-const AnimatedCounter = ({ target, suffix = '' }: { target: number; suffix?: string }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true });
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!isInView) return;
-    let start = 0;
-    const duration = 2000;
-    const increment = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [isInView, target]);
-
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
-};
 
 /* ─── FAQ Item ─── */
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
@@ -107,13 +86,13 @@ const Landing = () => {
     },
     {
       name: 'Creator', price: '19',
-      desc: 'Everything you need to create and sell digital products.',
+      desc: 'Launch your first income system in 7 days.',
       features: ['Full AI Product Generator', 'Marketing Studio (unlimited)', 'Sales Page Builder', 'Analytics Dashboard', 'Downloads & Exports', 'Medium & Long ebooks'],
       cta: 'Start Creator Plan', popular: true, badge: 'Most Popular'
     },
     {
       name: 'Pro', price: '39',
-      desc: 'Advanced tools for power users and scaling creators.',
+      desc: 'Scale your digital empire with advanced automation.',
       features: ['Everything in Creator', 'AI Business Assistant', 'Priority AI processing', 'Early feature access', 'Advanced automation tools'],
       cta: 'Upgrade to Pro', popular: false, badge: 'Best for Power Users'
     }
@@ -193,8 +172,11 @@ const Landing = () => {
                 Building Digital Businesses
               </span>
             </h1>
-            <p className="text-lg text-[#9EA4C0] mb-10 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg text-[#9EA4C0] mb-4 max-w-2xl mx-auto leading-relaxed">
               From idea to income — automate, launch, and scale effortlessly. NexoraOS creates products, monetizes them, and auto-improves — all without manual work.
+            </p>
+            <p className="text-sm font-medium text-[#5B27BB] mb-10">
+              Built by a solo creator. Trusted by early adopters across 30+ countries.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mb-6">
               <Link to="/dashboard" className="px-8 py-3.5 font-semibold rounded-lg bg-[#5B27BB] text-white hover:bg-[#4F21A1] transition-all shadow-[0_0_30px_rgba(91,39,187,0.4)] flex items-center gap-2 text-base">
@@ -209,29 +191,8 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ═══ LIVE STATS ═══ */}
-      <Section className="py-16 border-y border-white/8">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { label: 'Active Creators', value: 12400, suffix: '+' },
-              { label: 'Products Generated', value: 45000, suffix: '+' },
-              { label: 'Satisfaction Rate', value: 98, suffix: '%' },
-              { label: 'Creator Earnings', value: 2400000, suffix: '+', prefix: '$' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl md:text-4xl font-bold font-clash text-[#00FFD1]">
-                  {stat.prefix}<AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                </p>
-                <p className="text-sm text-[#6B7280] mt-2">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Section>
-
       {/* ═══ WHAT IS NEXORAOS ═══ */}
-      <Section className="py-24 border-b border-white/8">
+      <Section className="py-24 border-y border-white/8">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold font-clash mb-4">
@@ -268,10 +229,18 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div>
               <p className="text-sm font-semibold text-[#5B27BB] uppercase tracking-wider mb-4">Meet the Founder</p>
-              <h2 className="text-3xl md:text-4xl font-bold font-clash mb-6">Built by a Creator, for Creators</h2>
-              <p className="text-[#9EA4C0] leading-relaxed mb-8">
-                NexoraOS was created to eliminate confusion in making money online by combining AI, automation, and monetization into one system. No more juggling 10 different tools — everything lives here.
-              </p>
+              <h2 className="text-3xl md:text-4xl font-bold font-clash mb-6">Built by Yesh Malik</h2>
+              <div className="space-y-4 text-[#9EA4C0] leading-relaxed mb-8">
+                <p>
+                  NexoraOS was born out of a simple frustration: the digital product landscape is too fragmented. I spent years juggling 10 different tools just to launch a single ebook.
+                </p>
+                <p>
+                  My mission is to empower creators to build real, sustainable income without the technical overwhelm. NexoraOS isn't just a tool; it's a category-defining platform designed to handle the heavy lifting so you can focus on your vision.
+                </p>
+                <p>
+                  We're building a future where anyone with an idea can turn it into a powerful, self-improving business system in minutes.
+                </p>
+              </div>
               <blockquote className="border-l-2 border-[#5B27BB] pl-6 py-2">
                 <p className="text-xl font-medium italic text-[#5B27BB]">
                   "I built the tool I always needed — and now it's yours."
@@ -425,34 +394,21 @@ const Landing = () => {
         </div>
       </Section>
 
-      {/* ═══ TESTIMONIALS ═══ */}
+      {/* ═══ TESTIMONIALS (EDITORIAL QUOTE) ═══ */}
       <Section className="py-24 border-b border-white/8">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold font-clash text-center mb-12">What Creators Are Saying</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { name: 'Alex R.', role: 'Digital Creator', quote: 'Generated my first ebook in under 5 minutes. The quality blew me away — it actually reads like a professionally written book.', stars: 5 },
-              { name: 'Sarah K.', role: 'Course Creator', quote: 'Made my first sale within 24 hours of signing up. The marketing studio saved me hours of copywriting work.', stars: 5 },
-              { name: 'James M.', role: 'Entrepreneur', quote: 'NexoraOS replaced 4 different tools I was paying for. It\'s genuinely the only platform I need to run my digital business.', stars: 5 },
-            ].map((t) => (
-              <div key={t.name} className="bg-white/[0.04] border border-white/8 border-t-2 border-t-[#5B27BB] rounded-2xl p-6">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.stars }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#F59E0B] text-[#F59E0B]" />
-                  ))}
-                </div>
-                <p className="text-[#9EA4C0] text-sm leading-relaxed mb-6">"{t.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#5B27BB]/20 flex items-center justify-center text-xs font-bold text-[#5B27BB]">
-                    {t.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-[#6B7280]">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <Quote className="w-12 h-12 text-[#5B27BB]/20 mx-auto mb-8" />
+          <h2 className="text-3xl md:text-5xl font-bold font-clash leading-tight mb-8">
+            "I went from idea to live product in under 48 hours."
+          </h2>
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#5B27BB]/20 flex items-center justify-center text-xs font-bold text-[#5B27BB]">
+              EB
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold">Early Beta User</p>
+              <p className="text-xs text-[#6B7280]">NexoraOS</p>
+            </div>
           </div>
         </div>
       </Section>
@@ -465,14 +421,13 @@ const Landing = () => {
             <Rocket className="w-7 h-7 text-[#5B27BB]" />
           </div>
           <h2 className="text-4xl md:text-5xl font-bold font-clash mb-6">
-            Start Building Your{' '}
-            <span className="text-[#5B27BB]">Digital Empire Today</span>
+            Stop overthinking. <span className="text-[#5B27BB]">Start building.</span>
           </h2>
           <p className="text-lg text-[#9EA4C0] mb-10 max-w-2xl mx-auto leading-relaxed">
             Create products, explore monetization, and see why NexoraOS is the only platform that turns one idea into an entire business system.
           </p>
           <Link to="/dashboard" className="inline-flex items-center gap-2 px-10 py-4 font-semibold rounded-xl bg-[#5B27BB] text-white hover:bg-[#4F21A1] transition-all shadow-[0_0_40px_rgba(91,39,187,0.4)] text-lg">
-            Get Started Free <ArrowRight className="w-5 h-5" />
+            Get Started with NexoraOS <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="text-xs text-[#6B7280] mt-6">✓ Free forever · No credit card · 2-minute setup</p>
         </div>
