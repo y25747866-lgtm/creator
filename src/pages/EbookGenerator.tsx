@@ -250,7 +250,8 @@ const EbookGenerator = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <DashboardLayout>
+    <div className="relative">
       {isExpired && !subLoading && (
         <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the AI Product Generator." />
       )}
