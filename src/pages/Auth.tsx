@@ -160,7 +160,7 @@ const Auth = () => {
       `}} />
 
       {/* Left Side: Visuals */}
-      <div className="relative w-full lg:w-[50%] min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="relative w-full lg:w-1/2 min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-black">
           <PlasmaWeb
             hueShift={270}
@@ -232,7 +232,7 @@ const Auth = () => {
       </div>
 
       {/* Right Side: Auth Form */}
-      <div className="relative w-full lg:w-[50%] flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-gradient-to-br lg:from-zinc-950 lg:to-black">
+      <div className="relative w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-gradient-to-br lg:from-zinc-950 lg:to-black overflow-y-auto shrink-0">
         <div className="w-full max-w-md">
           <div className="relative rounded-3xl bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-8 lg:p-10">
             {magicLinkSent ? (
