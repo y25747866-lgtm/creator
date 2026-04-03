@@ -564,9 +564,12 @@ export type Database = {
       subscriptions: {
         Row: {
           created_at: string
+          end_date: string | null
           expires_at: string | null
           id: string
+          plan: string | null
           plan_type: string
+          start_date: string | null
           started_at: string
           status: string
           updated_at: string
@@ -576,9 +579,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          end_date?: string | null
           expires_at?: string | null
           id?: string
+          plan?: string | null
           plan_type: string
+          start_date?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -588,9 +594,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          end_date?: string | null
           expires_at?: string | null
           id?: string
+          plan?: string | null
           plan_type?: string
+          start_date?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -605,6 +614,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_account_records: { Args: never; Returns: undefined }
       has_active_subscription: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
