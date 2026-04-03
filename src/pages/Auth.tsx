@@ -136,7 +136,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen w-full bg-black flex flex-col md:flex-row overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes orbit {
           from {
@@ -160,7 +160,7 @@ const Auth = () => {
       `}} />
 
       {/* Left Side: Visuals */}
-      <div className="relative w-full lg:w-1/2 min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden shrink-0">
+      <div className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen flex items-center justify-center overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-black">
           <PlasmaWeb
             hueShift={270}
@@ -180,7 +180,7 @@ const Auth = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
         <div className="relative z-10 flex flex-col items-center justify-center px-6 py-12 lg:py-0">
-          <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8 lg:mb-12">
+          <div className="relative w-40 h-40 md:w-56 md:h-56 mb-8 md:mb-12">
             <div
               className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-600/40 via-purple-500/30 to-transparent blur-2xl"
               style={{ animation: "breathe 4s ease-in-out infinite" }}
@@ -222,19 +222,19 @@ const Auth = () => {
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-4 lg:mb-6 max-w-3xl leading-tight">
+          <h1 className="text-2xl md:text-4xl font-bold text-white text-center mb-4 md:mb-6 max-w-3xl leading-tight">
             Transform Ideas into Reality
           </h1>
-          <p className="text-base md:text-lg lg:text-xl text-purple-200/80 text-center max-w-2xl">
+          <p className="text-sm md:text-base text-purple-200/80 text-center max-w-2xl">
             AI-powered platform to create digital products instantly
           </p>
         </div>
       </div>
 
       {/* Right Side: Auth Form */}
-      <div className="relative w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-gradient-to-br lg:from-zinc-950 lg:to-black overflow-y-auto shrink-0">
+      <div className="relative w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-black md:bg-gradient-to-br md:from-zinc-950 md:to-black overflow-y-auto shrink-0">
         <div className="w-full max-w-md">
-          <div className="relative rounded-3xl bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-8 lg:p-10">
+            <div className="relative rounded-3xl bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-6 md:p-8">
             {magicLinkSent ? (
               <div className="text-center space-y-6">
                 <div className="flex justify-center">
@@ -259,7 +259,7 @@ const Auth = () => {
             ) : (
               <>
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
                     Sign in to NexoraOS
                   </h2>
                   <p className="text-sm text-gray-400">
