@@ -10,6 +10,7 @@ import {
   Quote, MousePointer2, CreditCard, Layout
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
+import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── FAQ Item ─── */
 const FAQItem = ({ q, a }: { q: string; a: string }) => {
@@ -117,9 +118,23 @@ const Landing = () => {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="pt-40 pb-24 relative">
-        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-[#7C3AED]/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-40 right-1/4 w-[400px] h-[400px] bg-[#C084FC]/5 rounded-full blur-[100px] pointer-events-none" />
+      <section className="pt-40 pb-24 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <PlasmaWeb
+            hueShift={270}
+            density={0.6}
+            glowIntensity={0.8}
+            saturation={0.5}
+            brightness={0.4}
+            energyFlow={0.6}
+            pulseIntensity={0.1}
+            attractionStrength={1.2}
+            mouseAttraction={true}
+            transparent={false}
+            speed={0.3}
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#04030E]/50 via-transparent to-[#04030E] -z-10" />
         
         <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.div
@@ -127,6 +142,12 @@ const Landing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
+            {/* Logo Placeholder */}
+            <div className="flex justify-center mb-8">
+              <div className="w-20 h-20 md:w-24 md:h-24 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center shadow-2xl">
+                <span className="text-white/30 text-[10px] font-medium text-center px-2">COMPANY LOGO</span>
+              </div>
+            </div>
             <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-8 font-clash max-w-5xl mx-auto">
               Turn your idea into a product, website, and income system — <span className="text-[#7C3AED]">automatically.</span>
             </h1>

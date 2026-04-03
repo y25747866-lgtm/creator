@@ -1,15 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Loader2, Sparkles } from "lucide-react";
+import { Mail, Loader2, Sparkles, BookOpen, Download, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable/index";
-import nexoraLogo from "@/assets/nexora-logo.png";
 import { z } from "zod";
-import { signInWithGoogle } from "@/lib/auth/login"; // ← Added this import
+import { signInWithGoogle } from "@/lib/auth/login";
+import { PlasmaWeb } from "@/components/PlasmaWeb";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
@@ -21,6 +20,40 @@ const GoogleIcon = () => (
     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58Z" fill="#EA4335"/>
   </svg>
 );
+
+interface OrbitingIconProps {
+  icon: React.ReactNode;
+  radius: number;
+  angle: number;
+  duration: number;
+  delay: number;
+}
+
+function OrbitingIcon({ icon, radius, angle, duration, delay }: OrbitingIconProps) {
+  return (
+    <div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{
+        animation: `orbit ${duration}s linear infinite`,
+        animationDelay: `${delay}s`,
+        // @ts-ignore
+        "--orbit-radius": `${radius}px`,
+      }}
+    >
+      <div
+        className="absolute"
+        style={{
+          left: `${radius * Math.cos((angle * Math.PI) / 180)}px`,
+          top: `${radius * Math.sin((angle * Math.PI) / 180)}px`,
+        }}
+      >
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 flex items-center justify-center text-purple-300 hover:scale-110 transition-transform">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -79,7 +112,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithGoogle(); // Uses Supabase directly → redirects to Google → back to /auth/callback
+      await signInWithGoogle();
     } catch (err: any) {
       console.error("Google sign-in error:", err);
       toast({
@@ -103,111 +136,210 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-[400px]"
-      >
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={nexoraLogo} alt="NexoraOS" className="h-10 w-auto" />
+    <div className="min-h-screen w-full bg-black flex flex-col lg:flex-row overflow-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes orbit {
+          from {
+            transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+          }
+        }
+        
+        @keyframes breathe {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 1;
+          }
+        }
+      `}} />
+
+      {/* Left Side: Visuals */}
+      <div className="relative w-full lg:w-[58%] min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-black">
+          <PlasmaWeb
+            hueShift={270}
+            density={0.8}
+            glowIntensity={1.2}
+            saturation={0.6}
+            brightness={0.5}
+            energyFlow={0.8}
+            pulseIntensity={0.2}
+            attractionStrength={1.5}
+            mouseAttraction={true}
+            transparent={false}
+            speed={0.5}
+          />
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          {magicLinkSent ? (
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground mb-1">Check your email</h1>
-                <p className="text-sm text-muted-foreground">
-                  We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Didn't get it? Check spam or try again.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => { setMagicLinkSent(false); setEmail(""); }}
-                className="w-full rounded-xl"
-              >
-                Use a different email
-              </Button>
-            </div>
-          ) : (
-            <>
-              <div className="text-center mb-6">
-                <h1 className="text-lg font-semibold text-foreground mb-1">Sign in to NexoraOS</h1>
-                <p className="text-sm text-muted-foreground">
-                  Create AI-powered digital businesses instantly.
-                </p>
-              </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-              {/* Email form */}
-              <form onSubmit={handleEmailSubmit} className="space-y-3">
+        <div className="relative z-10 flex flex-col items-center justify-center px-6 py-12 lg:py-0">
+          <div className="relative w-48 h-48 md:w-64 md:h-64 mb-8 lg:mb-12">
+            <div
+              className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-600/40 via-purple-500/30 to-transparent blur-2xl"
+              style={{ animation: "breathe 4s ease-in-out infinite" }}
+            />
+            
+            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 shadow-2xl shadow-purple-500/50 flex items-center justify-center"
+              style={{ animation: "breathe 4s ease-in-out infinite" }}
+            >
+              {/* Logo Placeholder */}
+              <div className="w-20 h-20 md:w-28 md:h-28 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center">
+                <span className="text-white/40 text-xs font-medium text-center px-2">COMPANY LOGO</span>
+              </div>
+            </div>
+
+            <div className="absolute inset-0">
+              <OrbitingIcon
+                icon={<Sparkles className="w-5 h-5" />}
+                radius={100}
+                angle={0}
+                duration={12}
+                delay={0}
+              />
+              <OrbitingIcon
+                icon={<BookOpen className="w-5 h-5" />}
+                radius={100}
+                angle={90}
+                duration={12}
+                delay={3}
+              />
+              <OrbitingIcon
+                icon={<Download className="w-5 h-5" />}
+                radius={100}
+                angle={180}
+                duration={12}
+                delay={6}
+              />
+              <OrbitingIcon
+                icon={<DollarSign className="w-5 h-5" />}
+                radius={100}
+                angle={270}
+                duration={12}
+                delay={9}
+              />
+            </div>
+          </div>
+
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white text-center mb-4 lg:mb-6 max-w-3xl leading-tight">
+            Transform Ideas into Reality
+          </h1>
+          <p className="text-base md:text-lg lg:text-xl text-purple-200/80 text-center max-w-2xl">
+            AI-powered platform to create digital products instantly
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side: Auth Form */}
+      <div className="relative w-full lg:w-[42%] flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-transparent">
+        <div className="w-full max-w-md">
+          <div className="relative rounded-3xl bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-8 lg:p-10">
+            {magicLinkSent ? (
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-purple-500/10 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-purple-400" />
+                  </div>
+                </div>
                 <div>
-                  <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-                    disabled={anyLoading}
-                    className="h-11 rounded-xl bg-background"
-                    autoFocus
-                  />
-                  {emailError && (
-                    <p className="text-xs text-destructive mt-1.5">{emailError}</p>
-                  )}
+                  <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
+                  <p className="text-gray-400">
+                    We sent a sign-in link to <span className="font-medium text-purple-300">{email}</span>
+                  </p>
                 </div>
                 <Button
-                  type="submit"
-                  className="w-full h-11 rounded-xl font-medium"
-                  disabled={anyLoading}
+                  variant="outline"
+                  onClick={() => { setMagicLinkSent(false); setEmail(""); }}
+                  className="w-full rounded-xl border-gray-700 text-white hover:bg-white/5"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                  Use a different email
                 </Button>
-              </form>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground font-medium">OR</span>
-                <div className="flex-1 h-px bg-border" />
               </div>
+            ) : (
+              <>
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+                    Sign in to NexoraOS
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Create AI-powered digital businesses instantly.
+                  </p>
+                </div>
 
-              {/* Google */}
-              <Button
-                variant="outline"
-                className="w-full h-11 rounded-xl font-medium gap-3"
-                onClick={handleGoogleSignIn}
-                disabled={anyLoading}
-              >
-                {isGoogleLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <GoogleIcon />
-                )}
-                Continue with Google
-              </Button>
-            </>
-          )}
+                <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
+                  <div className="w-full flex flex-col gap-3">
+                    <Input
+                      placeholder="Enter your email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
+                      disabled={anyLoading}
+                      className="w-full px-5 py-3.5 h-auto rounded-xl bg-white/5 border border-purple-500/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                    />
+                    {emailError && (
+                      <div className="text-sm text-red-400 text-left">{emailError}</div>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={anyLoading}
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold h-auto py-3.5 rounded-xl shadow-lg shadow-purple-500/30 transition-all duration-200 text-sm"
+                  >
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                  </Button>
+
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="px-2 bg-zinc-900 text-gray-500">OR</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGoogleSignIn}
+                    disabled={anyLoading}
+                    className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl h-auto py-3.5 font-medium text-white shadow transition-all duration-200 text-sm"
+                  >
+                    {isGoogleLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <GoogleIcon />
+                        Continue with Google
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="w-full text-center mt-4">
+                    <span className="text-xs text-gray-500">
+                      By signing in, you agree to our{" "}
+                      <a href="#" className="text-purple-400 hover:text-purple-300 underline">
+                        Terms of Service
+                      </a>{" "}
+                      and{" "}
+                      <a href="#" className="text-purple-400 hover:text-purple-300 underline">
+                        Privacy Policy
+                      </a>
+                      .
+                    </span>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
-          By signing in, you agree to our{" "}
-          <a href="#" className="underline hover:text-foreground transition-colors">Terms of Service</a>
-          {" "}and{" "}
-          <a href="#" className="underline hover:text-foreground transition-colors">Privacy Policy</a>.
-        </p>
-      </motion.div>
+      </div>
     </div>
   );
 };
