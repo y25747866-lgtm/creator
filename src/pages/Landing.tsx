@@ -118,7 +118,7 @@ const Landing = () => {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="pt-40 pb-24 relative overflow-hidden">
+      <section className="pt-40 pb-24 relative overflow-hidden bg-gradient-to-br from-[#0a0520] via-[#04030E] to-[#1a0a3e]">
         <div className="absolute inset-0 -z-10">
           <PlasmaWeb
             hueShift={270}
@@ -134,7 +134,7 @@ const Landing = () => {
             speed={0.3}
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#04030E]/50 via-transparent to-[#04030E] -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0520]/50 via-transparent to-[#1a0a3e] -z-10" />
         
         <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.div
@@ -142,12 +142,7 @@ const Landing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            {/* Logo Placeholder */}
-            <div className="flex justify-center mb-8">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-center shadow-2xl">
-                <span className="text-white/30 text-[10px] font-medium text-center px-2">COMPANY LOGO</span>
-              </div>
-            </div>
+
             <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-8 font-clash max-w-5xl mx-auto">
               Turn your idea into a product, website, and income system — <span className="text-[#7C3AED]">automatically.</span>
             </h1>
