@@ -160,7 +160,7 @@ const Auth = () => {
       `}} />
 
       {/* Left Side: Visuals */}
-      <div className="relative w-full lg:w-[58%] min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="relative w-full lg:w-[50%] min-h-[50vh] lg:min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-black">
           <PlasmaWeb
             hueShift={270}
@@ -186,14 +186,9 @@ const Auth = () => {
               style={{ animation: "breathe 4s ease-in-out infinite" }}
             />
             
-            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 shadow-2xl shadow-purple-500/50 flex items-center justify-center"
+            <div className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 shadow-2xl shadow-purple-500/50"
               style={{ animation: "breathe 4s ease-in-out infinite" }}
-            >
-              {/* Logo Placeholder */}
-              <div className="w-20 h-20 md:w-28 md:h-28 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center">
-                <span className="text-white/40 text-xs font-medium text-center px-2">COMPANY LOGO</span>
-              </div>
-            </div>
+            />
 
             <div className="absolute inset-0">
               <OrbitingIcon
@@ -237,7 +232,7 @@ const Auth = () => {
       </div>
 
       {/* Right Side: Auth Form */}
-      <div className="relative w-full lg:w-[42%] flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-transparent">
+      <div className="relative w-full lg:w-[50%] flex items-center justify-center p-6 lg:p-12 bg-black lg:bg-gradient-to-br lg:from-zinc-950 lg:to-black">
         <div className="w-full max-w-md">
           <div className="relative rounded-3xl bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-8 lg:p-10">
             {magicLinkSent ? (
