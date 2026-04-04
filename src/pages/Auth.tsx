@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { signInWithGoogle } from "@/lib/auth/login";
+import nexoraLogo from "@/assets/nexora-logo.png";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
@@ -87,7 +88,7 @@ const NexoraOSSignIn = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      <style jsx global>{`
+      <style>{`
         ::selection {
           background: #FFFFFF;
           color: #0A0A0A;
@@ -182,9 +183,7 @@ const NexoraOSSignIn = () => {
         
         {/* Logo - Always visible */}
         <div className="absolute top-0 left-0 p-6 md:p-8 flex items-center gap-2 animate-fade-in stagger-1 z-20">
-          <div className="w-8 h-8 bg-white flex items-center justify-center font-bold text-black text-sm">
-            N
-          </div>
+          <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
           <span className="text-white font-semibold text-base">NexoraOS</span>
         </div>
 
