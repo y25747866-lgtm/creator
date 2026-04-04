@@ -146,15 +146,15 @@ const Landing = () => {
               <div>
                 <div ref={heroWordsRef}>
                   <h1 className="text-4xl md:text-[56px] font-black leading-[1.1] mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">idea. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">product. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">income. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">In </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">one </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-[#7C3AED]">session.</span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">idea. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">product. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white font-black">income. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">In </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">one </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">session.</span>
                   </h1>
                 </div>
 
