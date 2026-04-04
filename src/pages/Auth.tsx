@@ -87,7 +87,7 @@ const NexoraOSSignIn = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      <style jsx global>{`
+      <style>{`
         ::selection {
           background: #FFFFFF;
           color: #0A0A0A;
