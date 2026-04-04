@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { signInWithGoogle } from "@/lib/auth/login";
+import nexoraLogo from "@/assets/nexora-logo.png";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
