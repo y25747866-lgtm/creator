@@ -108,23 +108,23 @@ const Landing = () => {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="pt-32 pb-24 relative overflow-hidden hero-section">
-        <div className="absolute inset-0 -z-10">
-          <PlasmaWeb
-            hueShift={270}
-            density={0.6}
-            glowIntensity={0.8}
-            saturation={0.5}
-            brightness={0.3}
-            energyFlow={0.6}
-            pulseIntensity={0.1}
-            attractionStrength={1.2}
-            mouseAttraction={true}
-            transparent={false}
-            speed={0.3}
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/60 via-transparent to-[#0A0A0A] -z-10" />
+      <section className="pt-32 pb-24 hero-section" style={{ position: 'relative', overflow: 'hidden' }}>
+        {/* Unicorn Studio Background */}
+        <div
+          data-us-project="mphmwraF225iCJdgjLPD"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 0,
+            opacity: 0.4,
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Fallback gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/60 via-transparent to-[#0A0A0A]" style={{ zIndex: 0 }} />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div
@@ -146,15 +146,15 @@ const Landing = () => {
               <div>
                 <div ref={heroWordsRef}>
                   <h1 className="text-4xl md:text-[56px] font-black leading-[1.1] mb-6" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">idea. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">product. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">Your </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">income. </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">In </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block">one </span>
-                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-[#7C3AED]">session.</span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">idea. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">product. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">Your </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white font-black">income. </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">In </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">one </span>
+                    <span className="hero-word opacity-0 transition-opacity duration-500 inline-block text-white/70">session.</span>
                   </h1>
                 </div>
 

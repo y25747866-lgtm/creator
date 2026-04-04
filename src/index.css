@@ -130,6 +130,30 @@
   }
 }
 
+/* Hero section */
+.hero-section {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Unicorn Studio background */
+[data-us-project="mphmwraF225iCJdgjLPD"] {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 768px) {
+  [data-us-project="mphmwraF225iCJdgjLPD"] {
+    opacity: 0.2 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-us-project="mphmwraF225iCJdgjLPD"] {
+    display: none;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
