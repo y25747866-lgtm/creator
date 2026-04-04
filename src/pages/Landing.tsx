@@ -74,14 +74,17 @@ const Landing = () => {
       </nav>
 
       {/* ═══ HERO ═══ */}
-      <section className="pt-48 pb-24 hero-section" style={{ position: 'relative', overflow: 'hidden' }}>
+      <section
+        className="pt-48 pb-24 hero-section"
+        style={{ position: 'relative', overflow: 'hidden' }}
+      >
         {/* Unicorn Studio Background */}
         <div
           data-us-project="mphmwraF225iCJdgjLPD"
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
+            top: '0',
+            left: '0',
             width: '100%',
             height: '100%',
             zIndex: 0,
@@ -92,7 +95,9 @@ const Landing = () => {
         {/* Fallback gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/60 via-transparent to-[#0A0A0A]" style={{ zIndex: 0 }} />
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        {/* Hero content wrapper */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -172,6 +177,7 @@ const Landing = () => {
               </div>
             </div>
           </motion.div>
+          </div>
         </div>
       </section>
 
