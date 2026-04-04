@@ -1,66 +1,18 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mail, Loader2, Sparkles, BookOpen, Download, DollarSign, ArrowRight, Shield, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { signInWithGoogle } from "@/lib/auth/login";
-import { PlasmaWeb } from "@/components/PlasmaWeb";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
-const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
-    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
-    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
-    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58Z" fill="#EA4335"/>
-  </svg>
-);
-
-interface OrbitingIconProps {
-  icon: React.ReactNode;
-  radius: number;
-  angle: number;
-  duration: number;
-  delay: number;
-}
-
-function OrbitingIcon({ icon, radius, angle, duration, delay }: OrbitingIconProps) {
-  return (
-    <div
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-      style={{
-        animation: `orbit ${duration}s linear infinite`,
-        animationDelay: `${delay}s`,
-        // @ts-ignore
-        "--orbit-radius": `${radius}px`,
-      }}
-    >
-      <div
-        className="absolute"
-        style={{
-          left: `${radius * Math.cos((angle * Math.PI) / 180)}px`,
-          top: `${radius * Math.sin((angle * Math.PI) / 180)}px`,
-        }}
-      >
-        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-cyan-400/30 to-purple-500/30 backdrop-blur-sm border border-purple-400/30 flex items-center justify-center text-purple-300 hover:scale-110 transition-transform">
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const Auth = () => {
-  const [email, setEmail] = useState("");
+const NexoraOSSignIn = () => {
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [error, setError] = useState('');
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -78,31 +30,31 @@ const Auth = () => {
     }
   }, [user, loading, navigate, redirectTo]);
 
-  const validateEmail = () => {
-    try {
-      emailSchema.parse(email);
-      setEmailError(null);
-      return true;
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        setEmailError(e.errors[0].message);
-      }
-      return false;
-    }
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateEmail()) return;
+    setError('');
+    
+    if (!email) {
+      setError('Email is required');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const { error } = await sendMagicLink(email);
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+      const { error: authError } = await sendMagicLink(email);
+      if (authError) {
+        setError(authError.message || 'Failed to send magic link');
+        toast({ title: "Error", description: authError.message, variant: "destructive" });
         return;
       }
-      setMagicLinkSent(true);
-    } catch {
+      toast({ title: "Success", description: "Check your email for the sign-in link" });
+    } catch (err: any) {
+      setError('Something went wrong. Please try again.');
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -125,344 +77,330 @@ const Auth = () => {
     }
   };
 
-  const anyLoading = isLoading || isGoogleLoading;
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <Loader2 className="w-6 h-6 animate-spin text-[#666666]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-black flex flex-col md:flex-row overflow-hidden">
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes orbit {
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <style jsx global>{`
+        ::selection {
+          background: #FFFFFF;
+          color: #0A0A0A;
+        }
+        
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 100px #111111 inset;
+          -webkit-text-fill-color: #FFFFFF;
+        }
+        
+        @keyframes fadeInUp {
           from {
-            transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+            opacity: 0;
+            transform: translateY(8px);
           }
           to {
-            transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+            opacity: 1;
+            transform: translateY(0);
           }
         }
         
-        @keyframes breathe {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 0.8;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
           }
-          50% {
-            transform: scale(1.05);
+          to {
             opacity: 1;
           }
         }
-
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease forwards;
         }
-
-        @keyframes glow-pulse {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3), 0 0 40px rgba(168, 85, 247, 0.1);
-          }
-          50% {
-            box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), 0 0 60px rgba(168, 85, 247, 0.2);
-          }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease forwards;
         }
-      `}} />
+        
+        .stagger-1 {
+          animation-delay: 0.1s;
+          opacity: 0;
+        }
+        
+        .stagger-2 {
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+        
+        .stagger-3 {
+          animation-delay: 0.3s;
+          opacity: 0;
+        }
+        
+        .stagger-4 {
+          animation-delay: 0.4s;
+          opacity: 0;
+        }
+        
+        .stagger-5 {
+          animation-delay: 0.5s;
+          opacity: 0;
+        }
+        
+        .stagger-6 {
+          animation-delay: 0.6s;
+          opacity: 0;
+        }
+        
+        .stagger-7 {
+          animation-delay: 0.7s;
+          opacity: 0;
+        }
+      `}</style>
 
-      {/* Left Side: Visuals with Enhanced Design */}
-      <div className="relative w-full md:w-1/2 min-h-[50vh] md:min-h-screen flex items-center justify-center overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-950 via-black to-black">
-          <PlasmaWeb
-            hueShift={270}
-            density={0.8}
-            glowIntensity={1.2}
-            saturation={0.6}
-            brightness={0.5}
-            energyFlow={0.8}
-            pulseIntensity={0.2}
-            attractionStrength={1.5}
-            mouseAttraction={true}
-            transparent={false}
-            speed={0.5}
-          />
+      {/* Left Panel */}
+      <div 
+        className="md:w-[55%] bg-[#0A0A0A] relative overflow-hidden h-14 md:h-screen flex flex-col"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }}
+      >
+        {/* Subtle glow effect */}
+        <div 
+          className="absolute bottom-0 left-0 w-[600px] h-[600px] pointer-events-none hidden md:block"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)',
+          }}
+        />
+        
+        {/* Logo - Always visible */}
+        <div className="absolute top-0 left-0 p-6 md:p-8 flex items-center gap-2 animate-fade-in stagger-1 z-20">
+          <div className="w-8 h-8 bg-white flex items-center justify-center font-bold text-black text-sm">
+            N
+          </div>
+          <span className="text-white font-semibold text-base">NexoraOS</span>
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+        {/* Center Content - Hidden on mobile */}
+        <div className="hidden md:flex flex-col justify-center items-start h-full px-12 relative z-10">
+          <div className="max-w-lg">
+            {/* Badge */}
+            <div className="mb-6 animate-fade-in stagger-2">
+              <span 
+                className="inline-block px-3 py-1.5 text-[10px] font-semibold tracking-wider"
+                style={{
+                  background: '#111111',
+                  border: '1px solid #1A1A1A',
+                  color: '#FFFFFF',
+                  opacity: 0.5,
+                }}
+              >
+                AI-POWERED BUSINESS OS
+              </span>
+            </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center px-6 py-12 lg:py-0">
-          {/* Enhanced Animated Orb */}
-          <div className="relative w-40 h-40 md:w-56 md:h-56 mb-8 md:mb-12">
-            <div
-              className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-600/40 via-purple-500/30 to-transparent blur-3xl"
-              style={{ animation: "breathe 4s ease-in-out infinite" }}
-            />
-            
-            <div 
-              className="absolute inset-8 rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-purple-800 shadow-2xl"
-              style={{ 
-                animation: "breathe 4s ease-in-out infinite",
-                boxShadow: "0 0 40px rgba(168, 85, 247, 0.6), inset 0 0 40px rgba(168, 85, 247, 0.3)"
+            {/* Headline */}
+            <h1 
+              className="text-white mb-4 animate-fade-in stagger-3"
+              style={{
+                fontFamily: 'Syne, sans-serif',
+                fontSize: '40px',
+                fontWeight: 900,
+                lineHeight: 1.2,
               }}
-            />
+            >
+              Turn your idea into income.
+            </h1>
 
-            <div className="absolute inset-0">
-              <OrbitingIcon
-                icon={<Sparkles className="w-5 h-5" />}
-                radius={100}
-                angle={0}
-                duration={12}
-                delay={0}
-              />
-              <OrbitingIcon
-                icon={<BookOpen className="w-5 h-5" />}
-                radius={100}
-                angle={90}
-                duration={12}
-                delay={3}
-              />
-              <OrbitingIcon
-                icon={<Download className="w-5 h-5" />}
-                radius={100}
-                angle={180}
-                duration={12}
-                delay={6}
-              />
-              <OrbitingIcon
-                icon={<DollarSign className="w-5 h-5" />}
-                radius={100}
-                angle={270}
-                duration={12}
-                delay={9}
-              />
+            {/* Subheadline */}
+            <p 
+              className="text-[#666666] mb-6 animate-fade-in stagger-4"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                lineHeight: 1.6,
+              }}
+            >
+              Everything you need to build, launch, and sell digital products — in one place.
+            </p>
+
+            {/* Features */}
+            <div className="space-y-3 mt-6">
+              {[
+                'Generate a full ebook in under 60 seconds',
+                'Launch a sales page without touching code',
+                'Sell on Whop, Gumroad, Payhip and more'
+              ].map((feature, index) => (
+                <div 
+                  key={index} 
+                  className={`flex items-center gap-3 animate-fade-in stagger-${index + 5}`}
+                >
+                  <Check className="w-4 h-4 text-white flex-shrink-0" />
+                  <span 
+                    className="text-[#999999]"
+                    style={{
+                      fontFamily: 'DM Sans, sans-serif',
+                      fontSize: '14px',
+                    }}
+                  >
+                    {feature}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Enhanced Text Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-center"
-          >
-            <h1 className="text-3xl md:text-5xl font-bold text-white text-center mb-4 md:mb-6 max-w-3xl leading-tight bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
-              Transform Ideas into Reality
-            </h1>
-            <p className="text-sm md:text-base text-purple-200/80 text-center max-w-2xl leading-relaxed">
-              AI-powered platform to create digital products instantly
-            </p>
-          </motion.div>
-
-          {/* Feature Pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-wrap gap-3 justify-center mt-8 md:mt-12"
-          >
-            <div className="px-4 py-2 rounded-full bg-white/5 border border-purple-500/30 backdrop-blur-sm flex items-center gap-2">
-              <Zap className="w-4 h-4 text-purple-400" />
-              <span className="text-xs md:text-sm text-purple-200">Lightning Fast</span>
-            </div>
-            <div className="px-4 py-2 rounded-full bg-white/5 border border-purple-500/30 backdrop-blur-sm flex items-center gap-2">
-              <Shield className="w-4 h-4 text-purple-400" />
-              <span className="text-xs md:text-sm text-purple-200">Secure & Private</span>
-            </div>
-            <div className="px-4 py-2 rounded-full bg-white/5 border border-purple-500/30 backdrop-blur-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span className="text-xs md:text-sm text-purple-200">AI Powered</span>
-            </div>
-          </motion.div>
+        {/* Copyright - Hidden on mobile */}
+        <div className="hidden md:block absolute bottom-0 left-0 p-8 z-20">
+          <p className="text-[#333333] text-[11px]">© 2026 NexoraOS</p>
         </div>
       </div>
 
-      {/* Right Side: Auth Form - Improved Design */}
-      <div className="relative w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-black md:bg-gradient-to-br md:from-zinc-950 md:to-black overflow-y-auto shrink-0">
-        <div className="w-full max-w-md">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="relative rounded-2xl bg-gradient-to-br from-zinc-900/80 to-black/80 backdrop-blur-xl border border-purple-500/20 shadow-2xl p-8 md:p-10"
+      {/* Right Panel */}
+      <div className="flex-1 md:w-[45%] bg-[#080808] flex flex-col justify-center items-center h-screen p-12">
+        <div className="w-full max-w-[340px] animate-fade-in-up">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 
+              className="text-white mb-2"
+              style={{
+                fontFamily: 'Syne, sans-serif',
+                fontSize: '24px',
+                fontWeight: 700,
+              }}
+            >
+              Sign in to NexoraOS
+            </h2>
+            <p 
+              className="text-[#666666]"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '13px',
+              }}
+            >
+              Create AI-powered digital businesses instantly.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleContinue} className="space-y-4">
+            {/* Email Input */}
+            <div>
+              <label 
+                htmlFor="email"
+                className="text-[#444444] text-[10px] font-semibold tracking-wider mb-2 block"
+              >
+                EMAIL
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className={`w-full h-11 bg-[#111111] border rounded-md px-3.5 text-white placeholder:text-[#333333] focus:outline-none transition-all ${
+                  error 
+                    ? 'border-[#FF4444]' 
+                    : 'border-[#1A1A1A] focus:border-[rgba(255,255,255,0.3)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.05)]'
+                }`}
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: '14px',
+                }}
+              />
+              {error && (
+                <p className="text-[#FF4444] text-xs mt-1.5">{error}</p>
+              )}
+            </div>
+
+            {/* Continue Button */}
+            <button
+              type="submit"
+              disabled={isLoading || isGoogleLoading}
+              className="w-full bg-white text-[#0A0A0A] font-bold rounded-md hover:bg-[#F0F0F0] transition-all disabled:opacity-50 disabled:cursor-not-allowed border-none flex items-center justify-center gap-2"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                height: '44px',
+                fontWeight: 700,
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Continue →'
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-[#1A1A1A]" />
+              <span className="text-[#333333] text-xs">OR</span>
+              <div className="flex-1 h-px bg-[#1A1A1A]" />
+            </div>
+
+            {/* Google Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading || isGoogleLoading}
+              className="w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-md flex items-center justify-center gap-3 text-[#999999] hover:border-[rgba(255,255,255,0.15)] hover:bg-[#161616] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                fontWeight: 500,
+              }}
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.20443C17.64 8.56625 17.5827 7.95262 17.4764 7.36353H9V10.8449H13.8436C13.635 11.9699 13.0009 12.9231 12.0477 13.5613V15.8194H14.9564C16.6582 14.2526 17.64 11.9453 17.64 9.20443Z" fill="#4285F4"/>
+                    <path d="M8.99976 18C11.4298 18 13.467 17.1941 14.9561 15.8195L12.0475 13.5613C11.2416 14.1013 10.2107 14.4204 8.99976 14.4204C6.65567 14.4204 4.67158 12.8372 3.96385 10.71H0.957031V13.0418C2.43794 15.9831 5.48158 18 8.99976 18Z" fill="#34A853"/>
+                    <path d="M3.96409 10.7098C3.78409 10.1698 3.68182 9.59301 3.68182 8.99983C3.68182 8.40665 3.78409 7.82983 3.96409 7.28983V4.95801H0.957273C0.347727 6.17301 0 7.54755 0 8.99983C0 10.4521 0.347727 11.8266 0.957273 13.0416L3.96409 10.7098Z" fill="#FBBC05"/>
+                    <path d="M8.99976 3.57955C10.3211 3.57955 11.5075 4.03364 12.4402 4.92545L15.0216 2.34409C13.4629 0.891818 11.4257 0 8.99976 0C5.48158 0 2.43794 2.01682 0.957031 4.95818L3.96385 7.29C4.67158 5.16273 6.65567 3.57955 8.99976 3.57955Z" fill="#EA4335"/>
+                  </svg>
+                  Continue with Google
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Terms */}
+          <p 
+            className="text-[#333333] text-center mt-6"
             style={{
-              boxShadow: "0 0 40px rgba(168, 85, 247, 0.1), inset 0 0 40px rgba(168, 85, 247, 0.05)"
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: '11px',
+              lineHeight: 1.5,
             }}
           >
-            {magicLinkSent ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                className="text-center space-y-6"
-              >
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="flex justify-center"
-                >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center border border-purple-500/30">
-                    <Sparkles className="w-8 h-8 text-purple-400" />
-                  </div>
-                </motion.div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-                  <p className="text-gray-400">
-                    We sent a sign-in link to <span className="font-medium text-purple-300">{email}</span>
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => { setMagicLinkSent(false); setEmail(""); }}
-                  className="w-full rounded-xl border-gray-700 text-white hover:bg-white/5 transition-all duration-200"
-                >
-                  Use a different email
-                </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
-              >
-                {/* Header */}
-                <div className="text-center mb-8">
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                      Welcome Back
-                    </h2>
-                    <p className="text-sm text-gray-400">
-                      Sign in to your NexoraOS account
-                    </p>
-                  </motion.div>
-                </div>
-
-                <form onSubmit={handleEmailSubmit} className="flex flex-col gap-5">
-                  {/* Email Input */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="w-full flex flex-col gap-2"
-                  >
-                    <label className="text-xs font-medium text-gray-300">Email Address</label>
-                    <Input
-                      placeholder="you@example.com"
-                      type="email"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-                      disabled={anyLoading}
-                      className="w-full px-4 py-3 h-auto rounded-lg bg-white/5 border border-purple-500/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all hover:bg-white/8 disabled:opacity-50"
-                    />
-                    {emailError && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-xs text-red-400 text-left"
-                      >
-                        {emailError}
-                      </motion.div>
-                    )}
-                  </motion.div>
-
-                  {/* Continue Button */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    <Button
-                      type="submit"
-                      disabled={anyLoading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold h-auto py-3 rounded-lg shadow-lg shadow-purple-500/30 transition-all duration-200 text-sm flex items-center justify-center gap-2 group disabled:opacity-50"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          Continue
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-
-                  {/* Divider */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                    className="relative my-2"
-                  >
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs">
-                      <span className="px-2 bg-zinc-900 text-gray-500">OR</span>
-                    </div>
-                  </motion.div>
-
-                  {/* Google Button */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                  >
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleGoogleSignIn}
-                      disabled={anyLoading}
-                      className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-lg h-auto py-3 font-medium text-white shadow transition-all duration-200 text-sm disabled:opacity-50"
-                    >
-                      {isGoogleLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <GoogleIcon />
-                          Continue with Google
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-
-                  {/* Terms & Privacy */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                    className="w-full text-center mt-6"
-                  >
-                    <span className="text-xs text-gray-500">
-                      By signing in, you agree to our{" "}
-                      <a href="#" className="text-purple-400 hover:text-purple-300 underline transition-colors">
-                        Terms of Service
-                      </a>{" "}
-                      and{" "}
-                      <a href="#" className="text-purple-400 hover:text-purple-300 underline transition-colors">
-                        Privacy Policy
-                      </a>
-                      .
-                    </span>
-                  </motion.div>
-                </form>
-              </motion.div>
-            )}
-          </motion.div>
+            By signing in, you agree to our{' '}
+            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default Auth;
+export default NexoraOSSignIn;
