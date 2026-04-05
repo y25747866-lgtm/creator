@@ -131,25 +131,21 @@
 }
 
 /* Hero section */
-.hero-section {
+#hero {
   position: relative !important;
   overflow: hidden !important;
 }
 
-/* Unicorn Studio background */
-[data-us-project="mphmwraF225iCJdgjLPD"] {
-  opacity: 0.4 !important;
-  pointer-events: none !important;
-}
-
+/* Mobile — reduce opacity */
 @media (max-width: 768px) {
-  [data-us-project="mphmwraF225iCJdgjLPD"] {
+  #hero [data-unicorn] {
     opacity: 0.2 !important;
   }
 }
 
+/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  [data-us-project="mphmwraF225iCJdgjLPD"] {
+  #hero [data-unicorn] {
     display: none;
   }
 }

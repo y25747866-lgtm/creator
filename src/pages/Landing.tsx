@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
+import UnicornScene from 'unicornstudio-react';
 import { 
   ArrowRight, Check, Sparkles, Globe, DollarSign,
   Zap, TrendingUp, Rocket, ChevronDown, ChevronUp,
@@ -75,108 +76,115 @@ const Landing = () => {
 
       {/* ═══ HERO ═══ */}
       <section
+        id="hero"
         className="pt-48 pb-24 hero-section"
         style={{ position: 'relative', overflow: 'hidden' }}
       >
-        {/* Unicorn Studio Background */}
+        {/* Unicorn Studio animated background */}
         <div
-          data-us-project="mphmwraF225iCJdgjLPD"
           style={{
             position: 'absolute',
-            top: '0',
-            left: '0',
+            top: 0,
+            left: 0,
             width: '100%',
             height: '100%',
             zIndex: 0,
             opacity: 0.4,
             pointerEvents: 'none',
           }}
-        />
-        {/* Fallback gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A0A0A]/60 via-transparent to-[#0A0A0A]" style={{ zIndex: 0 }} />
+        >
+          <UnicornScene
+            projectId="mphmwraF225iCJdgjLPD"
+            width="100%"
+            height="100%"
+            scale={1}
+            dpi={1.5}
+            sdkUrl="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@2.1.6/dist/unicornStudio.umd.js"
+          />
+        </div>
 
         {/* Hero content wrapper */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-7xl mx-auto"
-          >
-            {/* Badge */}
-            <div className="flex justify-start mb-8">
-              <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
-                style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
-                AI-POWERED BUSINESS OS
-              </span>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="max-w-7xl mx-auto"
+            >
+              {/* Badge */}
+              <div className="flex justify-start mb-8">
+                <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
+                  style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
+                  AI-POWERED BUSINESS OS
+                </span>
+              </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              {/* Left: Text */}
-              <div className="text-left">
-                <div ref={heroWordsRef}>
-                  <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                    <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your idea.</div>
-                    <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your product.</div>
-                    <div className="hero-word opacity-0 transition-opacity duration-500">
-                      <span className="text-white/85">Your </span>
-                      <span className="text-white font-[900] opacity-100">income.</span>
-                    </div>
-                    <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">In one session.</div>
-                  </h1>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                {/* Left: Text */}
+                <div className="text-left">
+                  <div ref={heroWordsRef}>
+                    <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
+                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your idea.</div>
+                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your product.</div>
+                      <div className="hero-word opacity-0 transition-opacity duration-500">
+                        <span className="text-white/85">Your </span>
+                        <span className="text-white font-[900] opacity-100">income.</span>
+                      </div>
+                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">In one session.</div>
+                    </h1>
+                  </div>
+
+                  <p className="text-[#666666] mb-10 text-lg leading-relaxed max-w-lg">
+                    NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
+                  </p>
+
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <Link
+                      to="/auth"
+                      className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2"
+                    >
+                      Start Building Now <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                  <p className="text-[#333333] text-xs">No credit card. No fluff.</p>
                 </div>
 
-                <p className="text-[#666666] mb-10 text-lg leading-relaxed max-w-lg">
-                  NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
-                </p>
-
-                <div className="flex flex-wrap gap-3 mb-4">
-                  <Link
-                    to="/auth"
-                    className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2"
+                {/* Right: Terminal Window */}
+                <div className="hidden lg:block">
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl max-w-md ml-auto"
                   >
-                    Start Building Now <ArrowRight className="w-4 h-4" />
-                  </Link>
+                    <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1A1A1A]">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
+                    </div>
+                    <div className="p-8 space-y-5 font-mono text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="text-white">✓</span>
+                        <span className="text-[#CCCCCC]">Product Generated</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-white">✓</span>
+                        <span className="text-[#CCCCCC]">Sales Page Live</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-white">✓</span>
+                        <span className="text-[#CCCCCC]">First Sale: <span className="text-white font-bold">$49</span></span>
+                      </div>
+                      <div className="pt-4 border-t border-[#1A1A1A]">
+                        <span className="text-[#666666]">Time elapsed: </span>
+                        <span className="text-white">47 minutes</span>
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
-                <p className="text-[#333333] text-xs">No credit card. No fluff.</p>
               </div>
-
-              {/* Right: Terminal Window */}
-              <div className="hidden lg:block">
-                <motion.div
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-                  className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl max-w-md ml-auto"
-                >
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1A1A1A]">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                  </div>
-                  <div className="p-8 space-y-5 font-mono text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="text-white">✓</span>
-                      <span className="text-[#CCCCCC]">Product Generated</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-white">✓</span>
-                      <span className="text-[#CCCCCC]">Sales Page Live</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-white">✓</span>
-                      <span className="text-[#CCCCCC]">First Sale: <span className="text-white font-bold">$49</span></span>
-                    </div>
-                    <div className="pt-4 border-t border-[#1A1A1A]">
-                      <span className="text-[#666666]">Time elapsed: </span>
-                      <span className="text-white">47 minutes</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
