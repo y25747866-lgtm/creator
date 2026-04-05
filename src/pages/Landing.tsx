@@ -8,6 +8,7 @@ import {
   CreditCard, Layout, Share2, Lightbulb, BarChart2
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
+import founderPhoto from '@/assets/founder-photo.jpg';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── Section wrapper with fade-up ─── */
@@ -290,13 +291,10 @@ const Landing = () => {
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            {/* Photo placeholder */}
+            {/* Founder Photo */}
             <div className="flex justify-center">
-              <div className="aspect-square w-full max-w-sm rounded-3xl bg-[#0F0F0F] border border-[#1A1A1A] flex flex-col items-center justify-center">
-                <div className="w-24 h-24 rounded-2xl bg-[#1A1A1A] flex items-center justify-center text-3xl font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-                  YM
-                </div>
-                <p className="text-[#333333] text-sm">Photo coming soon</p>
+              <div className="aspect-square w-full max-w-sm rounded-3xl overflow-hidden border border-[#1A1A1A]">
+                <img src={founderPhoto} alt="Yesh Malik — Founder of NexoraOS" className="w-full h-full object-cover" />
               </div>
             </div>
             {/* Quote */}
@@ -343,7 +341,7 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-              <Link to="/auth" className="w-full py-3.5 rounded-lg bg-[#0A0A0A] text-white font-bold text-center text-sm hover:opacity-90 transition-all block">
+              <Link to="/pricing" className="w-full py-3.5 rounded-lg bg-[#0A0A0A] text-white font-bold text-center text-sm hover:opacity-90 transition-all block">
                 Get Started
               </Link>
             </div>
@@ -384,7 +382,7 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-              <Link to="/auth" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
+              <Link to="/pricing" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
                 Go Pro
               </Link>
             </div>
