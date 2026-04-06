@@ -282,8 +282,8 @@ const AnalyticsDashboard = () => {
 
   if (subLoading) {
     return (
-    <DashboardLayout>
-      <div style={{ background: '#0A0A0A', padding: '0' }} className="space-y-8">
+      <DashboardLayout>
+        <div style={{ background: '#0A0A0A', padding: '0' }} className="space-y-8">
           <Skeleton className="h-12 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
@@ -302,28 +302,29 @@ const AnalyticsDashboard = () => {
           <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using Analytics." : "Analytics is a premium feature. Upgrade to track your revenue and get AI-powered insights."} />
         )}
 
-        <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""} style={{ padding: '40px' }}>
+        <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""} style={{ padding: '48px 40px' }}>
           {/* Header Row */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 700, color: '#FFFFFF' }}>
+              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
                 Analytics Dashboard
               </h1>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555555', marginTop: '8px' }}>
-                Track your sales, revenue, and product performance.
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', marginTop: '12px', fontWeight: 400 }}>
+                Real-time insights into your sales, revenue, and product performance
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Select value={platformFilter} onValueChange={setPlatformFilter}>
                 <SelectTrigger 
                   style={{ 
-                    background: '#111111', 
-                    border: '1px solid #1A1A1A', 
-                    borderRadius: '6px', 
+                    background: '#0F0F0F', 
+                    border: '1px solid #252525', 
+                    borderRadius: '8px', 
                     color: '#FFFFFF',
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize: '13px',
-                    padding: '8px 14px'
+                    padding: '10px 16px',
+                    fontWeight: 500
                   }}
                   className="w-[180px]"
                 >
@@ -345,9 +346,9 @@ const AnalyticsDashboard = () => {
                   }
                 }}
                 disabled={loadingData || connections.length === 0}
-                style={{ color: '#555555' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#FFFFFF'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#555555'}
+                style={{ color: '#666666', background: '#0F0F0F', border: '1px solid #252525' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.borderColor = '#333333'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#666666'; e.currentTarget.style.borderColor = '#252525'; }}
               >
                 <RefreshCw className={cn("w-4 h-4", loadingData && "animate-spin")} />
               </Button>
@@ -355,7 +356,7 @@ const AnalyticsDashboard = () => {
           </div>
 
           {/* Platform Connection Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '24px' }} className="mb-8">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '32px' }} className="mb-12">
             {PLATFORMS.map(platform => {
               const connection = connections.find(c => c.platform === platform.id);
               const isConnected = !!connection;
@@ -364,33 +365,42 @@ const AnalyticsDashboard = () => {
                 <div 
                   key={platform.id}
                   style={{
-                    background: '#111111',
-                    border: '1px solid #1A1A1A',
-                    borderRadius: '10px',
-                    padding: '20px'
+                    background: '#0F0F0F',
+                    border: '1px solid #252525',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#333333';
+                    e.currentTarget.style.background = '#121212';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#252525';
+                    e.currentTarget.style.background = '#0F0F0F';
                   }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
                       <div 
                         style={{
-                          width: '32px',
-                          height: '32px',
+                          width: '40px',
+                          height: '40px',
                           background: '#1A1A1A',
-                          border: '1px solid #222222',
-                          borderRadius: '6px',
+                          border: '1px solid #2A2A2A',
+                          borderRadius: '8px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}
                       >
-                        <BarChart2 className="w-4 h-4 text-white" />
+                        <BarChart2 className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                        <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '15px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>
                           {platform.name}
                         </h3>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#666666', marginTop: '4px' }}>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>
                           {platform.description}
                         </p>
                       </div>
@@ -403,7 +413,7 @@ const AnalyticsDashboard = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-7 text-[10px] text-muted-foreground hover:text-destructive"
+                          className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
                           onClick={() => handleDisconnect(platform.id)}
                         >
                           <Unlink className="w-3 h-3 mr-1" />
@@ -418,16 +428,16 @@ const AnalyticsDashboard = () => {
                         disabled={!hasAccess}
                         style={{
                           background: 'transparent',
-                          border: '1px solid #1A1A1A',
+                          border: '1px solid #252525',
                           color: '#FFFFFF',
                           fontFamily: "'DM Sans', sans-serif",
-                          fontSize: '12px',
+                          fontSize: '13px',
                           fontWeight: 600,
-                          padding: '8px 14px',
-                          borderRadius: '6px'
+                          padding: '8px 16px',
+                          borderRadius: '8px'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-                        onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#1A1A1A'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = 'transparent'; }}
                       >
                         <Link2 className="w-4 h-4" />
                         Connect
@@ -435,7 +445,7 @@ const AnalyticsDashboard = () => {
                     )}
                   </div>
                   {isConnected && connection.last_sync_at && (
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#666666' }}>
+                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #252525', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#777777', fontFamily: "'DM Sans', sans-serif" }}>
                       <span>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</span>
                     </div>
                   )}
@@ -448,10 +458,10 @@ const AnalyticsDashboard = () => {
           {!hasLoadedData && !loadingData ? (
             <div 
               style={{
-                background: '#111111',
-                border: '1px dashed #1A1A1A',
-                borderRadius: '10px',
-                padding: '60px 32px',
+                background: '#0F0F0F',
+                border: '1px dashed #252525',
+                borderRadius: '12px',
+                padding: '80px 32px',
                 textAlign: 'center',
                 marginTop: '16px',
                 display: 'flex',
@@ -462,23 +472,23 @@ const AnalyticsDashboard = () => {
             >
               <div 
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '48px',
+                  height: '48px',
                   background: '#1A1A1A',
-                  border: '1px solid #222222',
-                  borderRadius: '8px',
+                  border: '1px solid #2A2A2A',
+                  borderRadius: '10px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 16px'
+                  margin: '0 auto 24px'
                 }}
               >
-                <BarChart2 className="w-[18px] h-[18px] text-white" />
+                <BarChart2 className="w-6 h-6 text-white" />
               </div>
-              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>
+              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px', letterSpacing: '-0.3px' }}>
                 No Data to Display
               </h3>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666', maxWidth: '320px', margin: '8px auto 24px' }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', maxWidth: '360px', margin: '12px auto 32px', fontWeight: 400, lineHeight: '1.6' }}>
                 {connections.length === 0 
                   ? "Connect your Whop or Payhip account to start tracking your business performance."
                   : "We're ready to fetch your data. Click the refresh button to sync."}
@@ -493,9 +503,11 @@ const AnalyticsDashboard = () => {
                       color: '#0A0A0A',
                       fontFamily: "'Syne', sans-serif",
                       fontWeight: 700,
-                      padding: '10px 20px',
-                      borderRadius: '6px',
-                      border: 'none'
+                      padding: '11px 24px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '14px',
+                      letterSpacing: '-0.3px'
                     }}
                   >
                     Connect Whop
@@ -505,15 +517,16 @@ const AnalyticsDashboard = () => {
                     disabled={!hasAccess}
                     style={{
                       background: 'transparent',
-                      border: '1px solid #1A1A1A',
+                      border: '1px solid #252525',
                       color: '#FFFFFF',
                       fontFamily: "'Syne', sans-serif",
                       fontWeight: 600,
-                      padding: '10px 20px',
-                      borderRadius: '6px'
+                      padding: '11px 24px',
+                      borderRadius: '8px',
+                      fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#1A1A1A'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = 'transparent'; }}
                   >
                     Connect Payhip
                   </Button>
@@ -523,59 +536,33 @@ const AnalyticsDashboard = () => {
           ) : (
             <div className="space-y-8">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
-                      <DollarSign className="w-4 h-4 text-white" />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                {[
+                  { icon: DollarSign, label: 'Total Revenue', value: analytics?.summary.totalRevenue, format: (v: number) => `$${v.toLocaleString()}` },
+                  { icon: ShoppingCart, label: 'Total Sales', value: analytics?.summary.totalSales, format: (v: number) => v.toLocaleString() },
+                  { icon: Package, label: 'Active Products', value: analytics?.summary.activeProducts, format: (v: number) => v.toString() },
+                  { icon: TrendingUp, label: 'Conv. Rate', value: analytics?.summary.conversionRate, format: (v: number) => `${v}%` }
+                ].map((stat, i) => (
+                  <div key={i} style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '24px' }}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div style={{ padding: '10px', borderRadius: '10px', background: '#1A1A1A' }}>
+                        <stat.icon className="w-5 h-5 text-white" />
+                      </div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#777777', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>{stat.label}</span>
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Revenue</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">
-                    {loadingData ? <Skeleton className="h-8 w-24" /> : `$${analytics?.summary.totalRevenue.toLocaleString()}`}
-                  </div>
-                </Card>
-                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
-                      <ShoppingCart className="w-4 h-4 text-white" />
+                    <div className="text-3xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, letterSpacing: '-0.5px' }}>
+                      {loadingData ? <Skeleton className="h-8 w-24" /> : stat.format(stat.value || 0)}
                     </div>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Sales</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">
-                    {loadingData ? <Skeleton className="h-8 w-16" /> : analytics?.summary.totalSales.toLocaleString()}
-                  </div>
-                </Card>
-                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
-                      <Package className="w-4 h-4 text-white" />
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Products</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">
-                    {loadingData ? <Skeleton className="h-8 w-12" /> : analytics?.summary.activeProducts}
-                  </div>
-                </Card>
-                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
-                      <TrendingUp className="w-4 h-4 text-white" />
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Conv. Rate</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white">
-                    {loadingData ? <Skeleton className="h-8 w-16" /> : `${analytics?.summary.conversionRate}%`}
-                  </div>
-                </Card>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Charts & Tables */}
                 <div className="lg:col-span-8 space-y-8">
-                  <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '24px' }}>Revenue Overview</h3>
-                    <div className="h-[300px] w-full">
+                  <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '28px', fontFamily: "'Syne', sans-serif", letterSpacing: '-0.3px' }}>Revenue Overview</h3>
+                    <div className="h-[320px] w-full">
                       {loadingData ? (
                         <Skeleton className="w-full h-full rounded-xl" />
                       ) : (
@@ -583,7 +570,7 @@ const AnalyticsDashboard = () => {
                           <AreaChart data={revenueData}>
                             <defs>
                               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.15}/>
+                                <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.12}/>
                                 <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0}/>
                               </linearGradient>
                             </defs>
@@ -592,53 +579,56 @@ const AnalyticsDashboard = () => {
                               dataKey="date" 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{fontSize: 11, fill: '#333333'}}
+                              tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}}
                               dy={10}
                             />
                             <YAxis 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{fontSize: 11, fill: '#333333'}}
-                              tickFormatter={(val) => `$${val}`}
+                              tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}}
+                              tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
                             />
                             <Tooltip 
                               contentStyle={{ 
-                                backgroundColor: '#111111', 
-                                borderColor: '#1A1A1A',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                color: '#FFFFFF'
+                                backgroundColor: '#0F0F0F', 
+                                borderColor: '#252525',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                color: '#FFFFFF',
+                                fontFamily: "'DM Sans', sans-serif",
+                                border: '1px solid #252525'
                               }} 
                             />
                             <Area 
                               type="monotone" 
                               dataKey="amount" 
                               stroke="#FFFFFF"
-                              strokeOpacity={0.8}
+                              strokeOpacity={0.9}
+                              strokeWidth={2}
                               fill="url(#colorRev)" 
                             />
                           </AreaChart>
                         </ResponsiveContainer>
                       )}
                     </div>
-                  </Card>
+                  </div>
 
                   {/* Products Table */}
-                  <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '24px' }}>Top Products</h3>
+                  <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '28px', fontFamily: "'Syne', sans-serif", letterSpacing: '-0.3px' }}>Top Products</h3>
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow style={{ borderBottomColor: '#1A1A1A' }}>
-                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Product</TableHead>
-                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Sales</TableHead>
-                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Revenue</TableHead>
+                          <TableRow style={{ borderBottomColor: '#252525' }}>
+                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Product</TableHead>
+                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Sales</TableHead>
+                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Revenue</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {loadingData ? (
                             [1, 2, 3].map(i => (
-                              <TableRow key={i} style={{ borderBottomColor: '#1A1A1A' }}>
+                              <TableRow key={i} style={{ borderBottomColor: '#252525' }}>
                                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                                 <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
@@ -646,15 +636,15 @@ const AnalyticsDashboard = () => {
                             ))
                           ) : analytics?.products && analytics.products.length > 0 ? (
                             analytics.products.map((product, i) => (
-                              <TableRow key={i} style={{ borderBottomColor: '#1A1A1A' }}>
-                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>{product.name}</TableCell>
-                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>{product.sales}</TableCell>
-                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>${product.revenue}</TableCell>
+                              <TableRow key={i} style={{ borderBottomColor: '#252525' }}>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>{product.name}</TableCell>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>{product.sales}</TableCell>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>${product.revenue}</TableCell>
                               </TableRow>
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={3} style={{ textAlign: 'center', color: '#666666', padding: '24px' }}>
+                              <TableCell colSpan={3} style={{ textAlign: 'center', color: '#777777', padding: '32px', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" }}>
                                 No products data available
                               </TableCell>
                             </TableRow>
@@ -662,36 +652,39 @@ const AnalyticsDashboard = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  </Card>
+                  </div>
                 </div>
 
                 {/* Chat Sidebar */}
                 <div className="lg:col-span-4">
-                  <Card className="p-6 h-[600px] flex flex-col" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '16px' }}>AI Advisor</h3>
+                  <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px', height: '640px', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '20px', fontFamily: "'Syne', sans-serif", letterSpacing: '-0.3px' }}>AI Advisor</h3>
                     <ScrollArea className="flex-1 mb-4">
                       <div className="space-y-4 pr-4">
                         {chatMessages.length === 0 ? (
-                          <div style={{ textAlign: 'center', color: '#666666', fontSize: '12px', paddingTop: '24px' }}>
+                          <div style={{ textAlign: 'center', color: '#777777', fontSize: '13px', paddingTop: '32px', fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
                             Ask me anything about your analytics
                           </div>
                         ) : (
                           chatMessages.map((msg, i) => (
                             <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                               {msg.role === "assistant" && (
-                                <div style={{ width: '24px', height: '24px', background: '#1A1A1A', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <Bot className="w-3 h-3 text-white" />
+                                <div style={{ width: '28px', height: '28px', background: '#1A1A1A', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid #2A2A2A' }}>
+                                  <Bot className="w-4 h-4 text-white" />
                                 </div>
                               )}
                               <div 
                                 style={{
                                   background: msg.role === "user" ? '#FFFFFF' : '#1A1A1A',
                                   color: msg.role === "user" ? '#0A0A0A' : '#FFFFFF',
-                                  padding: '8px 12px',
-                                  borderRadius: '6px',
-                                  fontSize: '12px',
+                                  padding: '10px 14px',
+                                  borderRadius: '8px',
+                                  fontSize: '13px',
                                   maxWidth: '80%',
-                                  wordWrap: 'break-word'
+                                  wordWrap: 'break-word',
+                                  fontFamily: "'DM Sans', sans-serif",
+                                  fontWeight: 400,
+                                  border: msg.role === "assistant" ? '1px solid #2A2A2A' : 'none'
                                 }}
                               >
                                 {msg.content}
@@ -711,10 +704,12 @@ const AnalyticsDashboard = () => {
                         disabled={chatLoading}
                         style={{
                           background: '#0A0A0A',
-                          border: '1px solid #1A1A1A',
+                          border: '1px solid #252525',
                           color: '#FFFFFF',
-                          fontSize: '12px',
-                          padding: '8px 12px'
+                          fontSize: '13px',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          fontFamily: "'DM Sans', sans-serif"
                         }}
                       />
                       <Button
@@ -723,13 +718,14 @@ const AnalyticsDashboard = () => {
                         disabled={chatLoading || !chatInput.trim()}
                         style={{
                           background: '#FFFFFF',
-                          color: '#0A0A0A'
+                          color: '#0A0A0A',
+                          borderRadius: '8px'
                         }}
                       >
                         {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </Button>
                     </div>
-                  </Card>
+                  </div>
                 </div>
               </div>
             </div>
@@ -739,10 +735,10 @@ const AnalyticsDashboard = () => {
 
       {/* Connect Modal */}
       <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
-        <DialogContent style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
+        <DialogContent style={{ background: '#0F0F0F', border: '1px solid #252525', color: '#FFFFFF', borderRadius: '12px' }}>
           <DialogHeader>
-            <DialogTitle style={{ color: '#FFFFFF' }}>Connect {connectModal}</DialogTitle>
-            <DialogDescription style={{ color: '#666666' }}>
+            <DialogTitle style={{ color: '#FFFFFF', fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700 }}>Connect {connectModal}</DialogTitle>
+            <DialogDescription style={{ color: '#777777', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
               Enter your {connectModal} API key to start syncing data
             </DialogDescription>
           </DialogHeader>
@@ -754,9 +750,12 @@ const AnalyticsDashboard = () => {
               onChange={(e) => setApiKeyInput(e.target.value)}
               style={{
                 background: '#0A0A0A',
-                border: '1px solid #1A1A1A',
+                border: '1px solid #252525',
                 color: '#FFFFFF',
-                padding: '8px 12px'
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '13px'
               }}
             />
             <div className="flex gap-3 justify-end">
@@ -765,8 +764,11 @@ const AnalyticsDashboard = () => {
                 onClick={() => setConnectModal(null)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid #1A1A1A',
-                  color: '#FFFFFF'
+                  border: '1px solid #252525',
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: 600
                 }}
               >
                 Cancel
@@ -776,7 +778,10 @@ const AnalyticsDashboard = () => {
                 disabled={connecting || !apiKeyInput.trim()}
                 style={{
                   background: '#FFFFFF',
-                  color: '#0A0A0A'
+                  color: '#0A0A0A',
+                  borderRadius: '8px',
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 700
                 }}
               >
                 {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
