@@ -18,6 +18,81 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "neutral" }) => {
   return <Minus className="w-4 h-4 text-muted-foreground" />;
 };
 
+const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; label: string; value: string; trend?: "up" | "down" | "neutral"; loading?: boolean }) => (
+  <div
+    style={{
+      background: "#0F0F0F",
+      border: "1px solid #252525",
+      borderRadius: "12px",
+      padding: "24px",
+      minHeight: "130px",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      transition: "all 0.3s ease"
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = "#333333";
+      e.currentTarget.style.background = "#121212";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = "#252525";
+      e.currentTarget.style.background = "#0F0F0F";
+    }}
+  >
+    <div
+      style={{
+        width: "40px",
+        height: "40px",
+        background: "#1A1A1A",
+        border: "1px solid #2A2A2A",
+        borderRadius: "8px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Icon className="w-5 h-5 text-white" />
+    </div>
+    <div>
+      <div
+        style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: "12px",
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "#777777",
+          marginBottom: "12px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: "'Syne', sans-serif",
+          fontSize: "32px",
+          fontWeight: 800,
+          color: "#FFFFFF",
+          lineHeight: "1",
+          marginBottom: trend ? "12px" : "0",
+          letterSpacing: "-0.5px",
+        }}
+      >
+        {loading ? "..." : value}
+      </div>
+      {trend && (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+          <TrendIcon trend={trend} />
+          <span style={{ color: trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#777777" }}>
+            {trend === "up" ? "Growing" : trend === "down" ? "Declining" : "Stable"}
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const { hasPaidSubscription, subscription } = useSubscription();
   const isExpired = subscription?.status === "expired";
@@ -196,117 +271,53 @@ const Dashboard = () => {
     );
   }, [topProducts, searchQuery]);
 
-  const stats = [
-    {
-      icon: BookOpen,
-      label: "Ebooks Created",
-      value: aggregatedStats.ebooksCreated.toLocaleString(),
-      color: "from-indigo-500 to-purple-500",
-    },
-    {
-      icon: Eye,
-      label: "Total Views",
-      value: aggregatedStats.totalViews.toLocaleString(),
-      color: "from-blue-500 to-cyan-500",
-    },
-    {
-      icon: Download,
-      label: "Total Downloads",
-      value: aggregatedStats.totalDownloads.toLocaleString(),
-      color: "from-purple-500 to-pink-500",
-    },
-    {
-      icon: BarChart3,
-      label: "Conversion Rate",
-      value: aggregatedStats.totalViews > 0 
-        ? `${((aggregatedStats.totalDownloads / aggregatedStats.totalViews) * 100).toFixed(1)}%`
-        : "0%",
-      color: "from-orange-500 to-red-500",
-    },
-  ];
-
-  const COLORS = ["#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#10b981"];
-
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex items-center justify-between"
-        >
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Your digital product command center. Start creating today.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg border border-border">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-xs font-medium">AI Credits: {aggregatedStats.aiCredits}</span>
+      <div style={{ background: '#0A0A0A', padding: '0' }} className="w-full relative">
+        <div style={{ padding: '48px 40px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+            <div>
+              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '32px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px', letterSpacing: '-0.5px' }}>
+                Dashboard
+              </h1>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', fontWeight: 400 }}>
+                Your digital product command center. Start creating today.
+              </p>
             </div>
-            <Button size="sm" className="gap-2">
-              Export
-            </Button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#0F0F0F', border: '1px solid #252525', borderRadius: '8px', fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
+                <Zap className="w-4 h-4" />
+                AI Credits: {aggregatedStats.aiCredits}
+              </div>
+              <Button style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: "'Syne', sans-serif", fontWeight: 700, borderRadius: '8px', padding: '10px 20px' }}>
+                Export
+              </Button>
+            </div>
           </div>
-        </motion.div>
 
-        {isExpired && (
-          <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3 text-destructive">
-            <p className="text-sm font-medium">Your subscription has expired. Some premium features are locked.</p>
+          {isExpired && (
+            <div style={{ padding: '16px', borderRadius: '12px', background: '#1A1A1A', border: '1px solid #252525', display: 'flex', alignItems: 'center', gap: '12px', color: '#FFFFFF', marginBottom: '24px', fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 500 }}>
+              <p>Your subscription has expired. Some premium features are locked.</p>
+            </div>
+          )}
+
+          {/* Stats Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+            <StatCard icon={BookOpen} label="Ebooks Created" value={aggregatedStats.ebooksCreated.toLocaleString()} loading={loading} />
+            <StatCard icon={Eye} label="Total Views" value={aggregatedStats.totalViews.toLocaleString()} loading={loading} />
+            <StatCard icon={Download} label="Total Downloads" value={aggregatedStats.totalDownloads.toLocaleString()} trend={aggregatedStats.trend} loading={loading} />
+            <StatCard icon={BarChart3} label="Conversion Rate" value={aggregatedStats.totalViews > 0 ? `${((aggregatedStats.totalDownloads / aggregatedStats.totalViews) * 100).toFixed(1)}%` : "0%"} loading={loading} />
           </div>
-        )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Card className="p-6 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  {stat.label === "Total Downloads" && (
-                    <div className="flex items-center gap-1 text-sm font-medium">
-                      <TrendIcon trend={aggregatedStats.trend} />
-                      <span className={cn(
-                        "text-xs",
-                        aggregatedStats.trend === "up" ? "text-green-600" : aggregatedStats.trend === "down" ? "text-red-600" : "text-muted-foreground"
-                      )}>
-                        {aggregatedStats.trend === "up" ? "Growing" : aggregatedStats.trend === "down" ? "Declining" : "Stable"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                <p className="text-3xl font-bold">{loading ? "..." : stat.value}</p>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Total Profit / Performance Chart */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
+          {/* Charts Section */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '32px' }}>
+            {/* Performance Chart */}
+            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
                 <div>
-                  <h3 className="text-lg font-semibold">Performance</h3>
-                  <p className="text-sm text-muted-foreground">Downloads and views over time</p>
+                  <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Performance</h3>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Downloads and views over time</p>
                 </div>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
@@ -318,35 +329,38 @@ const Dashboard = () => {
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <defs>
+                        <linearGradient id="colorDownloads" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.12}/>
+                          <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "#0F0F0F",
+                          border: "1px solid #252525",
                           borderRadius: 8,
+                          color: "#FFFFFF",
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: "13px"
                         }}
                       />
-                      <Legend />
-                      <Line type="monotone" dataKey="downloads" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="views" stroke="#ec4899" strokeWidth={2} dot={false} />
+                      <Legend wrapperStyle={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px" }} />
+                      <Line type="monotone" dataKey="downloads" stroke="#FFFFFF" strokeOpacity={0.9} strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="views" stroke="#777777" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               )}
-            </Card>
-          </motion.div>
+            </div>
 
-          {/* Most Day Active */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          >
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Most Day Active</h3>
+            {/* Most Day Active */}
+            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Most Day Active</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
@@ -357,37 +371,33 @@ const Dashboard = () => {
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "#0F0F0F",
+                          border: "1px solid #252525",
                           borderRadius: 8,
+                          color: "#FFFFFF",
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: "13px"
                         }}
                       />
-                      <Bar dataKey="active" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="active" fill="#FFFFFF" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               )}
-            </Card>
-          </motion.div>
-        </div>
+            </div>
+          </div>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Best Selling Products */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="lg:col-span-2"
-          >
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Best Selling Products</h3>
+          {/* Bottom Section */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+            {/* Best Selling Products */}
+            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Best Selling Products</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
@@ -400,81 +410,73 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', textAlign: 'center', padding: '32px 0', fontWeight: 400 }}>
                   No products yet. Create your first ebook to get started!
                 </p>
               ) : (
                 <div className="space-y-4">
                   {filteredProducts.map((product, index) => (
-                    <div key={product.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
+                    <div key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '10px', background: '#0A0A0A', border: '1px solid #252525', transition: 'all 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#121212'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = '#0A0A0A'; }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne', sans-serif", fontWeight: 700, color: '#0A0A0A', fontSize: '14px' }}>
                           {index + 1}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{product.name}</p>
-                          <p className="text-xs text-muted-foreground">{product.downloads} downloads</p>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 500, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</p>
+                          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>{product.downloads} downloads</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${(product.revenue / 100).toFixed(0)}</p>
-                        <p className="text-xs text-yellow-600">★ {product.rating.toFixed(1)}</p>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>${(product.revenue / 100).toFixed(0)}</p>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>★ {product.rating.toFixed(1)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </Card>
-          </motion.div>
+            </div>
 
-          {/* Repeat Customer Rate */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Repeat Rate</h3>
+            {/* Repeat Rate */}
+            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Repeat Rate</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </div>
               {loading ? (
-                <Skeleton className="h-64 w-full rounded-lg" />
+                <Skeleton className="h-48 w-full rounded-lg" />
               ) : (
-                <div className="flex flex-col items-center justify-center h-64">
-                  <div className="relative w-40 h-40">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                  <div style={{ width: '120px', height: '120px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={[
-                            { name: "Repeat", value: 68 },
-                            { name: "New", value: 32 },
+                            { name: "Repeat", value: 65 },
+                            { name: "New", value: 35 },
                           ]}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={70}
+                          innerRadius={40}
+                          outerRadius={60}
                           paddingAngle={2}
                           dataKey="value"
                         >
-                          {COLORS.map((color, index) => (
-                            <Cell key={`cell-${index}`} fill={color} />
-                          ))}
+                          <Cell fill="#FFFFFF" />
+                          <Cell fill="#333333" />
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <p className="text-2xl font-bold mt-4">68%</p>
-                  <p className="text-xs text-muted-foreground text-center">On track for 80% target</p>
-                  <Button variant="link" size="sm" className="mt-2">
-                    Show details
-                  </Button>
+                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '24px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>65%</p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Repeat customers</p>
+                  </div>
                 </div>
               )}
-            </Card>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
