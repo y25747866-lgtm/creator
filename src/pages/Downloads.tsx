@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Download, Image, Eye, Trash2, BookOpen, Lock } from "lucide-react";
+import { Download, Image, Eye, Trash2, BookOpen, FileText, Lock } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
@@ -54,64 +53,138 @@ const Downloads = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 relative">
+      <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
         {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
         {!hasAccess && !subLoading && (
           <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to access your downloads." : "Downloads and exports are premium features. Upgrade to download your generated ebooks."} />
         )}
 
         <div className={!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-3xl font-bold mb-2">Download History</h1>
-            <p className="text-muted-foreground">Access and manage all your generated ebooks.</p>
-            {!hasAccess && !subLoading && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2.5">
-                <Lock className="w-4 h-4" />
-                {isExpired ? "Subscription expired." : "Downloads & Exports require a paid plan."}
-                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => window.location.href = "/pricing"}>Upgrade</Button>
-              </div>
-            )}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: '24px' }}
+          >
+            <h1 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
+              Download History
+            </h1>
+            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555' }}>
+              Access and manage all your generated ebooks.
+            </p>
           </motion.div>
 
           {ebooks.length === 0 ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-              <Card className="glass-panel p-12 text-center">
-                <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">No ebooks yet</h3>
-                <p className="text-muted-foreground mb-6">Create your first ebook to see it here.</p>
-                <Button onClick={() => (window.location.href = "/dashboard/ebook-generator")}>Create Ebook</Button>
-              </Card>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: 0.1 }}
+              style={{
+                background: '#111111',
+                border: '1px dashed #1A1A1A',
+                borderRadius: '10px',
+                padding: '80px 32px',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
+                background: '#1A1A1A',
+                border: '1px solid #222222',
+                borderRadius: '10px',
+                margin: '0 auto 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <BookOpen size={20} color="#FFFFFF" style={{ opacity: 0.4 }} />
+              </div>
+              <h3 style={{ fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>
+                No ebooks yet
+              </h3>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555', marginTop: '8px' }}>
+                Create your first ebook to see it here.
+              </p>
+              <button 
+                onClick={() => (window.location.href = "/dashboard/ebook-generator")}
+                style={{
+                  background: '#FFFFFF',
+                  color: '#0A0A0A',
+                  fontFamily: 'Syne',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  padding: '12px 24px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  marginTop: '24px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
+              >
+                Create Ebook
+              </button>
             </motion.div>
           ) : (
-            <div className="grid gap-6">
+            <div className="flex flex-col">
               {ebooks.map((ebook, index) => (
-                <motion.div key={ebook.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }}>
-                  <Card className="glass-panel p-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="w-full md:w-32 shrink-0">
-                        {ebook.coverImageUrl ? (
-                          <img src={ebook.coverImageUrl} alt={ebook.title} className="w-full rounded-lg shadow-md" />
-                        ) : (
-                          <div className="w-full aspect-[3/4] rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center p-2">
-                            <BookOpen className="w-8 h-8 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{ebook.title}</h3>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
-                          <span>Pages: ~{ebook.pages}</span>
-                          <span>Created: {format(new Date(ebook.createdAt), "MMM d, yyyy")}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                          <Button size="sm" onClick={() => guardedDownload(() => generatePDF(ebook), ebook, "download")} disabled={!hasAccess}><Download className="w-4 h-4 mr-2" />PDF</Button>
-                          <Button size="sm" variant="outline" onClick={() => guardedDownload(() => downloadCoverImage(ebook), ebook, "cover_download")} disabled={!ebook.coverImageUrl || !hasAccess}><Image className="w-4 h-4 mr-2" />Cover</Button>
-                          <Button size="sm" variant="outline" onClick={() => { setPreviewEbook(ebook); if (ebook.dbProductId) { try { recordMetric(ebook.dbProductId, "view"); } catch {} } }}><Eye className="w-4 h-4 mr-2" />Preview</Button>
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeEbook(ebook.id)}><Trash2 className="w-4 h-4" /></Button>
-                        </div>
-                      </div>
+                <motion.div 
+                  key={ebook.id} 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  style={{
+                    background: '#111111',
+                    border: '1px solid #1A1A1A',
+                    borderRadius: '10px',
+                    padding: '16px 20px',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <FileText size={18} color="#FFFFFF" style={{ opacity: 0.4 }} />
+                    <div>
+                      <h3 style={{ fontFamily: 'Syne', fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>
+                        {ebook.title}
+                      </h3>
+                      <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#555555' }}>
+                        {ebook.pages} pages · PDF · Generated {format(new Date(ebook.createdAt), "MMM d yyyy")}
+                      </p>
                     </div>
-                  </Card>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button 
+                      onClick={() => guardedDownload(() => generatePDF(ebook), ebook, "download")}
+                      disabled={!hasAccess}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid #1A1A1A',
+                        color: '#FFFFFF',
+                        padding: '8px 14px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+                    >
+                      Download
+                    </button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="text-destructive hover:text-destructive p-2 h-auto" 
+                      onClick={() => removeEbook(ebook.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -119,21 +192,16 @@ const Downloads = () => {
         </div>
 
         <Dialog open={!!previewEbook} onOpenChange={() => setPreviewEbook(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>{previewEbook?.title}</DialogTitle></DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#111111] border-[#1A1A1A] text-white">
+            <DialogHeader><DialogTitle className="text-white">{previewEbook?.title}</DialogTitle></DialogHeader>
             {previewEbook?.coverImageUrl && (
               <div className="mb-6"><img src={previewEbook.coverImageUrl} alt={previewEbook.title} className="w-48 mx-auto rounded-lg shadow-lg" /></div>
             )}
-            {/* Record view metric when preview is opened */}
-            {previewEbook && previewEbook.dbProductId && (() => {
-              try { recordMetric(previewEbook.dbProductId, "view"); } catch {}
-              return null;
-            })()}
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm dark:prose-invert max-w-none text-gray-300">
               {previewEbook?.content.split("\n").map((line, i) => {
-                if (line.startsWith("# ")) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.replace("# ", "")}</h1>;
-                if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-semibold mt-4 mb-3">{line.replace("## ", "")}</h2>;
-                if (line.startsWith("### ")) return <h3 key={i} className="text-lg font-medium mt-3 mb-2">{line.replace("### ", "")}</h3>;
+                if (line.startsWith("# ")) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4 text-white">{line.replace("# ", "")}</h1>;
+                if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-semibold mt-4 mb-3 text-white">{line.replace("## ", "")}</h2>;
+                if (line.startsWith("### ")) return <h3 key={i} className="text-lg font-medium mt-3 mb-2 text-white">{line.replace("### ", "")}</h3>;
                 if (line.trim()) return <p key={i} className="mb-3">{line}</p>;
                 return null;
               })}
