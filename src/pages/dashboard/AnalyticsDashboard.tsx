@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Link2, Unlink, RefreshCw, DollarSign, ShoppingCart, Package, TrendingUp,
-  Send, Bot, User, Loader2, BarChart3, Lock,
+  Send, Bot, User, Loader2, BarChart2, Lock,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from "recharts";
 import whopLogo from "@/assets/whop-logo.png";
@@ -283,9 +283,9 @@ const AnalyticsDashboard = () => {
   if (subLoading) {
     return (
       <DashboardLayout>
-        <div className="p-8 space-y-8">
+        <div style={{ background: '#0A0A0A', padding: '40px' }} className="space-y-8">
           <Skeleton className="h-12 w-64" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
           </div>
           <Skeleton className="h-[400px] rounded-xl" />
@@ -296,23 +296,37 @@ const AnalyticsDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-8 max-w-7xl mx-auto relative">
+      <div style={{ background: '#0A0A0A', padding: '40px' }} className="max-w-7xl mx-auto relative">
         {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
         {!hasAccess && (
           <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using Analytics." : "Analytics is a premium feature. Upgrade to track your revenue and get AI-powered insights."} />
         )}
 
         <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""}>
+          {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Track your sales, revenue, and product performance across platforms.
+              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 700, color: '#FFFFFF' }}>
+                Analytics Dashboard
+              </h1>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555555', marginTop: '8px' }}>
+                Track your sales, revenue, and product performance.
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Select value={platformFilter} onValueChange={setPlatformFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger 
+                  style={{ 
+                    background: '#111111', 
+                    border: '1px solid #1A1A1A', 
+                    borderRadius: '6px', 
+                    color: '#FFFFFF',
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: '13px',
+                    padding: '8px 14px'
+                  }}
+                  className="w-[180px]"
+                >
                   <SelectValue placeholder="All Platforms" />
                 </SelectTrigger>
                 <SelectContent>
@@ -328,32 +342,57 @@ const AnalyticsDashboard = () => {
                   if (connections.length > 0) {
                     setAnalytics(null);
                     setHasLoadedData(false);
-                    // This will trigger the useEffect to reload
                   }
                 }}
                 disabled={loadingData || connections.length === 0}
+                style={{ color: '#555555' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#FFFFFF'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#555555'}
               >
                 <RefreshCw className={cn("w-4 h-4", loadingData && "animate-spin")} />
               </Button>
             </div>
           </div>
 
-          {/* Connection Status */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Platform Connection Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '24px' }} className="mb-8">
             {PLATFORMS.map(platform => {
               const connection = connections.find(c => c.platform === platform.id);
               const isConnected = !!connection;
               
               return (
-                <Card key={platform.id} className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+                <div 
+                  key={platform.id}
+                  style={{
+                    background: '#111111',
+                    border: '1px solid #1A1A1A',
+                    borderRadius: '10px',
+                    padding: '20px'
+                  }}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-white p-2 flex items-center justify-center shadow-sm">
-                        <img src={platform.logo} alt={platform.name} className="w-full h-full object-contain" />
+                      <div 
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          background: '#1A1A1A',
+                          border: '1px solid #222222',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <BarChart2 className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg">{platform.name}</h3>
-                        <p className="text-xs text-muted-foreground max-w-[200px]">{platform.description}</p>
+                        <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>
+                          {platform.name}
+                        </h3>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#666666', marginTop: '4px' }}>
+                          {platform.description}
+                        </p>
                       </div>
                     </div>
                     {isConnected ? (
@@ -377,6 +416,18 @@ const AnalyticsDashboard = () => {
                         className="gap-2"
                         onClick={() => setConnectModal(platform.id)}
                         disabled={!hasAccess}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #1A1A1A',
+                          color: '#FFFFFF',
+                          fontFamily: "'DM Sans', sans-serif",
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          padding: '8px 14px',
+                          borderRadius: '6px'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+                        onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
                       >
                         <Link2 className="w-4 h-4" />
                         Connect
@@ -384,79 +435,136 @@ const AnalyticsDashboard = () => {
                     )}
                   </div>
                   {isConnected && connection.last_sync_at && (
-                    <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#666666' }}>
                       <span>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</span>
                     </div>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>
 
           {/* Analytics Content */}
           {!hasLoadedData && !loadingData ? (
-            <Card className="p-12 border-2 border-dashed flex flex-col items-center justify-center text-center bg-muted/20 rounded-3xl">
-              <div className="w-20 h-20 rounded-2xl bg-primary/5 flex items-center justify-center mb-6">
-                <BarChart3 className="w-10 h-10 text-primary/40" />
+            <div 
+              style={{
+                background: '#111111',
+                border: '1px dashed #1A1A1A',
+                borderRadius: '10px',
+                padding: '60px 32px',
+                textAlign: 'center',
+                marginTop: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <div 
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  background: '#1A1A1A',
+                  border: '1px solid #222222',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}
+              >
+                <BarChart2 className="w-[18px] h-[18px] text-white" />
               </div>
-              <h3 className="text-2xl font-bold mb-2">No Data to Display</h3>
-              <p className="text-muted-foreground max-w-md mx-auto mb-8">
+              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>
+                No Data to Display
+              </h3>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666', maxWidth: '320px', margin: '8px auto 24px' }}>
                 {connections.length === 0 
                   ? "Connect your Whop or Payhip account to start tracking your business performance."
                   : "We're ready to fetch your data. Click the refresh button to sync."}
               </p>
               {connections.length === 0 && (
-                <div className="flex gap-3">
-                  <Button onClick={() => setConnectModal("whop")} disabled={!hasAccess}>Connect Whop</Button>
-                  <Button variant="outline" onClick={() => setConnectModal("payhip")} disabled={!hasAccess}>Connect Payhip</Button>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <Button 
+                    onClick={() => setConnectModal("whop")} 
+                    disabled={!hasAccess}
+                    style={{
+                      background: '#FFFFFF',
+                      color: '#0A0A0A',
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 700,
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      border: 'none'
+                    }}
+                  >
+                    Connect Whop
+                  </Button>
+                  <Button 
+                    onClick={() => setConnectModal("payhip")} 
+                    disabled={!hasAccess}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #1A1A1A',
+                      color: '#FFFFFF',
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 600,
+                      padding: '10px 20px',
+                      borderRadius: '6px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+                  >
+                    Connect Payhip
+                  </Button>
                 </div>
               )}
-            </Card>
+            </div>
           ) : (
             <div className="space-y-8">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-6 bg-primary/5 border-primary/10">
+                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <DollarSign className="w-4 h-4 text-primary" />
+                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
+                      <DollarSign className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Revenue</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Revenue</span>
                   </div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-white">
                     {loadingData ? <Skeleton className="h-8 w-24" /> : `$${analytics?.summary.totalRevenue.toLocaleString()}`}
                   </div>
                 </Card>
-                <Card className="p-6 bg-primary/5 border-primary/10">
+                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <ShoppingCart className="w-4 h-4 text-primary" />
+                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
+                      <ShoppingCart className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Sales</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Sales</span>
                   </div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-white">
                     {loadingData ? <Skeleton className="h-8 w-16" /> : analytics?.summary.totalSales.toLocaleString()}
                   </div>
                 </Card>
-                <Card className="p-6 bg-primary/5 border-primary/10">
+                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Package className="w-4 h-4 text-primary" />
+                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
+                      <Package className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Products</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Products</span>
                   </div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-white">
                     {loadingData ? <Skeleton className="h-8 w-12" /> : analytics?.summary.activeProducts}
                   </div>
                 </Card>
-                <Card className="p-6 bg-primary/5 border-primary/10">
+                <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <TrendingUp className="w-4 h-4 text-primary" />
+                    <div style={{ padding: '8px', borderRadius: '8px', background: '#1A1A1A' }}>
+                      <TrendingUp className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conv. Rate</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Conv. Rate</span>
                   </div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-2xl font-bold text-white">
                     {loadingData ? <Skeleton className="h-8 w-16" /> : `${analytics?.summary.conversionRate}%`}
                   </div>
                 </Card>
@@ -465,8 +573,8 @@ const AnalyticsDashboard = () => {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Charts & Tables */}
                 <div className="lg:col-span-8 space-y-8">
-                  <Card className="p-6">
-                    <h3 className="text-lg font-bold mb-6">Revenue Overview</h3>
+                  <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '24px' }}>Revenue Overview</h3>
                     <div className="h-[300px] w-full">
                       {loadingData ? (
                         <Skeleton className="w-full h-full rounded-xl" />
@@ -475,38 +583,38 @@ const AnalyticsDashboard = () => {
                           <AreaChart data={revenueData}>
                             <defs>
                               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="#FFFFFF" stopOpacity={0.15}/>
+                                <stop offset="95%" stopColor="#FFFFFF" stopOpacity={0}/>
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
                             <XAxis 
                               dataKey="date" 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}}
+                              tick={{fontSize: 11, fill: '#333333'}}
                               dy={10}
                             />
                             <YAxis 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{fontSize: 10, fill: 'hsl(var(--muted-foreground))'}}
+                              tick={{fontSize: 11, fill: '#333333'}}
                               tickFormatter={(val) => `$${val}`}
                             />
                             <Tooltip 
                               contentStyle={{ 
-                                backgroundColor: 'hsl(var(--card))', 
-                                borderColor: 'hsl(var(--border))',
-                                borderRadius: '12px',
-                                fontSize: '12px'
+                                backgroundColor: '#111111', 
+                                borderColor: '#1A1A1A',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                color: '#FFFFFF'
                               }} 
                             />
                             <Area 
                               type="monotone" 
                               dataKey="amount" 
-                              stroke="hsl(var(--primary))" 
-                              strokeWidth={2}
-                              fillOpacity={1} 
+                              stroke="#FFFFFF"
+                              strokeOpacity={0.8}
                               fill="url(#colorRev)" 
                             />
                           </AreaChart>
@@ -515,152 +623,111 @@ const AnalyticsDashboard = () => {
                     </div>
                   </Card>
 
-                  <Tabs defaultValue="products" className="w-full">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="products">Top Products</TabsTrigger>
-                      <TabsTrigger value="orders">Recent Orders</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="products">
-                      <Card className="overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Product</TableHead>
-                              <TableHead className="text-right">Sales</TableHead>
-                              <TableHead className="text-right">Revenue</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {loadingData ? (
-                              [1, 2, 3].map(i => (
-                                <TableRow key={i}>
-                                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                  <TableCell><Skeleton className="h-4 w-8 ml-auto" /></TableCell>
-                                  <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
-                                </TableRow>
-                              ))
-                            ) : analytics?.products.map((product, i) => (
-                              <TableRow key={i}>
-                                <TableCell className="font-medium">{product.name}</TableCell>
-                                <TableCell className="text-right">{product.sales}</TableCell>
-                                <TableCell className="text-right font-bold">${product.revenue.toLocaleString()}</TableCell>
+                  {/* Products Table */}
+                  <Card className="p-6" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '24px' }}>Top Products</h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow style={{ borderBottomColor: '#1A1A1A' }}>
+                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Product</TableHead>
+                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Sales</TableHead>
+                            <TableHead style={{ color: '#666666', fontSize: '12px' }}>Revenue</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {loadingData ? (
+                            [1, 2, 3].map(i => (
+                              <TableRow key={i} style={{ borderBottomColor: '#1A1A1A' }}>
+                                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </Card>
-                    </TabsContent>
-                    <TabsContent value="orders">
-                      <Card className="overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Date</TableHead>
-                              <TableHead>Customer</TableHead>
-                              <TableHead>Product</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {loadingData ? (
-                              [1, 2, 3].map(i => (
-                                <TableRow key={i}>
-                                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                  <TableCell><Skeleton className="h-4 w-12 ml-auto" /></TableCell>
-                                </TableRow>
-                              ))
-                            ) : analytics?.orders.map((order, i) => (
-                              <TableRow key={i}>
-                                <TableCell className="text-xs text-muted-foreground">
-                                  {new Date(order.date).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell className="text-xs font-medium">{order.customer}</TableCell>
-                                <TableCell className="text-xs">{order.product}</TableCell>
-                                <TableCell className="text-right font-bold">${order.amount.toLocaleString()}</TableCell>
+                            ))
+                          ) : analytics?.products && analytics.products.length > 0 ? (
+                            analytics.products.map((product, i) => (
+                              <TableRow key={i} style={{ borderBottomColor: '#1A1A1A' }}>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>{product.name}</TableCell>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>{product.sales}</TableCell>
+                                <TableCell style={{ color: '#FFFFFF', fontSize: '12px' }}>${product.revenue}</TableCell>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </Card>
-                    </TabsContent>
-                  </Tabs>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={3} style={{ textAlign: 'center', color: '#666666', padding: '24px' }}>
+                                No products data available
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
                 </div>
 
-                {/* AI Advisor Sidebar */}
+                {/* Chat Sidebar */}
                 <div className="lg:col-span-4">
-                  <Card className="h-[600px] flex flex-col border-primary/20 bg-primary/5 backdrop-blur-sm overflow-hidden">
-                    <div className="p-4 border-b border-primary/10 flex items-center gap-3 bg-primary/10">
-                      <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                        <Bot className="w-5 h-5 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold">AI Business Advisor</h3>
-                        <p className="text-[10px] text-primary/70 font-medium">Analyzing your performance...</p>
-                      </div>
-                    </div>
-                    
-                    <ScrollArea className="flex-1 p-4">
-                      <div className="space-y-4">
-                        {chatMessages.length === 0 && (
-                          <div className="text-center py-8 px-4">
-                            <Bot className="w-10 h-10 text-primary/20 mx-auto mb-3" />
-                            <p className="text-xs text-muted-foreground">
-                              Ask me anything about your sales data, product performance, or growth strategies.
-                            </p>
+                  <Card className="p-6 h-[600px] flex flex-col" style={{ background: '#111111', border: '1px solid #1A1A1A' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '16px' }}>AI Advisor</h3>
+                    <ScrollArea className="flex-1 mb-4">
+                      <div className="space-y-4 pr-4">
+                        {chatMessages.length === 0 ? (
+                          <div style={{ textAlign: 'center', color: '#666666', fontSize: '12px', paddingTop: '24px' }}>
+                            Ask me anything about your analytics
                           </div>
-                        )}
-                        {chatMessages.map((msg, i) => (
-                          <div key={i} className={cn("flex gap-3", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
-                            <div className={cn(
-                              "w-6 h-6 rounded-full flex items-center justify-center shrink-0",
-                              msg.role === "user" ? "bg-primary" : "bg-muted border border-border"
-                            )}>
-                              {msg.role === "user" ? <User className="w-3 h-3 text-primary-foreground" /> : <Bot className="w-3 h-3 text-primary" />}
+                        ) : (
+                          chatMessages.map((msg, i) => (
+                            <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                              {msg.role === "assistant" && (
+                                <div style={{ width: '24px', height: '24px', background: '#1A1A1A', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Bot className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                              <div 
+                                style={{
+                                  background: msg.role === "user" ? '#FFFFFF' : '#1A1A1A',
+                                  color: msg.role === "user" ? '#0A0A0A' : '#FFFFFF',
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  maxWidth: '80%',
+                                  wordWrap: 'break-word'
+                                }}
+                              >
+                                {msg.content}
+                              </div>
                             </div>
-                            <div className={cn(
-                              "p-3 rounded-2xl text-xs max-w-[85%]",
-                              msg.role === "user" ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-card border border-border rounded-tl-none"
-                            )}>
-                              {msg.content}
-                            </div>
-                          </div>
-                        ))}
-                        {chatLoading && (
-                          <div className="flex gap-3">
-                            <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center">
-                              <Bot className="w-3 h-3 text-primary" />
-                            </div>
-                            <div className="p-3 rounded-2xl bg-card border border-border rounded-tl-none">
-                              <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                            </div>
-                          </div>
+                          ))
                         )}
                         <div ref={chatEndRef} />
                       </div>
                     </ScrollArea>
-
-                    <div className="p-4 border-t border-primary/10 bg-background/50">
-                      <div className="relative">
-                        <Input 
-                          placeholder="Ask about your data..." 
-                          className="pr-10 text-xs h-9 rounded-xl border-primary/20 focus-visible:ring-primary/30"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                          disabled={chatLoading || !hasAccess}
-                        />
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="absolute right-1 top-1 h-7 w-7 text-primary hover:bg-primary/10"
-                          onClick={handleSendChat}
-                          disabled={chatLoading || !chatInput.trim() || !hasAccess}
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && handleSendChat()}
+                        placeholder="Ask about your data..."
+                        disabled={chatLoading}
+                        style={{
+                          background: '#0A0A0A',
+                          border: '1px solid #1A1A1A',
+                          color: '#FFFFFF',
+                          fontSize: '12px',
+                          padding: '8px 12px'
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleSendChat}
+                        disabled={chatLoading || !chatInput.trim()}
+                        style={{
+                          background: '#FFFFFF',
+                          color: '#0A0A0A'
+                        }}
+                      >
+                        {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      </Button>
                     </div>
                   </Card>
                 </div>
@@ -668,41 +735,57 @@ const AnalyticsDashboard = () => {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Connect Modal */}
-        <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
-          <DialogContent className="sm:max-w-[400px]">
-            <DialogHeader>
-              <DialogTitle>Connect {connectModal === 'whop' ? 'Whop' : 'Payhip'}</DialogTitle>
-              <DialogDescription>
-                Enter your API key to sync your {connectModal} data.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium">API Key</label>
-                <Input 
-                  type="password" 
-                  placeholder="Enter your API key" 
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Your API key is encrypted and stored securely.
-                </p>
-              </div>
+      {/* Connect Modal */}
+      <Dialog open={!!connectModal} onOpenChange={() => setConnectModal(null)}>
+        <DialogContent style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
+          <DialogHeader>
+            <DialogTitle style={{ color: '#FFFFFF' }}>Connect {connectModal}</DialogTitle>
+            <DialogDescription style={{ color: '#666666' }}>
+              Enter your {connectModal} API key to start syncing data
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="API Key"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              style={{
+                background: '#0A0A0A',
+                border: '1px solid #1A1A1A',
+                color: '#FFFFFF',
+                padding: '8px 12px'
+              }}
+            />
+            <div className="flex gap-3 justify-end">
               <Button 
-                className="w-full" 
-                onClick={handleConnect}
-                disabled={connecting || !apiKeyInput.trim()}
+                variant="outline" 
+                onClick={() => setConnectModal(null)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #1A1A1A',
+                  color: '#FFFFFF'
+                }}
               >
-                {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Link2 className="w-4 h-4 mr-2" />}
-                Connect Account
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConnect} 
+                disabled={connecting || !apiKeyInput.trim()}
+                style={{
+                  background: '#FFFFFF',
+                  color: '#0A0A0A'
+                }}
+              >
+                {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Connect
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
