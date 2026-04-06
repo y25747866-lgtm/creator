@@ -6,7 +6,6 @@ import {
   Trash2 as TrashIcon, 
   CheckCircle2 as CheckIcon, 
   Sparkles as SparklesIcon, 
-  AlertCircle as AlertIcon 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,10 +46,8 @@ const MarketingStudio = () => {
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
-  // Free users can use with daily limits; only block if expired
   const hasAccess = !isExpired || hasPaidSubscription;
 
-  // Load saved results from DB
   useEffect(() => {
     if (!user || !hasAccess) {
       setLoadingSaved(false);
@@ -77,7 +74,6 @@ const MarketingStudio = () => {
     };
     load();
 
-    // Subscribe to real-time changes
     const channel = supabase
       .channel(`marketing_results_${user.id}`)
       .on(
@@ -118,7 +114,6 @@ const MarketingStudio = () => {
       return;
     }
 
-    // Check usage limits
     const allowed = await recordUsage("marketing_studio");
     if (!allowed) return;
 
@@ -192,16 +187,15 @@ const MarketingStudio = () => {
 
   return (
     <DashboardLayout>
-      <div className="relative min-h-[calc(100vh-4rem)]">
-        {/* LOCK ONLY FOR EXPIRED USERS */}
+      <div className="relative min-h-[calc(100vh-4rem)]" style={{ background: '#0A0A0A', padding: '40px' }}>
         {isExpired && !subLoading && (
           <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Marketing Studio." />
         )}
         
-        <div className={`max-w-[900px] mx-auto space-y-6 p-4 md:p-8 ${isExpired && !subLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Marketing Studio</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Generate platform-optimized marketing content with AI.</p>
+        <div className={`max-w-[900px] mx-auto ${isExpired && !subLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '28px', fontWeight: 700, color: '#FFFFFF' }}>Marketing Studio</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#555555' }}>Generate platform-optimized marketing content with AI.</p>
             {isFreePlan && !isExpired && remaining !== null && (
               <p className="text-xs text-muted-foreground mt-1">
                 {remaining > 0 ? `${remaining} generation${remaining === 1 ? "" : "s"} remaining today` : "Daily limit reached — upgrade to continue"}
@@ -209,97 +203,120 @@ const MarketingStudio = () => {
             )}
           </div>
 
-          <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5">
+          <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px', maxWidth: '580px' }} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Title</label>
-              <Input placeholder="e.g. Launch of my SaaS tool" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading || !hasAccess} className="h-10 text-sm rounded-lg" />
+              <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Title</label>
+              <Input 
+                placeholder="e.g. Launch of my SaaS tool" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                disabled={loading || !hasAccess} 
+                style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', padding: '12px 14px', width: '100%' }}
+                className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)]"
+              />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description</label>
-              <Textarea placeholder="What is your product/offer about?" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading || !hasAccess} rows={4} className="text-sm rounded-lg min-h-[100px]" />
+              <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Description</label>
+              <Textarea 
+                placeholder="What is your product/offer about?" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                disabled={loading || !hasAccess} 
+                rows={4} 
+                style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', padding: '12px 14px', width: '100%', minHeight: '100px', resize: 'vertical' }}
+                className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)]"
+              />
             </div>
-            <div className="flex gap-3 items-end flex-wrap pt-1">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'end', marginTop: '20px' }}>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Platform</label>
+                <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Platform</label>
                 <Select value={platform} onValueChange={(v) => setPlatform(v as "instagram" | "x")} disabled={loading || !hasAccess}>
-                  <SelectTrigger className="w-44 h-10 rounded-lg text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', padding: '12px 14px', width: '100%' }} className="h-auto">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
                     <SelectItem value="instagram">Instagram</SelectItem>
                     <SelectItem value="x">X (Twitter)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={generate} disabled={loading || !hasAccess || (isFreePlan && remaining === 0)} className="gap-2 h-10 px-5 rounded-lg text-sm">
+              <Button 
+                onClick={generate} 
+                disabled={loading || !hasAccess || (isFreePlan && remaining === 0)} 
+                style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', padding: '12px 24px', borderRadius: '6px', border: 'none', whiteSpace: 'nowrap' }}
+                className="hover:bg-[#F0F0F0]"
+              >
                 {loading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
                 Generate Posts
               </Button>
             </div>
           </Card>
 
-          {/* Saved Results */}
-          {results.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2>
+          {results.length === 0 && !loadingSaved && (
+            <div style={{ maxWidth: '580px', marginTop: '16px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#2A2A2A' }}>Your generated posts will appear here</p>
             </div>
           )}
 
-          <AnimatePresence>
-            {results.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                {results.map((result) => (
-                  <motion.div key={result.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
-                    <Card className="rounded-2xl border border-border shadow-sm p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8">
-                            {copiedId === result.id ? <CheckIcon className="w-3.5 h-3.5 text-primary" /> : <CopyIcon className="w-3.5 h-3.5" />}
-                            Copy
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(result.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive">
-                            <TrashIcon className="w-3.5 h-3.5" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-3 divide-y divide-border/50">
-                        <div className="pt-1">
-                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hook</p>
-                          <p className="font-medium text-sm">{result.hook}</p>
-                        </div>
-                        <div className="pt-3">
-                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Main Copy</p>
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.main_copy}</p>
-                        </div>
-                        <div className="pt-3">
-                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
-                          <p className="text-sm font-medium text-primary">{result.cta}</p>
-                        </div>
-                        {result.hashtags && (
-                          <div className="pt-3">
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Hashtags</p>
-                            <p className="text-sm text-muted-foreground">{result.hashtags}</p>
+          {results.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2>
+              <AnimatePresence>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                  {results.map((result) => (
+                    <motion.div key={result.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
+                      <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '20px' }} className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8 text-white hover:bg-white/10">
+                              {copiedId === result.id ? <CheckIcon className="w-3.5 h-3.5 text-primary" /> : <CopyIcon className="w-3.5 h-3.5" />}
+                              Copy
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(result.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                              <TrashIcon className="w-3.5 h-3.5" />
+                              Delete
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                        </div>
+                        <div className="space-y-3 divide-y divide-border/50">
+                          <div className="pt-1">
+                            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '4px' }}>Hook</p>
+                            <p className="font-medium text-sm text-white">{result.hook}</p>
+                          </div>
+                          <div className="pt-3">
+                            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '4px' }}>Main Copy</p>
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white">{result.main_copy}</p>
+                          </div>
+                          <div className="pt-3">
+                            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '4px' }}>CTA</p>
+                            <p className="text-sm font-medium text-primary">{result.cta}</p>
+                          </div>
+                          {result.hashtags && (
+                            <div className="pt-3">
+                              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '4px' }}>Hashtags</p>
+                              <p className="text-sm text-muted-foreground">{result.hashtags}</p>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
+        <DialogContent className="bg-[#111111] border-[#1A1A1A] text-white">
           <DialogHeader>
             <DialogTitle>Delete this result?</DialogTitle>
-            <DialogDescription>This action cannot be undone.</DialogDescription>
+            <DialogDescription className="text-[#555555]">This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="border-[#1A1A1A] text-white hover:bg-white/10">Cancel</Button>
             <Button variant="destructive" onClick={() => deleteConfirm && deleteResult(deleteConfirm)}>Delete</Button>
           </div>
         </DialogContent>
