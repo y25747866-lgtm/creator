@@ -65,43 +65,6 @@ const STEP_PROGRESS: Record<GenerationStep, number> = {
   idle: 0, title: 15, content: 60, cover: 85, complete: 100,
 };
 
-/* ─── Icon animation variants ─── */
-const ICON_VARIANTS = {
-  left: {
-    initial: { scale: 0.8, opacity: 0, rotate: 0 },
-    animate: { scale: 1, opacity: 1, rotate: -6, transition: { duration: 0.4, delay: 0.1 } },
-    hover: { x: -22, y: -5, rotate: -15, scale: 1.1, transition: { duration: 0.2 } }
-  },
-  center: {
-    initial: { scale: 0.8, opacity: 0 },
-    animate: { scale: 1, opacity: 1, transition: { duration: 0.4, delay: 0.2 } },
-    hover: { y: -10, scale: 1.15, transition: { duration: 0.2 } }
-  },
-  right: {
-    initial: { scale: 0.8, opacity: 0, rotate: 0 },
-    animate: { scale: 1, opacity: 1, rotate: 6, transition: { duration: 0.4, delay: 0.3 } },
-    hover: { x: 22, y: -5, rotate: 15, scale: 1.1, transition: { duration: 0.2 } }
-  }
-};
-
-const IconContainer = memo(({ children, variant }: { children: React.ReactNode; variant: 'left' | 'center' | 'right' }) => (
-  <motion.div variants={ICON_VARIANTS[variant]} className="relative">
-    <div className="w-12 h-12 rounded-xl bg-[#1A1A1A] border border-[#222222] flex items-center justify-center text-white/40">
-      {children}
-    </div>
-  </motion.div>
-));
-IconContainer.displayName = "IconContainer";
-
-const EmptyStateIcons = memo(() => (
-  <motion.div className="flex items-end justify-center gap-3 mb-6" initial="initial" animate="animate" whileHover="hover">
-    <IconContainer variant="left"><FileText className="w-5 h-5" /></IconContainer>
-    <IconContainer variant="center"><BookOpen className="w-5 h-5" /></IconContainer>
-    <IconContainer variant="right"><FileStack className="w-5 h-5" /></IconContainer>
-  </motion.div>
-));
-EmptyStateIcons.displayName = "EmptyStateIcons";
-
 /* ─── Main Component ─── */
 const EbookGenerator = () => {
   const [screen, setScreen] = useState<Screen>("form");
@@ -281,175 +244,84 @@ const EbookGenerator = () => {
     setEbookLength("short"); setErrorMsg(null);
   };
 
-  const labelStyle = {
-    fontFamily: 'DM Sans',
-    fontSize: '10px',
-    fontWeight: 600,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase' as const,
-    color: '#555555',
-    marginBottom: '8px',
-    display: 'block'
-  };
-
-  const inputStyle = {
-    background: '#161616',
-    border: '1px solid #1A1A1A',
-    borderRadius: '6px',
-    color: '#FFFFFF',
-    fontFamily: 'DM Sans',
-    fontSize: '14px',
-    padding: '12px 14px',
-    width: '100%',
-    marginBottom: '20px'
-  };
-
   /* ─── Render: Outline Screen ─── */
   const renderOutline = () => (
     <motion.div key="outline" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-      className="max-w-2xl mx-auto"
+      className="max-w-[580px]"
     >
-      <div className="text-center mb-8">
-        <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#555555] border border-[#1A1A1A] bg-[#111111] rounded mb-4">
+      <div className="mb-8">
+        <span style={{ display: 'inline-block', background: '#111111', border: '1px solid #1A1A1A', color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans', marginBottom: '12px' }}>
           EBOOK OUTLINE
         </span>
-        <h2 className="text-2xl font-bold mb-1 text-white" style={{ fontFamily: 'Syne' }}>Your Ebook Structure</h2>
-        <p className="text-sm text-[#555555]">Review your chapters before downloading</p>
+        <h2 style={{ fontFamily: 'Syne', fontSize: '32px', fontWeight: 800, color: '#FFFFFF', textAlign: 'left', marginBottom: '8px' }}>Your Ebook Structure</h2>
+        <p style={{ fontFamily: 'DM Sans', fontSize: '14px', color: '#666666', textAlign: 'left', marginBottom: '32px' }}>Review your chapters before downloading</p>
       </div>
 
       <div className="space-y-3 mb-8">
         {chapters.map((chapter) => (
-          <div key={chapter.id} className="bg-[#111111] border border-[#1A1A1A] rounded-xl p-5 hover:border-white/10 transition-all">
+          <div key={chapter.id} style={{ background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', padding: '20px', transition: 'all 0.3s ease' }}>
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-sm text-white">{chapter.title}</h3>
+              <h3 style={{ fontFamily: 'Syne', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{chapter.title}</h3>
             </div>
-            <p className="text-xs text-[#555555] mb-3">{chapter.description}</p>
+            <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#666666', marginBottom: '12px' }}>{chapter.description}</p>
             <div className="flex gap-2">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#555555] font-medium">{chapter.phase}</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1A1A1A] text-[#555555] font-medium">{chapter.modules}</span>
+              <span style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#555555', fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans' }}>{chapter.phase}</span>
+              <span style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#555555', fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans' }}>{chapter.modules}</span>
             </div>
           </div>
         ))}
       </div>
 
-      <button 
-        onClick={() => setScreen("download")} 
-        style={{
-          background: '#FFFFFF',
-          color: '#0A0A0A',
-          fontFamily: 'Syne',
-          fontWeight: 700,
-          fontSize: '14px',
-          padding: '14px 24px',
-          borderRadius: '6px',
-          border: 'none',
-          width: '100%',
-          height: '48px',
-          cursor: 'pointer',
-          transition: 'background 150ms ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
-        onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
-      >
-        Continue <ArrowRight className="w-4 h-4" />
-      </button>
+      <Button onClick={() => setScreen("download")} style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: 'Syne', fontWeight: 700, fontSize: '14px', borderRadius: '6px', height: '48px', width: '100%' }}>
+        Continue <ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
     </motion.div>
   );
 
   /* ─── Render: Download Screen ─── */
   const renderDownload = () => (
     <motion.div key="download" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-      className="max-w-md mx-auto text-center"
+      className="max-w-[580px] text-left"
     >
       {/* Book cover preview */}
       <div className="mb-8">
-        <div className="w-48 h-64 mx-auto bg-[#111111] border border-[#1A1A1A] rounded-xl flex flex-col items-center justify-center p-6 shadow-xl">
-          <h3 className="font-bold text-sm text-center mb-2 leading-tight text-white">{ebookData?.title}</h3>
-          <p className="text-[10px] text-[#555555]">A Complete Guide</p>
-          <p className="text-[10px] text-[#555555]/50 mt-auto">NexoraOS</p>
+        <div style={{ width: '192px', height: '256px', background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}>
+          <h3 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: '14px', color: '#FFFFFF', textAlign: 'center', marginBottom: '8px', lineHeight: '1.2' }}>{ebookData?.title}</h3>
+          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', color: '#666666' }}>A Complete Guide</p>
+          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', color: '#333333', marginTop: 'auto' }}>NexoraOS</p>
         </div>
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2">
           <CheckCircle2 className="w-5 h-5 text-white" />
-          <h2 className="text-xl font-bold text-white" style={{ fontFamily: 'Syne' }}>Your Ebook is Ready</h2>
+          <h2 style={{ fontFamily: 'Syne', fontSize: '24px', fontWeight: 800, color: '#FFFFFF' }}>Your Ebook is Ready</h2>
         </div>
-        <p className="font-semibold text-sm text-white">{ebookData?.title}</p>
-        <p className="text-xs text-[#555555] mt-1">
+        <p style={{ fontFamily: 'DM Sans', fontSize: '16px', fontWeight: 600, color: '#FFFFFF' }}>{ebookData?.title}</p>
+        <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#666666', marginTop: '4px' }}>
           {ebookData?.pages} pages · PDF format
         </p>
       </div>
 
       <div className="space-y-3">
-        <button 
-          onClick={handleDownloadPDF} 
-          disabled={!isCreatorOrAbove}
-          style={{
-            background: '#FFFFFF',
-            color: '#0A0A0A',
-            fontFamily: 'Syne',
-            fontWeight: 700,
-            fontSize: '14px',
-            padding: '14px 24px',
-            borderRadius: '6px',
-            border: 'none',
-            width: '100%',
-            height: '48px',
-            cursor: 'pointer',
-            transition: 'background 150ms ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
-        >
-          <Download className="w-4 h-4" />
+        <Button onClick={handleDownloadPDF} style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: 'Syne', fontWeight: 700, fontSize: '14px', borderRadius: '6px', height: '48px', width: '100%' }} disabled={!isCreatorOrAbove}>
+          <Download className="w-4 h-4 mr-2" />
           {isCreatorOrAbove ? "Download PDF" : "Upgrade to Download"}
-        </button>
+        </Button>
 
         {ebookData?.coverImageUrl && (
-          <button 
-            onClick={handleDownloadCover} 
-            disabled={!isCreatorOrAbove}
-            style={{
-              background: 'transparent',
-              color: '#FFFFFF',
-              fontFamily: 'Syne',
-              fontWeight: 700,
-              fontSize: '14px',
-              padding: '14px 24px',
-              borderRadius: '6px',
-              border: '1px solid #1A1A1A',
-              width: '100%',
-              height: '48px',
-              cursor: 'pointer',
-              transition: 'border-color 150ms ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
-          >
-            <ImageIcon className="w-4 h-4" />
+          <Button onClick={handleDownloadCover} variant="outline" style={{ background: 'transparent', border: '1px solid #2A2A2A', color: '#FFFFFF', fontFamily: 'Syne', fontWeight: 700, fontSize: '14px', borderRadius: '6px', height: '48px', width: '100%' }} disabled={!isCreatorOrAbove}>
+            <ImageIcon className="w-4 h-4 mr-2" />
             Download Cover
-          </button>
+          </Button>
         )}
 
         {!isCreatorOrAbove && (
-          <p className="text-xs text-[#555555]">Upgrade to Creator or Pro to download.</p>
+          <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#666666', textAlign: 'center' }}>Upgrade to Creator or Pro to download.</p>
         )}
 
-        <Button variant="ghost" onClick={resetForm} className="w-full gap-2 text-[#555555] hover:text-white hover:bg-white/5">
-          <RefreshCw className="w-4 h-4" />
+        <Button variant="ghost" onClick={resetForm} style={{ color: '#666666', fontFamily: 'DM Sans', fontSize: '14px', width: '100%' }}>
+          <RefreshCw className="w-4 h-4 mr-2" />
           Generate Another
         </Button>
       </div>
@@ -459,19 +331,16 @@ const EbookGenerator = () => {
   /* ─── Render: Generating Screen ─── */
   const renderGenerating = () => (
     <motion.div key="generating" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-      className="max-w-md mx-auto text-center py-16"
+      className="max-w-[580px] text-left py-16"
     >
-      <div className="w-20 h-20 rounded-2xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mx-auto mb-6 relative">
-        <Loader2 className="w-10 h-10 text-white animate-spin" />
-        <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white flex items-center justify-center animate-pulse">
-          <Sparkles className="w-3 h-3 text-[#0A0A0A]" />
-        </div>
+      <div style={{ width: '80px', height: '80px', borderRadius: '16px', background: '#111111', border: '1px solid #2A2A2A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', position: 'relative' }}>
+        <Loader2 className="w-10 h-10 text-white animate-spin mx-auto" />
       </div>
-      <h2 className="text-2xl font-bold mb-2 text-white" style={{ fontFamily: 'Syne' }}>{STEP_LABELS[step]}</h2>
-      <p className="text-[#555555] mb-8">This typically takes 30-60 seconds.</p>
-      <div className="max-w-sm mx-auto">
-        <Progress value={STEP_PROGRESS[step]} className="h-2 mb-2 bg-[#1A1A1A]" />
-        <p className="text-xs text-[#555555] text-right font-medium">{STEP_PROGRESS[step]}% Complete</p>
+      <h2 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>{STEP_LABELS[step]}</h2>
+      <p style={{ fontFamily: 'DM Sans', fontSize: '14px', color: '#666666', marginBottom: '32px' }}>This typically takes 30-60 seconds.</p>
+      <div className="max-w-sm">
+        <Progress value={STEP_PROGRESS[step]} className="h-1 bg-[#1A1A1A]" style={{ borderRadius: '2px' }} />
+        <p style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#555555', textAlign: 'right', marginTop: '8px', fontWeight: 600 }}>{STEP_PROGRESS[step]}% COMPLETE</p>
       </div>
     </motion.div>
   );
@@ -479,157 +348,143 @@ const EbookGenerator = () => {
   /* ─── Render: Form Screen ─── */
   const renderForm = () => (
     <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-      className="max-w-2xl mx-auto"
+      className="max-w-[580px]"
     >
-      {/* Empty state header */}
-      <div className="text-center mb-10">
-        <EmptyStateIcons />
-        <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#555555] border border-[#1A1A1A] bg-[#111111] rounded mb-4">
+      {/* Header */}
+      <div className="mb-10">
+        <span style={{ display: 'inline-block', background: '#111111', border: '1px solid #1A1A1A', color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans', marginBottom: '12px' }}>
           AI PRODUCT GENERATOR
         </span>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3 text-white" style={{ fontFamily: 'Syne' }}>Create Professional Ebooks</h1>
-        <p className="text-[#555555] max-w-lg mx-auto text-sm">
+        <h1 style={{ fontFamily: 'Syne', fontSize: '32px', fontWeight: 800, color: '#FFFFFF', textAlign: 'left', marginBottom: '8px' }}>Create Professional Ebooks</h1>
+        <p style={{ fontFamily: 'DM Sans', fontSize: '14px', color: '#666666', textAlign: 'left', marginBottom: '32px' }}>
           Enter your topic and let AI write a complete ebook ready to download as PDF in minutes.
         </p>
       </div>
 
       {/* Form card */}
-      <div className="bg-[#111111] border border-[#1A1A1A] rounded-2xl p-6 sm:p-8 space-y-0 max-w-[580px] mx-auto">
-
-        {/* Topic */}
-        <div>
-          <label style={labelStyle}>Ebook Topic</label>
-          <Input
-            type="text"
-            placeholder="e.g. Passive income strategies for 2025"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            style={inputStyle}
-            className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-        </div>
-
-        {/* Category + Tone grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label style={labelStyle}>Category</label>
-            <select
-              className="w-full h-12 rounded-xl border border-[#1A1A1A] bg-[#161616] px-3 text-sm text-white focus:outline-none focus:border-[rgba(255,255,255,0.25)] mb-5"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Select Category</option>
-              {CATEGORY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+      <div style={{ background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', padding: '32px', marginBottom: '16px' }}>
+        <div className="space-y-6">
+          {/* Topic */}
+          <div className="space-y-2">
+            <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Ebook Topic</label>
+            <input
+              type="text"
+              placeholder="e.g. Passive income strategies for 2025"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', outline: 'none' }}
+              className="placeholder:text-[#333333] focus:border-white/25 transition-colors"
+            />
           </div>
-          <div>
-            <label style={labelStyle}>Tone</label>
-            <select
-              className="w-full h-12 rounded-xl border border-[#1A1A1A] bg-[#161616] px-3 text-sm text-white focus:outline-none focus:border-[rgba(255,255,255,0.25)] mb-5"
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-            >
-              {TONE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+
+          {/* Category + Tone grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Category</label>
+              <select
+                style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', outline: 'none', appearance: 'none' }}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="focus:border-white/25 transition-colors"
+              >
+                <option value="" style={{ background: '#161616' }}>Select Category</option>
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt} style={{ background: '#161616' }}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Tone</label>
+              <select
+                style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', outline: 'none', appearance: 'none' }}
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                className="focus:border-white/25 transition-colors"
+              >
+                {TONE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value} style={{ background: '#161616' }}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
 
-        {/* Target Audience */}
-        <div>
-          <label style={labelStyle}>Target Audience</label>
-          <Input
-            type="text"
-            placeholder="e.g. Beginners, Freelancers, Small business owners"
-            value={targetAudience}
-            onChange={(e) => setTargetAudience(e.target.value)}
-            style={inputStyle}
-            className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-        </div>
-
-        {/* Length Selector */}
-        <div className="mb-5">
-          <label style={labelStyle}>Ebook Length</label>
-          <div className="grid grid-cols-3 gap-3">
-            {LENGTH_OPTIONS.map((opt) => {
-              const locked = !canSelectLength(opt.access);
-              const isSelected = ebookLength === opt.value && !locked;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    if (locked) {
-                      toast({ title: "Upgrade Required", description: `${opt.label} ebooks require Creator or Pro.`, variant: "destructive" });
-                      return;
-                    }
-                    setEbookLength(opt.value);
-                  }}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-4 rounded-xl border transition-all relative group",
-                    isSelected
-                      ? "border-white bg-white/5"
-                      : locked
-                        ? "border-[#1A1A1A] opacity-50 cursor-not-allowed"
-                        : "border-[#1A1A1A] hover:border-white/20"
-                  )}
-                >
-                  <div className={cn("mb-2 transition-colors", isSelected ? "text-white" : "text-[#555555] group-hover:text-white/60")}>
-                    {opt.icon}
-                  </div>
-                  <span className={cn("text-xs font-bold", isSelected ? "text-white" : "text-[#555555]")}>{opt.label}</span>
-                  <span className="text-[10px] text-[#555555]">{opt.pages}</span>
-                  {locked && (
-                    <Badge variant="outline" className="absolute -top-2 -right-2 text-[8px] px-1 py-0 h-3.5 font-bold border-white/10 text-white bg-[#0A0A0A]">
-                      <Lock className="w-2 h-2 mr-0.5" />
-                      PRO
-                    </Badge>
-                  )}
-                </button>
-              );
-            })}
+          {/* Target Audience */}
+          <div className="space-y-2">
+            <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Target Audience</label>
+            <input
+              type="text"
+              placeholder="e.g. Beginners, Freelancers, Small business owners"
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', outline: 'none' }}
+              className="placeholder:text-[#333333] focus:border-white/25 transition-colors"
+            />
           </div>
-        </div>
 
-        {/* Additional Context */}
-        <div>
-          <label style={labelStyle}>
-            Additional Context <span style={{ color: '#444444', textTransform: 'none', letterSpacing: 'normal' }}>(Optional)</span>
-          </label>
-          <textarea
-            placeholder="Add specific points you want the AI to cover..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
-            className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-        </div>
+          {/* Length Selector */}
+          <div className="space-y-2">
+            <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Ebook Length</label>
+            <div className="grid grid-cols-3 gap-3">
+              {LENGTH_OPTIONS.map((opt) => {
+                const locked = !canSelectLength(opt.access);
+                const isSelected = ebookLength === opt.value && !locked;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      if (locked) {
+                        toast({ title: "Upgrade Required", description: `${opt.label} ebooks require Creator or Pro.`, variant: "destructive" });
+                        return;
+                      }
+                      setEbookLength(opt.value);
+                    }}
+                    style={{
+                      background: isSelected ? '#1C1C1C' : '#161616',
+                      border: isSelected ? '2px solid rgba(255,255,255,0.3)' : '1px solid #1A1A1A',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      cursor: locked ? 'not-allowed' : 'pointer',
+                      opacity: locked ? 0.5 : 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s ease',
+                      position: 'relative'
+                    }}
+                  >
+                    <div style={{ color: 'rgba(255,255,255,0.3)', marginBottom: '8px' }}>
+                      {opt.icon}
+                    </div>
+                    <span style={{ fontFamily: 'Syne', fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>{opt.label}</span>
+                    <span style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#555555', marginTop: '2px' }}>{opt.pages}</span>
+                    {locked && (
+                      <div className="absolute -top-2 -right-2">
+                        <Lock className="w-3 h-3 text-white/30" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {/* Generate Button */}
-        <div style={{ marginTop: '8px' }}>
-          <button 
-            onClick={startGeneration} 
-            style={{
-              background: '#FFFFFF',
-              color: '#0A0A0A',
-              fontFamily: 'Syne',
-              fontWeight: 700,
-              fontSize: '14px',
-              padding: '14px 24px',
-              borderRadius: '6px',
-              border: 'none',
-              width: '100%',
-              height: '48px',
-              cursor: 'pointer',
-              transition: 'background 150ms ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
+          {/* Additional Context */}
+          <div className="space-y-2">
+            <label style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Additional Context <span style={{ color: '#333333', fontWeight: 400, textTransform: 'none' }}>(Optional)</span></label>
+            <textarea
+              placeholder="Add specific points you want the AI to cover..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', minHeight: '100px', outline: 'none', resize: 'none' }}
+              className="placeholder:text-[#333333] focus:border-white/25 transition-colors"
+            />
+          </div>
+
+          {/* Generate Button */}
+          <button
+            onClick={startGeneration}
+            style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: 'Syne', fontWeight: 700, fontSize: '14px', border: 'none', borderRadius: '6px', height: '48px', width: '100%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s ease' }}
             onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
             onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
           >
@@ -638,25 +493,32 @@ const EbookGenerator = () => {
           </button>
         </div>
       </div>
+
+      {/* Placeholder card */}
+      <div style={{ background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center', color: '#2A2A2A', fontSize: '13px', fontFamily: 'DM Sans' }}>
+        Your generated ebook will appear here
+      </div>
     </motion.div>
   );
 
   return (
     <DashboardLayout>
-      <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
-        {isExpired && !subLoading && (
-          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the AI Product Generator." />
-        )}
-        <LazyMotion features={domAnimation}>
-          <div className={cn(isExpired && "opacity-50 pointer-events-none")}>
-            <AnimatePresence mode="wait">
-              {screen === "form" && renderForm()}
-              {screen === "generating" && renderGenerating()}
-              {screen === "outline" && renderOutline()}
-              {screen === "download" && renderDownload()}
-            </AnimatePresence>
-          </div>
-        </LazyMotion>
+      <div style={{ background: '#0A0A0A', minHeight: '100vh', padding: '40px' }}>
+        <div className="relative">
+          {isExpired && !subLoading && (
+            <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the AI Product Generator." />
+          )}
+          <LazyMotion features={domAnimation}>
+            <div className={cn(isExpired && "opacity-50 pointer-events-none")}>
+              <AnimatePresence mode="wait">
+                {screen === "form" && renderForm()}
+                {screen === "generating" && renderGenerating()}
+                {screen === "outline" && renderOutline()}
+                {screen === "download" && renderDownload()}
+              </AnimatePresence>
+            </div>
+          </LazyMotion>
+        </div>
       </div>
     </DashboardLayout>
   );
