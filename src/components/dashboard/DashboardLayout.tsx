@@ -1,6 +1,5 @@
 import { ReactNode, useState, createContext, useContext } from "react";
 import DashboardSidebar from "./DashboardSidebar";
-import CanvasParticles from "@/components/CanvasParticles";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -35,28 +34,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      <div className="min-h-screen bg-background text-foreground">
-        <div className="fixed inset-0 z-0">
-          <CanvasParticles />
-        </div>
+      <div className="min-h-screen" style={{ background: '#0A0A0A', color: '#FFFFFF' }}>
         <DashboardSidebar />
         
         <main
           className="relative z-10 min-h-screen transition-all duration-300"
-          style={{ marginLeft: collapsed ? 80 : 280 }}
+          style={{ marginLeft: collapsed ? 80 : 280, background: '#0A0A0A' }}
         >
-          <header className="sticky top-0 z-30 bg-background/70 backdrop-blur-2xl border-b border-border px-8 py-5">
+          <header className="sticky top-0 z-30" style={{ background: '#0A0A0A', borderBottom: '1px solid #1A1A1A', padding: '20px 32px' }}>
             <div className="flex items-center justify-end gap-4">
               <button 
                 onClick={toggleTheme}
-                className="p-3 rounded-xl text-muted-foreground hover:text-foreground transition-all bg-muted/50 border border-border hover:border-primary/30 hover:bg-primary/5"
+                className="p-3 rounded-xl transition-all"
+                style={{ color: '#555555', background: '#111111', border: '1px solid #1A1A1A' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.background = '#1A1A1A'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#555555'; e.currentTarget.style.background = '#111111'; }}
               >
                 {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
             </div>
           </header>
           
-          <div className="p-10">
+          <div style={{ background: '#0A0A0A' }}>
             {children}
           </div>
         </main>

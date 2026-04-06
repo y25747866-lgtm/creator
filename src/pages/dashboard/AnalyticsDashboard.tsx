@@ -282,8 +282,8 @@ const AnalyticsDashboard = () => {
 
   if (subLoading) {
     return (
-      <DashboardLayout>
-        <div style={{ background: '#0A0A0A', padding: '40px' }} className="space-y-8">
+    <DashboardLayout>
+      <div style={{ background: '#0A0A0A', padding: '0' }} className="space-y-8">
           <Skeleton className="h-12 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
@@ -296,13 +296,13 @@ const AnalyticsDashboard = () => {
 
   return (
     <DashboardLayout>
-      <div style={{ background: '#0A0A0A', padding: '40px' }} className="max-w-7xl mx-auto relative">
+      <div style={{ background: '#0A0A0A', padding: '0' }} className="w-full relative">
         {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
         {!hasAccess && (
           <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using Analytics." : "Analytics is a premium feature. Upgrade to track your revenue and get AI-powered insights."} />
         )}
 
-        <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""}>
+        <div className={!hasAccess ? "opacity-50 pointer-events-none" : ""} style={{ padding: '40px' }}>
           {/* Header Row */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
