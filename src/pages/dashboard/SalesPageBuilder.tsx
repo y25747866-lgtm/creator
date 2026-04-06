@@ -145,48 +145,132 @@ const SalesPageBuilder = () => {
     toast({ title: "Deleted" });
   };
 
+  const labelStyle = {
+    fontFamily: 'DM Sans',
+    fontSize: '10px',
+    fontWeight: 600,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase' as const,
+    color: '#555555',
+    marginBottom: '8px',
+    display: 'block'
+  };
+
+  const inputStyle = {
+    background: '#161616',
+    border: '1px solid #1A1A1A',
+    borderRadius: '6px',
+    color: '#FFFFFF',
+    fontFamily: 'DM Sans',
+    fontSize: '14px',
+    padding: '12px 14px',
+    width: '100%',
+    marginBottom: '20px'
+  };
+
   return (
     <DashboardLayout>
-      <div className="relative max-w-[900px] mx-auto space-y-6">
+      <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
         {/* LOCK ONLY FOR EXPIRED USERS */}
         {isExpired && !subLoading && (
           <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Sales Page Builder." />
         )}
 
-        <div className={isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Sales Page Builder</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Generate conversion-focused sales page copy with AI.</p>
+        <div className={`max-w-[900px] mx-auto ${isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}`}>
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
+              Sales Page Builder
+            </h1>
+            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555' }}>
+              Generate conversion-focused sales page copy with AI.
+            </p>
           </div>
 
-          <Card className="rounded-2xl border border-border shadow-sm p-6 space-y-5 mt-6">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Product Title</label>
-              <Input placeholder="Your product name" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading || !hasAccess} className="h-10 text-sm rounded-lg" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Product Description</label>
-              <Textarea placeholder="Describe what your product does" value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading || !hasAccess} rows={4} className="text-sm rounded-lg min-h-[100px]" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Target Audience <span className="text-muted-foreground/60 normal-case font-normal">(optional)</span></label>
-              <Input placeholder="Who is this product for?" value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} disabled={loading || !hasAccess} className="h-10 text-sm rounded-lg" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Offer Details <span className="text-muted-foreground/60 normal-case font-normal">(optional)</span></label>
-              <Input placeholder="e.g. pricing, bonuses, guarantees" value={offerDetails} onChange={(e) => setOfferDetails(e.target.value)} disabled={loading || !hasAccess} className="h-10 text-sm rounded-lg" />
-            </div>
-            <div className="pt-1">
-              <Button 
-                onClick={generate} 
-                disabled={loading || !hasAccess} 
-                className="gap-2 h-10 px-5 rounded-lg text-sm"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                Generate 3 Sales Page Drafts
-              </Button>
+          <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px', maxWidth: '580px' }}>
+            <div className="space-y-0">
+              <div>
+                <label style={labelStyle}>Product Title</label>
+                <Input 
+                  placeholder="Your product name" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  disabled={loading || !hasAccess} 
+                  style={inputStyle}
+                  className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Product Description</label>
+                <Textarea 
+                  placeholder="Describe what your product does" 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  disabled={loading || !hasAccess} 
+                  rows={4} 
+                  style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
+                  className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  Target Audience <span style={{ color: '#444444', textTransform: 'none', letterSpacing: 'normal' }}>(optional)</span>
+                </label>
+                <Input 
+                  placeholder="Who is this product for?" 
+                  value={targetAudience} 
+                  onChange={(e) => setTargetAudience(e.target.value)} 
+                  disabled={loading || !hasAccess} 
+                  style={inputStyle}
+                  className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  Offer Details <span style={{ color: '#444444', textTransform: 'none', letterSpacing: 'normal' }}>(optional)</span>
+                </label>
+                <Input 
+                  placeholder="e.g. pricing, bonuses, guarantees" 
+                  value={offerDetails} 
+                  onChange={(e) => setOfferDetails(e.target.value)} 
+                  disabled={loading || !hasAccess} 
+                  style={inputStyle}
+                  className="placeholder:text-[#333333] focus:border-[rgba(255,255,255,0.25)] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                <button 
+                  onClick={generate} 
+                  disabled={loading || !hasAccess} 
+                  style={{
+                    background: '#FFFFFF',
+                    color: '#0A0A0A',
+                    fontFamily: 'Syne',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    padding: '14px 24px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    width: '100%',
+                    height: '48px',
+                    cursor: 'pointer',
+                    transition: 'background 150ms ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Generate 3 Sales Page Drafts"}
+                </button>
+              </div>
             </div>
           </Card>
+
+          {drafts.length === 0 && (
+            <div style={{ maxWidth: '580px', marginTop: '16px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#2A2A2A' }}>
+                Your generated sales pages will appear here
+              </p>
+            </div>
+          )}
 
           {drafts.length > 0 && (
             <div className="mt-8"><h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2></div>
