@@ -1,4 +1,6 @@
 import { ReactNode, useState, createContext, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 
 interface SidebarContextType {
@@ -19,6 +21,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [collapsed, setCollapsedState] = useState(() => {
     try { return localStorage.getItem(SIDEBAR_KEY) === "true"; } catch { return false; }
   });
+  const location = useLocation();
 
   const setCollapsed = (v: boolean) => {
     setCollapsedState(v);
@@ -34,15 +37,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           className="relative z-10 min-h-screen transition-all duration-300"
           style={{ marginLeft: collapsed ? 80 : 280, background: '#0A0A0A' }}
         >
-          <header className="sticky top-0 z-30" style={{ background: '#0A0A0A', borderBottom: '1px solid #1A1A1A', padding: '20px 32px' }}>
-            <div className="flex items-center justify-end gap-4 h-10">
-              {/* Theme toggle removed as requested */}
-            </div>
-          </header>
-          
-          <div style={{ background: '#0A0A0A' }}>
-            {children}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ background: '#0A0A0A' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </SidebarContext.Provider>
