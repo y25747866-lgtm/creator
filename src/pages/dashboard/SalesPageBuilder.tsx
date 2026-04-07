@@ -41,7 +41,8 @@ const SalesPageBuilder = () => {
   const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
   
   const isExpired = subscription?.status === "expired";
-  const hasAccess = !isExpired || hasPaidSubscription;
+  const isCreatorOrAbove = (subscription?.plan_type === "creator" || subscription?.plan_type === "pro") && !isExpired;
+  const hasAccess = isCreatorOrAbove;
 
   // Load saved results
   useEffect(() => {
@@ -171,12 +172,12 @@ const SalesPageBuilder = () => {
   return (
     <DashboardLayout>
       <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
-        {/* LOCK ONLY FOR EXPIRED USERS */}
-        {isExpired && !subLoading && (
-          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Sales Page Builder." />
+        {/* LOCK FOR FREE/EXPIRED USERS */}
+        {!hasAccess && !subLoading && (
+          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Sales Page Builder." : "Sales Page Builder is available on Creator and Pro plans. Upgrade to unlock."} />
         )}
 
-        <div className={`max-w-[900px] mx-auto ${isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}`}>
+        <div className={`max-w-[900px] mx-auto ${!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}`}>
           <div style={{ marginBottom: '24px' }}>
             <h1 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
               Sales Page Builder
