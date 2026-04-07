@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
+import platformLogos from '@/assets/platform-logos.png';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── Section wrapper with fade-up ─── */
@@ -256,25 +257,22 @@ const Landing = () => {
       </Section>
 
       {/* ═══ PLATFORM STRIP ═══ */}
-      <Section className="py-12 border-t border-[#1A1A1A]">
+      <Section className="py-16 border-t border-[#1A1A1A]">
         <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-[10px] font-semibold tracking-[0.2em] uppercase text-[#333333] mb-6">
+          <p className="text-center text-[10px] font-semibold tracking-[0.2em] uppercase text-[#333333] mb-10">
             SELL ON ANY PLATFORM
           </p>
           <div className="marquee">
-            <div className="marquee-content">
+            <div className="marquee-content items-center">
               {[...Array(4)].map((_, i) => (
                 <React.Fragment key={i}>
-                  <span className="text-[#333333] text-sm font-medium mx-4">Payhip</span>
-                  <span className="text-[#1A1A1A]">|</span>
-                  <span className="text-[#333333] text-sm font-medium mx-4">Etsy</span>
-                  <span className="text-[#1A1A1A]">|</span>
-                  <span className="text-[#333333] text-sm font-medium mx-4">Gumroad</span>
-                  <span className="text-[#1A1A1A]">|</span>
-                  <span className="text-[#333333] text-sm font-medium mx-4">Whop</span>
-                  <span className="text-[#1A1A1A]">|</span>
-                  <span className="text-[#333333] text-sm font-medium mx-4">Shopify</span>
-                  <span className="text-[#1A1A1A] ml-4">|</span>
+                  <motion.img
+                    src={platformLogos}
+                    alt="Payhip, Etsy, Gumroad, Whop, Shopify"
+                    className="h-10 md:h-12 w-auto object-contain opacity-40 hover:opacity-80 transition-opacity duration-500"
+                    style={{ filter: 'grayscale(100%) brightness(2)', minWidth: '500px' }}
+                    whileHover={{ filter: 'grayscale(0%) brightness(1)', opacity: 1 }}
+                  />
                 </React.Fragment>
               ))}
             </div>
