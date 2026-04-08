@@ -53,7 +53,7 @@ const Downloads = () => {
 
   return (
     <DashboardLayout>
-      <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
+      <div className="relative" style={{ background: '#0A0A0A', padding: '40px', minHeight: 'auto' }}>
         {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
         {!hasAccess && !subLoading && (
           <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to access your downloads." : "Downloads and exports are premium features. Upgrade to download your generated ebooks."} />

@@ -237,7 +237,7 @@ const Dashboard = () => {
         day: days[6 - i],
         downloads,
         views,
-        active: Math.floor(Math.random() * 160),
+        active: downloads + views,
       });
     }
 

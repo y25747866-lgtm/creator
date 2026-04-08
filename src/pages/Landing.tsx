@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
-import platformLogos from '@/assets/platform-logos.png';
+import platformLogosRow1 from '@/assets/platform-logos-row1.png';
+import platformLogosRow2 from '@/assets/platform-logos-row2.png';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── Section wrapper with fade-up ─── */
@@ -257,24 +258,51 @@ const Landing = () => {
       </Section>
 
       {/* ═══ PLATFORM STRIP ═══ */}
-      <Section className="py-16 border-t border-[#1A1A1A]">
+      <Section className="py-20 border-t border-[#1A1A1A]">
         <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-[10px] font-semibold tracking-[0.2em] uppercase text-[#333333] mb-10">
+          <p className="text-center text-[10px] font-semibold tracking-[0.2em] uppercase text-[#333333] mb-12">
             SELL ON ANY PLATFORM
           </p>
-          <div className="marquee">
-            <div className="marquee-content items-center">
-              {[...Array(4)].map((_, i) => (
-                <React.Fragment key={i}>
-                  <motion.img
-                    src={platformLogos}
-                    alt="Payhip, Etsy, Gumroad, Whop, Shopify"
-                    className="h-10 md:h-12 w-auto object-contain opacity-40 hover:opacity-80 transition-opacity duration-500"
-                    style={{ filter: 'grayscale(100%) brightness(2)', minWidth: '500px' }}
-                    whileHover={{ filter: 'grayscale(0%) brightness(1)', opacity: 1 }}
+          
+          {/* Row 1 — Payhip, Etsy, Gumroad, Shopify, Whop */}
+          <div className="relative overflow-hidden mb-6">
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+            <div className="marquee">
+              <div className="marquee-content items-center" style={{ gap: '80px' }}>
+                {[...Array(6)].map((_, i) => (
+                  <img
+                    key={`r1-${i}`}
+                    src={platformLogosRow1}
+                    alt="Payhip, Etsy, Gumroad, Shopify"
+                    className="h-8 md:h-10 w-auto object-contain transition-all duration-500"
+                    style={{ filter: 'brightness(0.5)', minWidth: '600px', opacity: 0.5 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.opacity = '1'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(0.5)'; e.currentTarget.style.opacity = '0.5'; }}
                   />
-                </React.Fragment>
-              ))}
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2 — Apple Books, Amazon, Barnes & Noble */}
+          <div className="relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10 pointer-events-none" />
+            <div className="marquee-reverse">
+              <div className="marquee-content-reverse items-center" style={{ gap: '80px' }}>
+                {[...Array(6)].map((_, i) => (
+                  <img
+                    key={`r2-${i}`}
+                    src={platformLogosRow2}
+                    alt="Apple Books, Amazon, Barnes & Noble Press"
+                    className="h-8 md:h-10 w-auto object-contain transition-all duration-500"
+                    style={{ filter: 'brightness(0.5)', minWidth: '600px', opacity: 0.5 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1)'; e.currentTarget.style.opacity = '1'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(0.5)'; e.currentTarget.style.opacity = '0.5'; }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
