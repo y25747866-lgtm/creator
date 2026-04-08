@@ -278,20 +278,22 @@ const Landing = () => {
         <div className="absolute left-0 top-0 bottom-0 w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #080808, transparent)' }} />
         <div className="absolute right-0 top-0 bottom-0 w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #080808, transparent)' }} />
 
-        <div className="overflow-hidden">
+        <div style={{ overflow: 'hidden', width: '100%' }}>
           <div
-            className="platform-track flex items-center"
+            className="platform-track"
             style={{
+              display: 'flex',
+              flexWrap: 'nowrap',
+              alignItems: 'center',
               gap: '100px',
-              whiteSpace: 'nowrap',
-              animation: 'platform-scroll 30s linear infinite',
               width: 'max-content',
+              animation: 'platform-scroll 30s linear infinite',
             }}
           >
-            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
+            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
+            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
+            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
+            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
           </div>
         </div>
       </section>
