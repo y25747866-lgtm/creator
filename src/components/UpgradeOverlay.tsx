@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Lock, AlertCircle } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface UpgradeOverlayProps {
   message?: string;
@@ -7,7 +8,6 @@ interface UpgradeOverlayProps {
 
 export const UpgradeOverlay = ({ message }: UpgradeOverlayProps) => {
   const navigate = useNavigate();
-  
   const { hasPaidSubscription, subscription } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
@@ -56,7 +56,5 @@ export const UpgradeOverlay = ({ message }: UpgradeOverlayProps) => {
     </div>
   );
 };
-
-import { useSubscription } from "@/hooks/useSubscription";
 
 export default UpgradeOverlay;
