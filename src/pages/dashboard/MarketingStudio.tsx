@@ -46,7 +46,6 @@ const MarketingStudio = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
   const { recordUsage, getRemainingUses, isFreePlan, canUseFeature } = useFeatureAccess();
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
