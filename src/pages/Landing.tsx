@@ -9,8 +9,6 @@ import {
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
-import platformLogosRow1 from '@/assets/platform-logos-row1.png';
-import platformLogosRow2 from '@/assets/platform-logos-row2.png';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── Section wrapper with fade-up ─── */
