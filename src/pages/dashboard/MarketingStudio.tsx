@@ -33,6 +33,10 @@ interface SocialResult {
 }
 
 const MarketingStudio = () => {
+  const { user } = useAuth();
+  const { getEbooksForUser } = useEbookStore();
+  const userEbooks = user ? getEbooksForUser(user.id) : [];
+  const [selectedEbook, setSelectedEbook] = useState<string>("custom");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [platform, setPlatform] = useState<"instagram" | "x">("instagram");
