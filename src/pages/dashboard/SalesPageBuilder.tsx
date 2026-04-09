@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Copy, Trash2, CheckCircle2, Sparkles } from "lucide-react";
+import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -14,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { useEbookStore } from "@/hooks/useEbookStore";
 
 interface SalesPageDraft {
   id: string;
@@ -26,6 +28,10 @@ interface SalesPageDraft {
 }
 
 const SalesPageBuilder = () => {
+  const { user } = useAuth();
+  const { getEbooksForUser } = useEbookStore();
+  const userEbooks = user ? getEbooksForUser(user.id) : [];
+  const [selectedEbook, setSelectedEbook] = useState<string>("custom");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
