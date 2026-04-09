@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -15,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
-import { useEbookStore } from "@/hooks/useEbookStore";
+import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 
 interface SalesPageDraft {
   id: string;
@@ -28,10 +27,6 @@ interface SalesPageDraft {
 }
 
 const SalesPageBuilder = () => {
-  const { user } = useAuth();
-  const { getEbooksForUser } = useEbookStore();
-  const userEbooks = user ? getEbooksForUser(user.id) : [];
-  const [selectedEbook, setSelectedEbook] = useState<string>("custom");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
@@ -40,14 +35,16 @@ const SalesPageBuilder = () => {
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showEbookSelector, setShowEbookSelector] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const allEbooks = useEbookStore((s) => s.ebooks);
 
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
   const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
   
   const isExpired = subscription?.status === "expired";
-  const isCreatorOrAbove = (subscription?.plan_type === "creator" || subscription?.plan_type === "pro") && !isExpired;
-  const hasAccess = isCreatorOrAbove;
+  const hasAccess = !isExpired || hasPaidSubscription;
 
   // Load saved results
   useEffect(() => {
@@ -67,6 +64,15 @@ const SalesPageBuilder = () => {
     };
     load();
   }, [user, hasAccess]);
+
+  const selectEbookFromHistory = (ebook: Ebook) => {
+    setTitle(ebook.title);
+    setDescription(ebook.topic || "");
+    setTargetAudience("");
+    setOfferDetails("");
+    setShowEbookSelector(false);
+    toast({ title: "Ebook selected", description: `"${ebook.title}" loaded for sales page generation.` });
+  };
 
   const generate = async () => {
     if (isExpired) {
@@ -177,48 +183,104 @@ const SalesPageBuilder = () => {
   return (
     <DashboardLayout>
       <div className="relative min-h-screen" style={{ background: '#0A0A0A', padding: '40px' }}>
-        {/* LOCK FOR FREE/EXPIRED USERS */}
-        {!hasAccess && !subLoading && (
-          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to continue using the Sales Page Builder." : "Sales Page Builder is available on Creator and Pro plans. Upgrade to unlock."} />
+        {/* LOCK ONLY FOR EXPIRED USERS */}
+        {isExpired && !subLoading && (
+          <UpgradeOverlay message="Your subscription has expired. Please renew to continue using the Sales Page Builder." />
         )}
 
-        <div className={`max-w-[900px] mx-auto ${!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}`}>
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
+        <div className={`max-w-[900px] mx-auto ${isExpired && !subLoading ? "opacity-50 pointer-events-none" : ""}`}>
+          <div style={{ marginBottom: '32px' }}>
+            <span style={{ display: 'inline-block', background: '#111111', border: '1px solid #1A1A1A', color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans', marginBottom: '12px' }}>
+              SALES PAGE GENERATOR
+            </span>
+            <h1 style={{ fontFamily: 'Syne', fontSize: '32px', fontWeight: 800, color: '#FFFFFF', marginBottom: '8px' }}>
               Sales Page Builder
             </h1>
-            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555' }}>
-              Generate conversion-focused sales page copy with AI.
+            <p style={{ fontFamily: 'DM Sans', fontSize: '14px', color: '#666666', maxWidth: '580px' }}>
+              Create high-converting sales pages that sell. Write the title, description, what's inside, who it's for, and why they need it—everything laid out in the right order. The Sales Page Builder generates all of that for you.
             </p>
           </div>
 
-          <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px', maxWidth: '580px' }}>
+          <Card style={{ background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', padding: '32px', maxWidth: '580px', marginBottom: '16px' }}>
             <div className="space-y-0">
-              {userEbooks.length > 0 && (
-                <div>
-                  <label style={labelStyle}>Select from your ebooks</label>
-                  <Select value={selectedEbook} onValueChange={(v) => {
-                    setSelectedEbook(v);
-                    if (v !== "custom") {
-                      const ebook = userEbooks.find(e => e.id === v);
-                      if (ebook) {
-                        setTitle(ebook.title);
-                        setDescription(ebook.description || ebook.topic);
-                      }
-                    }
-                  }}>
-                    <SelectTrigger style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', marginBottom: '20px' }} className="h-auto">
-                      <SelectValue placeholder="Choose an ebook or enter manually" />
-                    </SelectTrigger>
-                    <SelectContent style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
-                      <SelectItem value="custom">Enter manually</SelectItem>
-                      {userEbooks.map(eb => (
-                        <SelectItem key={eb.id} value={eb.id}>{eb.title}</SelectItem>
+              {/* Select from History Button */}
+              {allEbooks.length > 0 && (
+                <div style={{ marginBottom: '24px' }}>
+                  <button
+                    onClick={() => setShowEbookSelector(!showEbookSelector)}
+                    style={{
+                      background: '#161616',
+                      border: '1px solid #1A1A1A',
+                      borderRadius: '6px',
+                      color: '#FFFFFF',
+                      fontFamily: 'DM Sans',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      padding: '12px 14px',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#2A2A2A';
+                      e.currentTarget.style.background = '#1A1A1A';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#1A1A1A';
+                      e.currentTarget.style.background = '#161616';
+                    }}
+                  >
+                    <span>Select from Ebook History</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showEbookSelector ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {showEbookSelector && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        background: '#161616',
+                        border: '1px solid #1A1A1A',
+                        borderRadius: '6px',
+                        marginTop: '8px',
+                        maxHeight: '240px',
+                        overflowY: 'auto'
+                      }}
+                    >
+                      {allEbooks.map((ebook) => (
+                        <button
+                          key={ebook.id}
+                          onClick={() => selectEbookFromHistory(ebook)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 14px',
+                            textAlign: 'left',
+                            borderBottom: '1px solid #0D0D0D',
+                            background: 'transparent',
+                            color: '#FFFFFF',
+                            fontFamily: 'DM Sans',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s ease',
+                            border: 'none'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#1A1A1A'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontWeight: 600, marginBottom: '2px' }}>{ebook.title}</div>
+                          <div style={{ fontSize: '11px', color: '#555555' }}>{ebook.topic}</div>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </motion.div>
+                  )}
+                  
+                  <div style={{ height: '1px', background: '#1A1A1A', margin: '20px 0' }} />
                 </div>
               )}
+
               <div>
                 <label style={labelStyle}>Product Title</label>
                 <Input 
@@ -284,19 +346,24 @@ const SalesPageBuilder = () => {
                     width: '100%',
                     height: '48px',
                     cursor: 'pointer',
-                    transition: 'background 150ms ease'
+                    transition: 'background 150ms ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
                   onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Generate 3 Sales Page Drafts"}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  Generate 3 Sales Page Drafts
                 </button>
               </div>
             </div>
           </Card>
 
           {drafts.length === 0 && (
-            <div style={{ maxWidth: '580px', marginTop: '16px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
+            <div style={{ maxWidth: '580px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
               <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#2A2A2A' }}>
                 Your generated sales pages will appear here
               </p>
@@ -304,34 +371,105 @@ const SalesPageBuilder = () => {
           )}
 
           {drafts.length > 0 && (
-            <div className="mt-8"><h2 className="text-sm font-semibold text-muted-foreground mb-3">Saved Results</h2></div>
+            <div style={{ marginTop: '32px' }}>
+              <h2 style={{ fontFamily: 'Syne', fontSize: '14px', fontWeight: 700, color: '#FFFFFF', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                Saved Results
+              </h2>
+            </div>
           )}
 
           <AnimatePresence>
             {drafts.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 {drafts.map((draft) => (
-                  <motion.div key={draft.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
-                    <Card className="rounded-2xl border border-border shadow-sm p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-[10px]">Sales Page Draft</Badge>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => copyDraft(draft)} className="gap-1 text-xs h-8">
-                            {copiedId === draft.id ? <CheckCircle2 className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+                  <motion.div key={draft.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                    <Card style={{ background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', padding: '24px', transition: 'all 0.2s ease' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <span style={{ display: 'inline-block', background: '#161616', border: '1px solid #1A1A1A', color: '#555555', fontSize: '9px', fontWeight: 600, letterSpacing: '0.1em', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans' }}>
+                          Sales Page Draft
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => copyDraft(draft)}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid #1A1A1A',
+                              borderRadius: '4px',
+                              color: copiedId === draft.id ? '#FFFFFF' : '#555555',
+                              fontFamily: 'DM Sans',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              padding: '6px 10px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#2A2A2A';
+                              e.currentTarget.style.color = '#FFFFFF';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#1A1A1A';
+                              e.currentTarget.style.color = '#555555';
+                            }}
+                          >
+                            {copiedId === draft.id ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                             Copy
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirm(draft.id)} className="gap-1 text-xs h-8 text-destructive hover:text-destructive">
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(draft.id)}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid #1A1A1A',
+                              borderRadius: '4px',
+                              color: '#555555',
+                              fontFamily: 'DM Sans',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              padding: '6px 10px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = '#CC3333';
+                              e.currentTarget.style.color = '#FF6666';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#1A1A1A';
+                              e.currentTarget.style.color = '#555555';
+                            }}
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                             Delete
-                          </Button>
+                          </button>
                         </div>
                       </div>
-                      <div className="space-y-3 divide-y divide-border/50 cursor-text" onClick={handleSelectText}>
-                        <div><h3 className="text-lg font-bold">{draft.headline}</h3><p className="text-muted-foreground text-sm mt-0.5">{draft.subheadline}</p></div>
-                        <div className="pt-3"><p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">The Problem</p><p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.problem}</p></div>
-                        <div className="pt-3"><p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">The Solution</p><p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.solution}</p></div>
-                        <div className="pt-3"><p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Benefits</p><p className="text-sm whitespace-pre-wrap leading-relaxed">{draft.benefits}</p></div>
-                        <div className="pt-3"><div className="p-3 rounded-lg bg-primary/5 border border-primary/10"><p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Call to Action</p><p className="font-medium text-primary text-sm">{draft.cta}</p></div></div>
+                      <div style={{ cursor: 'text', userSelect: 'text' }} onClick={handleSelectText}>
+                        <div style={{ marginBottom: '20px' }}>
+                          <h3 style={{ fontFamily: 'Syne', fontSize: '18px', fontWeight: 800, color: '#FFFFFF', marginBottom: '4px' }}>{draft.headline}</h3>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#666666' }}>{draft.subheadline}</p>
+                        </div>
+                        <div style={{ borderTop: '1px solid #1A1A1A', paddingTop: '16px', marginBottom: '16px' }}>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>The Problem</p>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#CCCCCC', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{draft.problem}</p>
+                        </div>
+                        <div style={{ borderTop: '1px solid #1A1A1A', paddingTop: '16px', marginBottom: '16px' }}>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>The Solution</p>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#CCCCCC', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{draft.solution}</p>
+                        </div>
+                        <div style={{ borderTop: '1px solid #1A1A1A', paddingTop: '16px', marginBottom: '16px' }}>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Benefits</p>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#CCCCCC', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{draft.benefits}</p>
+                        </div>
+                        <div style={{ borderTop: '1px solid #1A1A1A', paddingTop: '16px', background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', padding: '12px' }}>
+                          <p style={{ fontFamily: 'DM Sans', fontSize: '10px', fontWeight: 600, color: '#555555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Call to Action</p>
+                          <p style={{ fontFamily: 'Syne', fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{draft.cta}</p>
+                        </div>
                       </div>
                     </Card>
                   </motion.div>
@@ -343,14 +481,56 @@ const SalesPageBuilder = () => {
       </div>
 
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
+        <DialogContent style={{ background: '#111111', border: '1px solid #2A2A2A' }}>
           <DialogHeader>
-            <DialogTitle>Delete this draft?</DialogTitle>
-            <DialogDescription>This action cannot be undone.</DialogDescription>
+            <DialogTitle style={{ fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Delete this draft?</DialogTitle>
+            <DialogDescription style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#666666' }}>This action cannot be undone.</DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && deleteDraft(deleteConfirm)}>Delete</Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px' }}>
+            <button
+              onClick={() => setDeleteConfirm(null)}
+              style={{
+                background: 'transparent',
+                border: '1px solid #1A1A1A',
+                borderRadius: '6px',
+                color: '#FFFFFF',
+                fontFamily: 'DM Sans',
+                fontSize: '13px',
+                fontWeight: 600,
+                padding: '8px 16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#2A2A2A';
+                e.currentTarget.style.background = '#161616';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#1A1A1A';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => deleteConfirm && deleteDraft(deleteConfirm)}
+              style={{
+                background: '#CC3333',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#FFFFFF',
+                fontFamily: 'DM Sans',
+                fontSize: '13px',
+                fontWeight: 600,
+                padding: '8px 16px',
+                cursor: 'pointer',
+                transition: 'background 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#FF6666'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#CC3333'}
+            >
+              Delete
+            </button>
           </div>
         </DialogContent>
       </Dialog>
