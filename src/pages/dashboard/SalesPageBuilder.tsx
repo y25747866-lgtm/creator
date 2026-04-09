@@ -41,7 +41,6 @@ const SalesPageBuilder = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
   const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
