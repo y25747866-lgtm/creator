@@ -208,6 +208,31 @@ const MarketingStudio = () => {
           </div>
 
           <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px', maxWidth: '580px' }} className="space-y-5">
+            {userEbooks.length > 0 && (
+              <div className="space-y-1.5">
+                <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Select from your ebooks</label>
+                <Select value={selectedEbook} onValueChange={(v) => {
+                  setSelectedEbook(v);
+                  if (v !== "custom") {
+                    const ebook = userEbooks.find(e => e.id === v);
+                    if (ebook) {
+                      setTitle(ebook.title);
+                      setDescription(ebook.description || ebook.topic);
+                    }
+                  }
+                }}>
+                  <SelectTrigger style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', padding: '12px 14px', width: '100%' }} className="h-auto">
+                    <SelectValue placeholder="Choose an ebook or enter manually" />
+                  </SelectTrigger>
+                  <SelectContent style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
+                    <SelectItem value="custom">Enter manually</SelectItem>
+                    {userEbooks.map(eb => (
+                      <SelectItem key={eb.id} value={eb.id}>{eb.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Title</label>
               <Input 
