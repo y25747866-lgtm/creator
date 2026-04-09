@@ -204,3 +204,17 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+
+@media (max-width: 768px) {
+  .platform-track {
+    gap: 48px !important;
+    animation-duration: 22s !important;
+  }
+  .platform-track img {
+    height: 28px !important;
+  }
+  .platform-fade-left,
+  .platform-fade-right {
+    width: 60px !important;
+  }
+}

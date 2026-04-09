@@ -9,8 +9,6 @@ import {
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
-import platformLogosRow1 from '@/assets/platform-logos-row1.png';
-import platformLogosRow2 from '@/assets/platform-logos-row2.png';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 
 /* ─── Section wrapper with fade-up ─── */
@@ -270,13 +268,13 @@ const Landing = () => {
           if (track) track.style.animationPlayState = 'running';
         }}
       >
-        <p className="text-center text-[10px] font-semibold tracking-[0.2em] uppercase text-[#333333]" style={{ marginBottom: '20px' }}>
+        <p style={{ textAlign: 'center', fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#333333', marginBottom: '20px', fontFamily: "'DM Sans', sans-serif" }}>
           SELL ON ANY PLATFORM
         </p>
 
         {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #080808, transparent)' }} />
-        <div className="absolute right-0 top-0 bottom-0 w-32 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #080808, transparent)' }} />
+        <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '120px', background: 'linear-gradient(to right, #080808, transparent)' }} />
+        <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '120px', background: 'linear-gradient(to left, #080808, transparent)' }} />
 
         <div style={{ overflow: 'hidden', width: '100%' }}>
           <div
@@ -285,15 +283,21 @@ const Landing = () => {
               display: 'flex',
               flexWrap: 'nowrap',
               alignItems: 'center',
-              gap: '100px',
+              gap: '80px',
               width: 'max-content',
-              animation: 'platform-scroll 30s linear infinite',
+              animation: 'platform-scroll 35s linear infinite',
             }}
           >
-            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow1} alt="Payhip, Etsy, Gumroad, Shopify" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
-            <img src={platformLogosRow2} alt="Apple Books, Amazon, Barnes & Noble Press" style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }} />
+            {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
+              <img
+                key={i}
+                src={`/logos/logo-${n}.png`}
+                alt={`Platform logo ${n}`}
+                style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 300ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }}
+              />
+            ))}
           </div>
         </div>
       </section>
