@@ -194,6 +194,31 @@ const SalesPageBuilder = () => {
 
           <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px', maxWidth: '580px' }}>
             <div className="space-y-0">
+              {userEbooks.length > 0 && (
+                <div>
+                  <label style={labelStyle}>Select from your ebooks</label>
+                  <Select value={selectedEbook} onValueChange={(v) => {
+                    setSelectedEbook(v);
+                    if (v !== "custom") {
+                      const ebook = userEbooks.find(e => e.id === v);
+                      if (ebook) {
+                        setTitle(ebook.title);
+                        setDescription(ebook.description || ebook.topic);
+                      }
+                    }
+                  }}>
+                    <SelectTrigger style={{ background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: 'DM Sans', fontSize: '14px', padding: '12px 14px', width: '100%', marginBottom: '20px' }} className="h-auto">
+                      <SelectValue placeholder="Choose an ebook or enter manually" />
+                    </SelectTrigger>
+                    <SelectContent style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
+                      <SelectItem value="custom">Enter manually</SelectItem>
+                      {userEbooks.map(eb => (
+                        <SelectItem key={eb.id} value={eb.id}>{eb.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label style={labelStyle}>Product Title</label>
                 <Input 
