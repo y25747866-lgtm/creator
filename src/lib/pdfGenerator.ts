@@ -73,10 +73,15 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
       doc.text(`${pageNum}`, pw / 2, ph - 10, { align: "center" });
     };
 
-    const needsBreak = (space: number) => {
+    // FIX: after needsBreak triggers a new page, reset font/color
+    // to avoid inheriting footer's muted/small style on first line
+    const needsBreak = (space: number, resetFontSize?: number, resetColor?: [number, number, number]) => {
       if (y + space > ph - 20) {
         footer();
         addPage();
+        // Reset styles after page break so text never inherits footer styling
+        if (resetFontSize) doc.setFontSize(resetFontSize);
+        if (resetColor) doc.setTextColor(...resetColor);
         return true;
       }
       return false;
@@ -147,7 +152,8 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
 
       doc.setFontSize(12);
       chapters.forEach((chapter, i) => {
-        needsBreak(10);
+        needsBreak(10, 12, colors.text);
+        doc.setFontSize(12);
         doc.setTextColor(...colors.text);
         const tocLine = doc.splitTextToSize(`${i + 1}.  ${chapter}`, cw - 10);
         doc.text(tocLine, margin + 5, y);
@@ -179,7 +185,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           break;
         }
         case "h2": {
-          needsBreak(22);
+          needsBreak(22, 16, colors.accent);
           y += 6;
           doc.setFontSize(16);
           doc.setTextColor(...colors.accent);
@@ -189,7 +195,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           break;
         }
         case "h3": {
-          needsBreak(18);
+          needsBreak(18, 13, [70, 70, 70]);
           y += 4;
           doc.setFontSize(13);
           doc.setTextColor(70, 70, 70);
@@ -199,14 +205,17 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           break;
         }
         case "bullet": {
-          needsBreak(bodyLineH + 2);
+          needsBreak(bodyLineH + 2, 11, colors.text);
           doc.setFontSize(11);
           doc.setTextColor(...colors.text);
           const bulletLines = doc.splitTextToSize(section.content, cw - 8);
           doc.setFillColor(...colors.accent);
           doc.circle(margin + 2, y - 1.2, 1, "F");
           bulletLines.forEach((line: string) => {
-            needsBreak(bodyLineH);
+            needsBreak(bodyLineH, 11, colors.text);
+            // FIX: always reset font and color before writing each line
+            doc.setFontSize(11);
+            doc.setTextColor(...colors.text);
             doc.text(line, margin + 7, y);
             y += bodyLineH;
           });
@@ -218,7 +227,10 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           doc.setTextColor(...colors.text);
           const para = doc.splitTextToSize(section.content, cw);
           para.forEach((line: string) => {
-            needsBreak(bodyLineH);
+            needsBreak(bodyLineH, 11, colors.text);
+            // FIX: always reset font and color before writing each line
+            doc.setFontSize(11);
+            doc.setTextColor(...colors.text);
             doc.text(line, margin, y);
             y += bodyLineH;
           });
@@ -275,4 +287,4 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     console.error("Error downloading cover image:", error);
     window.open(ebook.coverImageUrl, "_blank");
   }
-}
+               }
