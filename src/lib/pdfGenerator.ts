@@ -35,7 +35,7 @@ function parseContent(content: string | undefined): PDFSection[] {
 }
 
 function extractChapters(sections: PDFSection[]): string[] {
-  return sections.filter((s) => s.type === "h1").map((s) => s.content);
+  return sections.filter((s) => s.type === "h2").map((s) => s.content);
 }
 
 export async function generatePDF(ebook: Ebook): Promise<void> {
@@ -287,4 +287,4 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     console.error("Error downloading cover image:", error);
     window.open(ebook.coverImageUrl, "_blank");
   }
-               }
+  }
