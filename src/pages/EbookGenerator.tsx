@@ -412,4 +412,199 @@ const EbookGenerator = () => {
 
       toast({ title:"Success!", description:`"${ebook.title}" is ready.` });
 
-    } catch (e
+    } catch (err:any) {
+      setErrorMsg(err.message); setStep("idle"); setScreen("form");
+      toast({ title:"Generation Failed", description:err.message, variant:"destructive" });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!isCreatorOrAbove) { toast({title:"Upgrade Required",description:"Downloads require Creator or Pro plan.",variant:"destructive"}); return; }
+    if (!ebookData) return;
+    try {
+      await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename||"ebook_nexoraos.pdf");
+      if (ebookData.dbProductId) { try { await recordMetric(ebookData.dbProductId,"download"); } catch {} }
+    } catch (err:any) { toast({title:"Download Failed",description:err.message,variant:"destructive"}); }
+  };
+
+  const handleDownloadCover = () => {
+    if (!isCreatorOrAbove) { toast({title:"Upgrade Required",description:"Downloads require Creator or Pro plan.",variant:"destructive"}); return; }
+    if (!ebookData?.coverImageUrl) return;
+    const a = document.createElement("a"); a.href=ebookData.coverImageUrl;
+    a.download=`cover_${ebookData.title.replace(/[^a-z0-9]/gi,"_").toLowerCase()}.png`;
+    a.click();
+  };
+
+  const resetForm = () => {
+    setScreen("form");setStep("idle");setEbookData(null);setChapters([]);
+    setTopic("");setDescription("");setCategory("");setTargetAudience("");
+    setTone("professional");setEbookLength("short");setErrorMsg(null);
+  };
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
+
+  const lbl = { fontFamily:"DM Sans",fontSize:"10px",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase" as const,color:"#555555",display:"block" };
+  const inp = { background:"#161616",border:"1px solid #1A1A1A",borderRadius:"6px",color:"#FFFFFF",fontFamily:"DM Sans",fontSize:"14px",padding:"12px 14px",width:"100%",outline:"none",boxSizing:"border-box" as const };
+
+  const renderForm = () => (
+    <motion.div key="form" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} className="max-w-[580px]">
+      <div className="mb-10">
+        <span style={{display:"inline-block",background:"#111111",border:"1px solid #1A1A1A",color:"rgba(255,255,255,0.5)",fontSize:"10px",fontWeight:600,letterSpacing:"0.12em",padding:"4px 10px",borderRadius:"4px",textTransform:"uppercase",fontFamily:"DM Sans",marginBottom:"12px"}}>AI PRODUCT GENERATOR</span>
+        <h1 style={{fontFamily:"Syne",fontSize:"32px",fontWeight:800,color:"#FFFFFF",marginBottom:"8px"}}>Create Professional Ebooks</h1>
+        <p style={{fontFamily:"DM Sans",fontSize:"14px",color:"#666666",marginBottom:"32px"}}>Enter your topic and let AI write a complete ebook ready to download as PDF in minutes.</p>
+      </div>
+
+      <div style={{background:"#111111",border:"1px solid #2A2A2A",borderRadius:"10px",padding:"32px",marginBottom:"16px"}}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label style={lbl}>Ebook Topic</label>
+            <input type="text" placeholder="e.g. Passive income strategies for 2025" value={topic} onChange={e=>setTopic(e.target.value)} style={inp}/>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label style={lbl}>Category</label>
+              <select value={category} onChange={e=>setCategory(e.target.value)} style={{...inp,appearance:"none" as any,color:category?"#FFFFFF":"#333333"}}>
+                <option value="" style={{background:"#161616",color:"#333"}}>Select Category</option>
+                {CATEGORY_OPTIONS.map(o=><option key={o} value={o} style={{background:"#161616"}}>{o}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label style={lbl}>Tone</label>
+              <select value={tone} onChange={e=>setTone(e.target.value)} style={{...inp,appearance:"none" as any}}>
+                {TONE_OPTIONS.map(o=><option key={o.value} value={o.value} style={{background:"#161616"}}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label style={lbl}>Target Audience <span style={{color:"#333",fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+            <input type="text" placeholder="e.g. Beginners, Freelancers, Small business owners" value={targetAudience} onChange={e=>setTargetAudience(e.target.value)} style={inp}/>
+          </div>
+
+          <div className="space-y-3">
+            <label style={lbl}>Ebook Length</label>
+            <div className="grid grid-cols-3 gap-3">
+              {LENGTH_OPTIONS.map(opt=>{
+                const locked=!canSelectLength(opt.access); const active=ebookLength===opt.value&&!locked;
+                return (
+                  <button key={opt.value} onClick={()=>{if(locked){toast({title:"Upgrade Required",description:`${opt.label} ebooks require Creator or Pro plan.`,variant:"destructive"});return;}setEbookLength(opt.value);}}
+                    style={{background:active?"#FFFFFF":"#161616",border:`1px solid ${active?"#FFFFFF":"#2A2A2A"}`,borderRadius:"8px",color:active?"#0A0A0A":locked?"#333333":"#FFFFFF",cursor:locked?"not-allowed":"pointer",padding:"16px 8px",textAlign:"center",opacity:locked?.5:1,transition:"all 0.15s",display:"flex",flexDirection:"column",alignItems:"center",gap:"6px"}}>
+                    <span style={{opacity:.7}}>{opt.icon}</span>
+                    <span style={{fontFamily:"Syne",fontSize:"13px",fontWeight:700}}>{opt.label}</span>
+                    <span style={{fontFamily:"DM Sans",fontSize:"10px",opacity:.6}}>{opt.pages}</span>
+                    {locked&&<span style={{fontSize:"9px",color:"#555"}}>Creator+</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label style={lbl}>Additional Context <span style={{color:"#333",fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+            <textarea placeholder="Add specific points you want the AI to cover..." value={description} onChange={e=>setDescription(e.target.value)} rows={3}
+              style={{...inp,resize:"vertical" as any}}/>
+          </div>
+
+          {errorMsg&&<div style={{background:"#1A0D0D",border:"1px solid #4D1A1A",borderRadius:"6px",padding:"12px 14px"}}><p style={{fontFamily:"DM Sans",fontSize:"13px",color:"#F44336",margin:0}}>{errorMsg}</p></div>}
+
+          <Button onClick={startGeneration} disabled={!topic.trim()||!category}
+            style={{background:"#FFFFFF",color:"#0A0A0A",fontFamily:"Syne",fontWeight:700,fontSize:"14px",borderRadius:"6px",height:"48px",width:"100%"}}>
+            <Sparkles className="w-4 h-4 mr-2"/>Generate Ebook<ArrowRight className="w-4 h-4 ml-2"/>
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const renderGenerating = () => (
+    <motion.div key="generating" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} className="max-w-[580px] text-left py-16">
+      <div style={{width:"80px",height:"80px",borderRadius:"16px",background:"#111111",border:"1px solid #2A2A2A",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"24px"}}>
+        <Loader2 className="w-10 h-10 text-white animate-spin"/>
+      </div>
+      <h2 style={{fontFamily:"Syne",fontSize:"28px",fontWeight:800,color:"#FFFFFF",marginBottom:"8px"}}>{STEP_LABELS[step]}</h2>
+      <p style={{fontFamily:"DM Sans",fontSize:"14px",color:"#666666",marginBottom:"32px"}}>This typically takes 60–120 seconds. Please keep this tab open.</p>
+      <div className="max-w-sm">
+        <Progress value={STEP_PROGRESS[step]} className="h-1 bg-[#1A1A1A]" style={{borderRadius:"2px"}}/>
+        <p style={{fontFamily:"DM Sans",fontSize:"11px",color:"#555555",textAlign:"right",marginTop:"8px",fontWeight:600}}>{STEP_PROGRESS[step]}% COMPLETE</p>
+      </div>
+    </motion.div>
+  );
+
+  const renderOutline = () => (
+    <motion.div key="outline" initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-20}} className="max-w-[580px]">
+      <div className="mb-8">
+        <span style={{display:"inline-block",background:"#111111",border:"1px solid #1A1A1A",color:"rgba(255,255,255,0.5)",fontSize:"10px",fontWeight:600,letterSpacing:"0.12em",padding:"4px 10px",borderRadius:"4px",textTransform:"uppercase",fontFamily:"DM Sans",marginBottom:"12px"}}>EBOOK OUTLINE</span>
+        <h2 style={{fontFamily:"Syne",fontSize:"32px",fontWeight:800,color:"#FFFFFF",marginBottom:"8px"}}>Your Ebook Structure</h2>
+        <p style={{fontFamily:"DM Sans",fontSize:"14px",color:"#666666",marginBottom:"32px"}}>Review your chapters before downloading</p>
+      </div>
+      <div className="space-y-3 mb-8">
+        {chapters.map(ch=>(
+          <div key={ch.id} style={{background:"#111111",border:"1px solid #2A2A2A",borderRadius:"10px",padding:"20px"}}>
+            <h3 style={{fontFamily:"Syne",fontSize:"14px",fontWeight:700,color:"#FFFFFF",marginBottom:"6px"}}>{ch.title}</h3>
+            <p style={{fontFamily:"DM Sans",fontSize:"12px",color:"#666666",marginBottom:"12px"}}>{ch.description}</p>
+            <div className="flex gap-2">
+              <span style={{background:"#161616",border:"1px solid #1A1A1A",color:"#555555",fontSize:"10px",fontWeight:600,padding:"2px 8px",borderRadius:"4px",textTransform:"uppercase",fontFamily:"DM Sans"}}>{ch.phase}</span>
+              <span style={{background:"#161616",border:"1px solid #1A1A1A",color:"#555555",fontSize:"10px",fontWeight:600,padding:"2px 8px",borderRadius:"4px",textTransform:"uppercase",fontFamily:"DM Sans"}}>{ch.modules}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button onClick={()=>setScreen("download")} style={{background:"#FFFFFF",color:"#0A0A0A",fontFamily:"Syne",fontWeight:700,fontSize:"14px",borderRadius:"6px",height:"48px",width:"100%"}}>
+        Continue<ArrowRight className="w-4 h-4 ml-2"/>
+      </Button>
+    </motion.div>
+  );
+
+  const renderDownload = () => (
+    <motion.div key="download" initial={{opacity:0,scale:.95}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:.95}} className="max-w-[580px] text-left">
+      <div className="mb-8">
+        <div style={{width:"192px",height:"256px",background:"#111111",border:"1px solid #2A2A2A",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px",overflow:"hidden",position:"relative"}}>
+          {ebookData?.coverImageUrl&&<img src={ebookData.coverImageUrl} alt="Cover" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",opacity:.4,borderRadius:"10px"}}/>}
+          <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
+            <h3 style={{fontFamily:"Syne",fontWeight:800,fontSize:"13px",color:"#FFFFFF",marginBottom:"8px",lineHeight:1.3}}>{ebookData?.title}</h3>
+            <p style={{fontFamily:"DM Sans",fontSize:"10px",color:"#666666"}}>A Complete Guide</p>
+            <p style={{fontFamily:"DM Sans",fontSize:"10px",color:"#333333",marginTop:"12px"}}>NexoraOS</p>
+          </div>
+        </div>
+      </div>
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle2 className="w-5 h-5 text-white"/>
+          <h2 style={{fontFamily:"Syne",fontSize:"24px",fontWeight:800,color:"#FFFFFF"}}>Your Ebook is Ready</h2>
+        </div>
+        <p style={{fontFamily:"DM Sans",fontSize:"16px",fontWeight:600,color:"#FFFFFF"}}>{ebookData?.title}</p>
+        <p style={{fontFamily:"DM Sans",fontSize:"13px",color:"#666666",marginTop:"4px"}}>{ebookData?.pages} pages · PDF format</p>
+      </div>
+      <div className="space-y-3">
+        <Button onClick={handleDownloadPDF} disabled={!isCreatorOrAbove} style={{background:"#FFFFFF",color:"#0A0A0A",fontFamily:"Syne",fontWeight:700,fontSize:"14px",borderRadius:"6px",height:"48px",width:"100%"}}>
+          <Download className="w-4 h-4 mr-2"/>{isCreatorOrAbove?"Download PDF":"Upgrade to Download"}
+        </Button>
+        {ebookData?.coverImageUrl&&(
+          <Button onClick={handleDownloadCover} variant="outline" disabled={!isCreatorOrAbove} style={{background:"transparent",border:"1px solid #2A2A2A",color:"#FFFFFF",fontFamily:"Syne",fontWeight:700,fontSize:"14px",borderRadius:"6px",height:"48px",width:"100%"}}>
+            <ImageIcon className="w-4 h-4 mr-2"/>Download Cover
+          </Button>
+        )}
+        {!isCreatorOrAbove&&<p style={{fontFamily:"DM Sans",fontSize:"12px",color:"#666666",textAlign:"center"}}>Upgrade to Creator or Pro to download.</p>}
+        <Button variant="ghost" onClick={resetForm} style={{color:"#666666",fontFamily:"DM Sans",fontSize:"14px",width:"100%"}}>
+          <RefreshCw className="w-4 h-4 mr-2"/>Generate Another
+        </Button>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <DashboardLayout>
+      <div className="p-6 md:p-10">
+        <AnimatePresence mode="wait">
+          {screen==="form"       && renderForm()}
+          {screen==="generating" && renderGenerating()}
+          {screen==="outline"    && renderOutline()}
+          {screen==="download"   && renderDownload()}
+        </AnimatePresence>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default EbookGenerator;
