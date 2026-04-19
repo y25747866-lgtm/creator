@@ -370,7 +370,6 @@ const EbookGenerator = () => {
         renderer.drawContentPages(ch.title, ch.content, genData.meta.title, true, ch.number);
       }
       renderer.drawContentPages("Conclusion", genData.content.conclusion, genData.meta.title);
-      renderer.drawBackCover();
 
       const safeTitle = genData.meta.title.replace(/[^a-z0-9]/gi,"_").toLowerCase();
       const filename  = `${safeTitle}_nexoraos.pdf`;
