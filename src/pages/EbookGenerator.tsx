@@ -343,7 +343,7 @@ const EbookGenerator = () => {
       if (!session?.access_token) throw new Error("Please log in to generate ebooks.");
 
       // STEP 1 — Generate text
-      const { data:genData, error:genError } = await supabase.functions.invoke("generate-ebook-content", {
+      const { data:genData, error:genError } = await supabase.functions.invoke("generate-ebook", {
         body: { topic, description, length:ebookLength, category, targetAudience, tone },
       });
       if (genError) throw new Error(genError.message);
@@ -353,7 +353,7 @@ const EbookGenerator = () => {
       setStep("cover");
       let coverBase64: string|null = null;
       try {
-        const { data:coverData } = await supabase.functions.invoke("generate-ebook-cover", { body:{topic,title:genData.meta.title} });
+        const { data:coverData } = await supabase.functions.invoke("cover-image", { body:{topic,title:genData.meta.title} });
         if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
       } catch {}
 
