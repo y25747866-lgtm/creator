@@ -154,6 +154,8 @@ async function downloadPDF(canvases: HTMLCanvasElement[], filename: string) {
 
 class EbookPDFRenderer {
   readonly pages: HTMLCanvasElement[] = [];
+  private _lastCtx: CanvasRenderingContext2D | null = null;
+  private _lastY: number = 0;
 
   private newPage(): CanvasRenderingContext2D {
     const c = document.createElement("canvas");
@@ -175,12 +177,23 @@ class EbookPDFRenderer {
 
   private footer(ctx: CanvasRenderingContext2D, title: string, n: number) {
     const y = PAGE_H - 28;
-    ctx.strokeStyle="#E0E0E0"; ctx.lineWidth=0.5;
-    ctx.beginPath(); ctx.moveTo(MX,y-8); ctx.lineTo(PAGE_W-MX,y-8); ctx.stroke();
-    ctx.fillStyle="#888"; ctx.font="bold 10px sans-serif"; ctx.textAlign="left"; ctx.fillText("NEXORAOS",MX,y+8);
-    ctx.font="10px sans-serif"; ctx.textAlign="center";
-    ctx.fillText(title.length>45?title.substring(0,45)+"…":title, PAGE_W/2, y+8);
-    ctx.textAlign="right"; ctx.fillText(String(n),PAGE_W-MX,y+8);
+    ctx.strokeStyle = "#DDDDDD";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(MX, y - 8);
+    ctx.lineTo(PAGE_W - MX, y - 8);
+    ctx.stroke();
+    // Short title center — no brand name
+    const short = title.length > 50 ? title.substring(0, 50) + "…" : title;
+    ctx.fillStyle = "#AAAAAA";
+    ctx.font = "10px Georgia, serif";
+    ctx.textAlign = "center";
+    ctx.fillText(short, PAGE_W / 2, y + 8);
+    // Page number right
+    ctx.fillStyle = "#AAAAAA";
+    ctx.font = "10px sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(String(n), PAGE_W - MX, y + 8);
   }
 
   async drawCover(title: string, subtitle: string, topic: string, img64: string|null, date: string) {
@@ -197,7 +210,7 @@ class EbookPDFRenderer {
       } catch {}
     }
 
-    ctx.fillStyle=ACCENT; ctx.font="bold 11px sans-serif"; ctx.textAlign="left"; ctx.fillText("NEXORAOS",MX,48);
+    // No brand name on cover top
     ctx.fillStyle="#2D2D4E"; ctx.beginPath(); ctx.roundRect(MX-2,h*.37,180,24,4); ctx.fill();
     ctx.fillStyle=ACCENT; ctx.font="bold 9px sans-serif"; ctx.fillText(topic.toUpperCase().substring(0,30),MX+10,h*.37+16);
 
@@ -239,20 +252,32 @@ class EbookPDFRenderer {
     ctx.fillStyle=WHITE; ctx.font="bold 44px sans-serif"; ctx.fillText(String(num).padStart(2,"0"),MX,h*.34);
     ctx.font="bold 24px sans-serif"; let ty=h*.41;
     for (const l of this.wrap(ctx,title,CONTENT_W)) { ctx.fillText(l,MX,ty); ty+=34; }
-    ctx.fillStyle="#555"; ctx.font="10px sans-serif"; ctx.textAlign="right"; ctx.fillText("NEXORAOS",w-MX,h-24);
+    // No brand on chapter splash
     this.footer(ctx,bookTitle,this.pages.length);
   }
 
   drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter=false, chNum?: number) {
-    const maxY = PAGE_H - 88;
-    const lineH = 22;       // body line height
+    const maxY    = PAGE_H - 88;
+    const lineH   = 22;
     const bodyFont = "13.5px Georgia, serif";
     const headFont = "bold 15px sans-serif";
 
-    let ctx = this.newPage();
-    let y   = 72;
+    // Smart page management: continue on existing page if enough room,
+    // otherwise start a new page. This eliminates blank overflow pages.
+    const MIN_ROOM = isChapter ? PAGE_H : 200; // chapters always start fresh; intro/conclusion continue
+    let ctx: CanvasRenderingContext2D;
+    let y: number;
 
-    // ── Section header ──────────────────────────────────────────────────
+    if (!isChapter && this._lastCtx && this._lastY < maxY - MIN_ROOM) {
+      // Continue on last page — add spacing between sections
+      ctx = this._lastCtx;
+      y   = this._lastY + 32;
+    } else {
+      ctx = this.newPage();
+      y   = 72;
+    }
+
+    // ── Section header ─────────────────────────────────────────────────
     if (isChapter && chNum !== undefined) {
       ctx.fillStyle = ACCENT;
       ctx.font = "bold 9px sans-serif";
@@ -260,6 +285,7 @@ class EbookPDFRenderer {
       ctx.fillText(`CHAPTER ${String(chNum).padStart(2,"0")}`, MX, y);
       y += 22;
     }
+
     ctx.fillStyle = BLACK;
     ctx.font = "bold 26px sans-serif";
     ctx.textAlign = "left";
@@ -271,26 +297,20 @@ class EbookPDFRenderer {
     ctx.fillRect(MX, y, 60, 4);
     y += 22;
 
-    // ── Render blocks ───────────────────────────────────────────────────
-    const blocks = this.parseBlocks(rawContent);
-
-    for (const block of blocks) {
+    // ── Blocks ─────────────────────────────────────────────────────────
+    for (const block of this.parseBlocks(rawContent)) {
       if (block.type === "heading") {
-        // Ensure heading fits — start new page if tight
         if (y > maxY - 70) {
           this.footer(ctx, bookTitle, this.pages.length);
-          ctx = this.newPage();
-          y = 72;
+          ctx = this.newPage(); y = 72;
         }
         y += 14;
         ctx.fillStyle = BLACK;
         ctx.font = headFont;
         ctx.textAlign = "left";
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
-          ctx.fillText(l, MX, y);
-          y += 24;
+          ctx.fillText(l, MX, y); y += 24;
         }
-        // Thin accent line under subheading
         ctx.fillStyle = ACCENT;
         ctx.fillRect(MX, y, 36, 2);
         y += 10;
@@ -301,43 +321,36 @@ class EbookPDFRenderer {
         const bh = cl.length * 20 + 28;
         if (y > maxY - bh) {
           this.footer(ctx, bookTitle, this.pages.length);
-          ctx = this.newPage();
-          y = 72;
+          ctx = this.newPage(); y = 72;
         }
         y += 10;
         ctx.fillStyle = "#F0EEFF";
-        ctx.beginPath();
-        ctx.roundRect(MX, y, CONTENT_W, bh, 6);
-        ctx.fill();
-        ctx.fillStyle = ACCENT;
-        ctx.fillRect(MX, y, 5, bh);
-        ctx.fillStyle = "#4A42CC";
-        ctx.font = "italic 12px sans-serif";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 6); ctx.fill();
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, bh);
+        ctx.fillStyle = "#4A42CC"; ctx.font = "italic 12px sans-serif";
         let cy = y + 18;
         for (const l of cl) { ctx.fillText(l, MX + 20, cy); cy += 20; }
         y += bh + 14;
 
       } else {
-        // Body text — Georgia serif, justified feel, proper line height
         ctx.fillStyle = "#1A1A1A";
         ctx.font = bodyFont;
         ctx.textAlign = "left";
-        const lines = this.wrap(ctx, block.text, CONTENT_W);
-        for (const l of lines) {
+        for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
           if (y > maxY) {
             this.footer(ctx, bookTitle, this.pages.length);
-            ctx = this.newPage();
-            y = 72;
+            ctx = this.newPage(); y = 72;
           }
-          ctx.fillText(l, MX, y);
-          y += lineH;
+          ctx.fillText(l, MX, y); y += lineH;
         }
-        y += 12; // paragraph spacing
+        y += 12;
       }
     }
 
-    // Only add footer if page has content (prevents blank footer-only pages)
     if (y > 80) this.footer(ctx, bookTitle, this.pages.length);
+    // Save state for potential continuation
+    this._lastCtx = ctx;
+    this._lastY   = y;
   }
   private parseBlocks(content: string): Array<{type:string;text:string}> {
     const blocks: Array<{type:string;text:string}> = [];
@@ -445,7 +458,7 @@ const EbookGenerator = () => {
       renderer.drawContentPages("Conclusion", genData.content.conclusion, genData.meta.title);
 
       const safeTitle = genData.meta.title.replace(/[^a-z0-9]/gi,"_").toLowerCase();
-      const filename  = `${safeTitle}_nexoraos.pdf`;
+      const filename  = `${safeTitle}.pdf`;
 
       // STEP 4 — Build Ebook object
       const flatContent = [
@@ -636,7 +649,7 @@ const EbookGenerator = () => {
           <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
             <h3 style={{fontFamily:"Syne",fontWeight:800,fontSize:"13px",color:"#FFFFFF",marginBottom:"8px",lineHeight:1.3}}>{ebookData?.title}</h3>
             <p style={{fontFamily:"DM Sans",fontSize:"10px",color:"#666666"}}>A Complete Guide</p>
-            <p style={{fontFamily:"DM Sans",fontSize:"10px",color:"#333333",marginTop:"12px"}}>NexoraOS</p>
+            
           </div>
         </div>
       </div>
