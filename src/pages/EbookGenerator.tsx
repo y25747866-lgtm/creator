@@ -243,62 +243,135 @@ class EbookPDFRenderer {
     this.footer(ctx,bookTitle,this.pages.length);
   }
 
-  drawContentPages(title: string, content: string, bookTitle: string, isChapter=false, chNum?: number) {
-    const maxY=PAGE_H-80; let ctx=this.newPage(); let y=72;
-    if (isChapter && chNum!==undefined) {
-      ctx.fillStyle=ACCENT; ctx.font="bold 9px sans-serif"; ctx.textAlign="left"; ctx.fillText(`CHAPTER ${String(chNum).padStart(2,"0")}`,MX,y); y+=22;
+  drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter=false, chNum?: number) {
+    const maxY = PAGE_H - 88;
+    const lineH = 22;       // body line height
+    const bodyFont = "13.5px Georgia, serif";
+    const headFont = "bold 15px sans-serif";
+
+    let ctx = this.newPage();
+    let y   = 72;
+
+    // ── Section header ──────────────────────────────────────────────────
+    if (isChapter && chNum !== undefined) {
+      ctx.fillStyle = ACCENT;
+      ctx.font = "bold 9px sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`CHAPTER ${String(chNum).padStart(2,"0")}`, MX, y);
+      y += 22;
     }
-    ctx.fillStyle=BLACK; ctx.font="bold 26px sans-serif"; ctx.textAlign="left";
-    for (const l of this.wrap(ctx,title,CONTENT_W)) { ctx.fillText(l,MX,y); y+=34; }
-    ctx.fillStyle=ACCENT; ctx.fillRect(MX,y,60,4); y+=20;
+    ctx.fillStyle = BLACK;
+    ctx.font = "bold 26px sans-serif";
+    ctx.textAlign = "left";
+    for (const l of this.wrap(ctx, title, CONTENT_W)) {
+      ctx.fillText(l, MX, y);
+      y += 34;
+    }
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(MX, y, 60, 4);
+    y += 22;
 
-    for (const block of this.parseBlocks(content)) {
-      if (block.type==="heading") {
-        if (y>maxY-60) { this.footer(ctx,bookTitle,this.pages.length); ctx=this.newPage(); y=72; }
-        y+=12; ctx.fillStyle=BLACK; ctx.font="bold 15px sans-serif"; ctx.textAlign="left";
-        for (const l of this.wrap(ctx,block.text,CONTENT_W)) { ctx.fillText(l,MX,y); y+=22; } y+=4;
+    // ── Render blocks ───────────────────────────────────────────────────
+    const blocks = this.parseBlocks(rawContent);
 
-      } else if (block.type==="callout") {
-        ctx.font="11px sans-serif";
-        const cl=this.wrap(ctx,block.text,CONTENT_W-40); const bh=cl.length*20+28;
-        if (y>maxY-bh) { this.footer(ctx,bookTitle,this.pages.length); ctx=this.newPage(); y=72; }
-        y+=8;
-        ctx.fillStyle="#F0EEFF"; ctx.beginPath(); ctx.roundRect(MX,y,CONTENT_W,bh,6); ctx.fill();
-        ctx.fillStyle=ACCENT; ctx.fillRect(MX,y,5,bh);
-        ctx.fillStyle="#4A42CC"; ctx.font="bold italic 11px sans-serif"; let cy=y+18;
-        for (const l of cl) { ctx.fillText(l,MX+20,cy); cy+=20; } y+=bh+14;
+    for (const block of blocks) {
+      if (block.type === "heading") {
+        // Ensure heading fits — start new page if tight
+        if (y > maxY - 70) {
+          this.footer(ctx, bookTitle, this.pages.length);
+          ctx = this.newPage();
+          y = 72;
+        }
+        y += 14;
+        ctx.fillStyle = BLACK;
+        ctx.font = headFont;
+        ctx.textAlign = "left";
+        for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
+          ctx.fillText(l, MX, y);
+          y += 24;
+        }
+        // Thin accent line under subheading
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(MX, y, 36, 2);
+        y += 10;
+
+      } else if (block.type === "callout") {
+        ctx.font = "12px sans-serif";
+        const cl = this.wrap(ctx, block.text, CONTENT_W - 44);
+        const bh = cl.length * 20 + 28;
+        if (y > maxY - bh) {
+          this.footer(ctx, bookTitle, this.pages.length);
+          ctx = this.newPage();
+          y = 72;
+        }
+        y += 10;
+        ctx.fillStyle = "#F0EEFF";
+        ctx.beginPath();
+        ctx.roundRect(MX, y, CONTENT_W, bh, 6);
+        ctx.fill();
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(MX, y, 5, bh);
+        ctx.fillStyle = "#4A42CC";
+        ctx.font = "italic 12px sans-serif";
+        let cy = y + 18;
+        for (const l of cl) { ctx.fillText(l, MX + 20, cy); cy += 20; }
+        y += bh + 14;
 
       } else {
-        ctx.fillStyle="#222"; ctx.font="13px sans-serif"; ctx.textAlign="left";
-        for (const l of this.wrap(ctx,block.text,CONTENT_W)) {
-          if (y>maxY) { this.footer(ctx,bookTitle,this.pages.length); ctx=this.newPage(); y=72; }
-          ctx.fillText(l,MX,y); y+=21;
-        } y+=10;
+        // Body text — Georgia serif, justified feel, proper line height
+        ctx.fillStyle = "#1A1A1A";
+        ctx.font = bodyFont;
+        ctx.textAlign = "left";
+        const lines = this.wrap(ctx, block.text, CONTENT_W);
+        for (const l of lines) {
+          if (y > maxY) {
+            this.footer(ctx, bookTitle, this.pages.length);
+            ctx = this.newPage();
+            y = 72;
+          }
+          ctx.fillText(l, MX, y);
+          y += lineH;
+        }
+        y += 12; // paragraph spacing
       }
     }
-    this.footer(ctx,bookTitle,this.pages.length);
-  }
 
-  drawBackCover() {
-    const ctx=this.newPage(); const w=PAGE_W,h=PAGE_H;
-    ctx.fillStyle=BLACK; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle=ACCENT; ctx.fillRect(0,h*.5,w,6);
-    ctx.fillStyle=ACCENT; ctx.font="bold 38px sans-serif"; ctx.textAlign="center"; ctx.fillText("NexoraOS",w/2,h*.42);
-    ctx.fillStyle=WHITE; ctx.font="15px sans-serif"; ctx.fillText("AI-Powered Business Operating System",w/2,h*.47);
-    ctx.fillStyle="#666688"; ctx.font="12px sans-serif"; ctx.fillText("www.nexoraos.online",w/2,h*.53);
-    ctx.fillStyle=WHITE; ctx.font="italic 22px Georgia,serif"; ctx.fillText('"Begin now."',w/2,h*.65);
-    ctx.fillStyle=ACCENT; ctx.fillRect(0,h-6,w,6);
+    // Only add footer if page has content (prevents blank footer-only pages)
+    if (y > 80) this.footer(ctx, bookTitle, this.pages.length);
   }
-
   private parseBlocks(content: string): Array<{type:string;text:string}> {
-    return content.split(/\n\n+/).map(p => p.trim()).filter(Boolean).map(t => {
-      if (t.startsWith("## ")||t.startsWith("### ")) return {type:"heading",text:t.replace(/^#{2,3}\s+/,"")};
-      if (t.startsWith("**")&&t.endsWith("**")&&t.length<120) return {type:"heading",text:t.replace(/\*\*/g,"")};
-      if (t.startsWith(">")) return {type:"callout",text:t.replace(/^>\s*/,"")};
-      return {type:"body",text:t.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1").replace(/`(.*?)`/g,"$1")};
-    });
+    const blocks: Array<{type:string;text:string}> = [];
+    for (const para of content.split(/\n\n+/)) {
+      const t = para.trim();
+      if (!t) continue;
+      // Strip AI leakage lines
+      if (/^Chapter:\s*[""\"]?.{3,100}[""\"]?\s*$/i.test(t)) continue;
+      if (/^here is the (improved|rewritten|final|humanized|updated)/i.test(t)) continue;
+      if (/^(note:|editor'?s? note:|revision:|draft \d)/i.test(t)) continue;
+      // Markdown headings
+      if (t.startsWith("## ") || t.startsWith("### ")) {
+        blocks.push({type:"heading", text:t.replace(/^#{2,3}\s+/,"").replace(/\*\*/g,"")});
+        continue;
+      }
+      // Bold-only line = subheading
+      const boldOnly = t.match(/^\*\*([^*]{4,80})\*\*\s*$/);
+      if (boldOnly) { blocks.push({type:"heading", text:boldOnly[1]}); continue; }
+      // Bold prefix + body text = split into heading + body
+      const boldInline = t.match(/^\*\*([^*]{4,80})\*\*\s+(.{10,})/s);
+      if (boldInline) {
+        blocks.push({type:"heading", text:boldInline[1]});
+        const body = boldInline[2].trim().replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1");
+        if (body) blocks.push({type:"body", text:body});
+        continue;
+      }
+      // Callout
+      if (t.startsWith(">")) { blocks.push({type:"callout", text:t.replace(/^>\s*/,"").replace(/\*\*(.*?)\*\*/g,"$1")}); continue; }
+      // Body
+      const clean = t.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1").replace(/`(.*?)`/g,"$1").replace(/^[-•]\s+/,"");
+      if (clean.length > 2) blocks.push({type:"body", text:clean});
+    }
+    return blocks;
   }
-
   async exportPDF(filename: string) {
     await downloadPDF(this.pages, filename);
   }
