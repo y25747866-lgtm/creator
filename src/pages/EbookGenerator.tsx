@@ -509,14 +509,14 @@ const EbookGenerator = () => {
         const { data: coverData } = await supabase.functions.invoke("cover-image", {
           body: { topic, title: genData.meta.title },
         });
-  if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
+          if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
       } catch { /* non-critical */ }
 
       // STEP 3 — Render PDF in browser
       setStep("pdf");
       const renderer = new EbookPDFRenderer();
 
-      await renderer.drawCover(genData.meta.title, genData.cover.subtitle, topic, coverBase64);
+      await renderer.drawCover(genData.meta.title, genData.cover?.subtitle || "", topic, coverBase64);
       renderer.drawTOC(genData.toc, genData.meta.title);
       renderer.drawContentPages("Introduction", genData.content.introduction, genData.meta.title);
       for (const ch of genData.content.chapters) {
