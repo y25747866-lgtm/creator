@@ -247,55 +247,126 @@ class EbookPDFRenderer {
     ctx.fillRect(0, h - 6, w, 6);
   }
 
+  // ── TITLE PAGE — clean white page between cover and TOC ──────────────────
+  drawTitlePage(title: string) {
+    const ctx = this.newPage();
+    const w = PAGE_W, h = PAGE_H;
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, w, h);
+
+    // Title centered vertically in upper third
+    ctx.fillStyle = BLACK;
+    ctx.textAlign = "center";
+
+    // Draw title words — split into lines
+    const words = title.toUpperCase().split(" ");
+    const lines: string[] = [];
+    let line = "";
+    ctx.font = "bold 52px Georgia, serif";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > CONTENT_W - 40 && line) {
+        lines.push(line); line = word;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+
+    const totalH = lines.length * 68;
+    let ty = h * 0.30 - totalH / 2 + 68;
+
+    ctx.font = "bold 52px Georgia, serif";
+    for (const l of lines) {
+      ctx.fillText(l, w / 2, ty);
+      ty += 68;
+    }
+
+    // Decorative divider
+    const cx = w / 2;
+    const dy = ty + 40;
+    ctx.strokeStyle = BLACK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx - 100, dy); ctx.lineTo(cx - 24, dy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 24, dy); ctx.lineTo(cx + 100, dy); ctx.stroke();
+
+    // Diamond ornament
+    ctx.beginPath();
+    ctx.moveTo(cx, dy - 8);
+    ctx.lineTo(cx + 8, dy);
+    ctx.lineTo(cx, dy + 8);
+    ctx.lineTo(cx - 8, dy);
+    ctx.closePath();
+    ctx.fillStyle = BLACK;
+    ctx.fill();
+
+    // Small dots at line ends
+    ctx.beginPath(); ctx.arc(cx - 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+  }
+
   // ── TABLE OF CONTENTS ────────────────────────────────────────────────────
   drawTOC(toc: Array<{type: string; number?: number; label: string}>, bookTitle: string) {
     const ctx = this.newPage();
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
     let y = 92;
 
-    ctx.fillStyle = BLACK; ctx.font = "bold 34px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("Table of Contents", MX, y); y += 26;
+    // Heading
+    ctx.fillStyle = BLACK; ctx.font = "bold 36px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("Table of Contents", MX, y); y += 18;
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 100, 4); y += 48;
 
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 92, 4); y += 52;
+    // Estimate real page numbers
+    // Cover=1, TitlePage=2, TOC=3, Intro=4, Ch1splash=5, Ch1content=6+...
+    let pg = 4; // intro starts at page 4
 
     for (const e of toc) {
-      if (y > PAGE_H - 140) break;
+      if (y > PAGE_H - 120) break;
 
       if (e.type === "chapter") {
-        ctx.fillStyle = ACCENT; ctx.font = "bold 10.5px sans-serif";
+        y += 6;
+        ctx.fillStyle = ACCENT; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "left";
         ctx.fillText(`CHAPTER ${String(e.number).padStart(2, "0")}`, MX, y);
-        y += 22;
+        y += 20;
       }
 
+      // Title
       ctx.fillStyle = BLACK;
-      ctx.font = e.type === "chapter" ? "bold 16px sans-serif" : "16px sans-serif";
+      ctx.font = e.type === "chapter" ? "bold 15px sans-serif" : "15px sans-serif";
       ctx.textAlign = "left";
-      // Truncate long TOC titles so they don't overflow
+
+      // Truncate if too long
       let label = e.label;
-      ctx.font = e.type === "chapter" ? "bold 14px sans-serif" : "15px sans-serif";
-      while (ctx.measureText(label).width > CONTENT_W - 60 && label.length > 10) {
+      while (ctx.measureText(label).width > CONTENT_W - 50 && label.length > 10) {
         label = label.substring(0, label.length - 4) + "…";
       }
       ctx.fillText(label, MX, y);
 
-      // Dotted leader line
-      ctx.strokeStyle = "#CCCCCC"; ctx.lineWidth = 1;
-      ctx.setLineDash([2, 3]);
-      ctx.beginPath();
-      ctx.moveTo(MX + ctx.measureText(label).width + 12, y - 4);
-      ctx.lineTo(PAGE_W - MX - 30, y - 4);
-      ctx.stroke(); ctx.setLineDash([]);
+      // Page number right-aligned
+      const pgStr = String(pg);
+      ctx.fillStyle = "#333333"; ctx.font = "14px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText(pgStr, PAGE_W - MX, y);
 
-      // Page number
-      ctx.fillStyle = "#555555"; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
-      ctx.fillText(String(e.number || this.pages.length), PAGE_W - MX, y - 4);
-      ctx.textAlign = "left";
+      // Dotted leader between title and page number
+      const titleEnd = MX + ctx.measureText(label).width + 8;
+      const pgStart  = PAGE_W - MX - ctx.measureText(pgStr).width - 8;
+      if (pgStart > titleEnd + 20) {
+        ctx.strokeStyle = "#BBBBBB"; ctx.lineWidth = 0.8;
+        ctx.setLineDash([1, 4]);
+        ctx.beginPath();
+        ctx.moveTo(titleEnd, y - 3);
+        ctx.lineTo(pgStart, y - 3);
+        ctx.stroke(); ctx.setLineDash([]);
+      }
 
-      y += 42;
+      // Advance page estimate
+      if (e.type === "intro") pg += 2;
+      else if (e.type === "chapter") { pg += 3; }
+      else if (e.type === "conclusion") pg += 2;
+
+      y += e.type === "chapter" ? 38 : 34;
     }
+
     this.footer(ctx, bookTitle, this.pages.length);
   }
 
-  // ── CHAPTER SPLASH — clean white, elegant ───────────────────────────────
+    // ── CHAPTER SPLASH — clean white, elegant ───────────────────────────────
   drawChapterSplash(num: number, title: string, bookTitle: string) {
     const ctx = this.newPage();
     ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
@@ -509,7 +580,7 @@ const EbookGenerator = () => {
         const { data: coverData } = await supabase.functions.invoke("cover-image", {
           body: { topic, title: genData.meta.title },
         });
-          if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
+        if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
       } catch { /* non-critical */ }
 
       // STEP 3 — Render PDF in browser
@@ -517,6 +588,7 @@ const EbookGenerator = () => {
       const renderer = new EbookPDFRenderer();
 
       await renderer.drawCover(genData.meta.title, genData.cover?.subtitle || "", topic, coverBase64);
+      renderer.drawTitlePage(genData.meta.title);
       renderer.drawTOC(genData.toc, genData.meta.title);
       renderer.drawContentPages("Introduction", genData.content.introduction, genData.meta.title);
       for (const ch of genData.content.chapters) {
