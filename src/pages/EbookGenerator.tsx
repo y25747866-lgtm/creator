@@ -18,7 +18,6 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-
 const CATEGORY_OPTIONS = [
   "Business & Entrepreneurship","Self-Help & Personal Development",
   "Finance & Investing","Marketing & Sales","Technology & AI",
@@ -51,7 +50,6 @@ const STEP_PROGRESS: Record<GenerationStep,number> = {
 };
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
-
 const BLACK     = "#0A0A0A";
 const WHITE     = "#FFFFFF";
 const ACCENT    = "#6C63FF";
@@ -61,8 +59,6 @@ const MX        = 64;
 const CONTENT_W = PAGE_W - MX * 2;
 
 // ─── ZERO-DEPENDENCY PDF BUILDER ──────────────────────────────────────────────
-// Builds a real PDF binary from canvas JPEG pages — no npm install needed.
-
 function base64ToBytes(b64: string): Uint8Array {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -102,39 +98,30 @@ function buildPDF(jpegUrls: string[], pw: number, ph: number): Uint8Array {
   const pushB = (b: Uint8Array)   => { parts.push(b); pos += b.length; };
   const obj = (id: number, body: string) => {
     offsets[id] = pos;
-    push(`${id} 0 obj\n${body}\nendobj\n\n`);
+    push(`\( {id} 0 obj\n \){body}\nendobj\n\n`);
   };
 
   push("%PDF-1.4\n%\xFF\xFF\xFF\xFF\n\n");
-
-  // Catalog
   obj(1, `<<\n/Type /Catalog\n/Pages 2 0 R\n>>`);
-
-  // Pages
-  obj(2, `<<\n/Type /Pages\n/Kids [${pageIds.map(id=>`${id} 0 R`).join(" ")}]\n/Count ${n}\n>>`);
+  obj(2, `<<\n/Type /Pages\n/Kids [\( {pageIds.map(id=>` \){id} 0 R`).join(" ")}]\n/Count ${n}\n>>`);
 
   for (let i = 0; i < n; i++) {
     const imgBytes = base64ToBytes(jpegUrls[i].split(",")[1]);
-
-    // Image XObject
     offsets[imgId(i)] = pos;
     push(`${imgId(i)} 0 obj\n<<\n/Type /XObject\n/Subtype /Image\n/Width ${pw}\n/Height ${ph}\n/ColorSpace /DeviceRGB\n/BitsPerComponent 8\n/Filter /DCTDecode\n/Length ${imgBytes.length}\n>>\nstream\n`);
     pushB(imgBytes);
     push(`\nendstream\nendobj\n\n`);
 
-    // Content stream
-    const cs = `q\n${pw} 0 0 ${ph} 0 0 cm\n/Im${imgId(i)} Do\nQ\n`;
-    obj(contentId(i), `<<\n/Length ${cs.length}\n>>\nstream\n${cs}\nendstream`);
-
-    // Page dict
-    obj(pageId(i), `<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 ${pw} ${ph}]\n/Contents ${contentId(i)} 0 R\n/Resources <<\n/XObject <<\n/Im${imgId(i)} ${imgId(i)} 0 R\n>>\n>>\n>>`);
+    const cs = `q\n${pw} 0 0 \( {ph} 0 0 cm\n/Im \){imgId(i)} Do\nQ\n`;
+    obj(contentId(i), `<<\n/Length \( {cs.length}\n>>\nstream\n \){cs}\nendstream`);
+    obj(pageId(i), `<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 ${pw} ${ph}]\n/Contents \( {contentId(i)} 0 R\n/Resources <<\n/XObject <<\n/Im \){imgId(i)} ${imgId(i)} 0 R\n>>\n>>\n>>`);
   }
 
   const xref = pos;
   push(`xref\n0 ${total+1}\n`);
   push("0000000000 65535 f \n");
   for (let i = 1; i <= total; i++) push(String(offsets[i]).padStart(10,"0")+" 00000 n \n");
-  push(`trailer\n<<\n/Size ${total+1}\n/Root 1 0 R\n>>\nstartxref\n${xref}\n%%EOF\n`);
+  push(`trailer\n<<\n/Size \( {total+1}\n/Root 1 0 R\n>>\nstartxref\n \){xref}\n%%EOF\n`);
 
   return concat(...parts);
 }
@@ -150,8 +137,7 @@ async function downloadPDF(canvases: HTMLCanvasElement[], filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-// ─── PDF PAGE RENDERER ────────────────────────────────────────────────────────
-
+// ─── PROFESSIONAL LIGHT-THEME PDF RENDERER (Real ebook style) ─────────────────
 class EbookPDFRenderer {
   readonly pages: HTMLCanvasElement[] = [];
   private _lastCtx: CanvasRenderingContext2D | null = null;
@@ -176,222 +162,205 @@ class EbookPDFRenderer {
   }
 
   private footer(ctx: CanvasRenderingContext2D, title: string, n: number) {
-    const y = PAGE_H - 28;
-    ctx.strokeStyle = "#DDDDDD";
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(MX, y - 8);
-    ctx.lineTo(PAGE_W - MX, y - 8);
-    ctx.stroke();
-    // Short title center — no brand name
-    const short = title.length > 50 ? title.substring(0, 50) + "…" : title;
-    ctx.fillStyle = "#AAAAAA";
+    const y = PAGE_H - 32;
+    ctx.strokeStyle = "#E0E0E0"; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(MX, y - 8); ctx.lineTo(PAGE_W - MX, y - 8); ctx.stroke();
+
+    const short = title.length > 60 ? title.substring(0, 60) + "…" : title;
+    ctx.fillStyle = "#555555";
     ctx.font = "10px Georgia, serif";
     ctx.textAlign = "center";
     ctx.fillText(short, PAGE_W / 2, y + 8);
-    // Page number right
-    ctx.fillStyle = "#AAAAAA";
+
+    ctx.fillStyle = "#555555";
     ctx.font = "10px sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(String(n), PAGE_W - MX, y + 8);
+
+    ctx.fillStyle = "#999999";
+    ctx.font = "9px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Copyrighted Material", MX, y + 8);
   }
 
-  async drawCover(title: string, subtitle: string, topic: string, img64: string|null, date: string) {
-    const ctx = this.newPage(); const w=PAGE_W,h=PAGE_H;
-    ctx.fillStyle=BLACK; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle=ACCENT; ctx.fillRect(0,0,w,8);
-    ctx.fillStyle="#1A1A2E"; ctx.beginPath(); ctx.moveTo(w*.5,0); ctx.lineTo(w,0); ctx.lineTo(w,h*.45); ctx.closePath(); ctx.fill();
+  async drawCover(title: string, subtitle: string, topic: string, img64: string|null) {
+    const ctx = this.newPage(); const w = PAGE_W, h = PAGE_H;
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#F8F8F8"; ctx.fillRect(0, 0, w, 12);
 
     if (img64) {
       try {
         const img = new Image();
-        await new Promise<void>(res => { img.onload=()=>res(); img.onerror=()=>res(); img.src=`data:image/png;base64,${img64}`; });
-        ctx.globalAlpha=0.28; ctx.drawImage(img,w*.38,0,w*.62,h*.52); ctx.globalAlpha=1;
+        await new Promise<void>(res => { img.onload = () => res(); img.onerror = () => res(); img.src = `data:image/png;base64,${img64}`; });
+        ctx.globalAlpha = 0.12;
+        ctx.drawImage(img, w * 0.55, h * 0.15, w * 0.45, h * 0.45);
+        ctx.globalAlpha = 1;
       } catch {}
     }
 
-    // No brand name on cover top
-    ctx.fillStyle="#2D2D4E"; ctx.beginPath(); ctx.roundRect(MX-2,h*.37,180,24,4); ctx.fill();
-    ctx.fillStyle=ACCENT; ctx.font="bold 9px sans-serif"; ctx.fillText(topic.toUpperCase().substring(0,30),MX+10,h*.37+16);
+    ctx.fillStyle = BLACK;
+    ctx.font = "bold 58px sans-serif";
+    ctx.textAlign = "left";
+    let ty = h * 0.38;
+    for (const l of this.wrap(ctx, title, CONTENT_W)) {
+      ctx.fillText(l, MX, ty); ty += 72;
+    }
 
-    ctx.fillStyle=WHITE; ctx.font="bold 48px sans-serif";
-    let ty=h*.46;
-    for (const l of this.wrap(ctx,title,CONTENT_W)) { ctx.fillText(l,MX,ty); ty+=62; }
-    ctx.fillStyle=ACCENT; ctx.fillRect(MX,ty-40,80,5);
-    ctx.fillStyle="#AAAAAA"; ctx.font="15px sans-serif";
-    let sy=ty-12;
-    for (const l of this.wrap(ctx,subtitle,CONTENT_W)) { ctx.fillText(l,MX,sy); sy+=24; }
+    if (subtitle) {
+      ctx.fillStyle = "#444444";
+      ctx.font = "20px Georgia, serif";
+      ctx.fillText(subtitle, MX, ty + 20);
+    }
 
-    ctx.strokeStyle="#333355"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(MX,h*.83); ctx.lineTo(w-MX,h*.83); ctx.stroke();
-    ctx.fillStyle="#666688"; ctx.font="11px sans-serif"; ctx.textAlign="left"; ctx.fillText(date,MX,h*.87);
-    ctx.textAlign="right"; ctx.fillText("Generated by NexoraOS",w-MX,h*.87);
-    ctx.fillStyle=ACCENT; ctx.fillRect(0,h-6,w,6);
+    ctx.fillStyle = "#E0E0E0"; ctx.fillRect(MX, h - 80, 120, 3);
   }
 
   drawTOC(toc: Array<{type:string;number?:number;label:string}>, bookTitle: string) {
-    const ctx=this.newPage(); let y=72;
-    ctx.fillStyle=BLACK; ctx.font="bold 30px sans-serif"; ctx.textAlign="left"; ctx.fillText("Table of Contents",MX,y); y+=14;
-    ctx.fillStyle=ACCENT; ctx.fillRect(MX,y,70,4); y+=28;
+    const ctx = this.newPage(); let y = 92;
+    ctx.fillStyle = BLACK; ctx.font = "bold 34px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("Table of Contents", MX, y); y += 26;
+
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 92, 4); y += 52;
+
     for (const e of toc) {
-      if (y>PAGE_H-100) break;
-      if (e.type==="chapter") { ctx.fillStyle=ACCENT; ctx.font="bold 9px sans-serif"; ctx.fillText(`CHAPTER ${String(e.number).padStart(2,"0")}`,MX,y); y+=18; }
-      ctx.fillStyle=BLACK; ctx.font=e.type==="chapter"?"bold 14px sans-serif":"15px sans-serif"; ctx.fillText(e.label,MX,y); y+=6;
-      ctx.strokeStyle="#E0E0E0"; ctx.lineWidth=0.5; ctx.beginPath(); ctx.moveTo(MX,y+8); ctx.lineTo(PAGE_W-MX,y+8); ctx.stroke(); y+=28;
+      if (y > PAGE_H - 140) break;
+
+      if (e.type === "chapter") {
+        ctx.fillStyle = ACCENT; ctx.font = "bold 10.5px sans-serif";
+        ctx.fillText(`CHAPTER ${String(e.number).padStart(2, "0")}`, MX, y);
+        y += 22;
+      }
+
+      ctx.fillStyle = BLACK; ctx.font = e.type === "chapter" ? "bold 16px sans-serif" : "16px sans-serif";
+      ctx.fillText(e.label, MX, y);
+
+      ctx.strokeStyle = "#CCCCCC"; ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(MX + 280, y - 4); ctx.lineTo(PAGE_W - MX - 30, y - 4); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#555555"; ctx.font = "12px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText(String(e.number || this.pages.length), PAGE_W - MX, y - 4);
+      ctx.textAlign = "left";
+
+      y += 42;
     }
-    this.footer(ctx,bookTitle,this.pages.length);
+    this.footer(ctx, bookTitle, this.pages.length);
   }
 
   drawChapterSplash(num: number, title: string, bookTitle: string) {
-    const ctx=this.newPage(); const w=PAGE_W,h=PAGE_H;
-    ctx.fillStyle=BLACK; ctx.fillRect(0,0,w,h);
-    ctx.fillStyle=WHITE; ctx.fillRect(0,h*.52,w,h*.48);
-    ctx.fillStyle=ACCENT; ctx.fillRect(0,h*.52,w,6);
-    ctx.fillStyle="#1A1A1A"; ctx.font="bold 200px sans-serif"; ctx.textAlign="left"; ctx.fillText(String(num).padStart(2,"0"),MX-8,h*.57);
-    ctx.fillStyle=ACCENT; ctx.font="bold 10px sans-serif"; ctx.fillText("CHAPTER",MX,h*.26);
-    ctx.fillStyle=WHITE; ctx.font="bold 44px sans-serif"; ctx.fillText(String(num).padStart(2,"0"),MX,h*.34);
-    ctx.font="bold 24px sans-serif"; let ty=h*.41;
-    for (const l of this.wrap(ctx,title,CONTENT_W)) { ctx.fillText(l,MX,ty); ty+=34; }
-    // No brand on chapter splash
-    this.footer(ctx,bookTitle,this.pages.length);
+    const ctx = this.newPage();
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
+
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, 110, 70, 4);
+
+    ctx.fillStyle = BLACK; ctx.font = "bold 14px sans-serif";
+    ctx.fillText(`CHAPTER ${String(num).padStart(2, "0")}`, MX, 92);
+
+    ctx.fillStyle = BLACK; ctx.font = "bold 42px sans-serif";
+    let ty = 170;
+    for (const l of this.wrap(ctx, title, CONTENT_W)) {
+      ctx.fillText(l, MX, ty); ty += 56;
+    }
+    this.footer(ctx, bookTitle, this.pages.length);
   }
 
-  drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter=false, chNum?: number) {
-    const maxY    = PAGE_H - 88;
-    const lineH   = 22;
-    const bodyFont = "13.5px Georgia, serif";
-    const headFont = "bold 15px sans-serif";
+  drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter = false, chNum?: number) {
+    const maxY = PAGE_H - 88;
+    const lineH = 23;
+    const bodyFont = "13.8px Georgia, serif";
+    const headFont = "bold 16px sans-serif";
 
-    // Smart page management: continue on existing page if enough room,
-    // otherwise start a new page. This eliminates blank overflow pages.
-    const MIN_ROOM = isChapter ? PAGE_H : 200; // chapters always start fresh; intro/conclusion continue
     let ctx: CanvasRenderingContext2D;
     let y: number;
 
-    if (!isChapter && this._lastCtx && this._lastY < maxY - MIN_ROOM) {
-      // Continue on last page — add spacing between sections
+    if (!isChapter && this._lastCtx && this._lastY < maxY - 220) {
       ctx = this._lastCtx;
-      y   = this._lastY + 32;
+      y = this._lastY + 40;
     } else {
       ctx = this.newPage();
-      y   = 72;
+      y = 72;
     }
 
-    // ── Section header ─────────────────────────────────────────────────
     if (isChapter && chNum !== undefined) {
-      ctx.fillStyle = ACCENT;
-      ctx.font = "bold 9px sans-serif";
-      ctx.textAlign = "left";
+      ctx.fillStyle = ACCENT; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "left";
       ctx.fillText(`CHAPTER ${String(chNum).padStart(2,"0")}`, MX, y);
-      y += 22;
+      y += 26;
     }
 
-    ctx.fillStyle = BLACK;
-    ctx.font = "bold 26px sans-serif";
-    ctx.textAlign = "left";
+    ctx.fillStyle = BLACK; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "left";
     for (const l of this.wrap(ctx, title, CONTENT_W)) {
-      ctx.fillText(l, MX, y);
-      y += 34;
+      ctx.fillText(l, MX, y); y += 38;
     }
-    ctx.fillStyle = ACCENT;
-    ctx.fillRect(MX, y, 60, 4);
-    y += 22;
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 70, 5); y += 28;
 
-    // ── Blocks ─────────────────────────────────────────────────────────
     for (const block of this.parseBlocks(rawContent)) {
       if (block.type === "heading") {
-        if (y > maxY - 70) {
-          this.footer(ctx, bookTitle, this.pages.length);
-          ctx = this.newPage(); y = 72;
-        }
-        y += 14;
-        ctx.fillStyle = BLACK;
-        ctx.font = headFont;
-        ctx.textAlign = "left";
+        if (y > maxY - 80) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 18;
+        ctx.fillStyle = BLACK; ctx.font = headFont;
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
-          ctx.fillText(l, MX, y); y += 24;
+          ctx.fillText(l, MX, y); y += 26;
         }
-        ctx.fillStyle = ACCENT;
-        ctx.fillRect(MX, y, 36, 2);
-        y += 10;
-
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 40, 3); y += 18;
       } else if (block.type === "callout") {
-        ctx.font = "12px sans-serif";
-        const cl = this.wrap(ctx, block.text, CONTENT_W - 44);
-        const bh = cl.length * 20 + 28;
-        if (y > maxY - bh) {
-          this.footer(ctx, bookTitle, this.pages.length);
-          ctx = this.newPage(); y = 72;
-        }
-        y += 10;
-        ctx.fillStyle = "#F0EEFF";
-        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 6); ctx.fill();
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, bh);
-        ctx.fillStyle = "#4A42CC"; ctx.font = "italic 12px sans-serif";
-        let cy = y + 18;
-        for (const l of cl) { ctx.fillText(l, MX + 20, cy); cy += 20; }
-        y += bh + 14;
-
+        ctx.font = "12.5px sans-serif";
+        const cl = this.wrap(ctx, block.text, CONTENT_W - 48);
+        const bh = cl.length * 22 + 36;
+        if (y > maxY - bh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 12;
+        ctx.fillStyle = "#F8F6FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 8); ctx.fill();
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 6, bh);
+        ctx.fillStyle = "#3F2F9E"; ctx.font = "italic 12.5px sans-serif";
+        let cy = y + 22;
+        for (const l of cl) { ctx.fillText(l, MX + 24, cy); cy += 22; }
+        y += bh + 24;
       } else {
-        ctx.fillStyle = "#1A1A1A";
-        ctx.font = bodyFont;
-        ctx.textAlign = "left";
+        ctx.fillStyle = "#1F1F1F"; ctx.font = bodyFont; ctx.textAlign = "left";
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
-          if (y > maxY) {
-            this.footer(ctx, bookTitle, this.pages.length);
-            ctx = this.newPage(); y = 72;
-          }
+          if (y > maxY) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
           ctx.fillText(l, MX, y); y += lineH;
         }
-        y += 12;
+        y += 18;
       }
     }
 
-    if (y > 80) this.footer(ctx, bookTitle, this.pages.length);
-    // Save state for potential continuation
+    this.footer(ctx, bookTitle, this.pages.length);
     this._lastCtx = ctx;
-    this._lastY   = y;
+    this._lastY = y;
   }
-  private parseBlocks(content: string): Array<{type:string;text:string}> {
-    const blocks: Array<{type:string;text:string}> = [];
+
+  private parseBlocks(content: string): Array<{type:string; text:string}> {
+    const blocks: Array<{type:string; text:string}> = [];
     for (const para of content.split(/\n\n+/)) {
       const t = para.trim();
       if (!t) continue;
-      // Strip AI leakage lines
-      if (/^Chapter:\s*[""\"]?.{3,100}[""\"]?\s*$/i.test(t)) continue;
-      if (/^here is the (improved|rewritten|final|humanized|updated)/i.test(t)) continue;
-      if (/^(note:|editor'?s? note:|revision:|draft \d)/i.test(t)) continue;
-      // Markdown headings
-      if (t.startsWith("## ") || t.startsWith("### ")) {
-        blocks.push({type:"heading", text:t.replace(/^#{2,3}\s+/,"").replace(/\*\*/g,"")});
+
+      if (/^##\s+/.test(t)) {
+        blocks.push({type:"heading", text: t.replace(/^##\s+/, "").replace(/\*\*/g, "")});
         continue;
       }
-      // Bold-only line = subheading
-      const boldOnly = t.match(/^\*\*([^*]{4,80})\*\*\s*$/);
-      if (boldOnly) { blocks.push({type:"heading", text:boldOnly[1]}); continue; }
-      // Bold prefix + body text = split into heading + body
-      const boldInline = t.match(/^\*\*([^*]{4,80})\*\*\s+(.{10,})/s);
-      if (boldInline) {
-        blocks.push({type:"heading", text:boldInline[1]});
-        const body = boldInline[2].trim().replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1");
-        if (body) blocks.push({type:"body", text:body});
+      if (/^\*\*([^*]{4,80})\*\*$/.test(t)) {
+        blocks.push({type:"heading", text: t.replace(/\*\*/g, "")});
         continue;
       }
-      // Callout
-      if (t.startsWith(">")) { blocks.push({type:"callout", text:t.replace(/^>\s*/,"").replace(/\*\*(.*?)\*\*/g,"$1")}); continue; }
-      // Body
-      const clean = t.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1").replace(/`(.*?)`/g,"$1").replace(/^[-•]\s+/,"");
-      if (clean.length > 2) blocks.push({type:"body", text:clean});
+      if (t.startsWith(">")) {
+        blocks.push({type:"callout", text: t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1")});
+        continue;
+      }
+
+      const clean = t.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/`(.*?)`/g, "$1");
+      if (clean.length > 3) blocks.push({type:"body", text: clean});
     }
     return blocks;
   }
+
   async exportPDF(filename: string) {
     await downloadPDF(this.pages, filename);
   }
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-
 const EbookGenerator = () => {
   const [screen,         setScreen]         = useState<Screen>("form");
   const [topic,          setTopic]          = useState("");
@@ -428,14 +397,12 @@ const EbookGenerator = () => {
       const { data:{session} } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Please log in to generate ebooks.");
 
-      // STEP 1 — Generate text
       const { data:genData, error:genError } = await supabase.functions.invoke("generate-ebook", {
         body: { topic, description, length:ebookLength, category, targetAudience, tone },
       });
       if (genError) throw new Error(genError.message);
       if (!genData?.success) throw new Error(genData?.error||"Content generation failed");
 
-      // STEP 2 — Cover image
       setStep("cover");
       let coverBase64: string|null = null;
       try {
@@ -443,12 +410,11 @@ const EbookGenerator = () => {
         if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
       } catch {}
 
-      // STEP 3 — Render PDF in browser (zero dependencies)
       setStep("pdf");
       const renderer = new EbookPDFRenderer();
       const date = new Date().toLocaleDateString("en-US",{year:"numeric",month:"long"});
 
-      await renderer.drawCover(genData.meta.title, genData.cover.subtitle, topic, coverBase64, date);
+      await renderer.drawCover(genData.meta.title, genData.cover.subtitle, topic, coverBase64);
       renderer.drawTOC(genData.toc, genData.meta.title);
       renderer.drawContentPages("Introduction", genData.content.introduction, genData.meta.title);
       for (const ch of genData.content.chapters) {
@@ -460,11 +426,10 @@ const EbookGenerator = () => {
       const safeTitle = genData.meta.title.replace(/[^a-z0-9]/gi,"_").toLowerCase();
       const filename  = `${safeTitle}.pdf`;
 
-      // STEP 4 — Build Ebook object
       const flatContent = [
         `# ${genData.meta.title}`,
         `## Introduction\n\n${genData.content.introduction}`,
-        ...genData.content.chapters.map((c:any)=>`## ${c.title}\n\n${c.content}`),
+        ...genData.content.chapters.map((c:any)=>`## \( {c.title}\n\n \){c.content}`),
         `## Conclusion\n\n${genData.content.conclusion}`,
       ].join("\n\n");
 
@@ -507,7 +472,7 @@ const EbookGenerator = () => {
     if (!isCreatorOrAbove) { toast({title:"Upgrade Required",description:"Downloads require Creator or Pro plan.",variant:"destructive"}); return; }
     if (!ebookData) return;
     try {
-      await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename||"ebook_nexoraos.pdf");
+      await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename||"ebook.pdf");
       if (ebookData.dbProductId) { try { await recordMetric(ebookData.dbProductId,"download"); } catch {} }
     } catch (err:any) { toast({title:"Download Failed",description:err.message,variant:"destructive"}); }
   };
@@ -525,8 +490,6 @@ const EbookGenerator = () => {
     setTopic("");setDescription("");setCategory("");setTargetAudience("");
     setTone("professional");setEbookLength("short");setErrorMsg(null);
   };
-
-  // ── RENDER ────────────────────────────────────────────────────────────────
 
   const lbl = { fontFamily:"DM Sans",fontSize:"10px",fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase" as const,color:"#555555",display:"block" };
   const inp = { background:"#161616",border:"1px solid #1A1A1A",borderRadius:"6px",color:"#FFFFFF",fontFamily:"DM Sans",fontSize:"14px",padding:"12px 14px",width:"100%",outline:"none",boxSizing:"border-box" as const };
@@ -649,7 +612,6 @@ const EbookGenerator = () => {
           <div style={{position:"relative",zIndex:1,textAlign:"center"}}>
             <h3 style={{fontFamily:"Syne",fontWeight:800,fontSize:"13px",color:"#FFFFFF",marginBottom:"8px",lineHeight:1.3}}>{ebookData?.title}</h3>
             <p style={{fontFamily:"DM Sans",fontSize:"10px",color:"#666666"}}>A Complete Guide</p>
-            
           </div>
         </div>
       </div>
