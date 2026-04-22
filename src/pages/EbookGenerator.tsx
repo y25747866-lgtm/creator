@@ -228,30 +228,44 @@ class EbookPDFRenderer {
       }
     }
 
-    // Title
+    // ── PROFESSIONAL COVER TITLE — centered, large, dominant ─────────────────
+    ctx.font = "bold 64px sans-serif";
+    ctx.textAlign = "center";
+    const titleLines = this.wrap(ctx, title, w - 120);
+    const lineH = 78;
+    const blockH = titleLines.length * lineH;
+    let ty = h * 0.38 - blockH / 2;
+
+    ctx.shadowColor = "rgba(0,0,0,0.7)";
+    ctx.shadowBlur = 18;
     ctx.fillStyle = WHITE;
-    ctx.font = "bold 52px sans-serif";
-    ctx.textAlign = "left";
-    let ty = h * 0.44;
-    for (const l of this.wrap(ctx, title, CONTENT_W)) {
-      ctx.fillText(l, MX, ty); ty += 66;
+    for (const l of titleLines) {
+      ctx.fillText(l, w / 2, ty); ty += lineH;
     }
+    ctx.shadowBlur = 0;
 
-    // Accent underline
+    // Accent line centered under title
     ctx.fillStyle = ACCENT;
-    ctx.fillRect(MX, ty - 38, 80, 5);
+    ctx.fillRect(w / 2 - 60, ty - 14, 120, 5);
 
-    // Subtitle (only if it doesn't echo raw user input)
-    if (subtitle && subtitle.length < 80 && !subtitle.toLowerCase().includes("make me")) {
-      ctx.fillStyle = "#AAAAAA";
-      ctx.font = "16px Georgia, serif";
-      let sy = ty - 10;
-      for (const l of this.wrap(ctx, subtitle, CONTENT_W)) {
-        ctx.fillText(l, MX, sy); sy += 26;
+    // Subtitle centered below accent
+    if (subtitle && subtitle.length < 100 && !subtitle.toLowerCase().includes("make me")) {
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = "18px Georgia, serif";
+      ctx.textAlign = "center";
+      let sy = ty + 22;
+      for (const l of this.wrap(ctx, subtitle, w - 160)) {
+        ctx.fillText(l, w / 2, sy); sy += 28;
       }
     }
 
-    // Bottom accent
+    // NexoraOS branding — subtle bottom center
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("NEXORAOS.ONLINE", w / 2, h - 28);
+
+    // Bottom accent bar
     ctx.fillStyle = ACCENT;
     ctx.fillRect(0, h - 6, w, 6);
   }
@@ -393,6 +407,7 @@ class EbookPDFRenderer {
 
     // Chapters always get a fresh page; intro/conclusion can continue
     if (isChapter) {
+      this.trimOrphanPages();
       ctx = this.newPage();
       y   = 72;
     } else if (!isChapter && this._lastCtx && this._lastY < maxY - 220) {
@@ -462,6 +477,15 @@ class EbookPDFRenderer {
     this._lastY   = y;
   }
 
+  // Remove last page if it's nearly blank (less than 15% filled) — eliminates orphan pages
+  private trimOrphanPages() {
+    if (this.pages.length < 2) return;
+    const last = this.pages[this.pages.length - 1];
+    if (this._lastY < PAGE_H * 0.15) {
+      this.pages.pop();
+    }
+  }
+
   // ── CONTENT PARSER ───────────────────────────────────────────────────────
   private parseBlocks(content: string): Array<{type: string; text: string}> {
     const blocks: Array<{type: string; text: string}> = [];
@@ -518,6 +542,7 @@ class EbookPDFRenderer {
   }
 
   async exportPDF(filename: string) {
+    this.trimOrphanPages();
     await downloadPDF(this.pages, filename);
   }
 }
@@ -592,11 +617,16 @@ const EbookGenerator = () => {
 
       await renderer.drawCover(genData.meta.title, genData.cover?.subtitle || "", topic, coverBase64);
       renderer.drawTitlePage(genData.meta.title);
-      renderer.drawTOC(genData.toc, genData.meta.title);
-      renderer.drawContentPages("Introduction", genData.content.introduction, genData.meta.title);
+      // Professional ebooks: no Introduction page — go straight to Chapter 1
+      const filteredToc = genData.toc.filter((e: any) => e.type !== "intro");
+      renderer.drawTOC(filteredToc, genData.meta.title);
       for (const ch of genData.content.chapters) {
+        // Fold intro content into Chapter 1 as a seamless opening
+        const chContent = ch.number === 1
+          ? genData.content.introduction + "\n\n" + ch.content
+          : ch.content;
         renderer.drawChapterSplash(ch.number, ch.title, genData.meta.title);
-        renderer.drawContentPages(ch.title, ch.content, genData.meta.title, true, ch.number);
+        renderer.drawContentPages(ch.title, chContent, genData.meta.title, true, ch.number);
       }
       renderer.drawContentPages("Conclusion", genData.content.conclusion, genData.meta.title);
 
