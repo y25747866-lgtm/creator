@@ -205,7 +205,7 @@ class EbookPDFRenderer {
     ctx.moveTo(w * 0.5, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.45);
     ctx.closePath(); ctx.fill();
 
-    // Cover image blended in
+    // Cover image — full bleed background
     if (img64) {
       try {
         const img = new Image();
@@ -213,10 +213,19 @@ class EbookPDFRenderer {
           img.onload = () => res(); img.onerror = () => res();
           img.src = `data:image/png;base64,${img64}`;
         });
-        ctx.globalAlpha = 0.3;
-        ctx.drawImage(img, w * 0.38, 0, w * 0.62, h * 0.52);
+        // Full bleed: cover entire page, then overlay dark gradient for readability
         ctx.globalAlpha = 1;
-      } catch {}
+        ctx.drawImage(img, 0, 0, w, h);
+        // Dark gradient overlay so title text remains readable
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0,   "rgba(10,10,10,0.55)");
+        grad.addColorStop(0.5, "rgba(10,10,10,0.45)");
+        grad.addColorStop(1,   "rgba(10,10,10,0.82)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      } catch {
+        // fallback: keep dark background already drawn
+      }
     }
 
     // Title
@@ -366,26 +375,10 @@ class EbookPDFRenderer {
     this.footer(ctx, bookTitle, this.pages.length);
   }
 
-    // ── CHAPTER SPLASH — clean white, elegant ───────────────────────────────
-  drawChapterSplash(num: number, title: string, bookTitle: string) {
-    const ctx = this.newPage();
-    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
-
-    // Chapter label
-    ctx.fillStyle = ACCENT; ctx.font = "bold 14px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText(`CHAPTER ${String(num).padStart(2, "0")}`, MX, 92);
-
-    // Accent bar
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, 110, 70, 4);
-
-    // Chapter title
-    ctx.fillStyle = BLACK; ctx.font = "bold 40px sans-serif";
-    let ty = 170;
-    for (const l of this.wrap(ctx, title, CONTENT_W)) {
-      ctx.fillText(l, MX, ty); ty += 54;
-    }
-
-    this.footer(ctx, bookTitle, this.pages.length);
+  // ── CHAPTER SPLASH — removed: title now renders inline with content page ──
+  drawChapterSplash(_num: number, _title: string, _bookTitle: string) {
+    // No-op: chapter heading is rendered at the top of drawContentPages
+    // This eliminates the blank-looking splash pages
   }
 
   // ── CONTENT PAGES — auto-flows, no blank pages ──────────────────────────
@@ -398,8 +391,11 @@ class EbookPDFRenderer {
     let ctx: CanvasRenderingContext2D;
     let y: number;
 
-    // Smart continuation: reuse last page if enough room (avoids blank pages)
-    if (!isChapter && this._lastCtx && this._lastY < maxY - 220) {
+    // Chapters always get a fresh page; intro/conclusion can continue
+    if (isChapter) {
+      ctx = this.newPage();
+      y   = 72;
+    } else if (!isChapter && this._lastCtx && this._lastY < maxY - 220) {
       ctx = this._lastCtx;
       y   = this._lastY + 40;
     } else {
@@ -407,18 +403,25 @@ class EbookPDFRenderer {
       y   = 72;
     }
 
-    // Section header
+    // Chapter label badge (e.g. "CHAPTER 01")
     if (isChapter && chNum !== undefined) {
-      ctx.fillStyle = ACCENT; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "left";
+      ctx.fillStyle = ACCENT; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
       ctx.fillText(`CHAPTER ${String(chNum).padStart(2, "0")}`, MX, y);
-      y += 26;
+      y += 6;
+      // Short accent bar under label
+      ctx.fillStyle = ACCENT; ctx.fillRect(MX, y + 4, 56, 3);
+      y += 20;
     }
 
-    ctx.fillStyle = BLACK; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "left";
+    // Section/chapter title — large, tight to label above
+    ctx.fillStyle = BLACK; ctx.font = "bold 32px sans-serif"; ctx.textAlign = "left";
     for (const l of this.wrap(ctx, title, CONTENT_W)) {
-      ctx.fillText(l, MX, y); y += 38;
+      ctx.fillText(l, MX, y); y += 42;
     }
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 70, 5); y += 28;
+    // Thin accent underline right under title
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 8, 70, 4);
+    // Small gap then body starts immediately — no large whitespace
+    y += 16;
 
     // Render blocks
     for (const block of this.parseBlocks(rawContent)) {
