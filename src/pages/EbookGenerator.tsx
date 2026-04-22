@@ -294,7 +294,8 @@ class EbookPDFRenderer {
     if (line) lines.push(line);
 
     const totalH = lines.length * 68;
-    let ty = h * 0.30 - totalH / 2 + 68;
+    // True vertical center of page
+    let ty = h / 2 - totalH / 2 + 52;
 
     ctx.font = "bold 52px Georgia, serif";
     for (const l of lines) {
@@ -405,38 +406,36 @@ class EbookPDFRenderer {
     let ctx: CanvasRenderingContext2D;
     let y: number;
 
-    // Chapters always get a fresh page; intro/conclusion can continue
+    // Chapters always get a fresh page; conclusion can continue
     if (isChapter) {
       this.trimOrphanPages();
       ctx = this.newPage();
-      y   = 72;
-    } else if (!isChapter && this._lastCtx && this._lastY < maxY - 220) {
+      y   = 100; // enough top margin so tall letters (B,T,L,S) don't clip
+    } else if (this._lastCtx && this._lastY < maxY - 220) {
       ctx = this._lastCtx;
       y   = this._lastY + 40;
     } else {
       ctx = this.newPage();
-      y   = 72;
+      y   = 100;
     }
 
     // Chapter label badge (e.g. "CHAPTER 01")
     if (isChapter && chNum !== undefined) {
       ctx.fillStyle = ACCENT; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
       ctx.fillText(`CHAPTER ${String(chNum).padStart(2, "0")}`, MX, y);
-      y += 6;
-      // Short accent bar under label
-      ctx.fillStyle = ACCENT; ctx.fillRect(MX, y + 4, 56, 3);
-      y += 20;
+      y += 10;
+      ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 56, 3);
+      y += 22;
     }
 
-    // Section/chapter title — large, tight to label above
+    // Chapter/section title
     ctx.fillStyle = BLACK; ctx.font = "bold 32px sans-serif"; ctx.textAlign = "left";
     for (const l of this.wrap(ctx, title, CONTENT_W)) {
-      ctx.fillText(l, MX, y); y += 42;
+      ctx.fillText(l, MX, y); y += 44;
     }
-    // Thin accent underline right under title
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 8, 70, 4);
-    // Small gap then body starts immediately — no large whitespace
-    y += 16;
+    // Accent underline
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 6, 70, 4);
+    y += 20;
 
     // Render blocks
     for (const block of this.parseBlocks(rawContent)) {
@@ -477,12 +476,27 @@ class EbookPDFRenderer {
     this._lastY   = y;
   }
 
-  // Remove last page if it's nearly blank (less than 15% filled) — eliminates orphan pages
+  // Remove last page if it has very little content — pixel-based detection
   private trimOrphanPages() {
     if (this.pages.length < 2) return;
     const last = this.pages[this.pages.length - 1];
-    if (this._lastY < PAGE_H * 0.15) {
+    const ctx = last.getContext("2d")!;
+    // Sample a strip of pixels in the top 30% of the page (below where footer sits)
+    // If nearly all white, it's an orphan page
+    const sampleH = Math.floor(PAGE_H * 0.30);
+    const data = ctx.getImageData(MX, 80, CONTENT_W, sampleH).data;
+    let nonWhitePixels = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      // Count pixels that aren't white (255,255,255)
+      if (data[i] < 240 || data[i+1] < 240 || data[i+2] < 240) {
+        nonWhitePixels++;
+      }
+    }
+    // If less than 80 non-white pixels in the sample area, it's blank — remove it
+    if (nonWhitePixels < 80) {
       this.pages.pop();
+      this._lastCtx = null;
+      this._lastY = 0;
     }
   }
 
@@ -628,7 +642,7 @@ const EbookGenerator = () => {
         renderer.drawChapterSplash(ch.number, ch.title, genData.meta.title);
         renderer.drawContentPages(ch.title, chContent, genData.meta.title, true, ch.number);
       }
-      renderer.drawContentPages("Conclusion", genData.content.conclusion, genData.meta.title);
+      renderer.drawContentPages("Conclusion", genData.content.conclusion, genData.meta.title, true, undefined);
 
       const safeTitle = genData.meta.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
       const filename  = `${safeTitle}.pdf`;
