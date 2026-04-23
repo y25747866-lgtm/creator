@@ -294,9 +294,12 @@ class EbookPDFRenderer {
     if (line) lines.push(line);
 
     const totalH = lines.length * 68;
-    const ornamentOffset = 80;
-    // True vertical center: title block + ornament centered on page
-    let ty = h / 2 - (totalH + ornamentOffset) / 2;
+    const ornamentH = 100; // ti + ornament visual height
+    // Canvas fillText uses baseline. For 52px bold Georgia, cap height ≈ 38px above baseline.
+    // To visually center: start baseline so visual top of first line = page center - half total block
+    const capHeight = 38; // approximate cap height for 52px bold Georgia
+    const visualBlockH = totalH + ornamentH;
+    let ty = (h - visualBlockH) / 2 + capHeight;
 
     ctx.font = "bold 52px Georgia, serif";
     for (const l of lines) {
@@ -408,16 +411,21 @@ class EbookPDFRenderer {
     let y: number;
 
     // Chapters always get a fresh page; conclusion can continue
-    if (isChapter) {
+    if (isChapter && chNum !== undefined) {
+      // Regular chapter — trim orphans then fresh page
       this.trimOrphanPages();
       ctx = this.newPage();
-      y   = 165; // canvas baseline — cap height of 32px font sits safely within page
+      y   = 165;
+    } else if (isChapter && chNum === undefined) {
+      // Conclusion — always fresh page, no orphan trim needed
+      ctx = this.newPage();
+      y   = 120;
     } else if (this._lastCtx && this._lastY < maxY - 220) {
       ctx = this._lastCtx;
       y   = this._lastY + 40;
     } else {
       ctx = this.newPage();
-      y   = 165;
+      y   = 120;
     }
 
     // Chapter label badge (e.g. "CHAPTER 01")
