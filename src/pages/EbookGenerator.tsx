@@ -294,8 +294,9 @@ class EbookPDFRenderer {
     if (line) lines.push(line);
 
     const totalH = lines.length * 68;
-    // True vertical center of page
-    let ty = h / 2 - totalH / 2 + 52;
+    const ornamentOffset = 80; // height reserved for ornament below title
+    // Center title+ornament block as one unit on page
+    let ty = h / 2 - (totalH + ornamentOffset) / 2 + 52;
 
     ctx.font = "bold 52px Georgia, serif";
     for (const l of lines) {
@@ -410,13 +411,13 @@ class EbookPDFRenderer {
     if (isChapter) {
       this.trimOrphanPages();
       ctx = this.newPage();
-      y   = 100; // enough top margin so tall letters (B,T,L,S) don't clip
+      y   = 140; // 140px top margin — fully prevents tall letter clipping (N,T,C,O,B etc)
     } else if (this._lastCtx && this._lastY < maxY - 220) {
       ctx = this._lastCtx;
       y   = this._lastY + 40;
     } else {
       ctx = this.newPage();
-      y   = 100;
+      y   = 140;
     }
 
     // Chapter label badge (e.g. "CHAPTER 01")
