@@ -513,7 +513,14 @@ class EbookPDFRenderer {
   private parseBlocks(content: string): Array<{type: string; text: string}> {
     const blocks: Array<{type: string; text: string}> = [];
 
-    for (const para of content.split(/\n\n+/)) {
+    // Pre-process: fix any remaining fused bold+body patterns the sanitizer may have missed
+    // "**Heading** body text..." → "## Heading\n\nbody text..."
+    const preprocessed = content
+      .replace(/^\*\*([^*\n]{4,80})\*\*[ \t]+(.{10,})/gm, "## $1\n\n$2")
+      // Also fix "## Heading\nBody on next line without blank line" → ensure blank line after heading
+      .replace(/(^#{2,3}\s+[^\n]+)\n([^#\n])/gm, "$1\n\n$2");
+
+    for (const para of preprocessed.split(/\n\n+/)) {
       const t = para.trim();
       if (!t) continue;
 
@@ -522,24 +529,36 @@ class EbookPDFRenderer {
       if (/^here is the (improved|rewritten|final|humanized)/i.test(t)) continue;
       if (/^(note:|editor.?s? note:|revision:)/i.test(t)) continue;
 
-      // Markdown headings
-      if (/^##\s+/.test(t)) {
-        blocks.push({ type: "heading", text: t.replace(/^##\s+/, "").replace(/\*\*/g, "") });
-        continue;
-      }
-      if (/^###\s+/.test(t)) {
-        blocks.push({ type: "heading", text: t.replace(/^###\s+/, "").replace(/\*\*/g, "") });
+      // Markdown headings — ## and ###
+      if (/^#{2,3}\s+/.test(t)) {
+        const headingText = t
+          .replace(/^#{2,3}\s+/, "")
+          .replace(/\*\*/g, "")
+          .split("\n")[0] // take only first line in case body leaked in
+          .trim();
+        if (headingText.length > 3) {
+          blocks.push({ type: "heading", text: headingText });
+          // If there's body text after the heading on subsequent lines, push it as body
+          const afterHeading = t.replace(/^#{2,3}\s+[^\n]+/, "").trim();
+          if (afterHeading.length > 10) {
+            const bodyClean = afterHeading
+              .replace(/\*\*(.*?)\*\*/g, "$1")
+              .replace(/\*(.*?)\*/g, "$1")
+              .replace(/`(.*?)`/g, "$1");
+            blocks.push({ type: "body", text: bodyClean });
+          }
+        }
         continue;
       }
 
-      // Bold-only line = subheading
-      if (/^\*\*([^*]{4,80})\*\*$/.test(t)) {
+      // Bold-only line = subheading (fallback for AI that ignores ## instruction)
+      if (/^\*\*([^*\n]{4,80})\*\*$/.test(t)) {
         blocks.push({ type: "heading", text: t.replace(/\*\*/g, "") });
         continue;
       }
 
-      // Bold prefix + body = split into heading + body
-      const boldInline = t.match(/^\*\*([^*]{4,80})\*\*\s+(.{10,})/s);
+      // Bold prefix + body = split into heading + body (final safety net)
+      const boldInline = t.match(/^\*\*([^*\n]{4,80})\*\*\s+(.{10,})/s);
       if (boldInline) {
         blocks.push({ type: "heading", text: boldInline[1] });
         const body = boldInline[2].trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
