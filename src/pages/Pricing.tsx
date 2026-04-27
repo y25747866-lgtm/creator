@@ -10,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
 
 const PAYMENT_LINKS = {
-  creator: "https://whop.com/checkout/5q5mTvNs1ODMBL3RPr-Z5Wp-Zly1-KwwP-lGktR6dgK7UO/",
-  pro: "https://whop.com/checkout/plan_PFB3YG5Pyzlme",
+  creator: "https://whop.com/nexora-b5b0/creator-d2/?ref=related_products&funnelId=product_f1bf7e78-2e66-48fc-89fd-90cd24354d47",
+  pro: "https://whop.com/nexora-b5b0/pro-24-ca4a/?ref=related_products&funnelId=product_cdcea7cf-32f3-489e-b11e-1b3014193cac",
 };
 
 type PlanDef = {
@@ -79,7 +79,7 @@ const PLANS: PlanDef[] = [
     ],
     popular: false,
     badge: "Best for Power Users",
-    cta: "Upgrade to Pro",
+    cta: "Go Pro",
     link: PAYMENT_LINKS.pro,
   },
 ];
