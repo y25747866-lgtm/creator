@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
+import nexoraLogo from '@/assets/nexora-logo.png';
 
 const PAYMENT_LINKS = {
   creator: "https://whop.com/nexora-b5b0/creator-d2/?ref=related_products&funnelId=product_f1bf7e78-2e66-48fc-89fd-90cd24354d47",
@@ -153,14 +154,12 @@ const Pricing = () => {
   }, [purchaseStarted, isReady]);
 
   return (
-    <div className="min-h-screen bg-[#05050D] text-[#EFF0F4]">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#05050D]/80 backdrop-blur-md">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl font-clash">
-            <div className="w-8 h-8 bg-[#0A26E6] rounded flex items-center justify-center">
-              <span className="text-white text-xs">N</span>
-            </div>
-            <span>NexoraOS</span>
+    <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
+            <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => navigate("/")} className="text-[#9EA4C0] hover:text-white gap-2">
@@ -193,15 +192,15 @@ const Pricing = () => {
 
         {user && purchaseStarted && (
           <div className="max-w-5xl mx-auto mb-8 animate-fade-in">
-            <Card className="bg-[#0F172A] border-white/10 p-6 text-left">
-              <p className="text-sm text-[#9EA4C0]">
+            <Card className="bg-[#0F0F0F] border-[#1A1A1A] p-6 text-left">
+              <p className="text-sm text-[#666666]">
                 After completing checkout, come back to this tab. We'll unlock your account as soon as the payment confirmation arrives.
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <Button onClick={checkAccessNow} disabled={checkingAccess} className="bg-[#0A26E6] hover:bg-[#081eb8] text-white sm:w-auto">
+                <Button onClick={checkAccessNow} disabled={checkingAccess} className="bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] sm:w-auto">
                   {checkingAccess ? "Checking…" : "I've paid — Unlock access"}
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/dashboard")} className="border-white/10 text-[#9EA4C0] hover:text-white sm:w-auto">
+                <Button variant="outline" onClick={() => navigate("/dashboard")} className="border-[#1A1A1A] text-[#666666] hover:text-white sm:w-auto">
                   Go to Dashboard
                 </Button>
               </div>
@@ -217,33 +216,33 @@ const Pricing = () => {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <Card
-                className={`bg-[#0F172A] p-8 relative h-full flex flex-col rounded-2xl border transition-all duration-200 ${
+                className={`bg-[#0F0F0F] p-8 relative h-full flex flex-col rounded-2xl border transition-all duration-200 ${
                   plan.popular
-                    ? "border-[#0A26E6] shadow-xl shadow-[#0A26E6]/10"
-                    : "border-white/10 shadow-sm"
+                    ? "border-white shadow-xl shadow-white/5"
+                    : "border-[#1A1A1A] shadow-sm"
                 }`}
               >
                 {plan.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-[#0A26E6] text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full whitespace-nowrap">
+                    <span className="bg-white text-[#0A0A0A] text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full whitespace-nowrap">
                       {plan.badge}
                     </span>
                   </div>
                 )}
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold mb-2 font-clash">{plan.name}</h2>
+                  <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>{plan.name}</h2>
                   <div className="flex items-baseline gap-1 mb-4">
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    {plan.period && <span className="text-sm text-[#6B7280]">{plan.period}</span>}
+                    {plan.period && <span className="text-sm text-[#666666]">{plan.period}</span>}
                   </div>
-                  <p className="text-sm text-[#9EA4C0] leading-relaxed">{plan.description}</p>
+                  <p className="text-sm text-[#666666] leading-relaxed">{plan.description}</p>
                 </div>
-                <div className="border-t border-white/5 my-1" />
+                <div className="border-t border-[#1A1A1A] my-1" />
                 <ul className="space-y-4 mb-8 flex-1 pt-6">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.included ? "text-[#0A26E6]" : "text-white/10"}`} />
-                      <span className={`text-sm ${feature.included ? "text-[#9EA4C0]" : "text-white/20"}`}>{feature.text}</span>
+                      <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.included ? "text-white" : "text-[#333333]"}`} />
+                      <span className={`text-sm ${feature.included ? "text-[#999999]" : "text-[#333333]"}`}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -251,8 +250,8 @@ const Pricing = () => {
                   size="lg"
                   className={`w-full rounded-lg font-bold transition-all ${
                     plan.popular 
-                      ? "bg-[#0A26E6] hover:bg-[#081eb8] text-white" 
-                      : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+                      ? "bg-white text-[#0A0A0A] hover:bg-[#F0F0F0]" 
+                      : "bg-[#1A1A1A] hover:bg-[#222222] text-white border border-[#333333]"
                   }`}
                   onClick={() => handlePurchase(plan)}
                 >
