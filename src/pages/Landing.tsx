@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
-import UnicornScene from 'unicornstudio-react';
+
 import { 
   ArrowRight, Check, Sparkles, Globe, DollarSign,
   Zap, TrendingUp, Rocket, ChevronDown, ChevronUp,
@@ -12,6 +12,7 @@ import founderPhoto from '@/assets/founder-photo.jpg';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';
+import OptimizedHeroBackground from '@/components/OptimizedHeroBackground';
 
 /* ─── Section wrapper with fade-up ─── */
 const Section = ({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) => {
@@ -33,10 +34,10 @@ const Section = ({ children, className = '', id }: { children: React.ReactNode; 
 
 const Landing = () => {
   const heroWordsRef = useRef<HTMLDivElement>(null);
-  const { isLoading } = useLandingLoading(1500);
+  const { isLoading } = useLandingLoading(100); // Minimal delay for instant display
 
   useEffect(() => {
-    if (heroWordsRef.current) {
+    if (heroWordsRef.current && !isLoading) {
       const words = heroWordsRef.current.querySelectorAll('.hero-word');
       words.forEach((word, index) => {
         setTimeout(() => {
@@ -44,7 +45,7 @@ const Landing = () => {
         }, index * 150);
       });
     }
-  }, []);
+  }, [isLoading]);
 
   const faqs = [
     { q: 'Do I need technical skills?', a: 'No. If you can type and click, you can use NexoraOS. The AI handles the technical stuff.' },
@@ -94,28 +95,8 @@ const Landing = () => {
         className="pt-48 pb-24 hero-section"
         style={{ position: 'relative', overflow: 'hidden' }}
       >
-        {/* Unicorn Studio animated background */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 0,
-            opacity: 0.4,
-            pointerEvents: 'none',
-          }}
-        >
-          <UnicornScene
-            projectId="mphmwraF225iCJdgjLPD"
-            width="100%"
-            height="100%"
-            scale={1}
-            dpi={1.5}
-            sdkUrl="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@2.1.6/dist/unicornStudio.umd.js"
-          />
-        </div>
+        {/* Optimized animated background with lazy loading */}
+        <OptimizedHeroBackground />
 
         {/* Hero content wrapper */}
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -139,13 +120,13 @@ const Landing = () => {
                 <div className="text-left">
                   <div ref={heroWordsRef}>
                     <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your idea.</div>
-                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">Your product.</div>
-                      <div className="hero-word opacity-0 transition-opacity duration-500">
+                      <div className="hero-word transition-opacity duration-500 text-white/85">Your idea.</div>
+                      <div className="hero-word transition-opacity duration-500 text-white/85">Your product.</div>
+                      <div className="hero-word transition-opacity duration-500">
                         <span className="text-white/85">Your </span>
-                        <span className="text-white font-[900] opacity-100">income.</span>
+                        <span className="text-white font-[900]">income.</span>
                       </div>
-                      <div className="hero-word opacity-0 transition-opacity duration-500 text-white/85">In one session.</div>
+                      <div className="hero-word transition-opacity duration-500 text-white/85">In one session.</div>
                     </h1>
                   </div>
 
