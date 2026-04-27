@@ -403,9 +403,9 @@ class EbookPDFRenderer {
   // ── CONTENT PAGES — auto-flows, no blank pages ──────────────────────────
   drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter = false, chNum?: number) {
     const maxY     = PAGE_H - 88;
-    const lineH    = 23;
-    const bodyFont = "13.8px Georgia, serif";
-    const headFont = "bold 16px sans-serif";
+    const lineH    = 25;
+    const bodyFont = "14.5px Georgia, serif";
+    const headFont = "bold 17px sans-serif";
 
     let ctx: CanvasRenderingContext2D;
     let y: number;
@@ -448,35 +448,99 @@ class EbookPDFRenderer {
 
     // Render blocks
     for (const block of this.parseBlocks(rawContent)) {
+
       if (block.type === "heading") {
-        if (y > maxY - 80) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 18;
-        ctx.fillStyle = BLACK; ctx.font = headFont; ctx.textAlign = "left";
+        // ── Subheading ──────────────────────────────────────────────────────
+        if (y > maxY - 90) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 22;
+        ctx.fillStyle = BLACK; ctx.font = "bold 17px sans-serif"; ctx.textAlign = "left";
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
-          ctx.fillText(l, MX, y); y += 26;
+          ctx.fillText(l, MX, y); y += 28;
         }
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 40, 3); y += 18;
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 4, 44, 3); y += 18;
+
+      } else if (block.type === "pullquote") {
+        // ── Pull Quote — large italic with purple left bar ───────────────────
+        ctx.font = "italic 14px Georgia, serif";
+        const ql = this.wrap(ctx, `"${block.text}"`, CONTENT_W - 60);
+        const qh = ql.length * 26 + 44;
+        if (y > maxY - qh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 16;
+        // Background
+        ctx.fillStyle = "#F5F3FF";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, qh, 6); ctx.fill();
+        // Left accent bar
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, qh);
+        // Quote text
+        ctx.fillStyle = "#2D1F8A"; ctx.font = "italic 14px Georgia, serif";
+        let qy = y + 28;
+        for (const l of ql) { ctx.fillText(l, MX + 22, qy); qy += 26; }
+        y += qh + 20;
+
+      } else if (block.type === "keyinsight") {
+        // ── KEY INSIGHT callout box ──────────────────────────────────────────
+        ctx.font = "12.5px sans-serif";
+        const kl = this.wrap(ctx, block.text, CONTENT_W - 52);
+        const kh = kl.length * 22 + 48;
+        if (y > maxY - kh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 14;
+        // Background
+        ctx.fillStyle = "#FFFBF0";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, kh, 8); ctx.fill();
+        // Left accent bar — gold/amber
+        ctx.fillStyle = "#D4A017"; ctx.fillRect(MX, y, 5, kh);
+        // Label
+        ctx.fillStyle = "#8B6914"; ctx.font = "bold 10px sans-serif";
+        ctx.fillText("KEY INSIGHT", MX + 20, y + 18);
+        // Body
+        ctx.fillStyle = "#5C4500"; ctx.font = "italic 12.5px Georgia, serif";
+        let ky = y + 36;
+        for (const l of kl) { ctx.fillText(l, MX + 20, ky); ky += 22; }
+        y += kh + 20;
+
+      } else if (block.type === "framework") {
+        // ── Framework Spotlight ──────────────────────────────────────────────
+        ctx.font = "12.5px sans-serif";
+        const fl = this.wrap(ctx, block.text, CONTENT_W - 52);
+        const fh = fl.length * 22 + 48;
+        if (y > maxY - fh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 14;
+        // Background
+        ctx.fillStyle = "#F0F4FF";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, fh, 8); ctx.fill();
+        // Left accent bar — deep purple
+        ctx.fillStyle = "#3B2F9E"; ctx.fillRect(MX, y, 5, fh);
+        // Label
+        ctx.fillStyle = "#2A1F7A"; ctx.font = "bold 10px sans-serif";
+        ctx.fillText("FRAMEWORK", MX + 20, y + 18);
+        // Body
+        ctx.fillStyle = "#2A1F7A"; ctx.font = "italic 12.5px Georgia, serif";
+        let fy = y + 36;
+        for (const l of fl) { ctx.fillText(l, MX + 20, fy); fy += 22; }
+        y += fh + 20;
 
       } else if (block.type === "callout") {
+        // ── Generic callout / blockquote ─────────────────────────────────────
         ctx.font = "12.5px sans-serif";
         const cl = this.wrap(ctx, block.text, CONTENT_W - 48);
         const bh = cl.length * 22 + 36;
         if (y > maxY - bh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
         y += 12;
         ctx.fillStyle = "#F8F6FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 8); ctx.fill();
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 6, bh);
-        ctx.fillStyle = "#3F2F9E"; ctx.font = "italic 12.5px sans-serif";
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, bh);
+        ctx.fillStyle = "#3F2F9E"; ctx.font = "italic 12.5px Georgia, serif";
         let cy = y + 22;
         for (const l of cl) { ctx.fillText(l, MX + 24, cy); cy += 22; }
         y += bh + 24;
 
       } else {
-        ctx.fillStyle = "#1F1F1F"; ctx.font = bodyFont; ctx.textAlign = "left";
+        // ── Body text ─────────────────────────────────────────────────────────
+        ctx.fillStyle = "#1A1A1A"; ctx.font = bodyFont; ctx.textAlign = "left";
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
           if (y > maxY) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
           ctx.fillText(l, MX, y); y += lineH;
         }
-        y += 18;
+        y += 16;
       }
     }
 
@@ -566,9 +630,28 @@ class EbookPDFRenderer {
         continue;
       }
 
-      // Callout / blockquote
+      // Callout / blockquote — detect subtypes
       if (t.startsWith(">")) {
-        blocks.push({ type: "callout", text: t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1") });
+        const raw = t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1").trim();
+
+        // Pull quote: starts with a quote mark
+        if (raw.startsWith('"') || raw.startsWith('"')) {
+          const text = raw.replace(/^[""]+/, "").replace(/[""]+$/, "").trim();
+          blocks.push({ type: "pullquote", text });
+
+        // KEY INSIGHT callout
+        } else if (/^KEY INSIGHT[:\s]/i.test(raw)) {
+          const text = raw.replace(/^KEY INSIGHT[:\s]*/i, "").trim();
+          blocks.push({ type: "keyinsight", text });
+
+        // Framework spotlight
+        } else if (/^(FRAMEWORK|The .+:)/i.test(raw)) {
+          blocks.push({ type: "framework", text: raw });
+
+        // Generic callout
+        } else {
+          blocks.push({ type: "callout", text: raw });
+        }
         continue;
       }
 
