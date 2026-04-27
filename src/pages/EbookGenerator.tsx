@@ -580,8 +580,11 @@ class EbookPDFRenderer {
     // Pre-process: fix any remaining fused bold+body patterns the sanitizer may have missed
     // "**Heading** body text..." → "## Heading\n\nbody text..."
     const preprocessed = content
-      .replace(/^\*\*([^*\n]{4,80})\*\*[ \t]+(.{10,})/gm, "## $1\n\n$2")
-      // Also fix "## Heading\nBody on next line without blank line" → ensure blank line after heading
+      // Pattern 1: **Heading** body anywhere in text (not just line start)
+      .replace(/\*\*([^*\n]{4,80})\*\*[ \t]+([A-Z][^*\n]{10,})/g, "\n\n## $1\n\n$2")
+      // Pattern 2: Bold heading after punctuation mid-paragraph
+      .replace(/([.!?])\s+\*\*([^*\n]{4,80})\*\*\s+([A-Z][^*\n]{10,})/g, "$1\n\n## $2\n\n$3")
+      // Pattern 3: ensure blank line after ## heading
       .replace(/(^#{2,3}\s+[^\n]+)\n([^#\n])/gm, "$1\n\n$2");
 
     for (const para of preprocessed.split(/\n\n+/)) {
