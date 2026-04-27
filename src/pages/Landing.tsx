@@ -10,6 +10,8 @@ import {
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
 import { PlasmaWeb } from '@/components/PlasmaWeb';
+import LandingSkeleton from '@/components/LandingSkeleton';
+import { useLandingLoading } from '@/hooks/useLandingLoading';
 
 /* ─── Section wrapper with fade-up ─── */
 const Section = ({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) => {
@@ -31,6 +33,7 @@ const Section = ({ children, className = '', id }: { children: React.ReactNode; 
 
 const Landing = () => {
   const heroWordsRef = useRef<HTMLDivElement>(null);
+  const { isLoading } = useLandingLoading(1500);
 
   useEffect(() => {
     if (heroWordsRef.current) {
@@ -52,11 +55,21 @@ const Landing = () => {
     { q: 'Is there a free plan?', a: 'Yes. Start free, no credit card needed. Upgrade when you\'re ready.' },
   ];
 
+  // Show skeleton while loading
+  if (isLoading) {
+    return <LandingSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       
       {/* ═══ NAVBAR ═══ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl">
+      <motion.nav
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl"
+      >
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
@@ -73,7 +86,7 @@ const Landing = () => {
             </Link>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ═══ HERO ═══ */}
       <section
