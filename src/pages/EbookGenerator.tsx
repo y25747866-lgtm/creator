@@ -228,9 +228,8 @@ class EbookPDFRenderer {
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   }
 }
 
@@ -246,8 +245,8 @@ interface NicheCard {
   speed: number;
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const EbookGenerator = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const { addEbook } = useEbookStore();
@@ -323,14 +322,13 @@ const EbookGenerator = () => {
     setDraftingProgress(0);
 
     try {
-      // We'll use the existing generate-ebook-content function but stream it for the UI
       const { data, error } = await supabase.functions.invoke("generate-ebook-content", {
         body: { 
           topic: selectedNiche.headline, 
           title: selectedNiche.headline,
           description: selectedNiche.description,
           category: selectedNiche.category,
-          length: "short" // Using short for faster demo
+          length: "short"
         }
       });
       
@@ -345,7 +343,6 @@ const EbookGenerator = () => {
         };
       });
 
-      // Simulate the progressive appearance
       const sections = [];
       for (let i = 0; i < parsedSections.length; i++) {
         await new Promise(r => setTimeout(r, 600));
@@ -368,11 +365,7 @@ const EbookGenerator = () => {
 
     try {
       const renderer = new EbookPDFRenderer();
-      
-      // Generate cover (mocking image for now)
       await renderer.drawCover(scriptContent.title, selectedNiche.description.substring(0, 60), topic, null);
-      
-      // Draw content
       renderer.drawTitlePage(scriptContent.title);
       
       const toc = scriptContent.sections.map((s, i) => ({
@@ -404,7 +397,6 @@ const EbookGenerator = () => {
       addEbook(ebook);
       setEbookData(ebook);
       
-      // Track product
       try {
         await createTrackedProduct({
           title: ebook.title, topic: ebook.topic,
@@ -439,26 +431,26 @@ const EbookGenerator = () => {
 
   // ── RENDER HELPERS ──
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-4 mb-12">
-      <div className={`flex items-center gap-2 ${step >= 1 ? "text-white" : "text-zinc-600"}`}>
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? "bg-white text-black" : step > 1 ? "bg-green-500 text-white" : "bg-zinc-800"}`}>
+    <div className="flex items-center justify-center gap-8 mb-12">
+      <div className="flex items-center gap-2">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
           {step > 1 ? <Check className="w-3 h-3" /> : "1"}
         </div>
-        <span className="text-sm font-medium">Niche</span>
+        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 1 ? "text-white" : "text-zinc-600"}`}>Niche</span>
       </div>
-      <ChevronRight className="w-4 h-4 text-zinc-700" />
-      <div className={`flex items-center gap-2 ${step >= 2 ? "text-white" : "text-zinc-600"}`}>
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? "bg-white text-black" : step > 2 ? "bg-green-500 text-white" : "bg-zinc-800"}`}>
-          {step > 2 ? <Check className="w-3 h-3" /> : "2"}
+      <div className="w-12 h-[1px] bg-zinc-800" />
+      <div className="flex items-center gap-2">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
+          {step > 2 ? <Check className="w-3 h-3" /> : step === 2 ? <div className="w-2 h-2 bg-black rounded-full" /> : "2"}
         </div>
-        <span className="text-sm font-medium">Script</span>
+        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 2 ? "text-white" : "text-zinc-600"}`}>Script</span>
       </div>
-      <ChevronRight className="w-4 h-4 text-zinc-700" />
-      <div className={`flex items-center gap-2 ${step >= 3 ? "text-white" : "text-zinc-600"}`}>
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step === 3 ? "bg-white text-black" : "bg-zinc-800"}`}>
-          3
+      <div className="w-12 h-[1px] bg-zinc-800" />
+      <div className="flex items-center gap-2">
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 3 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
+          {step > 3 ? <Check className="w-3 h-3" /> : "3"}
         </div>
-        <span className="text-sm font-medium">Render</span>
+        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 3 ? "text-white" : "text-zinc-600"}`}>Render</span>
       </div>
     </div>
   );
@@ -578,57 +570,53 @@ const EbookGenerator = () => {
     <div className="max-w-4xl mx-auto">
       {renderStepIndicator()}
       
-      <div className="flex items-center gap-3 mb-8">
-        <div className="px-4 py-2 bg-white/10 border border-white/20 rounded-full text-xs font-bold text-white uppercase tracking-widest">
-          {selectedNiche?.category}: {selectedNiche?.subNiche}
+      <div className="flex justify-center mb-8">
+        <div className="px-4 py-1.5 bg-white text-black rounded-full text-[11px] font-bold uppercase tracking-wider">
+          {selectedNiche?.headline}
         </div>
       </div>
 
-      <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-8">
+      <div className="bg-[#0F0F0F] border border-zinc-900 rounded-2xl p-8 mb-8">
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Syne" }}>Drafting your script…</h2>
-              <p className="text-sm text-zinc-500">{draftingProgress}/12 sections complete</p>
-            </div>
+          <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Drafting Your Script</h2>
+          <div className="text-[10px] font-bold text-white bg-zinc-800 px-2 py-1 rounded">
+            {draftingProgress} / 12
           </div>
-          {isDrafting && <Loader2 className="w-6 h-6 animate-spin text-white" />}
         </div>
 
         <div className="space-y-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
           {scriptContent?.sections.map((section, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="border-l-2 border-zinc-800 pl-6 py-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
             >
-              <h3 className="text-lg font-bold text-white mb-3 uppercase tracking-tight">{section.heading}</h3>
-              <p className="text-zinc-400 leading-relaxed">{section.body}</p>
+              <h3 className="text-sm font-black text-white uppercase tracking-tight">{section.heading}</h3>
+              <p className="text-sm text-zinc-400 leading-relaxed">{section.body}</p>
             </motion.div>
           ))}
           {isDrafting && (
-            <div className="animate-pulse border-l-2 border-zinc-800 pl-6 py-2">
-              <div className="h-6 bg-zinc-800 rounded w-1/3 mb-4" />
-              <div className="h-4 bg-zinc-800 rounded w-full mb-2" />
-              <div className="h-4 bg-zinc-800 rounded w-5/6" />
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 bg-zinc-900 rounded w-1/4" />
+              <div className="space-y-2">
+                <div className="h-3 bg-zinc-900 rounded w-full" />
+                <div className="h-3 bg-zinc-900 rounded w-5/6" />
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {!isDrafting && (
-        <div className="flex justify-center pb-20">
+      {!isDrafting && draftingProgress === 12 && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center pb-20">
           <Button
             onClick={renderProduct}
             className="h-14 px-10 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl"
           >
             Continue <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -637,66 +625,82 @@ const EbookGenerator = () => {
     <div className="max-w-4xl mx-auto">
       {renderStepIndicator()}
 
-      <div className="bg-[#111111] border border-zinc-800 rounded-3xl p-8 md:p-12 mb-10">
-        <div className="flex flex-col md:flex-row gap-10">
-          <div className="w-full md:w-1/3 aspect-[3/4] bg-black border border-zinc-800 rounded-xl overflow-hidden relative shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-              <h3 className="text-lg font-bold text-white mb-2 leading-tight" style={{ fontFamily: "Syne" }}>{scriptContent?.title}</h3>
-              <div className="w-8 h-0.5 bg-white/20 mb-4" />
-              <p className="text-[10px] text-zinc-500 uppercase tracking-[0.2em]">Premium Digital Product</p>
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Render Complete</h2>
+        <div className="px-2 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold rounded uppercase tracking-wider">Ready</div>
+      </div>
+
+      <div className="bg-[#0F0F0F] border border-zinc-900 rounded-2xl p-6 mb-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-40 aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden flex-shrink-0 relative border border-zinc-800">
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+              <div className="text-[8px] font-bold text-white/40 uppercase mb-2">Masterpiece</div>
+              <div className="text-[10px] font-bold text-white leading-tight line-clamp-3">{scriptContent?.title}</div>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center">
-            <h2 className="text-3xl font-extrabold text-white mb-2" style={{ fontFamily: "Syne" }}>{scriptContent?.title}</h2>
-            <p className="text-zinc-400 mb-8">{selectedNiche?.description}</p>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "Syne" }}>{scriptContent?.title}</h2>
+            <p className="text-sm text-zinc-500 mb-6">{selectedNiche?.description.substring(0, 100)}...</p>
             
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-black/50 border border-zinc-900 rounded-lg p-3">
-                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Word Count</p>
-                <p className="text-white font-bold">~4,200 words</p>
+            <div className="flex gap-4 mb-8">
+              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
+                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Words</p>
+                <p className="text-white font-bold text-sm">4,200</p>
               </div>
-              <div className="bg-black/50 border border-zinc-900 rounded-lg p-3">
-                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Sections</p>
-                <p className="text-white font-bold">12 Chapters</p>
+              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
+                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Value Blocks</p>
+                <p className="text-white font-bold text-sm">24</p>
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3 mb-10">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                <Check className="w-3 h-3" /> Niche Locked
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                <Check className="w-3 h-3" /> Script Compiled
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] font-bold text-green-500 uppercase tracking-widest">
-                <Check className="w-3 h-3" /> Cover Rendered
+              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
+                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Sections</p>
+                <p className="text-white font-bold text-sm">12</p>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                onClick={handleDownloadPDF}
-                className="flex-1 h-14 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl"
-              >
-                <Download className="w-5 h-5 mr-2" /> Download PDF
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 h-14 bg-transparent border-zinc-800 text-white hover:bg-zinc-900 font-bold rounded-xl"
-              >
-                <ImageIcon className="w-5 h-5 mr-2" /> Download Cover
-              </Button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
+                </div>
+                Niche Locked — <span className="text-zinc-500 font-medium normal-case">Winning angle selected</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
+                </div>
+                Script Compiled — <span className="text-zinc-500 font-medium normal-case">Core sections staged</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
+                </div>
+                Cover Rendered — <span className="text-zinc-500 font-medium normal-case">Artwork synced.</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      <div className="space-y-3 mb-8">
+        <Button
+          onClick={handleDownloadPDF}
+          className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl"
+        >
+          Download PDF
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full h-14 bg-transparent border-zinc-800 text-white hover:bg-zinc-900 font-bold rounded-xl"
+        >
+          Download Cover
+        </Button>
+      </div>
+
       <div className="text-center pb-20">
         <button
           onClick={resetAll}
-          className="text-zinc-500 hover:text-white text-sm font-medium transition-colors"
+          className="text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
         >
           Generate Another
         </button>
