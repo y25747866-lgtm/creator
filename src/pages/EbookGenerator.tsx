@@ -138,13 +138,17 @@ class EbookPDFRenderer {
     }
     ctx.fillStyle = WHITE; ctx.textAlign = "center";
     ctx.font = "bold 42px sans-serif";
-    let y = 180;
+    let y = 200;
     for (const l of this.wrap(ctx, title.toUpperCase(), w - 100)) { ctx.fillText(l, w / 2, y); y += 50; }
-    ctx.fillStyle = ACCENT; ctx.fillRect(w / 2 - 40, y + 20, 80, 4);
-    ctx.fillStyle = "#AAAAAA"; ctx.font = "italic 18px Georgia, serif";
-    y += 70;
-    for (const l of this.wrap(ctx, subtitle, w - 140)) { ctx.fillText(l, w / 2, y); y += 26; }
-    ctx.fillStyle = WHITE; ctx.font = "bold 12px sans-serif";
+    ctx.fillStyle = ACCENT; ctx.fillRect(w / 2 - 40, y + 16, 80, 4);
+    y += 60;
+    // Subtitle — truncate at 120 chars max so it always fits
+    const safeSubtitle = subtitle.length > 120 ? subtitle.substring(0, 117) + "..." : subtitle;
+    ctx.fillStyle = "#AAAAAA"; ctx.font = "italic 16px Georgia, serif";
+    for (const l of this.wrap(ctx, safeSubtitle, w - 160)) {
+      if (y < h - 100) { ctx.fillText(l, w / 2, y); y += 24; }
+    }
+    ctx.fillStyle = WHITE; ctx.font = "bold 11px sans-serif";
     ctx.fillText("AI GENERATED MASTERPIECE", w / 2, h - 60);
   }
   drawTitlePage(title: string) {
@@ -369,7 +373,7 @@ const EbookGenerator = () => {
         });
       }
 
-      const sections: { heading: string; body: string }[] = [];
+      const sections = [];
       for (let i = 0; i < parsedSections.length; i++) {
         await new Promise(r => setTimeout(r, 600));
         sections.push(parsedSections[i]);
@@ -401,8 +405,10 @@ const EbookGenerator = () => {
       }));
       renderer.drawTOC(toc, scriptContent.title);
       
-      for (const section of scriptContent.sections) {
-        renderer.drawContentPages(section.heading, section.body, scriptContent.title, true, 1);
+      for (let i = 0; i < scriptContent.sections.length; i++) {
+        const section = scriptContent.sections[i];
+        const isChapter = toc[i]?.type === "chapter";
+        renderer.drawContentPages(section.heading, section.body, scriptContent.title, true, isChapter ? toc[i].number : undefined);
       }
 
       const safeTitle = scriptContent.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
