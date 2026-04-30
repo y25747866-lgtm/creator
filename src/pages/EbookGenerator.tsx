@@ -218,6 +218,8 @@ class EbookPDFRenderer {
   }
   private parseBlocks(text: string) {
     return text.split("\n\n").map(b => {
+      // Catch ## headings anywhere in text, not just line start
+      if (/^##\s+/.test(b.trim())) return { type: "heading", text: b.trim().replace(/^##\s+/, "") };
       if (b.startsWith("### ")) return { type: "heading", text: b.replace("### ", "") };
       return { type: "paragraph", text: b };
     });
@@ -292,13 +294,25 @@ const EbookGenerator = () => {
     }, 1500);
 
     try {
-      const { data, error } = await supabase.functions.invoke("find-winning-niches", {
+      // ✅ FIXED: was "find-winning-niches"
+      const { data, error } = await supabase.functions.invoke("search-winning-niches", {
         body: { topic, language }
       });
       
       if (error) throw error;
       if (data?.niches) {
-        setNiches(data.niches);
+        // Map scores.pain/demand/speed to flat fields for the UI
+        const mapped = data.niches.map((n: any, i: number) => ({
+          id: crypto.randomUUID(),
+          category: n.category,
+          subNiche: n.subNiche,
+          headline: n.headline,
+          description: n.painDescription,
+          pain: n.scores?.pain ?? n.pain ?? 7,
+          demand: n.scores?.demand ?? n.demand ?? 7,
+          speed: n.scores?.speed ?? n.speed ?? 7,
+        }));
+        setNiches(mapped);
       } else {
         throw new Error("No niches found");
       }
@@ -322,33 +336,45 @@ const EbookGenerator = () => {
     setDraftingProgress(0);
 
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ebook-content", {
+      // ✅ FIXED: was "generate-ebook-content", removed length param, added language
+      const { data, error } = await supabase.functions.invoke("generate-ebook", {
         body: { 
-          topic: selectedNiche.headline, 
-          title: selectedNiche.headline,
+          topic: selectedNiche.headline,
           description: selectedNiche.description,
           category: selectedNiche.category,
-          length: "short"
+          tone: "professional",
+          language
         }
       });
       
       if (error) throw error;
-      
-      const content = data.content;
-      const parsedSections = content.split("## ").filter(Boolean).map((s: string) => {
-        const lines = s.split("\n");
-        return {
-          heading: lines[0].trim(),
-          body: lines.slice(1).join("\n").trim()
-        };
-      });
 
-      const sections = [];
+      // Handle response from generate-ebook which returns chapters array
+      let parsedSections: { heading: string; body: string }[] = [];
+
+      if (data.chapters && Array.isArray(data.chapters)) {
+        // New format: { title, chapters: [{ title, content }] }
+        parsedSections = data.chapters.map((ch: any) => ({
+          heading: ch.title,
+          body: ch.content
+        }));
+      } else if (data.content) {
+        // Legacy format fallback
+        parsedSections = data.content.split("## ").filter(Boolean).map((s: string) => {
+          const lines = s.split("\n");
+          return {
+            heading: lines[0].trim(),
+            body: lines.slice(1).join("\n").trim()
+          };
+        });
+      }
+
+      const sections: { heading: string; body: string }[] = [];
       for (let i = 0; i < parsedSections.length; i++) {
         await new Promise(r => setTimeout(r, 600));
         sections.push(parsedSections[i]);
         setDraftingProgress(i + 1);
-        setScriptContent({ title: selectedNiche.headline, sections: [...sections] });
+        setScriptContent({ title: data.title || selectedNiche.headline, sections: [...sections] });
       }
       
       setIsDrafting(false);
@@ -608,7 +634,7 @@ const EbookGenerator = () => {
         </div>
       </div>
 
-      {!isDrafting && draftingProgress === 12 && (
+      {!isDrafting && draftingProgress >= 1 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center pb-20">
           <Button
             onClick={renderProduct}
@@ -654,7 +680,7 @@ const EbookGenerator = () => {
               </div>
               <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
                 <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Sections</p>
-                <p className="text-white font-bold text-sm">12</p>
+                <p className="text-white font-bold text-sm">{scriptContent?.sections.length ?? 0}</p>
               </div>
             </div>
 
