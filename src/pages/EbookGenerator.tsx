@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText, BookOpen, FileStack, RefreshCw,
   ArrowRight, Download, Sparkles, Loader2,
-  CheckCircle2, Image as ImageIcon, Search,
-  ChevronRight, Globe, Lock, Check
+  CheckCircle2, Image as ImageIcon, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,72 +17,127 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const PAGE_W = 595, PAGE_H = 842;
-const MX = 50, MY = 50, CONTENT_W = PAGE_W - MX * 2;
-const ACCENT = "#7C3AED", BLACK = "#000000", WHITE = "#FFFFFF";
+const CATEGORY_OPTIONS = [
+  "Business & Entrepreneurship","Self-Help & Personal Development",
+  "Finance & Investing","Marketing & Sales","Technology & AI",
+  "Health & Wellness","Education & Learning","Creativity & Design",
+  "Relationships & Communication","Productivity & Habits",
+];
+const TONE_OPTIONS = [
+  { value: "professional",  label: "Professional"  },
+  { value: "motivational",  label: "Motivational"  },
+  { value: "educational",   label: "Educational"   },
+  { value: "business",      label: "Business"      },
+  { value: "conversational",label: "Conversational" },
+  { value: "inspirational", label: "Inspirational"  },
+];
 
-// ─── UTILS ───────────────────────────────────────────────────────────────────
-function base64ToBytes(base64: string): Uint8Array {
-  const s = atob(base64);
-  const out = new Uint8Array(s.length);
-  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 0xff;
+type GenerationStep = "idle"|"content"|"cover"|"pdf"|"complete";
+type Screen         = "form"|"generating"|"outline"|"download";
+
+const STEP_LABELS: Record<GenerationStep,string> = {
+  idle:"", content:"Writing your book... This may take a minute.",
+  cover:"Designing your cover...", pdf:"Rendering your PDF...", complete:"Your ebook is ready!",
+};
+const STEP_PROGRESS: Record<GenerationStep,number> = {
+  idle:0, content:55, cover:75, pdf:90, complete:100,
+};
+
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const BLACK     = "#0A0A0A";
+const WHITE     = "#FFFFFF";
+const ACCENT    = "#6C63FF";
+const PAGE_W    = 794;
+const PAGE_H    = 1123;
+const MX        = 64;
+const CONTENT_W = PAGE_W - MX * 2;
+
+// ─── PDF BINARY BUILDER (zero dependencies) ───────────────────────────────────
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
+
 function strBytes(s: string): Uint8Array {
   const out = new Uint8Array(s.length);
   for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 0xff;
   return out;
 }
+
 function concat(...chunks: Uint8Array[]): Uint8Array {
   const total = chunks.reduce((n, c) => n + c.length, 0);
-  const out = new Uint8Array(total);
+  const out   = new Uint8Array(total);
   let pos = 0;
   for (const c of chunks) { out.set(c, pos); pos += c.length; }
   return out;
 }
+
 function buildPDF(jpegUrls: string[], pw: number, ph: number): Uint8Array {
-  const n = jpegUrls.length;
+  const n       = jpegUrls.length;
   const perPage = 3;
-  const total = 2 + n * perPage;
-  const imgId = (i: number) => 3 + i * perPage;
+  const total   = 2 + n * perPage;
+
+  const imgId     = (i: number) => 3 + i * perPage;
   const contentId = (i: number) => 3 + i * perPage + 1;
-  const pageId = (i: number) => 3 + i * perPage + 2;
-  const pageIds = Array.from({ length: n }, (_, i) => pageId(i));
+  const pageId    = (i: number) => 3 + i * perPage + 2;
+  const pageIds   = Array.from({length: n}, (_, i) => pageId(i));
+
   const parts: Uint8Array[] = [];
   const offsets = new Array(total + 1).fill(0);
   let pos = 0;
-  const push = (s: string) => { const b = strBytes(s); parts.push(b); pos += b.length; };
-  const pushB = (b: Uint8Array) => { parts.push(b); pos += b.length; };
-  const obj = (id: number, body: string) => {
+
+  const push  = (s: string)      => { const b = strBytes(s); parts.push(b); pos += b.length; };
+  const pushB = (b: Uint8Array)  => { parts.push(b); pos += b.length; };
+  const obj   = (id: number, body: string) => {
     offsets[id] = pos;
     push(`${id} 0 obj\n${body}\nendobj\n\n`);
   };
+
   push("%PDF-1.4\n%\xFF\xFF\xFF\xFF\n\n");
   obj(1, `<<\n/Type /Catalog\n/Pages 2 0 R\n>>`);
   obj(2, `<<\n/Type /Pages\n/Kids [${pageIds.map(id => `${id} 0 R`).join(" ")}]\n/Count ${n}\n>>`);
+
   for (let i = 0; i < n; i++) {
     const imgBytes = base64ToBytes(jpegUrls[i].split(",")[1]);
     offsets[imgId(i)] = pos;
     push(`${imgId(i)} 0 obj\n<<\n/Type /XObject\n/Subtype /Image\n/Width ${pw}\n/Height ${ph}\n/ColorSpace /DeviceRGB\n/BitsPerComponent 8\n/Filter /DCTDecode\n/Length ${imgBytes.length}\n>>\nstream\n`);
     pushB(imgBytes);
     push(`\nendstream\nendobj\n\n`);
+
     const cs = `q\n${pw} 0 0 ${ph} 0 0 cm\n/Im${imgId(i)} Do\nQ\n`;
     obj(contentId(i), `<<\n/Length ${cs.length}\n>>\nstream\n${cs}\nendstream`);
-    obj(pageId(i), `<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 ${pw} ${ph}]\n/Contents ${contentId(i)} 0 R\n/Resources <<\n/XObject <<\n/Im${imgId(i)} ${imgId(i)} 0 R\n>>\n>>\n>>`);
+    obj(pageId(i),    `<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 ${pw} ${ph}]\n/Contents ${contentId(i)} 0 R\n/Resources <<\n/XObject <<\n/Im${imgId(i)} ${imgId(i)} 0 R\n>>\n>>\n>>`);
   }
+
   const xref = pos;
   push(`xref\n0 ${total + 1}\n`);
   push("0000000000 65535 f \n");
   for (let i = 1; i <= total; i++) push(String(offsets[i]).padStart(10, "0") + " 00000 n \n");
   push(`trailer\n<<\n/Size ${total + 1}\n/Root 1 0 R\n>>\nstartxref\n${xref}\n%%EOF\n`);
+
   return concat(...parts);
 }
 
-// ─── PDF RENDERER ─────────────────────────────────────────────────────────────
+async function downloadPDF(canvases: HTMLCanvasElement[], filename: string) {
+  const jpegUrls = canvases.map(c => c.toDataURL("image/jpeg", 0.92));
+  const bytes    = buildPDF(jpegUrls, canvases[0].width, canvases[0].height);
+  const blob     = new Blob([bytes], { type: "application/pdf" });
+  const url      = URL.createObjectURL(blob);
+  const a        = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+// ─── PDF RENDERER (light theme, real book layout) ─────────────────────────────
 class EbookPDFRenderer {
   readonly pages: HTMLCanvasElement[] = [];
   private _lastCtx: CanvasRenderingContext2D | null = null;
   private _lastY: number = 0;
+
   private newPage(): CanvasRenderingContext2D {
     const c = document.createElement("canvas");
     c.width = PAGE_W; c.height = PAGE_H;
@@ -93,6 +146,7 @@ class EbookPDFRenderer {
     this.pages.push(c);
     return ctx;
   }
+
   private wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const words = text.split(" ");
     const lines: string[] = [];
@@ -105,675 +159,860 @@ class EbookPDFRenderer {
     if (line) lines.push(line);
     return lines;
   }
+
   private footer(ctx: CanvasRenderingContext2D, title: string, n: number) {
     const y = PAGE_H - 32;
     ctx.strokeStyle = "#E0E0E0"; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(MX, y - 8); ctx.lineTo(PAGE_W - MX, y - 8); ctx.stroke();
+
     const short = title.length > 60 ? title.substring(0, 60) + "…" : title;
     ctx.fillStyle = "#555555";
     ctx.font = "10px Georgia, serif";
     ctx.textAlign = "center";
     ctx.fillText(short, PAGE_W / 2, y + 8);
+
     ctx.fillStyle = "#555555";
     ctx.font = "10px sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(String(n), PAGE_W - MX, y + 8);
+
     ctx.fillStyle = "#999999";
     ctx.font = "9px sans-serif";
     ctx.textAlign = "left";
     ctx.fillText("Copyrighted Material", MX, y + 8);
   }
+
+  // ── COVER — clean white/dark design, no branding ─────────────────────────
   async drawCover(title: string, subtitle: string, topic: string, img64: string | null) {
     const ctx = this.newPage();
     const w = PAGE_W, h = PAGE_H;
+
+    // Dark background
     ctx.fillStyle = BLACK; ctx.fillRect(0, 0, w, h);
+
+    // Top accent bar
     ctx.fillStyle = ACCENT; ctx.fillRect(0, 0, w, 8);
+
+    // Top-right triangle decoration
+    ctx.fillStyle = "#1A1A2E";
+    ctx.beginPath();
+    ctx.moveTo(w * 0.5, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.45);
+    ctx.closePath(); ctx.fill();
+
+    // Cover image — full bleed background
     if (img64) {
-      const img = new Image();
-      img.src = img64;
-      await new Promise(r => img.onload = r);
-      ctx.globalAlpha = 0.4;
-      ctx.drawImage(img, 0, 0, w, h);
-      ctx.globalAlpha = 1.0;
+      try {
+        const img = new Image();
+        await new Promise<void>(res => {
+          img.onload = () => res(); img.onerror = () => res();
+          img.src = `data:image/png;base64,${img64}`;
+        });
+        // Full bleed: cover entire page, then overlay dark gradient for readability
+        ctx.globalAlpha = 1;
+        ctx.drawImage(img, 0, 0, w, h);
+        // Dark gradient overlay so title text remains readable
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0,   "rgba(10,10,10,0.55)");
+        grad.addColorStop(0.5, "rgba(10,10,10,0.45)");
+        grad.addColorStop(1,   "rgba(10,10,10,0.82)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      } catch {
+        // fallback: keep dark background already drawn
+      }
     }
-    ctx.fillStyle = WHITE; ctx.textAlign = "center";
-    ctx.font = "bold 42px sans-serif";
-    let y = 200;
-    for (const l of this.wrap(ctx, title.toUpperCase(), w - 100)) { ctx.fillText(l, w / 2, y); y += 50; }
-    ctx.fillStyle = ACCENT; ctx.fillRect(w / 2 - 40, y + 16, 80, 4);
-    y += 60;
-    // Subtitle — truncate at 120 chars max so it always fits
-    const safeSubtitle = subtitle.length > 120 ? subtitle.substring(0, 117) + "..." : subtitle;
-    ctx.fillStyle = "#AAAAAA"; ctx.font = "italic 16px Georgia, serif";
-    for (const l of this.wrap(ctx, safeSubtitle, w - 160)) {
-      if (y < h - 100) { ctx.fillText(l, w / 2, y); y += 24; }
+
+    // ── PROFESSIONAL COVER TITLE — centered, large, dominant ─────────────────
+    ctx.font = "bold 64px sans-serif";
+    ctx.textAlign = "center";
+    const titleLines = this.wrap(ctx, title, w - 120);
+    const lineH = 78;
+    const blockH = titleLines.length * lineH;
+    let ty = h * 0.38 - blockH / 2;
+
+    ctx.shadowColor = "rgba(0,0,0,0.7)";
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = WHITE;
+    for (const l of titleLines) {
+      ctx.fillText(l, w / 2, ty); ty += lineH;
     }
-    ctx.fillStyle = WHITE; ctx.font = "bold 11px sans-serif";
-    ctx.fillText("AI GENERATED MASTERPIECE", w / 2, h - 60);
+    ctx.shadowBlur = 0;
+
+    // Accent line centered under title
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(w / 2 - 60, ty - 14, 120, 5);
+
+    // Subtitle centered below accent
+    if (subtitle && subtitle.length < 100 && !subtitle.toLowerCase().includes("make me")) {
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = "18px Georgia, serif";
+      ctx.textAlign = "center";
+      let sy = ty + 22;
+      for (const l of this.wrap(ctx, subtitle, w - 160)) {
+        ctx.fillText(l, w / 2, sy); sy += 28;
+      }
+    }
+
+    // NexoraOS branding — subtle bottom center
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("NEXORAOS.ONLINE", w / 2, h - 28);
+
+    // Bottom accent bar
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(0, h - 6, w, 6);
   }
+
+  // ── TITLE PAGE — clean white page between cover and TOC ──────────────────
   drawTitlePage(title: string) {
     const ctx = this.newPage();
-    ctx.fillStyle = BLACK; ctx.font = "bold 32px sans-serif"; ctx.textAlign = "left";
-    let y = 120;
-    for (const l of this.wrap(ctx, title, CONTENT_W)) { ctx.fillText(l, MX, y); y += 40; }
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y + 10, 60, 4);
-    this.footer(ctx, title, 1);
+    const w = PAGE_W, h = PAGE_H;
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, w, h);
+
+    // Title centered vertically in upper third
+    ctx.fillStyle = BLACK;
+    ctx.textAlign = "center";
+
+    // Draw title words — split into lines
+    const words = title.toUpperCase().split(" ");
+    const lines: string[] = [];
+    let line = "";
+    ctx.font = "bold 52px Georgia, serif";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > CONTENT_W - 40 && line) {
+        lines.push(line); line = word;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+
+    const totalH = lines.length * 68;
+    const ornamentH = 100; // ti + ornament visual height
+    // Canvas fillText uses baseline. For 52px bold Georgia, cap height ≈ 38px above baseline.
+    // To visually center: start baseline so visual top of first line = page center - half total block
+    const capHeight = 38; // approximate cap height for 52px bold Georgia
+    const visualBlockH = totalH + ornamentH;
+    let ty = (h - visualBlockH) / 2 + capHeight;
+
+    ctx.font = "bold 52px Georgia, serif";
+    for (const l of lines) {
+      ctx.fillText(l, w / 2, ty);
+      ty += 68;
+    }
+
+    // Decorative divider
+    const cx = w / 2;
+    const dy = ty + 40;
+    ctx.strokeStyle = BLACK; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx - 100, dy); ctx.lineTo(cx - 24, dy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 24, dy); ctx.lineTo(cx + 100, dy); ctx.stroke();
+
+    // Diamond ornament
+    ctx.beginPath();
+    ctx.moveTo(cx, dy - 8);
+    ctx.lineTo(cx + 8, dy);
+    ctx.lineTo(cx, dy + 8);
+    ctx.lineTo(cx - 8, dy);
+    ctx.closePath();
+    ctx.fillStyle = BLACK;
+    ctx.fill();
+
+    // Small dots at line ends
+    ctx.beginPath(); ctx.arc(cx - 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
   }
-  drawTOC(entries: any[], bookTitle: string) {
+
+  // ── TABLE OF CONTENTS ────────────────────────────────────────────────────
+  drawTOC(toc: Array<{type: string; number?: number; label: string}>, bookTitle: string) {
     const ctx = this.newPage();
-    let y = 120;
-    ctx.fillStyle = BLACK; ctx.font = "bold 28px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("Table of Contents", MX, y); y += 50;
-    ctx.font = "14px Georgia, serif";
-    let pg = 3;
-    for (const e of entries) {
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
+    let y = 92;
+
+    // Heading
+    ctx.fillStyle = BLACK; ctx.font = "bold 36px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText("Table of Contents", MX, y); y += 18;
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 100, 4); y += 48;
+
+    // Estimate real page numbers
+    // Cover=1, TitlePage=2, TOC=3, Intro=4, Ch1splash=5, Ch1content=6+...
+    let pg = 4; // intro starts at page 4
+
+    for (const e of toc) {
+      if (y > PAGE_H - 120) break;
+
+      if (e.type === "chapter") {
+        y += 6;
+        ctx.fillStyle = ACCENT; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "left";
+        ctx.fillText(`CHAPTER ${String(e.number).padStart(2, "0")}`, MX, y);
+        y += 20;
+      }
+
+      // Title
       ctx.fillStyle = BLACK;
-      const title = e.type === "chapter" ? `Chapter ${e.number}: ${e.label}` : e.label;
-      ctx.fillText(title, MX, y);
-      const titleEnd = MX + ctx.measureText(title).width + 8;
+      ctx.font = e.type === "chapter" ? "bold 15px sans-serif" : "15px sans-serif";
+      ctx.textAlign = "left";
+
+      // Truncate if too long
+      let label = e.label;
+      while (ctx.measureText(label).width > CONTENT_W - 50 && label.length > 10) {
+        label = label.substring(0, label.length - 4) + "…";
+      }
+      ctx.fillText(label, MX, y);
+
+      // Page number right-aligned
       const pgStr = String(pg);
-      ctx.textAlign = "right"; ctx.fillText(pgStr, PAGE_W - MX, y); ctx.textAlign = "left";
-      const pgStart = PAGE_W - MX - ctx.measureText(pgStr).width - 8;
+      ctx.fillStyle = "#333333"; ctx.font = "14px sans-serif"; ctx.textAlign = "right";
+      ctx.fillText(pgStr, PAGE_W - MX, y);
+
+      // Dotted leader between title and page number
+      const titleEnd = MX + ctx.measureText(label).width + 8;
+      const pgStart  = PAGE_W - MX - ctx.measureText(pgStr).width - 8;
       if (pgStart > titleEnd + 20) {
         ctx.strokeStyle = "#BBBBBB"; ctx.lineWidth = 0.8;
         ctx.setLineDash([1, 4]);
-        ctx.beginPath(); ctx.moveTo(titleEnd, y - 3); ctx.lineTo(pgStart, y - 3); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(titleEnd, y - 3);
+        ctx.lineTo(pgStart, y - 3);
+        ctx.stroke(); ctx.setLineDash([]);
       }
+
+      // Advance page estimate
       if (e.type === "intro") pg += 2;
       else if (e.type === "chapter") { pg += 3; }
       else if (e.type === "conclusion") pg += 2;
+
       y += e.type === "chapter" ? 38 : 34;
     }
+
     this.footer(ctx, bookTitle, this.pages.length);
   }
+
+  // ── CHAPTER SPLASH — removed: title now renders inline with content page ──
+  drawChapterSplash(_num: number, _title: string, _bookTitle: string) {
+    // No-op: chapter heading is rendered at the top of drawContentPages
+    // This eliminates the blank-looking splash pages
+  }
+
+  // ── CONTENT PAGES — auto-flows, no blank pages ──────────────────────────
   drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter = false, chNum?: number) {
-    const maxY = PAGE_H - 88;
+    const maxY     = PAGE_H - 88;
+    const lineH    = 25;
+    const bodyFont = "14.5px Georgia, serif";
+    const headFont = "bold 17px sans-serif";
+
     let ctx: CanvasRenderingContext2D;
     let y: number;
-    if (isChapter && chNum !== undefined) { ctx = this.newPage(); y = 165; }
-    else if (isChapter && chNum === undefined) { ctx = this.newPage(); y = 120; }
-    else if (this._lastCtx && this._lastY < maxY - 220) { ctx = this._lastCtx; y = this._lastY + 40; }
-    else { ctx = this.newPage(); y = 120; }
+
+    // Chapters always get a fresh page; conclusion can continue
+    if (isChapter && chNum !== undefined) {
+      // Regular chapter — trim orphans then fresh page
+      this.trimOrphanPages();
+      ctx = this.newPage();
+      y   = 165;
+    } else if (isChapter && chNum === undefined) {
+      // Conclusion — always fresh page, no orphan trim needed
+      ctx = this.newPage();
+      y   = 120;
+    } else if (this._lastCtx && this._lastY < maxY - 220) {
+      ctx = this._lastCtx;
+      y   = this._lastY + 40;
+    } else {
+      ctx = this.newPage();
+      y   = 120;
+    }
+
+    // Chapter label badge (e.g. "CHAPTER 01")
     if (isChapter && chNum !== undefined) {
       ctx.fillStyle = ACCENT; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
       ctx.fillText(`CHAPTER ${String(chNum).padStart(2, "0")}`, MX, y);
-      y += 10; ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 56, 3); y += 22;
+      y += 10;
+      ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 56, 3);
+      y += 22;
     }
+
+    // Chapter/section title
     ctx.fillStyle = BLACK; ctx.font = "bold 32px sans-serif"; ctx.textAlign = "left";
-    for (const l of this.wrap(ctx, title, CONTENT_W)) { ctx.fillText(l, MX, y); y += 44; }
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 6, 70, 4); y += 20;
+    for (const l of this.wrap(ctx, title, CONTENT_W)) {
+      ctx.fillText(l, MX, y); y += 44;
+    }
+    // Accent underline
+    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 6, 70, 4);
+    y += 20;
+
+    // Render blocks
     for (const block of this.parseBlocks(rawContent)) {
+
       if (block.type === "heading") {
+        // ── Subheading ──────────────────────────────────────────────────────
         if (y > maxY - 90) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 22; ctx.fillStyle = BLACK; ctx.font = "bold 17px sans-serif";
-        for (const l of this.wrap(ctx, block.text, CONTENT_W)) { ctx.fillText(l, MX, y); y += 28; }
+        y += 22;
+        ctx.fillStyle = BLACK; ctx.font = "bold 17px sans-serif"; ctx.textAlign = "left";
+        for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
+          ctx.fillText(l, MX, y); y += 28;
+        }
         ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 4, 44, 3); y += 18;
+
+      } else if (block.type === "pullquote") {
+        // ── Pull Quote — large italic with purple left bar ───────────────────
+        ctx.font = "italic 14px Georgia, serif";
+        const ql = this.wrap(ctx, `"${block.text}"`, CONTENT_W - 60);
+        const qh = ql.length * 26 + 44;
+        if (y > maxY - qh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 16;
+        // Background
+        ctx.fillStyle = "#F5F3FF";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, qh, 6); ctx.fill();
+        // Left accent bar
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, qh);
+        // Quote text
+        ctx.fillStyle = "#2D1F8A"; ctx.font = "italic 14px Georgia, serif";
+        let qy = y + 28;
+        for (const l of ql) { ctx.fillText(l, MX + 22, qy); qy += 26; }
+        y += qh + 20;
+
+      } else if (block.type === "keyinsight") {
+        // ── KEY INSIGHT callout box ──────────────────────────────────────────
+        ctx.font = "12.5px sans-serif";
+        const kl = this.wrap(ctx, block.text, CONTENT_W - 52);
+        const kh = kl.length * 22 + 48;
+        if (y > maxY - kh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 14;
+        // Background
+        ctx.fillStyle = "#FFFBF0";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, kh, 8); ctx.fill();
+        // Left accent bar — gold/amber
+        ctx.fillStyle = "#D4A017"; ctx.fillRect(MX, y, 5, kh);
+        // Label
+        ctx.fillStyle = "#8B6914"; ctx.font = "bold 10px sans-serif";
+        ctx.fillText("KEY INSIGHT", MX + 20, y + 18);
+        // Body
+        ctx.fillStyle = "#5C4500"; ctx.font = "italic 12.5px Georgia, serif";
+        let ky = y + 36;
+        for (const l of kl) { ctx.fillText(l, MX + 20, ky); ky += 22; }
+        y += kh + 20;
+
+      } else if (block.type === "framework") {
+        // ── Framework Spotlight ──────────────────────────────────────────────
+        ctx.font = "12.5px sans-serif";
+        const fl = this.wrap(ctx, block.text, CONTENT_W - 52);
+        const fh = fl.length * 22 + 48;
+        if (y > maxY - fh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 14;
+        // Background
+        ctx.fillStyle = "#F0F4FF";
+        ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, fh, 8); ctx.fill();
+        // Left accent bar — deep purple
+        ctx.fillStyle = "#3B2F9E"; ctx.fillRect(MX, y, 5, fh);
+        // Label
+        ctx.fillStyle = "#2A1F7A"; ctx.font = "bold 10px sans-serif";
+        ctx.fillText("FRAMEWORK", MX + 20, y + 18);
+        // Body
+        ctx.fillStyle = "#2A1F7A"; ctx.font = "italic 12.5px Georgia, serif";
+        let fy = y + 36;
+        for (const l of fl) { ctx.fillText(l, MX + 20, fy); fy += 22; }
+        y += fh + 20;
+
+      } else if (block.type === "callout") {
+        // ── Generic callout / blockquote ─────────────────────────────────────
+        ctx.font = "12.5px sans-serif";
+        const cl = this.wrap(ctx, block.text, CONTENT_W - 48);
+        const bh = cl.length * 22 + 36;
+        if (y > maxY - bh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
+        y += 12;
+        ctx.fillStyle = "#F8F6FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 8); ctx.fill();
+        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, bh);
+        ctx.fillStyle = "#3F2F9E"; ctx.font = "italic 12.5px Georgia, serif";
+        let cy = y + 22;
+        for (const l of cl) { ctx.fillText(l, MX + 24, cy); cy += 22; }
+        y += bh + 24;
+
       } else {
-        ctx.font = "14.5px Georgia, serif"; ctx.fillStyle = "#333333";
+        // ── Body text ─────────────────────────────────────────────────────────
+        ctx.fillStyle = "#1A1A1A"; ctx.font = bodyFont; ctx.textAlign = "left";
         for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
           if (y > maxY) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-          ctx.fillText(l, MX, y); y += 25;
+          ctx.fillText(l, MX, y); y += lineH;
         }
-        y += 15;
+        y += 16;
       }
     }
-    this._lastCtx = ctx; this._lastY = y;
-    this.footer(ctx, bookTitle, this.pages.length);
+
+    if (y > 80) this.footer(ctx, bookTitle, this.pages.length);
+    this._lastCtx = ctx;
+    this._lastY   = y;
   }
-  private parseBlocks(text: string) {
-    return text.split("\n\n").map(b => {
-      // Catch ## headings anywhere in text, not just line start
-      if (/^##\s+/.test(b.trim())) return { type: "heading", text: b.trim().replace(/^##\s+/, "") };
-      if (b.startsWith("### ")) return { type: "heading", text: b.replace("### ", "") };
-      return { type: "paragraph", text: b };
-    });
+
+  // Remove last page if it has very little content — pixel-based detection
+  private trimOrphanPages() {
+    if (this.pages.length < 2) return;
+    const last = this.pages[this.pages.length - 1];
+    const ctx = last.getContext("2d")!;
+    // Sample a strip of pixels in the top 30% of the page (below where footer sits)
+    // If nearly all white, it's an orphan page
+    const sampleH = Math.floor(PAGE_H * 0.30);
+    const data = ctx.getImageData(MX, 80, CONTENT_W, sampleH).data;
+    let nonWhitePixels = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      // Count pixels that aren't white (255,255,255)
+      if (data[i] < 240 || data[i+1] < 240 || data[i+2] < 240) {
+        nonWhitePixels++;
+      }
+    }
+    // If less than 80 non-white pixels in the sample area, it's blank — remove it
+    if (nonWhitePixels < 80) {
+      this.pages.pop();
+      this._lastCtx = null;
+      this._lastY = 0;
+    }
   }
+
+  // ── CONTENT PARSER ───────────────────────────────────────────────────────
+  private parseBlocks(content: string): Array<{type: string; text: string}> {
+    const blocks: Array<{type: string; text: string}> = [];
+
+    // Pre-process: fix any remaining fused bold+body patterns the sanitizer may have missed
+    // "**Heading** body text..." → "## Heading\n\nbody text..."
+    const preprocessed = content
+      // Pattern 1: **Heading** body anywhere in text (not just line start)
+      .replace(/\*\*([^*\n]{4,80})\*\*[ \t]+([A-Z][^*\n]{10,})/g, "\n\n## $1\n\n$2")
+      // Pattern 2: Bold heading after punctuation mid-paragraph
+      .replace(/([.!?])\s+\*\*([^*\n]{4,80})\*\*\s+([A-Z][^*\n]{10,})/g, "$1\n\n## $2\n\n$3")
+      // Pattern 3: ensure blank line after ## heading
+      .replace(/(^#{2,3}\s+[^\n]+)\n([^#\n])/gm, "$1\n\n$2");
+
+    for (const para of preprocessed.split(/\n\n+/)) {
+      const t = para.trim();
+      if (!t) continue;
+
+      // Strip AI leakage: chapter title echoed as first line
+      if (/^Chapter:\s*[""]?.{3,120}[""]?\s*$/i.test(t)) continue;
+      if (/^here is the (improved|rewritten|final|humanized)/i.test(t)) continue;
+      if (/^(note:|editor.?s? note:|revision:)/i.test(t)) continue;
+
+      // Markdown headings — ## and ###
+      if (/^#{2,3}\s+/.test(t)) {
+        const headingText = t
+          .replace(/^#{2,3}\s+/, "")
+          .replace(/\*\*/g, "")
+          .split("\n")[0] // take only first line in case body leaked in
+          .trim();
+        if (headingText.length > 3) {
+          blocks.push({ type: "heading", text: headingText });
+          // If there's body text after the heading on subsequent lines, push it as body
+          const afterHeading = t.replace(/^#{2,3}\s+[^\n]+/, "").trim();
+          if (afterHeading.length > 10) {
+            const bodyClean = afterHeading
+              .replace(/\*\*(.*?)\*\*/g, "$1")
+              .replace(/\*(.*?)\*/g, "$1")
+              .replace(/`(.*?)`/g, "$1");
+            blocks.push({ type: "body", text: bodyClean });
+          }
+        }
+        continue;
+      }
+
+      // Bold-only line = subheading (fallback for AI that ignores ## instruction)
+      if (/^\*\*([^*\n]{4,80})\*\*$/.test(t)) {
+        blocks.push({ type: "heading", text: t.replace(/\*\*/g, "") });
+        continue;
+      }
+
+      // Bold prefix + body = split into heading + body (final safety net)
+      const boldInline = t.match(/^\*\*([^*\n]{4,80})\*\*\s+(.{10,})/s);
+      if (boldInline) {
+        blocks.push({ type: "heading", text: boldInline[1] });
+        const body = boldInline[2].trim().replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+        if (body) blocks.push({ type: "body", text: body });
+        continue;
+      }
+
+      // Callout / blockquote — detect subtypes
+      if (t.startsWith(">")) {
+        const raw = t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1").trim();
+
+        // Pull quote: starts with a quote mark
+        if (raw.startsWith('"') || raw.startsWith('"')) {
+          const text = raw.replace(/^[""]+/, "").replace(/[""]+$/, "").trim();
+          blocks.push({ type: "pullquote", text });
+
+        // KEY INSIGHT callout
+        } else if (/^KEY INSIGHT[:\s]/i.test(raw)) {
+          const text = raw.replace(/^KEY INSIGHT[:\s]*/i, "").trim();
+          blocks.push({ type: "keyinsight", text });
+
+        // Framework spotlight
+        } else if (/^(FRAMEWORK|The .+:)/i.test(raw)) {
+          blocks.push({ type: "framework", text: raw });
+
+        // Generic callout
+        } else {
+          blocks.push({ type: "callout", text: raw });
+        }
+        continue;
+      }
+
+      // Body text
+      const clean = t
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/`(.*?)`/g, "$1");
+      if (clean.length > 3) blocks.push({ type: "body", text: clean });
+    }
+
+    return blocks;
+  }
+
   async exportPDF(filename: string) {
-    const jpegUrls = this.pages.map(c => c.toDataURL("image/jpeg", 0.92));
-    const bytes = buildPDF(jpegUrls, PAGE_W, PAGE_H);
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
+    this.trimOrphanPages();
+    await downloadPDF(this.pages, filename);
   }
 }
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-interface NicheCard {
-  id: string;
-  category: string;
-  subNiche: string;
-  headline: string;
-  description: string;
-  pain: number;
-  demand: number;
-  speed: number;
-}
-
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const EbookGenerator = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { addEbook } = useEbookStore();
-  const { recordUsage, isFreePlan } = useFeatureAccess();
-  const { planType, hasPaidSubscription } = useSubscription();
-  const isCreatorOrAbove = planType === "creator" || planType === "pro";
+  const [screen,         setScreen]         = useState<Screen>("form");
+  const [topic,          setTopic]          = useState("");
+  const [description,    setDescription]    = useState("");
+  const [category,       setCategory]       = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [tone,           setTone]           = useState("professional");
 
-  // State
-  const [step, setStep] = useState(1);
-  const [topic, setTopic] = useState("");
-  const [language, setLanguage] = useState("English");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchStatus, setSearchStatus] = useState("");
-  const [niches, setNiches] = useState<NicheCard[]>([]);
-  const [selectedNiche, setSelectedNiche] = useState<NicheCard | null>(null);
-  const [isDrafting, setIsDrafting] = useState(false);
-  const [draftingProgress, setDraftingProgress] = useState(0);
-  const [scriptContent, setScriptContent] = useState<{ title: string; sections: { heading: string; body: string }[] } | null>(null);
-  const [ebookData, setEbookData] = useState<Ebook | null>(null);
+  const [step,           setStep]           = useState<GenerationStep>("idle");
+  const [errorMsg,       setErrorMsg]       = useState<string|null>(null);
+  const [ebookData,      setEbookData]      = useState<Ebook|null>(null);
+  const [chapters,       setChapters]       = useState<{
+    id: number; title: string; description: string; phase: string; modules: string;
+  }[]>([]);
 
-  // Search Steps
-  const searchSteps = [
-    "Scanning trending topics…",
-    "Analyzing market demand…",
-    "Scoring pain points…",
-    "Weighing candidates… 5/9"
-  ];
+  const { toast }       = useToast();
+  const addEbook        = useEbookStore(s => s.addEbook);
+  const navigate        = useNavigate();
+  const { recordUsage } = useFeatureAccess();
+  const { subscription, planType } = useSubscription();
+  const { user }        = useAuth();
 
-  const languages = ["English", "Spanish", "French", "Portuguese", "German", "Arabic", "Hindi", "Mandarin"];
+  const isExpired        = subscription?.status === "expired";
+  const isCreatorOrAbove = (planType === "creator" || planType === "pro") && !isExpired;
 
-  // ── STEP 1: NICHE DISCOVERY ──
-  const findWinningNiches = async () => {
-    if (!topic.trim()) {
-      toast({ title: "Topic Required", description: "Please enter a broad idea to search.", variant: "destructive" });
+  // ── GENERATION FLOW ────────────────────────────────────────────────────────
+  const startGeneration = async () => {
+    if (!topic.trim() || !category) {
+      toast({ title: "Required Fields", description: "Please enter a topic and select a category.", variant: "destructive" });
       return;
     }
-
-    setIsSearching(true);
-    let stepIdx = 0;
-    const interval = setInterval(() => {
-      setSearchStatus(searchSteps[stepIdx % searchSteps.length]);
-      stepIdx++;
-    }, 1500);
-
-    try {
-      // ✅ FIXED: was "find-winning-niches"
-      const { data, error } = await supabase.functions.invoke("search-winning-niches", {
-        body: { topic, language }
-      });
-      
-      if (error) throw error;
-      if (data?.niches) {
-        // Map scores.pain/demand/speed to flat fields for the UI
-        const mapped = data.niches.map((n: any, i: number) => ({
-          id: crypto.randomUUID(),
-          category: n.category,
-          subNiche: n.subNiche,
-          headline: n.headline,
-          description: n.painDescription,
-          pain: n.scores?.pain ?? n.pain ?? 7,
-          demand: n.scores?.demand ?? n.demand ?? 7,
-          speed: n.scores?.speed ?? n.speed ?? 7,
-        }));
-        setNiches(mapped);
-      } else {
-        throw new Error("No niches found");
-      }
-    } catch (err: any) {
-      toast({ title: "Search Failed", description: err.message, variant: "destructive" });
-    } finally {
-      clearInterval(interval);
-      setIsSearching(false);
-    }
-  };
-
-  // ── STEP 2: SCRIPT ──
-  const startDrafting = async () => {
-    if (!selectedNiche) return;
-    
     const allowed = await recordUsage("ebook_generator");
     if (!allowed) return;
 
-    setStep(2);
-    setIsDrafting(true);
-    setDraftingProgress(0);
+    setScreen("generating"); setStep("content"); setErrorMsg(null); setEbookData(null);
 
     try {
-      // ✅ FIXED: was "generate-ebook-content", removed length param, added language
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
-        body: { 
-          topic: selectedNiche.headline,
-          description: selectedNiche.description,
-          category: selectedNiche.category,
-          tone: "professional",
-          language
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Please log in to generate ebooks.");
+
+      // STEP 1 — Generate content via new generate-ebook function
+      // New response format: { title, chapters: [{ title, content }], frameworks, chapterCount, language }
+      const { data: genData, error: genError } = await supabase.functions.invoke("generate-ebook", {
+        body: { topic, description, category, targetAudience, tone, language: "English" },
       });
-      
-      if (error) throw error;
+      if (genError) throw new Error(genError.message);
+      if (!genData?.title || !genData?.chapters) throw new Error(genData?.error || "Content generation failed");
 
-      // Handle response from generate-ebook which returns chapters array
-      let parsedSections: { heading: string; body: string }[] = [];
-
-      if (data.chapters && Array.isArray(data.chapters)) {
-        // New format: { title, chapters: [{ title, content }] }
-        parsedSections = data.chapters.map((ch: any) => ({
-          heading: ch.title,
-          body: ch.content
-        }));
-      } else if (data.content) {
-        // Legacy format fallback
-        parsedSections = data.content.split("## ").filter(Boolean).map((s: string) => {
-          const lines = s.split("\n");
-          return {
-            heading: lines[0].trim(),
-            body: lines.slice(1).join("\n").trim()
-          };
+      // STEP 2 — Cover image via cover-image function
+      setStep("cover");
+      let coverBase64: string | null = null;
+      try {
+        const { data: coverData } = await supabase.functions.invoke("cover-image", {
+          body: { topic, title: genData.title },
         });
-      }
+        if (coverData?.imageBase64) coverBase64 = coverData.imageBase64;
+      } catch { /* non-critical */ }
 
-      const sections = [];
-      for (let i = 0; i < parsedSections.length; i++) {
-        await new Promise(r => setTimeout(r, 600));
-        sections.push(parsedSections[i]);
-        setDraftingProgress(i + 1);
-        setScriptContent({ title: data.title || selectedNiche.headline, sections: [...sections] });
-      }
-      
-      setIsDrafting(false);
-    } catch (err: any) {
-      toast({ title: "Drafting Failed", description: err.message, variant: "destructive" });
-      setStep(1);
-    }
-  };
-
-  // ── STEP 3: RENDER ──
-  const renderProduct = async () => {
-    if (!scriptContent || !selectedNiche) return;
-    setStep(3);
-
-    try {
+      // STEP 3 — Render PDF in browser
+      setStep("pdf");
       const renderer = new EbookPDFRenderer();
-      await renderer.drawCover(scriptContent.title, selectedNiche.description.substring(0, 60), topic, null);
-      renderer.drawTitlePage(scriptContent.title);
-      
-      const toc = scriptContent.sections.map((s, i) => ({
-        type: i === 0 ? "intro" : i === scriptContent.sections.length - 1 ? "conclusion" : "chapter",
-        number: i,
-        label: s.heading
+
+      // Draw cover
+      const subtitle = genData.chapters[0]?.content?.substring(0, 120) || "";
+      await renderer.drawCover(genData.title, subtitle, topic, coverBase64);
+      renderer.drawTitlePage(genData.title);
+
+      // Build TOC from chapters array
+      const toc = genData.chapters.map((ch: any, i: number) => ({
+        type: "chapter",
+        number: i + 1,
+        label: ch.title,
       }));
-      renderer.drawTOC(toc, scriptContent.title);
-      
-      for (let i = 0; i < scriptContent.sections.length; i++) {
-        const section = scriptContent.sections[i];
-        const isChapter = toc[i]?.type === "chapter";
-        renderer.drawContentPages(section.heading, section.body, scriptContent.title, true, isChapter ? toc[i].number : undefined);
+      renderer.drawTOC(toc, genData.title);
+
+      // Draw each chapter with correct incrementing number
+      for (let i = 0; i < genData.chapters.length; i++) {
+        const ch = genData.chapters[i];
+        renderer.drawChapterSplash(i + 1, ch.title, genData.title);
+        renderer.drawContentPages(ch.title, ch.content, genData.title, true, i + 1);
       }
 
-      const safeTitle = scriptContent.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      const safeTitle = genData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      const filename  = `${safeTitle}.pdf`;
+
+      // STEP 4 — Build ebook object
+      const flatContent = [
+        `# ${genData.title}`,
+        ...genData.chapters.map((c: any) => `## ${c.title}\n\n${c.content}`),
+      ].join("\n\n");
+
       const ebook: Ebook = {
-        id: crypto.randomUUID(),
-        title: scriptContent.title,
-        topic,
-        content: scriptContent.sections.map(s => `## ${s.heading}\n\n${s.body}`).join("\n\n"),
-        coverImageUrl: null,
-        pages: renderer.pages.length,
-        length: "medium",
-        createdAt: new Date().toISOString(),
-        userId: user?.id,
-        _renderer: renderer,
-        _filename: `${safeTitle}.pdf`
-      } as any;
+        id:            crypto.randomUUID(),
+        title:         genData.title,
+        topic, description,
+        content:       flatContent,
+        coverImageUrl: coverBase64 ? `data:image/png;base64,${coverBase64}` : null,
+        pages:         renderer.pages.length,
+        length:        "medium",
+        createdAt:     new Date().toISOString(),
+        userId:        user?.id,
+        _renderer:     renderer,
+        _filename:     filename,
+      };
+
+      // Build chapters list for outline screen
+      setChapters(
+        genData.chapters.map((ch: any, i: number) => ({
+          id:          i + 1,
+          title:       ch.title,
+          description: `Chapter ${i + 1} of your ebook`,
+          phase:       `Phase ${Math.ceil((i + 1) / 3)}`,
+          modules:     `${((i + 1) % 4) + 2} Sections`,
+        }))
+      );
 
       addEbook(ebook);
       setEbookData(ebook);
-      
+      setStep("complete");
+      setScreen("outline");
+
+      // Product tracking
       try {
-        await createTrackedProduct({
+        const { product } = await createTrackedProduct({
           title: ebook.title, topic: ebook.topic,
-          description: selectedNiche.description, length: "medium",
-          content: ebook.content, coverImageUrl: null, pages: ebook.pages,
+          description: ebook.description || "", length: ebook.length || "medium",
+          content: ebook.content, coverImageUrl: ebook.coverImageUrl, pages: ebook.pages,
         });
-      } catch {}
+        ebook.dbProductId = product?.id;
+        if (product?.id) { try { await recordMetric(product.id, "view"); } catch {} }
+      } catch (e) { console.warn("Tracking failed:", e); }
+
+      toast({ title: "Success!", description: `"${ebook.title}" is ready.` });
 
     } catch (err: any) {
-      toast({ title: "Render Failed", description: err.message, variant: "destructive" });
+      setErrorMsg(err.message); setStep("idle"); setScreen("form");
+      toast({ title: "Generation Failed", description: err.message, variant: "destructive" });
     }
   };
 
+  // ── DOWNLOAD HANDLERS ──────────────────────────────────────────────────────
   const handleDownloadPDF = async () => {
     if (!isCreatorOrAbove) {
       toast({ title: "Upgrade Required", description: "Downloads require Creator or Pro plan.", variant: "destructive" });
       return;
     }
-    if (ebookData) {
+    if (!ebookData) return;
+    try {
       await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename || "ebook.pdf");
+      if (ebookData.dbProductId) { try { await recordMetric(ebookData.dbProductId, "download"); } catch {} }
+    } catch (err: any) {
+      toast({ title: "Download Failed", description: err.message, variant: "destructive" });
     }
   };
 
-  const resetAll = () => {
-    setStep(1);
-    setTopic("");
-    setNiches([]);
-    setSelectedNiche(null);
-    setScriptContent(null);
-    setEbookData(null);
+  const handleDownloadCover = () => {
+    if (!isCreatorOrAbove) {
+      toast({ title: "Upgrade Required", description: "Downloads require Creator or Pro plan.", variant: "destructive" });
+      return;
+    }
+    if (!ebookData?.coverImageUrl) return;
+    const a = document.createElement("a");
+    a.href     = ebookData.coverImageUrl;
+    a.download = `cover_${ebookData.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.png`;
+    a.click();
   };
 
-  // ── RENDER HELPERS ──
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-8 mb-12">
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 1 ? <Check className="w-3 h-3" /> : "1"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 1 ? "text-white" : "text-zinc-600"}`}>Niche</span>
-      </div>
-      <div className="w-12 h-[1px] bg-zinc-800" />
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 2 ? <Check className="w-3 h-3" /> : step === 2 ? <div className="w-2 h-2 bg-black rounded-full" /> : "2"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 2 ? "text-white" : "text-zinc-600"}`}>Script</span>
-      </div>
-      <div className="w-12 h-[1px] bg-zinc-800" />
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 3 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 3 ? <Check className="w-3 h-3" /> : "3"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 3 ? "text-white" : "text-zinc-600"}`}>Render</span>
-      </div>
-    </div>
-  );
+  const resetForm = () => {
+    setScreen("form"); setStep("idle"); setEbookData(null); setChapters([]);
+    setTopic(""); setDescription(""); setCategory(""); setTargetAudience("");
+    setTone("professional"); setErrorMsg(null);
+  };
 
-  const renderNicheDiscovery = () => (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold mb-4 tracking-tight" style={{ fontFamily: "Syne" }}>AI Product Generator</h1>
-        <p className="text-zinc-400">Discover winning niches and generate professional ebooks in minutes.</p>
+  // ── STYLES ────────────────────────────────────────────────────────────────
+  const lbl: React.CSSProperties = {
+    fontFamily: "DM Sans", fontSize: "10px", fontWeight: 600,
+    letterSpacing: "0.1em", textTransform: "uppercase", color: "#555555", display: "block",
+  };
+  const inp: React.CSSProperties = {
+    background: "#161616", border: "1px solid #1A1A1A", borderRadius: "6px",
+    color: "#FFFFFF", fontFamily: "DM Sans", fontSize: "14px",
+    padding: "12px 14px", width: "100%", outline: "none", boxSizing: "border-box",
+  };
+
+  // ── SCREENS ───────────────────────────────────────────────────────────────
+  const renderForm = () => (
+    <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-[580px]">
+      <div className="mb-10">
+        <span style={{ display: "inline-block", background: "#111111", border: "1px solid #1A1A1A", color: "rgba(255,255,255,0.5)", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", padding: "4px 10px", borderRadius: "4px", textTransform: "uppercase", fontFamily: "DM Sans", marginBottom: "12px" }}>
+          AI PRODUCT GENERATOR
+        </span>
+        <h1 style={{ fontFamily: "Syne", fontSize: "32px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>Create Professional Ebooks</h1>
+        <p style={{ fontFamily: "DM Sans", fontSize: "14px", color: "#666666", marginBottom: "32px" }}>
+          Enter your topic and let AI write a complete ebook ready to download as PDF in minutes.
+        </p>
       </div>
 
-      <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-bold text-white mb-2 uppercase tracking-wider">What's your topic?</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Biohacking, Real Estate, Parenting..."
-              className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
-            />
-            <p className="text-xs text-zinc-500 mt-2">Enter a broad idea and AI will search trending markets to find the best angle to sell.</p>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-white mb-2 uppercase tracking-wider">Output Language</label>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white appearance-none"
-            >
-              {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-            </select>
-          </div>
-        </div>
-        
-        <Button
-          onClick={findWinningNiches}
-          disabled={isSearching}
-          className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl transition-all"
-        >
-          {isSearching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
-          Find Winning Niches
-        </Button>
-      </div>
+      <div style={{ background: "#111111", border: "1px solid #2A2A2A", borderRadius: "10px", padding: "32px", marginBottom: "16px" }}>
+        <div className="space-y-6">
 
-      {isSearching && (
-        <div className="text-center py-20">
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full mb-6">
-            <Loader2 className="w-5 h-5 animate-spin text-white" />
-            <span className="text-white font-medium">{searchStatus}</span>
+          <div className="space-y-2">
+            <label style={lbl}>Ebook Topic</label>
+            <input type="text" placeholder="e.g. Passive income strategies for 2025" value={topic} onChange={e => setTopic(e.target.value)} style={inp} />
           </div>
-          <div className="max-w-xs mx-auto">
-            <Progress value={isSearching ? 100 : 0} className="h-1 bg-zinc-900" />
-          </div>
-        </div>
-      )}
 
-      {niches.length > 0 && !isSearching && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {niches.map(niche => (
-            <div
-              key={niche.id}
-              onClick={() => setSelectedNiche(niche)}
-              className={`bg-[#111111] border-2 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] ${selectedNiche?.id === niche.id ? "border-white" : "border-zinc-900"}`}
-            >
-              <span className="inline-block px-2 py-1 bg-zinc-800 text-[10px] font-bold text-zinc-400 rounded mb-4 tracking-widest uppercase">{niche.category}</span>
-              <p className="text-xs text-zinc-500 mb-1">{niche.subNiche}</p>
-              <h3 className="text-lg font-bold text-white mb-3 leading-tight" style={{ fontFamily: "Syne" }}>{niche.headline}</h3>
-              <p className="text-sm text-zinc-400 mb-6 line-clamp-2">{niche.description}</p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                  <span className="text-zinc-500">Pain</span>
-                  <div className="flex gap-1">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className={`w-2 h-1 rounded-full ${i < niche.pain ? "bg-white" : "bg-zinc-800"}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                  <span className="text-zinc-500">Demand</span>
-                  <div className="flex gap-1">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className={`w-2 h-1 rounded-full ${i < niche.demand ? "bg-white" : "bg-zinc-800"}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                  <span className="text-zinc-500">Speed</span>
-                  <div className="flex gap-1">
-                    {[...Array(10)].map((_, i) => (
-                      <div key={i} className={`w-2 h-1 rounded-full ${i < niche.speed ? "bg-white" : "bg-zinc-800"}`} />
-                    ))}
-                  </div>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label style={lbl}>Category</label>
+              <select value={category} onChange={e => setCategory(e.target.value)}
+                style={{ ...inp, appearance: "none" as any, color: category ? "#FFFFFF" : "#333333" }}>
+                <option value="" style={{ background: "#161616", color: "#333" }}>Select Category</option>
+                {CATEGORY_OPTIONS.map(o => <option key={o} value={o} style={{ background: "#161616" }}>{o}</option>)}
+              </select>
             </div>
-          ))}
-        </div>
-      )}
-
-      {selectedNiche && !isSearching && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center pb-20">
-          <Button
-            onClick={startDrafting}
-            className="h-14 px-10 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl"
-          >
-            Lock This Angle <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </motion.div>
-      )}
-    </div>
-  );
-
-  const renderScript = () => (
-    <div className="max-w-4xl mx-auto">
-      {renderStepIndicator()}
-      
-      <div className="flex justify-center mb-8">
-        <div className="px-4 py-1.5 bg-white text-black rounded-full text-[11px] font-bold uppercase tracking-wider">
-          {selectedNiche?.headline}
-        </div>
-      </div>
-
-      <div className="bg-[#0F0F0F] border border-zinc-900 rounded-2xl p-8 mb-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Drafting Your Script</h2>
-          <div className="text-[10px] font-bold text-white bg-zinc-800 px-2 py-1 rounded">
-            {draftingProgress} / 12
+            <div className="space-y-2">
+              <label style={lbl}>Tone</label>
+              <select value={tone} onChange={e => setTone(e.target.value)} style={{ ...inp, appearance: "none" as any }}>
+                {TONE_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: "#161616" }}>{o.label}</option>)}
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-8 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-          {scriptContent?.sections.map((section, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
-            >
-              <h3 className="text-sm font-black text-white uppercase tracking-tight">{section.heading}</h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">{section.body}</p>
-            </motion.div>
-          ))}
-          {isDrafting && (
-            <div className="animate-pulse space-y-3">
-              <div className="h-4 bg-zinc-900 rounded w-1/4" />
-              <div className="space-y-2">
-                <div className="h-3 bg-zinc-900 rounded w-full" />
-                <div className="h-3 bg-zinc-900 rounded w-5/6" />
-              </div>
+          <div className="space-y-2">
+            <label style={lbl}>Target Audience <span style={{ color: "#333", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+            <input type="text" placeholder="e.g. Beginners, Freelancers, Small business owners" value={targetAudience} onChange={e => setTargetAudience(e.target.value)} style={inp} />
+          </div>
+
+          <div className="space-y-2">
+            <label style={lbl}>Additional Context <span style={{ color: "#333", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
+            <textarea placeholder="Add specific points you want the AI to cover..." value={description} onChange={e => setDescription(e.target.value)} rows={3}
+              style={{ ...inp, resize: "vertical" as any }} />
+          </div>
+
+          {errorMsg && (
+            <div style={{ background: "#1A0D0D", border: "1px solid #4D1A1A", borderRadius: "6px", padding: "12px 14px" }}>
+              <p style={{ fontFamily: "DM Sans", fontSize: "13px", color: "#F44336", margin: 0 }}>{errorMsg}</p>
             </div>
           )}
+
+          <Button onClick={startGeneration} disabled={!topic.trim() || !category}
+            style={{ background: "#FFFFFF", color: "#0A0A0A", fontFamily: "Syne", fontWeight: 700, fontSize: "14px", borderRadius: "6px", height: "48px", width: "100%" }}>
+            <Sparkles className="w-4 h-4 mr-2" />Generate Ebook<ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
-
-      {!isDrafting && draftingProgress >= 1 && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-center pb-20">
-          <Button
-            onClick={renderProduct}
-            className="h-14 px-10 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl"
-          >
-            Continue <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </motion.div>
-      )}
-    </div>
+    </motion.div>
   );
 
-  const renderFinal = () => (
-    <div className="max-w-4xl mx-auto">
-      {renderStepIndicator()}
-
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Render Complete</h2>
-        <div className="px-2 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold rounded uppercase tracking-wider">Ready</div>
+  const renderGenerating = () => (
+    <motion.div key="generating" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-[580px] text-left py-16">
+      <div style={{ width: "80px", height: "80px", borderRadius: "16px", background: "#111111", border: "1px solid #2A2A2A", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "24px" }}>
+        <Loader2 className="w-10 h-10 text-white animate-spin" />
       </div>
+      <h2 style={{ fontFamily: "Syne", fontSize: "28px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>{STEP_LABELS[step]}</h2>
+      <p style={{ fontFamily: "DM Sans", fontSize: "14px", color: "#666666", marginBottom: "32px" }}>This typically takes 60–120 seconds. Please keep this tab open.</p>
+      <div className="max-w-sm">
+        <Progress value={STEP_PROGRESS[step]} className="h-1 bg-[#1A1A1A]" style={{ borderRadius: "2px" }} />
+        <p style={{ fontFamily: "DM Sans", fontSize: "11px", color: "#555555", textAlign: "right", marginTop: "8px", fontWeight: 600 }}>{STEP_PROGRESS[step]}% COMPLETE</p>
+      </div>
+    </motion.div>
+  );
 
-      <div className="bg-[#0F0F0F] border border-zinc-900 rounded-2xl p-6 mb-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="w-full md:w-40 aspect-[3/4] bg-zinc-900 rounded-lg overflow-hidden flex-shrink-0 relative border border-zinc-800">
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-              <div className="text-[8px] font-bold text-white/40 uppercase mb-2">Masterpiece</div>
-              <div className="text-[10px] font-bold text-white leading-tight line-clamp-3">{scriptContent?.title}</div>
+  const renderOutline = () => (
+    <motion.div key="outline" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-[580px]">
+      <div className="mb-8">
+        <span style={{ display: "inline-block", background: "#111111", border: "1px solid #1A1A1A", color: "rgba(255,255,255,0.5)", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", padding: "4px 10px", borderRadius: "4px", textTransform: "uppercase", fontFamily: "DM Sans", marginBottom: "12px" }}>EBOOK OUTLINE</span>
+        <h2 style={{ fontFamily: "Syne", fontSize: "32px", fontWeight: 800, color: "#FFFFFF", marginBottom: "8px" }}>Your Ebook Structure</h2>
+        <p style={{ fontFamily: "DM Sans", fontSize: "14px", color: "#666666", marginBottom: "32px" }}>Review your chapters before downloading</p>
+      </div>
+      <div className="space-y-3 mb-8">
+        {chapters.map(ch => (
+          <div key={ch.id} style={{ background: "#111111", border: "1px solid #2A2A2A", borderRadius: "10px", padding: "20px" }}>
+            <h3 style={{ fontFamily: "Syne", fontSize: "14px", fontWeight: 700, color: "#FFFFFF", marginBottom: "6px" }}>{ch.title}</h3>
+            <p style={{ fontFamily: "DM Sans", fontSize: "12px", color: "#666666", marginBottom: "12px" }}>{ch.description}</p>
+            <div className="flex gap-2">
+              <span style={{ background: "#161616", border: "1px solid #1A1A1A", color: "#555555", fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", textTransform: "uppercase", fontFamily: "DM Sans" }}>{ch.phase}</span>
+              <span style={{ background: "#161616", border: "1px solid #1A1A1A", color: "#555555", fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", textTransform: "uppercase", fontFamily: "DM Sans" }}>{ch.modules}</span>
             </div>
           </div>
+        ))}
+      </div>
+      <Button onClick={() => setScreen("download")}
+        style={{ background: "#FFFFFF", color: "#0A0A0A", fontFamily: "Syne", fontWeight: 700, fontSize: "14px", borderRadius: "6px", height: "48px", width: "100%" }}>
+        Continue<ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
+    </motion.div>
+  );
 
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "Syne" }}>{scriptContent?.title}</h2>
-            <p className="text-sm text-zinc-500 mb-6">{selectedNiche?.description.substring(0, 100)}...</p>
-            
-            <div className="flex gap-4 mb-8">
-              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
-                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Words</p>
-                <p className="text-white font-bold text-sm">4,200</p>
-              </div>
-              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
-                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Value Blocks</p>
-                <p className="text-white font-bold text-sm">24</p>
-              </div>
-              <div className="flex-1 bg-black border border-zinc-900 rounded-lg p-3">
-                <p className="text-[9px] text-zinc-500 uppercase font-bold mb-1">Sections</p>
-                <p className="text-white font-bold text-sm">{scriptContent?.sections.length ?? 0}</p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
-                </div>
-                Niche Locked — <span className="text-zinc-500 font-medium normal-case">Winning angle selected</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
-                </div>
-                Script Compiled — <span className="text-zinc-500 font-medium normal-case">Core sections staged</span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                <div className="w-4 h-4 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-[#7C3AED]" />
-                </div>
-                Cover Rendered — <span className="text-zinc-500 font-medium normal-case">Artwork synced.</span>
-              </div>
-            </div>
+  const renderDownload = () => (
+    <motion.div key="download" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="max-w-[580px] text-left">
+      <div className="mb-8">
+        <div style={{ width: "192px", height: "256px", background: "#111111", border: "1px solid #2A2A2A", borderRadius: "10px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", overflow: "hidden", position: "relative" }}>
+          {ebookData?.coverImageUrl && (
+            <img src={ebookData.coverImageUrl} alt="Cover" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.4, borderRadius: "10px" }} />
+          )}
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+            <h3 style={{ fontFamily: "Syne", fontWeight: 800, fontSize: "13px", color: "#FFFFFF", marginBottom: "8px", lineHeight: 1.3 }}>{ebookData?.title}</h3>
+            <p style={{ fontFamily: "DM Sans", fontSize: "10px", color: "#666666" }}>A Complete Guide</p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3 mb-8">
-        <Button
-          onClick={handleDownloadPDF}
-          className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold rounded-xl"
-        >
-          Download PDF
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full h-14 bg-transparent border-zinc-800 text-white hover:bg-zinc-900 font-bold rounded-xl"
-        >
-          Download Cover
-        </Button>
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <CheckCircle2 className="w-5 h-5 text-white" />
+          <h2 style={{ fontFamily: "Syne", fontSize: "24px", fontWeight: 800, color: "#FFFFFF" }}>Your Ebook is Ready</h2>
+        </div>
+        <p style={{ fontFamily: "DM Sans", fontSize: "16px", fontWeight: 600, color: "#FFFFFF" }}>{ebookData?.title}</p>
+        <p style={{ fontFamily: "DM Sans", fontSize: "13px", color: "#666666", marginTop: "4px" }}>{ebookData?.pages} pages · PDF format</p>
       </div>
 
-      <div className="text-center pb-20">
-        <button
-          onClick={resetAll}
-          className="text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
-        >
-          Generate Another
-        </button>
+      <div className="space-y-3">
+        <Button onClick={handleDownloadPDF} disabled={!isCreatorOrAbove}
+          style={{ background: "#FFFFFF", color: "#0A0A0A", fontFamily: "Syne", fontWeight: 700, fontSize: "14px", borderRadius: "6px", height: "48px", width: "100%" }}>
+          <Download className="w-4 h-4 mr-2" />{isCreatorOrAbove ? "Download PDF" : "Upgrade to Download"}
+        </Button>
+
+        {ebookData?.coverImageUrl && (
+          <Button onClick={handleDownloadCover} variant="outline" disabled={!isCreatorOrAbove}
+            style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#FFFFFF", fontFamily: "Syne", fontWeight: 700, fontSize: "14px", borderRadius: "6px", height: "48px", width: "100%" }}>
+            <ImageIcon className="w-4 h-4 mr-2" />Download Cover
+          </Button>
+        )}
+
+        {!isCreatorOrAbove && (
+          <p style={{ fontFamily: "DM Sans", fontSize: "12px", color: "#666666", textAlign: "center" }}>Upgrade to Creator or Pro to download.</p>
+        )}
+
+        <Button variant="ghost" onClick={resetForm} style={{ color: "#666666", fontFamily: "DM Sans", fontSize: "14px", width: "100%" }}>
+          <RefreshCw className="w-4 h-4 mr-2" />Generate Another
+        </Button>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
     <DashboardLayout>
-      <div className="p-6 md:p-10 min-h-screen bg-[#0A0A0A] text-white">
+      <div className="p-6 md:p-10">
         <AnimatePresence mode="wait">
-          {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {renderNicheDiscovery()}
-            </motion.div>
-          )}
-          {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {renderScript()}
-            </motion.div>
-          )}
-          {step === 3 && (
-            <motion.div
-              key="step3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {renderFinal()}
-            </motion.div>
-          )}
+          {screen === "form"       && renderForm()}
+          {screen === "generating" && renderGenerating()}
+          {screen === "outline"    && renderOutline()}
+          {screen === "download"   && renderDownload()}
         </AnimatePresence>
       </div>
     </DashboardLayout>
