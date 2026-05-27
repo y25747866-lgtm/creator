@@ -81,10 +81,27 @@ function buildPDF(jpegUrls: string[], pw: number, ph: number): Uint8Array {
 }
 
 // ─── PDF RENDERER ─────────────────────────────────────────────────────────────
+// Premium editorial style — clean white, serif typography, wide margins
+// Inspired by traditionally published nonfiction books
+const BODY_FONT   = "15px Georgia, serif";
+const BODY_COLOR  = "#1A1A1A";
+const HEAD_COLOR  = "#111111";
+const RULE_COLOR  = "#CCCCCC";
+const SMALL_COLOR = "#888888";
+const LINE_H      = 27;   // generous line height for readability
+const PARA_GAP    = 18;   // space between paragraphs
+const HEAD_GAP    = 32;   // space above subheadings
+const MX2         = 72;   // wider inner margins for premium feel
+const CONTENT_W2  = PAGE_W - MX2 * 2;
+const TOP_Y       = 64;   // header zone height
+const FOOTER_Y    = PAGE_H - 44;
+const MAX_CONTENT = FOOTER_Y - 20;
+
 class EbookPDFRenderer {
   readonly pages: HTMLCanvasElement[] = [];
   private _lastCtx: CanvasRenderingContext2D | null = null;
   private _lastY: number = 0;
+  private _bookTitle: string = "";
 
   private newPage(): CanvasRenderingContext2D {
     const c = document.createElement("canvas");
@@ -95,7 +112,8 @@ class EbookPDFRenderer {
     return ctx;
   }
 
-  private wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  // Justify text across a fixed width
+  private wrapJustified(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const words = text.split(" ");
     const lines: string[] = [];
     let line = "";
@@ -108,276 +126,263 @@ class EbookPDFRenderer {
     return lines;
   }
 
-  private footer(ctx: CanvasRenderingContext2D, title: string, n: number) {
-    const y = PAGE_H - 32;
-    ctx.strokeStyle = "#E0E0E0"; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(MX, y - 8); ctx.lineTo(PAGE_W - MX, y - 8); ctx.stroke();
-    const short = title.length > 60 ? title.substring(0, 60) + "…" : title;
-    ctx.fillStyle = "#555555"; ctx.font = "10px Georgia, serif"; ctx.textAlign = "center";
-    ctx.fillText(short, PAGE_W / 2, y + 8);
-    ctx.fillStyle = "#555555"; ctx.font = "10px sans-serif"; ctx.textAlign = "right";
-    ctx.fillText(String(n), PAGE_W - MX, y + 8);
-    ctx.fillStyle = "#999999"; ctx.font = "9px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("Copyrighted Material", MX, y + 8);
+  // Draw justified text — last line left-aligned
+  private drawJustified(ctx: CanvasRenderingContext2D, line: string, isLast: boolean, x: number, y: number, maxW: number) {
+    const words = line.split(" ");
+    if (words.length <= 1 || isLast) {
+      ctx.textAlign = "left";
+      ctx.fillText(line, x, y);
+      return;
+    }
+    const totalWordW = words.reduce((s, w) => s + ctx.measureText(w).width, 0);
+    const gap = (maxW - totalWordW) / (words.length - 1);
+    let cx = x;
+    for (const w of words) {
+      ctx.fillText(w, cx, y);
+      cx += ctx.measureText(w).width + gap;
+    }
+  }
+
+  // Header rule line at top of each content page
+  private drawHeader(ctx: CanvasRenderingContext2D, title: string, pageNum: number) {
+    // Top rule
+    ctx.strokeStyle = RULE_COLOR; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(MX2, TOP_Y); ctx.lineTo(PAGE_W - MX2, TOP_Y); ctx.stroke();
+    // Left: book title (small caps style)
+    ctx.fillStyle = SMALL_COLOR; ctx.font = "10px Georgia, serif"; ctx.textAlign = "left";
+    const shortTitle = title.length > 45 ? title.substring(0, 42) + "…" : title;
+    ctx.fillText(shortTitle.toUpperCase(), MX2, TOP_Y - 8);
+    // Right: page number
+    ctx.textAlign = "right";
+    ctx.fillText(String(pageNum), PAGE_W - MX2, TOP_Y - 8);
+  }
+
+  // Footer rule line at bottom
+  private drawFooter(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = RULE_COLOR; ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.moveTo(PAGE_W / 2 - 40, FOOTER_Y); ctx.lineTo(PAGE_W / 2 + 40, FOOTER_Y); ctx.stroke();
   }
 
   // ── COVER ────────────────────────────────────────────────────────────────────
-  async drawCover(title: string, subtitle: string, topic: string, img64: string | null) {
+  // Clean white editorial cover — no purple, no gradients
+  async drawCover(title: string, subtitle: string, _topic: string, img64: string | null) {
+    this._bookTitle = title;
     const ctx = this.newPage();
     const w = PAGE_W, h = PAGE_H;
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, w, h);
 
-    ctx.fillStyle = BLACK; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = ACCENT; ctx.fillRect(0, 0, w, 8);
+    // Thin top rule
+    ctx.strokeStyle = "#333333"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(MX2, 48); ctx.lineTo(w - MX2, 48); ctx.stroke();
 
-    // Top-right triangle decoration
-    ctx.fillStyle = "#1A1A2E";
-    ctx.beginPath();
-    ctx.moveTo(w * 0.5, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.45);
-    ctx.closePath(); ctx.fill();
-
+    // If cover image provided — show as background with overlay
     if (img64) {
       try {
         const img = new Image();
         await new Promise<void>(res => { img.onload = () => res(); img.onerror = () => res(); img.src = `data:image/png;base64,${img64}`; });
-        ctx.globalAlpha = 1;
-        ctx.drawImage(img, 0, 0, w, h);
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0,   "rgba(10,10,10,0.55)");
-        grad.addColorStop(0.5, "rgba(10,10,10,0.45)");
-        grad.addColorStop(1,   "rgba(10,10,10,0.82)");
-        ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
-      } catch { /* keep dark bg */ }
+        // Draw image in top half
+        ctx.drawImage(img, 0, 60, w, h * 0.45);
+        // Fade overlay
+        const grad = ctx.createLinearGradient(0, 60, 0, h * 0.55);
+        grad.addColorStop(0, "rgba(255,255,255,0)");
+        grad.addColorStop(1, "rgba(255,255,255,1)");
+        ctx.fillStyle = grad; ctx.fillRect(0, 60, w, h * 0.5);
+      } catch { /* no image, keep white */ }
     }
 
-    // Title
-    ctx.font = "bold 64px sans-serif"; ctx.textAlign = "center";
-    const titleLines = this.wrap(ctx, title, w - 120);
-    const lineH = 78;
-    const blockH = titleLines.length * lineH;
-    let ty = h * 0.38 - blockH / 2;
-    ctx.shadowColor = "rgba(0,0,0,0.7)"; ctx.shadowBlur = 18;
-    ctx.fillStyle = WHITE;
+    // Title — large elegant serif, centered, split by word groups for rhythm
+    ctx.fillStyle = HEAD_COLOR; ctx.textAlign = "center";
+    ctx.font = "bold 58px Georgia, serif";
+    const titleLines = this.wrapJustified(ctx, title, w - 120);
+    const lineH = 70;
+    let ty = h * 0.42 - (titleLines.length * lineH) / 2;
     for (const l of titleLines) { ctx.fillText(l, w / 2, ty); ty += lineH; }
-    ctx.shadowBlur = 0;
 
-    // Accent line
-    ctx.fillStyle = ACCENT; ctx.fillRect(w / 2 - 60, ty - 14, 120, 5);
+    // Short rule under title
+    ctx.strokeStyle = "#333333"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(w / 2 - 50, ty + 16); ctx.lineTo(w / 2 + 50, ty + 16); ctx.stroke();
 
-    // Subtitle
-    const safeSubtitle = subtitle.length > 120 ? subtitle.substring(0, 117) + "..." : subtitle;
-    if (safeSubtitle && !safeSubtitle.toLowerCase().includes("make me")) {
-      ctx.fillStyle = "rgba(255,255,255,0.75)"; ctx.font = "18px Georgia, serif"; ctx.textAlign = "center";
-      let sy = ty + 22;
-      for (const l of this.wrap(ctx, safeSubtitle, w - 160)) {
-        if (sy < h - 100) { ctx.fillText(l, w / 2, sy); sy += 28; }
+    // Subtitle — italic, smaller
+    if (subtitle) {
+      const safe = subtitle.length > 100 ? subtitle.substring(0, 97) + "…" : subtitle;
+      ctx.fillStyle = "#444444"; ctx.font = "italic 16px Georgia, serif"; ctx.textAlign = "center";
+      let sy = ty + 44;
+      for (const l of this.wrapJustified(ctx, safe, w - 180)) {
+        if (sy < h - 80) { ctx.fillText(l, w / 2, sy); sy += 26; }
       }
     }
 
-    // Bottom accent bar — no NexoraOS branding
-    ctx.fillStyle = ACCENT; ctx.fillRect(0, h - 6, w, 6);
+    // Bottom thin rule
+    ctx.strokeStyle = "#333333"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(MX2, h - 48); ctx.lineTo(w - MX2, h - 48); ctx.stroke();
   }
 
   // ── TITLE PAGE ───────────────────────────────────────────────────────────────
+  // Elegant centered serif — exactly like Image 1
   drawTitlePage(title: string) {
+    this._bookTitle = title;
     const ctx = this.newPage();
-    const w = PAGE_W, h = PAGE_H;
-    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = BLACK; ctx.textAlign = "center";
+    ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
 
-    const words = title.toUpperCase().split(" ");
+    // Split title into natural word groups for stacked display
+    const words = title.split(" ");
     const lines: string[] = [];
+    ctx.font = "bold 44px Georgia, serif";
     let line = "";
-    ctx.font = "bold 52px Georgia, serif";
     for (const word of words) {
       const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > CONTENT_W - 40 && line) { lines.push(line); line = word; }
+      if (ctx.measureText(test).width > CONTENT_W2 - 20 && line) { lines.push(line); line = word; }
       else line = test;
     }
     if (line) lines.push(line);
 
-    const totalH = lines.length * 68;
-    const ornamentH = 100;
-    const capHeight = 38;
-    const visualBlockH = totalH + ornamentH;
-    let ty = (h - visualBlockH) / 2 + capHeight;
+    // Vertically center the title block
+    const lineH = 62;
+    const totalH = lines.length * lineH;
+    let ty = (PAGE_H - totalH) / 2 - 20;
 
-    ctx.font = "bold 52px Georgia, serif";
-    for (const l of lines) { ctx.fillText(l, w / 2, ty); ty += 68; }
+    ctx.fillStyle = HEAD_COLOR; ctx.textAlign = "center"; ctx.font = "bold 44px Georgia, serif";
+    for (const l of lines) { ctx.fillText(l, PAGE_W / 2, ty); ty += lineH; }
 
-    // Decorative divider
-    const cx = w / 2;
-    const dy = ty + 40;
-    ctx.strokeStyle = BLACK; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(cx - 100, dy); ctx.lineTo(cx - 24, dy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx + 24, dy); ctx.lineTo(cx + 100, dy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx, dy - 8); ctx.lineTo(cx + 8, dy); ctx.lineTo(cx, dy + 8); ctx.lineTo(cx - 8, dy); ctx.closePath();
-    ctx.fillStyle = BLACK; ctx.fill();
-    ctx.beginPath(); ctx.arc(cx - 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(cx + 108, dy, 2.5, 0, Math.PI * 2); ctx.fill();
+    // Copyrighted Material footer (matches Image 1)
+    ctx.fillStyle = SMALL_COLOR; ctx.font = "9px Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillText("Copyrighted Material", PAGE_W / 2, PAGE_H - 30);
+    ctx.fillText("Copyrighted Material", PAGE_W / 2, 24);
   }
 
   // ── TABLE OF CONTENTS ────────────────────────────────────────────────────────
+  // Clean numbered list — exactly like Image 2
   drawTOC(toc: Array<{ type: string; number?: number; label: string }>, bookTitle: string) {
     const ctx = this.newPage();
     ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
-    let y = 92;
 
-    ctx.fillStyle = BLACK; ctx.font = "bold 36px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText("Table of Contents", MX, y); y += 18;
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 100, 4); y += 48;
+    // "Contents" heading — large, left-aligned
+    let y = 100;
+    ctx.fillStyle = HEAD_COLOR; ctx.font = "bold 36px Georgia, serif"; ctx.textAlign = "left";
+    ctx.fillText("Contents", MX2, y); y += 60;
 
     let pg = 4;
     for (const e of toc) {
-      if (y > PAGE_H - 120) break;
+      if (y > PAGE_H - 80) break;
 
-      if (e.type === "chapter") {
-        y += 6;
-        ctx.fillStyle = ACCENT; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "left";
-        ctx.fillText(`CHAPTER ${String(e.number).padStart(2, "0")}`, MX, y);
-        y += 20;
-      }
+      // Strip "Chapter N:" prefix
+      const rawLabel = e.label.replace(/^Chapter\s*\d+\s*[:\-\.]\s*/i, "").trim();
 
-      ctx.fillStyle = BLACK;
-      ctx.font = e.type === "chapter" ? "bold 15px sans-serif" : "15px sans-serif";
-      ctx.textAlign = "left";
+      // Number
+      ctx.fillStyle = HEAD_COLOR;
+      ctx.font = "15px Georgia, serif"; ctx.textAlign = "left";
+      const numStr = e.number ? `${e.number}.` : "";
+      if (numStr) { ctx.fillText(numStr, MX2, y); }
 
-      let label = e.label;
-      while (ctx.measureText(label).width > CONTENT_W - 50 && label.length > 10) {
-        label = label.substring(0, label.length - 4) + "…";
-      }
-      ctx.fillText(label, MX, y);
+      // Label — may wrap to second line
+      const labelX = MX2 + 28;
+      const labelMaxW = CONTENT_W2 - 60;
+      ctx.font = "15px Georgia, serif";
+      const labelLines = this.wrapJustified(ctx, rawLabel, labelMaxW);
 
+      ctx.fillStyle = HEAD_COLOR; ctx.textAlign = "left";
+      ctx.fillText(labelLines[0], labelX, y);
+      if (labelLines[1]) { ctx.fillText(labelLines[1], labelX, y + 20); }
+
+      // Page number — right aligned
       const pgStr = String(pg);
-      ctx.fillStyle = "#333333"; ctx.font = "14px sans-serif"; ctx.textAlign = "right";
-      ctx.fillText(pgStr, PAGE_W - MX, y);
+      ctx.fillStyle = HEAD_COLOR; ctx.font = "15px Georgia, serif"; ctx.textAlign = "right";
+      ctx.fillText(pgStr, PAGE_W - MX2, y);
 
-      const titleEnd = MX + ctx.measureText(label).width + 8;
-      const pgStart  = PAGE_W - MX - ctx.measureText(pgStr).width - 8;
-      if (pgStart > titleEnd + 20) {
-        ctx.strokeStyle = "#BBBBBB"; ctx.lineWidth = 0.8;
-        ctx.setLineDash([1, 4]);
-        ctx.beginPath(); ctx.moveTo(titleEnd, y - 3); ctx.lineTo(pgStart, y - 3); ctx.stroke(); ctx.setLineDash([]);
-      }
-
-      if (e.type === "intro") pg += 2;
-      else if (e.type === "chapter") pg += 3;
-      else if (e.type === "conclusion") pg += 2;
-
-      y += e.type === "chapter" ? 38 : 34;
+      pg += 3;
+      y += labelLines[1] ? 52 : 36;
     }
 
-    this.footer(ctx, bookTitle, this.pages.length);
+    // Footer
+    ctx.fillStyle = SMALL_COLOR; ctx.font = "9px Georgia, serif"; ctx.textAlign = "center";
+    ctx.fillText("Copyrighted Material", MX2, PAGE_H - 24);
+    ctx.textAlign = "center";
+    ctx.fillText(bookTitle, PAGE_W / 2, PAGE_H - 24);
+    ctx.textAlign = "right";
+    ctx.fillText(String(this.pages.length), PAGE_W - MX2, PAGE_H - 24);
   }
 
-  // ── CHAPTER SPLASH — no-op, heading renders inline ───────────────────────────
+  // no-op — chapter heading renders in drawContentPages
   drawChapterSplash(_num: number, _title: string, _bookTitle: string) { /* no-op */ }
 
   // ── CONTENT PAGES ────────────────────────────────────────────────────────────
   drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter = false, chNum?: number) {
-    const maxY     = PAGE_H - 88;
-    const lineH    = 25;
-    const bodyFont = "14.5px Georgia, serif";
+    if (isChapter) this.trimOrphanPages();
 
-    let ctx: CanvasRenderingContext2D;
-    let y: number;
+    // Use a mutable ref object so ctx and y can flow across pages
+    const state = { ctx: this.newPage(), y: isChapter ? 140 : TOP_Y + 24 };
 
-    if (isChapter && chNum !== undefined) {
-      this.trimOrphanPages();
-      ctx = this.newPage(); y = 165;
-    } else if (isChapter && chNum === undefined) {
-      ctx = this.newPage(); y = 120;
-    } else if (this._lastCtx && this._lastY < maxY - 220) {
-      ctx = this._lastCtx; y = this._lastY + 40;
-    } else {
-      ctx = this.newPage(); y = 120;
+    const newPageIfNeeded = (neededSpace: number) => {
+      if (state.y > MAX_CONTENT - neededSpace) {
+        this.drawFooter(state.ctx);
+        state.ctx = this.newPage();
+        this.drawHeader(state.ctx, bookTitle, this.pages.length);
+        state.y = TOP_Y + 28;
+      }
+    };
+
+    // Header rule — not on chapter opening page
+    if (!isChapter) {
+      this.drawHeader(state.ctx, bookTitle, this.pages.length);
     }
 
-    // Chapter label badge
+    // Chapter number label
     if (isChapter && chNum !== undefined) {
-      ctx.fillStyle = ACCENT; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
-      ctx.fillText(`CHAPTER ${String(chNum).padStart(2, "0")}`, MX, y);
-      y += 10; ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 56, 3); y += 22;
+      state.ctx.fillStyle = SMALL_COLOR;
+      state.ctx.font = "11px Georgia, serif"; state.ctx.textAlign = "left";
+      state.ctx.fillText(`Chapter ${chNum}`, MX2, state.y - 40);
+      // Thin rule below chapter number
+      state.ctx.strokeStyle = RULE_COLOR; state.ctx.lineWidth = 0.7;
+      state.ctx.beginPath();
+      state.ctx.moveTo(MX2, state.y - 28); state.ctx.lineTo(PAGE_W - MX2, state.y - 28);
+      state.ctx.stroke();
     }
 
     // Chapter title
-    ctx.fillStyle = BLACK; ctx.font = "bold 32px sans-serif"; ctx.textAlign = "left";
-    for (const l of this.wrap(ctx, title, CONTENT_W)) { ctx.fillText(l, MX, y); y += 44; }
-    ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 6, 70, 4); y += 20;
+    const cleanTitle = title.replace(/^Chapter\s*\d+\s*[:\-\.]\s*/i, "").trim();
+    state.ctx.fillStyle = HEAD_COLOR; state.ctx.font = "bold 28px Georgia, serif"; state.ctx.textAlign = "left";
+    const titleLines = this.wrapJustified(state.ctx, cleanTitle, CONTENT_W2);
+    for (const l of titleLines) { state.ctx.fillText(l, MX2, state.y); state.y += 38; }
+    state.y += 24;
 
     // Content blocks
     for (const block of this.parseBlocks(rawContent)) {
       if (block.type === "heading") {
-        if (y > maxY - 90) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 22; ctx.fillStyle = BLACK; ctx.font = "bold 17px sans-serif"; ctx.textAlign = "left";
-        for (const l of this.wrap(ctx, block.text, CONTENT_W)) { ctx.fillText(l, MX, y); y += 28; }
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y - 4, 44, 3); y += 18;
+        newPageIfNeeded(80);
+        state.y += HEAD_GAP;
+        state.ctx.fillStyle = HEAD_COLOR; state.ctx.font = "bold 17px Georgia, serif"; state.ctx.textAlign = "left";
+        const hLines = this.wrapJustified(state.ctx, block.text, CONTENT_W2);
+        for (const l of hLines) { state.ctx.fillText(l, MX2, state.y); state.y += 24; }
+        state.y += 10;
 
       } else if (block.type === "pullquote") {
-        ctx.font = "italic 14px Georgia, serif";
-        const ql = this.wrap(ctx, `"${block.text}"`, CONTENT_W - 60);
-        const qh = ql.length * 26 + 44;
-        if (y > maxY - qh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 16;
-        ctx.fillStyle = "#F5F3FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, qh, 6); ctx.fill();
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, qh);
-        ctx.fillStyle = "#2D1F8A"; ctx.font = "italic 14px Georgia, serif";
-        let qy = y + 28;
-        for (const l of ql) { ctx.fillText(l, MX + 22, qy); qy += 26; }
-        y += qh + 20;
-
-      } else if (block.type === "keyinsight") {
-        ctx.font = "12.5px sans-serif";
-        const kl = this.wrap(ctx, block.text, CONTENT_W - 52);
-        const kh = kl.length * 22 + 48;
-        if (y > maxY - kh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 14;
-        ctx.fillStyle = "#FFFBF0"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, kh, 8); ctx.fill();
-        ctx.fillStyle = "#D4A017"; ctx.fillRect(MX, y, 5, kh);
-        ctx.fillStyle = "#8B6914"; ctx.font = "bold 10px sans-serif"; ctx.fillText("KEY INSIGHT", MX + 20, y + 18);
-        ctx.fillStyle = "#5C4500"; ctx.font = "italic 12.5px Georgia, serif";
-        let ky = y + 36;
-        for (const l of kl) { ctx.fillText(l, MX + 20, ky); ky += 22; }
-        y += kh + 20;
-
-      } else if (block.type === "framework") {
-        ctx.font = "12.5px sans-serif";
-        const fl = this.wrap(ctx, block.text, CONTENT_W - 52);
-        const fh = fl.length * 22 + 48;
-        if (y > maxY - fh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 14;
-        ctx.fillStyle = "#F0F4FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, fh, 8); ctx.fill();
-        ctx.fillStyle = "#3B2F9E"; ctx.fillRect(MX, y, 5, fh);
-        ctx.fillStyle = "#2A1F7A"; ctx.font = "bold 10px sans-serif"; ctx.fillText("FRAMEWORK", MX + 20, y + 18);
-        ctx.fillStyle = "#2A1F7A"; ctx.font = "italic 12.5px Georgia, serif";
-        let fy = y + 36;
-        for (const l of fl) { ctx.fillText(l, MX + 20, fy); fy += 22; }
-        y += fh + 20;
-
-      } else if (block.type === "callout") {
-        ctx.font = "12.5px sans-serif";
-        const cl = this.wrap(ctx, block.text, CONTENT_W - 48);
-        const bh = cl.length * 22 + 36;
-        if (y > maxY - bh) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-        y += 12;
-        ctx.fillStyle = "#F8F6FF"; ctx.beginPath(); ctx.roundRect(MX, y, CONTENT_W, bh, 8); ctx.fill();
-        ctx.fillStyle = ACCENT; ctx.fillRect(MX, y, 5, bh);
-        ctx.fillStyle = "#3F2F9E"; ctx.font = "italic 12.5px Georgia, serif";
-        let cy = y + 22;
-        for (const l of cl) { ctx.fillText(l, MX + 24, cy); cy += 22; }
-        y += bh + 24;
+        // Elegant italic indented quote — no box, just indented italic
+        newPageIfNeeded(60);
+        state.y += 14;
+        state.ctx.fillStyle = "#444444"; state.ctx.font = "italic 14px Georgia, serif"; state.ctx.textAlign = "left";
+        const qLines = this.wrapJustified(state.ctx, `\u201c${block.text}\u201d`, CONTENT_W2 - 60);
+        for (const l of qLines) {
+          newPageIfNeeded(20);
+          state.ctx.fillText(l, MX2 + 30, state.y); state.y += 22;
+        }
+        state.y += 14;
 
       } else {
-        ctx.fillStyle = "#1A1A1A"; ctx.font = bodyFont; ctx.textAlign = "left";
-        for (const l of this.wrap(ctx, block.text, CONTENT_W)) {
-          if (y > maxY) { this.footer(ctx, bookTitle, this.pages.length); ctx = this.newPage(); y = 72; }
-          ctx.fillText(l, MX, y); y += lineH;
+        // Body paragraph — justified
+        state.ctx.fillStyle = BODY_COLOR; state.ctx.font = BODY_FONT; state.ctx.textAlign = "left";
+        const lines = this.wrapJustified(state.ctx, block.text, CONTENT_W2);
+        for (let i = 0; i < lines.length; i++) {
+          newPageIfNeeded(LINE_H);
+          state.ctx.fillStyle = BODY_COLOR; state.ctx.font = BODY_FONT;
+          this.drawJustified(state.ctx, lines[i], i === lines.length - 1, MX2, state.y, CONTENT_W2);
+          state.y += LINE_H;
         }
-        y += 16;
+        state.y += PARA_GAP;
       }
     }
 
-    if (y > 80) this.footer(ctx, bookTitle, this.pages.length);
-    this._lastCtx = ctx; this._lastY = y;
+    this.drawFooter(state.ctx);
+    this._lastCtx = state.ctx; this._lastY = state.y;
   }
 
   // Remove nearly blank trailing pages
@@ -386,7 +391,7 @@ class EbookPDFRenderer {
     const last = this.pages[this.pages.length - 1];
     const ctx = last.getContext("2d")!;
     const sampleH = Math.floor(PAGE_H * 0.30);
-    const data = ctx.getImageData(MX, 80, CONTENT_W, sampleH).data;
+    const data = ctx.getImageData(MX2, TOP_Y + 30, CONTENT_W2, sampleH).data;
     let nonWhitePixels = 0;
     for (let i = 0; i < data.length; i += 4) {
       if (data[i] < 240 || data[i+1] < 240 || data[i+2] < 240) nonWhitePixels++;
@@ -402,7 +407,6 @@ class EbookPDFRenderer {
       .replace(/\*\*([^*\n]{4,80})\*\*[ \t]+([A-Z][^*\n]{10,})/g, "\n\n## $1\n\n$2")
       .replace(/([.!?])\s+\*\*([^*\n]{4,80})\*\*\s+([A-Z][^*\n]{10,})/g, "$1\n\n## $2\n\n$3")
       .replace(/(^#{2,3}\s+[^\n]+)\n([^#\n])/gm, "$1\n\n$2")
-      // Strip leaked part labels
       .replace(/^(Text of )?(Part \d+\s*[-—]+\s*THE\s+\w+|THE INSIGHT|THE MECHANISM|THE EVIDENCE|THE COUNTER|THE EDGE)\s*$/gim, "")
       .replace(/^(The Insight|The Mechanism|The Evidence|The Counter|The Edge)\s+/gm, "")
       .replace(/\n{3,}/g, "\n\n");
@@ -419,9 +423,8 @@ class EbookPDFRenderer {
         if (headingText.length > 3) {
           blocks.push({ type: "heading", text: headingText });
           const afterHeading = t.replace(/^#{2,3}\s+[^\n]+/, "").trim();
-          if (afterHeading.length > 10) {
+          if (afterHeading.length > 10)
             blocks.push({ type: "body", text: afterHeading.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1") });
-          }
         }
         continue;
       }
@@ -439,17 +442,11 @@ class EbookPDFRenderer {
         continue;
       }
 
+      // All blockquotes rendered as elegant italic pull quotes — no colored boxes
       if (t.startsWith(">")) {
-        const raw = t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1").trim();
-        if (raw.startsWith('"') || raw.startsWith('\u201c')) {
-          blocks.push({ type: "pullquote", text: raw.replace(/^["\u201c]+/, "").replace(/["\u201d]+$/, "").trim() });
-        } else if (/^KEY INSIGHT[:\s]/i.test(raw)) {
-          blocks.push({ type: "keyinsight", text: raw.replace(/^KEY INSIGHT[:\s]*/i, "").trim() });
-        } else if (/^(FRAMEWORK|The .+:)/i.test(raw)) {
-          blocks.push({ type: "framework", text: raw });
-        } else {
-          blocks.push({ type: "callout", text: raw });
-        }
+        const raw = t.replace(/^>\s*/, "").replace(/\*\*(.*?)\*\*/g, "$1").trim()
+          .replace(/^["\u201c]+/, "").replace(/["\u201d]+$/, "").trim();
+        if (raw.length > 3) blocks.push({ type: "pullquote", text: raw });
         continue;
       }
 
@@ -462,7 +459,7 @@ class EbookPDFRenderer {
 
   async exportPDF(filename: string) {
     this.trimOrphanPages();
-    const jpegUrls = this.pages.map(c => c.toDataURL("image/jpeg", 0.92));
+    const jpegUrls = this.pages.map(c => c.toDataURL("image/jpeg", 0.95));
     const bytes = buildPDF(jpegUrls, PAGE_W, PAGE_H);
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
@@ -471,6 +468,7 @@ class EbookPDFRenderer {
     URL.revokeObjectURL(url);
   }
 }
+
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 interface NicheCard {
@@ -591,8 +589,9 @@ const EbookGenerator = () => {
 
       if (data.chapters && Array.isArray(data.chapters)) {
         // New format: { title, chapters: [{ title, content }] }
+        // Strip any "Chapter N:" prefix the AI may have added to titles
         parsedSections = data.chapters.map((ch: any) => ({
-          heading: ch.title,
+          heading: ch.title.replace(/^Chapter\s*\d+\s*[:\-\.]\s*/i, "").trim(),
           body: ch.content
         }));
       } else if (data.content) {
@@ -628,7 +627,9 @@ const EbookGenerator = () => {
 
     try {
       const renderer = new EbookPDFRenderer();
-      await renderer.drawCover(scriptContent.title, selectedNiche.description, topic, null);
+      // Use the short headline as subtitle, not the full pain description
+      const coverSubtitle = selectedNiche.headline || "";
+      await renderer.drawCover(scriptContent.title, coverSubtitle, topic, null);
       renderer.drawTitlePage(scriptContent.title);
       
       const toc = scriptContent.sections.map((s, i) => ({
