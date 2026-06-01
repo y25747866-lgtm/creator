@@ -77,7 +77,7 @@ export const lazyLoadImage = (
   }
 
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
+    (entries || []).forEach((entry) => {
       if (entry.isIntersecting) {
         const img = entry.target as HTMLImageElement;
         img.src = img.dataset.src || '';

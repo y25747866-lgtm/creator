@@ -151,7 +151,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
       y += 12;
 
       doc.setFontSize(12);
-      chapters.forEach((chapter, i) => {
+      (chapters || []).forEach((chapter, i) => {
         needsBreak(10, 12, colors.text);
         doc.setFontSize(12);
         doc.setTextColor(...colors.text);
@@ -165,7 +165,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
     // ===== CONTENT =====
     addPage();
 
-    sections.forEach((section) => {
+    (sections || []).forEach((section) => {
       switch (section.type) {
         case "h1": {
           if (y > margin + 10) {
@@ -211,7 +211,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           const bulletLines = doc.splitTextToSize(section.content, cw - 8);
           doc.setFillColor(...colors.accent);
           doc.circle(margin + 2, y - 1.2, 1, "F");
-          bulletLines.forEach((line: string) => {
+          (bulletLines || []).forEach((line: string) => {
             needsBreak(bodyLineH, 11, colors.text);
             // FIX: always reset font and color before writing each line
             doc.setFontSize(11);
@@ -226,7 +226,7 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
           doc.setFontSize(11);
           doc.setTextColor(...colors.text);
           const para = doc.splitTextToSize(section.content, cw);
-          para.forEach((line: string) => {
+          (para || []).forEach((line: string) => {
             needsBreak(bodyLineH, 11, colors.text);
             // FIX: always reset font and color before writing each line
             doc.setFontSize(11);

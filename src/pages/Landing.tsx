@@ -39,7 +39,7 @@ const Landing = () => {
   useEffect(() => {
     if (heroWordsRef.current && !isLoading) {
       const words = heroWordsRef.current.querySelectorAll('.hero-word');
-      words.forEach((word, index) => {
+      (words || []).forEach((word, index) => {
         setTimeout(() => {
           word.classList.add('opacity-100');
         }, index * 150);

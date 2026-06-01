@@ -191,7 +191,7 @@ const Dashboard = () => {
       };
     }
 
-    products.forEach((product) => {
+    (products || []).forEach((product) => {
       totalEbooks++;
       const metrics = metricsCache[product.id] ?? [];
       const feedback = feedbackCache[product.id] ?? [];

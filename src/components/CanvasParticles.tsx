@@ -60,7 +60,7 @@ const CanvasParticles = () => {
       ctx.clearRect(0, 0, W, H);
       const color = hexToRgb(getAccentColor());
 
-      particles.forEach((p, i) => {
+      (particles || []).forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
         if (p.x < 0 || p.x > W) p.vx *= -1;
