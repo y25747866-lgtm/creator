@@ -108,11 +108,19 @@ const Dashboard = () => {
     const loadProducts = async () => {
       try {
         const data = await listProducts();
-        const list: ProductRecord[] = data.products ?? data ?? [];
+        // Ensure we have an array
+        let list: ProductRecord[] = [];
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data?.products && Array.isArray(data.products)) {
+          list = data.products;
+        } else if (data && typeof data === 'object') {
+          list = [];
+        }
         setProducts(list);
         
         // Load metrics for all products
-        if (list.length > 0) {
+        if (Array.isArray(list) && list.length > 0) {
           const metricsData: Record<string, MetricRecord[]> = {};
           const feedbackData: Record<string, FeedbackRecord[]> = {};
           
@@ -122,8 +130,22 @@ const Dashboard = () => {
                 getProductMetrics(product.id),
                 getProductFeedback(product.id),
               ]);
-              metricsData[product.id] = mRes.metrics ?? mRes ?? [];
-              feedbackData[product.id] = fRes.feedback ?? fRes ?? [];
+              // Ensure metrics is an array
+              let metrics: MetricRecord[] = [];
+              if (Array.isArray(mRes)) {
+                metrics = mRes;
+              } else if (mRes?.metrics && Array.isArray(mRes.metrics)) {
+                metrics = mRes.metrics;
+              }
+              // Ensure feedback is an array
+              let feedback: FeedbackRecord[] = [];
+              if (Array.isArray(fRes)) {
+                feedback = fRes;
+              } else if (fRes?.feedback && Array.isArray(fRes.feedback)) {
+                feedback = fRes.feedback;
+              }
+              metricsData[product.id] = metrics;
+              feedbackData[product.id] = feedback;
             } catch (error) {
               metricsData[product.id] = [];
               feedbackData[product.id] = [];
@@ -157,6 +179,17 @@ const Dashboard = () => {
     let totalPreviousDownloads = 0;
     const now = Date.now();
     const weekMs = 7 * 24 * 60 * 60 * 1000;
+
+    if (!Array.isArray(products)) {
+      return {
+        ebooksCreated: 0,
+        totalDownloads: 0,
+        totalViews: 0,
+        avgRating: "0",
+        aiCredits: hasPaidSubscription && !isExpired ? "∞" : "1/day",
+        trend: "neutral" as const,
+      };
+    }
 
     products.forEach((product) => {
       totalEbooks++;
@@ -212,6 +245,20 @@ const Dashboard = () => {
     const days = ["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
     const now = new Date();
 
+    if (!Array.isArray(products)) {
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        data.push({
+          day: days[6 - i],
+          downloads: 0,
+          views: 0,
+          active: 0,
+        });
+      }
+      return data;
+    }
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
@@ -246,6 +293,9 @@ const Dashboard = () => {
 
   // Get top products
   const topProducts = useMemo(() => {
+    if (!Array.isArray(products)) {
+      return [];
+    }
     return products
       .map((p) => {
         const metrics = metricsCache[p.id] ?? [];

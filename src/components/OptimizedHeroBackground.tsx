@@ -10,12 +10,27 @@ const OptimizedHeroBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Use requestIdleCallback to defer heavy background loading
-    const id = requestIdleCallback(() => {
-      setIsReady(true);
-    }, { timeout: 2000 });
-
-    return () => cancelIdleCallback(id);
+    // Use requestIdleCallback to defer heavy background loading with fallback
+    let id: number | NodeJS.Timeout;
+    
+    if (typeof requestIdleCallback !== 'undefined') {
+      id = requestIdleCallback(() => {
+        setIsReady(true);
+      }, { timeout: 2000 });
+      
+      return () => {
+        if (typeof cancelIdleCallback !== 'undefined') {
+          cancelIdleCallback(id as number);
+        }
+      };
+    } else {
+      // Fallback for browsers that don't support requestIdleCallback
+      id = setTimeout(() => {
+        setIsReady(true);
+      }, 100);
+      
+      return () => clearTimeout(id as NodeJS.Timeout);
+    }
   }, []);
 
   return (
