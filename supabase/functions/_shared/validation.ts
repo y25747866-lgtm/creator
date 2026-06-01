@@ -67,6 +67,39 @@ export interface AccessResult {
   error?: string;
 }
 
+/**
+ * HARD SUBSCRIPTION ENFORCEMENT
+ * Strictly checks if the subscription is active and not expired.
+ * Returns 403 if expired or missing.
+ */
+export function requireActiveSubscription(subscription: any): { authorized: boolean; error?: string } {
+  console.log("Subscription check:", subscription);
+
+  if (!subscription) {
+    return { authorized: false, error: "No active subscription found" };
+  }
+
+  if (subscription.status !== "active") {
+    return { authorized: false, error: "Subscription is not active" };
+  }
+
+  const now = new Date();
+  const endDate = subscription.end_date ? new Date(subscription.end_date) : null;
+  const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
+
+  const isExpired = (endDate && endDate < now) || (expiresAt && expiresAt < now);
+
+  if (isExpired) {
+    return { authorized: false, error: "Subscription expired" };
+  }
+
+  return { authorized: true };
+}
+
+/**
+ * Verify if the user has a valid active and unexpired subscription.
+ * Strictly enforces: status = 'active' AND (end_date > now OR expires_at > now)
+ */
 export async function verifyAccess(req: Request): Promise<AccessResult> {
   // Extract JWT from Authorization header
   const authHeader = req.headers.get('Authorization');
@@ -95,12 +128,13 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
     return { authorized: false, error: 'Invalid or expired token' };
   }
 
-  // Check for active subscription
+  // Check for valid active + unexpired subscription
   const { data: subscription, error: subError } = await supabase
     .from('subscriptions')
-    .select('id, status, expires_at')
+    .select('id, status, expires_at, end_date')
     .eq('user_id', user.id)
-    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (subError) {
@@ -108,16 +142,47 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
     return { authorized: false, error: 'Failed to verify subscription' };
   }
 
-  if (!subscription) {
-    return { authorized: false, error: 'No active subscription' };
+  const check = requireActiveSubscription(subscription);
+  if (!check.authorized) {
+    // Auto-update status to expired in background if it was active but now expired
+    if (subscription && subscription.status === 'active' && check.error === "Subscription expired") {
+      supabase
+        .from('subscriptions')
+        .update({ status: 'expired' })
+        .eq('id', subscription.id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to auto-update expired status:', error.message);
+        });
+    }
+    return { authorized: false, error: check.error };
   }
 
-  // Check if subscription has expired
-  if (subscription.expires_at) {
-    const expiresAt = new Date(subscription.expires_at);
-    if (expiresAt < new Date()) {
-      return { authorized: false, error: 'Subscription has expired' };
-    }
+  return { authorized: true, userId: user.id };
+}
+
+/**
+ * Auth-only verification (no subscription check).
+ * Use for features available on free tier with client-side rate limiting.
+ */
+export async function verifyAuthOnly(req: Request): Promise<AccessResult> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { authorized: false, error: 'Missing authorization' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { authorized: false, error: 'Server configuration error' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return { authorized: false, error: 'Invalid or expired token' };
   }
 
   return { authorized: true, userId: user.id };

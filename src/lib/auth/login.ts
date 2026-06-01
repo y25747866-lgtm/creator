@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Email + Password Sign In

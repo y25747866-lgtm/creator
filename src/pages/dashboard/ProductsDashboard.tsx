@@ -36,13 +36,19 @@ const ProductsDashboard = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    listProducts()
-      .then((data) => {
+    const loadProducts = async () => {
+      try {
+        const data = await listProducts();
         const list: ProductRecord[] = data.products ?? data ?? [];
         setProducts(list);
-      })
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error("Failed to load products:", error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
   }, []);
 
   const fetchDetails = useCallback(

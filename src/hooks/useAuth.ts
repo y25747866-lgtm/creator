@@ -41,7 +41,7 @@ export function useAuth() {
 
   // Magic Link authentication (email only, no password)
   const sendMagicLink = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/whop/success`;
+    const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signInWithOtp({
       email,

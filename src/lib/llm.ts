@@ -17,7 +17,7 @@ export async function callLLM(
     temperature = 0.7,
   } = options;
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY || "";
 
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set in environment variables");

@@ -3,7 +3,7 @@ import {
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
-  verifyAccess, 
+  verifyAuthOnly, 
   errorResponse 
 } from "../_shared/validation.ts";
 
@@ -13,10 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication and subscription
-    const access = await verifyAccess(req);
+    const access = await verifyAuthOnly(req);
     if (!access.authorized) {
-      return errorResponse(access.error || 'Unauthorized', 401);
+      return errorResponse(access.error || 'Authentication required', 401);
     }
 
     // Parse and validate input
