@@ -267,9 +267,9 @@ const Dashboard = () => {
       let downloads = 0;
       let views = 0;
 
-      products.forEach((product) => {
+      (products || []).forEach((product) => {
         const metrics = metricsCache[product.id] ?? [];
-        metrics.forEach((m) => {
+        (metrics || []).forEach((m) => {
           if (m.recorded_at.slice(0, 10) === dateStr) {
             if (m.metric_type === "download" || m.metric_type === "cover_download") {
               downloads += m.value;

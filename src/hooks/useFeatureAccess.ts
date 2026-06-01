@@ -37,7 +37,7 @@ export function useFeatureAccess() {
         .eq("used_at", today);
       
       const usage: Record<string, number> = {};
-      data?.forEach((row: any) => { 
+      (data || []).forEach((row: any) => { 
         usage[row.feature] = row.count; 
       });
       setDailyUsage(usage);

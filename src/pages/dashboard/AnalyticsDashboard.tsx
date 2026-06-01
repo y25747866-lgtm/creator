@@ -305,7 +305,7 @@ const AnalyticsDashboard = () => {
     if (!analytics?.orders || analytics.orders.length === 0) return [];
     
     const groups: Record<string, number> = {};
-    analytics.orders.forEach(order => {
+    (analytics?.orders || []).forEach(order => {
       const date = new Date(order.date).toLocaleDateString();
       groups[date] = (groups[date] || 0) + order.amount;
     });
