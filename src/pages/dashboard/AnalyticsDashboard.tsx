@@ -142,7 +142,7 @@ const AnalyticsDashboard = () => {
     loadAnalytics();
   }, [user?.id, platformFilter, connections.length, hasAccess]);
 
-  // Load chat messages
+  // Load chat messages and subscribe to real-time updates
   useEffect(() => {
     if (!user || !hasAccess) {
       setChatMessages([]);
@@ -166,6 +166,28 @@ const AnalyticsDashboard = () => {
     };
 
     loadChatMessages();
+
+    // Subscribe to real-time updates for new messages
+    const subscription = supabase
+      .channel(`analytics_chat_${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "analytics_chat_messages",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload: any) => {
+          const newMessage = payload.new as ChatMessage;
+          setChatMessages((prev) => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user?.id, hasAccess]);
 
   useEffect(() => {
@@ -240,11 +262,23 @@ const AnalyticsDashboard = () => {
     
     const msg = chatInput.trim();
     setChatInput("");
-    
-    setChatMessages((prev) => [...(prev || []), { role: "user", content: msg, created_at: new Date().toISOString() }]);
     setChatLoading(true);
     
     try {
+      // Save user message to Supabase immediately
+      const { error: saveError } = await supabase
+        .from("analytics_chat_messages")
+        .insert({
+          user_id: user.id,
+          role: "user",
+          content: msg,
+        });
+
+      if (saveError) {
+        throw new Error(`Failed to save message: ${saveError.message}`);
+      }
+
+      // Call AI function to get response
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
         body: { 
           message: msg,
@@ -255,7 +289,9 @@ const AnalyticsDashboard = () => {
       if (error) throw error;
       
       if (data?.reply) {
-        setChatMessages((prev) => [...(prev || []), { role: "assistant", content: data.reply, created_at: new Date().toISOString() }]);
+        // The edge function will save the assistant message, but we can also add it locally
+        // The real-time subscription will handle adding it to the UI
+        console.log("AI response received and will be synced via real-time subscription");
       }
     } catch (e: any) {
       console.error("Chat error:", e);
@@ -381,72 +417,76 @@ const AnalyticsDashboard = () => {
                   }}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div 
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          background: '#1A1A1A',
-                          border: '1px solid #2A2A2A',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <BarChart2 className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '15px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>
-                          {platform.name}
-                        </h3>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>
-                          {platform.description}
-                        </p>
-                      </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', fontFamily: "'Syne', sans-serif" }}>{platform.name}</h3>
+                      <p style={{ fontSize: '13px', color: '#777777', fontFamily: "'DM Sans', sans-serif", lineHeight: '1.5' }}>{platform.description}</p>
                     </div>
-                    {isConnected ? (
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
-                          Connected
-                        </Badge>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDisconnect(platform.id)}
-                        >
-                          <Unlink className="w-3 h-3 mr-1" />
-                          Disconnect
-                        </Button>
+                    <img src={platform.logo} alt={platform.name} style={{ width: '48px', height: '48px' }} />
+                  </div>
+                  
+                  {isConnected ? (
+                    <div className="mt-6 space-y-3">
+                      <div style={{ fontSize: '12px', color: '#777777', fontFamily: "'DM Sans', sans-serif" }}>
+                        <p>Connected on {new Date(connection.connected_at).toLocaleDateString()}</p>
+                        {connection.last_sync_at && <p>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</p>}
                       </div>
-                    ) : (
                       <Button 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={() => setConnectModal(platform.id)}
+                        onClick={() => handleDisconnect(platform.id)} 
                         disabled={!hasAccess}
                         style={{
                           background: 'transparent',
                           border: '1px solid #252525',
                           color: '#FFFFFF',
-                          fontFamily: "'DM Sans', sans-serif",
-                          fontSize: '13px',
+                          fontFamily: "'Syne', sans-serif",
                           fontWeight: 600,
-                          padding: '8px 16px',
-                          borderRadius: '8px'
+                          padding: '11px 24px',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          width: '100%'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FF6B6B'; e.currentTarget.style.color = '#FF6B6B'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.color = '#FFFFFF'; }}
+                      >
+                        <Unlink className="w-4 h-4 mr-2" /> Disconnect
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mt-6 flex gap-2">
+                      <Button 
+                        onClick={() => setConnectModal(platform.id)} 
+                        disabled={!hasAccess}
+                        style={{
+                          background: '#FFFFFF',
+                          color: '#0A0A0A',
+                          fontFamily: "'Syne', sans-serif",
+                          fontWeight: 700,
+                          padding: '11px 24px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          fontSize: '14px',
+                          letterSpacing: '-0.3px'
+                        }}
+                      >
+                        Connect {platform.name}
+                      </Button>
+                      <Button 
+                        onClick={() => setConnectModal("payhip")} 
+                        disabled={!hasAccess}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #252525',
+                          color: '#FFFFFF',
+                          fontFamily: "'Syne', sans-serif",
+                          fontWeight: 600,
+                          padding: '11px 24px',
+                          borderRadius: '8px',
+                          fontSize: '14px'
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#1A1A1A'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = 'transparent'; }}
                       >
-                        <Link2 className="w-4 h-4" />
-                        Connect
+                        Connect Payhip
                       </Button>
-                    )}
-                  </div>
-                  {isConnected && connection.last_sync_at && (
-                    <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #252525', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#777777', fontFamily: "'DM Sans', sans-serif" }}>
-                      <span>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
@@ -454,84 +494,10 @@ const AnalyticsDashboard = () => {
             })}
           </div>
 
-          {/* Analytics Content */}
-          {!hasLoadedData && !loadingData ? (
-            <div 
-              style={{
-                background: '#0F0F0F',
-                border: '1px dashed #252525',
-                borderRadius: '12px',
-                padding: '80px 32px',
-                textAlign: 'center',
-                marginTop: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <div 
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  background: '#1A1A1A',
-                  border: '1px solid #2A2A2A',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 24px'
-                }}
-              >
-                <BarChart2 className="w-6 h-6 text-white" />
-              </div>
-              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px', letterSpacing: '-0.3px' }}>
-                No Data to Display
-              </h3>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', maxWidth: '360px', margin: '12px auto 32px', fontWeight: 400, lineHeight: '1.6' }}>
-                {connections.length === 0 
-                  ? "Connect your Whop or Payhip account to start tracking your business performance."
-                  : "We're ready to fetch your data. Click the refresh button to sync."}
-              </p>
-              {connections.length === 0 && (
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                  <Button 
-                    onClick={() => setConnectModal("whop")} 
-                    disabled={!hasAccess}
-                    style={{
-                      background: '#FFFFFF',
-                      color: '#0A0A0A',
-                      fontFamily: "'Syne', sans-serif",
-                      fontWeight: 700,
-                      padding: '11px 24px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      fontSize: '14px',
-                      letterSpacing: '-0.3px'
-                    }}
-                  >
-                    Connect Whop
-                  </Button>
-                  <Button 
-                    onClick={() => setConnectModal("payhip")} 
-                    disabled={!hasAccess}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid #252525',
-                      color: '#FFFFFF',
-                      fontFamily: "'Syne', sans-serif",
-                      fontWeight: 600,
-                      padding: '11px 24px',
-                      borderRadius: '8px',
-                      fontSize: '14px'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#1A1A1A'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = 'transparent'; }}
-                  >
-                    Connect Payhip
-                  </Button>
-                </div>
-              )}
+          {connections.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 40px', background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px', fontFamily: "'Syne', sans-serif" }}>No Platforms Connected</h3>
+              <p style={{ fontSize: '14px', color: '#777777', fontFamily: "'DM Sans', sans-serif", marginBottom: '24px' }}>Connect Whop or Payhip to start tracking your analytics</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -767,21 +733,27 @@ const AnalyticsDashboard = () => {
                   border: '1px solid #252525',
                   color: '#FFFFFF',
                   borderRadius: '8px',
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontWeight: 600
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 600,
+                  padding: '10px 20px',
+                  fontSize: '14px'
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#1A1A1A'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = 'transparent'; }}
               >
                 Cancel
               </Button>
               <Button 
-                onClick={handleConnect} 
+                onClick={handleConnect}
                 disabled={connecting || !apiKeyInput.trim()}
                 style={{
                   background: '#FFFFFF',
                   color: '#0A0A0A',
                   borderRadius: '8px',
                   fontFamily: "'Syne', sans-serif",
-                  fontWeight: 700
+                  fontWeight: 700,
+                  padding: '10px 20px',
+                  fontSize: '14px'
                 }}
               >
                 {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
