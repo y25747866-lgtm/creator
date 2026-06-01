@@ -461,7 +461,7 @@ class EbookPDFRenderer {
     this.trimOrphanPages();
     const jpegUrls = this.pages.map(c => c.toDataURL("image/jpeg", 0.95));
     const bytes = buildPDF(jpegUrls, PAGE_W, PAGE_H);
-    const blob = new Blob([bytes], { type: "application/pdf" });
+    const blob = new Blob([bytes as any], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = filename; a.click();
