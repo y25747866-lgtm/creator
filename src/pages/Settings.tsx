@@ -55,8 +55,20 @@ const Settings = () => {
     return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   };
 
-  const displayPlanName = getPlanDisplayName(planType);
-  const displayPlanPrice = getPlanPrice(planType);
+  const isExpired = subscription?.status === "expired";
+
+  // FIX: If plan is expired or not paid, always show Free plan info
+  // Previously, it would still show "Pro Plan" even after expiry
+  const displayPlanName = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
+  const displayPlanPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
+
+  // Badge logic
+  const badgeText = isExpired ? "Expired" : hasPaidSubscription ? "Active" : "Free";
+  const badgeStyle = isExpired
+    ? { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444' }
+    : hasPaidSubscription
+    ? { background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)', color: '#00d4aa' }
+    : { background: '#1A1A1A', border: '1px solid #2A2A2A', color: 'rgba(255,255,255,0.6)' };
 
   const labelStyle = { fontFamily: "'DM Sans', sans-serif", fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#555555', marginBottom: '8px', display: 'block' };
   const inputStyle = { background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '14px', padding: '12px 14px', width: '100%' };
@@ -84,29 +96,39 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg gap-3" style={{ background: '#0F0F0F', border: '1px solid #1A1A1A' }}>
                     <div>
-                      <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', textTransform: 'capitalize' }}>{displayPlanName} Plan</p>
+                      {/* FIX: Now correctly shows "Free Plan" when expired or not paid */}
+                      <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', textTransform: 'capitalize' }}>
+                        {displayPlanName} Plan
+                      </p>
                       <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#555555', marginTop: '4px' }}>
-                        {hasPaidSubscription && subscription ? `Active since ${formatDate(subscription.start_date || subscription.started_at)} · ${displayPlanPrice}` : displayPlanPrice}
+                        {hasPaidSubscription && subscription
+                          ? `Active since ${formatDate(subscription.start_date || subscription.started_at)} · ${displayPlanPrice}`
+                          : displayPlanPrice}
                       </p>
                     </div>
+                    {/* FIX: Badge now shows correct color — teal for active, red for expired, grey for free */}
                     <span style={{
-                      background: '#1A1A1A', border: '1px solid #2A2A2A', color: 'rgba(255,255,255,0.6)',
                       fontSize: '10px', fontWeight: 700, padding: '4px 12px', borderRadius: '4px',
                       textTransform: 'uppercase', letterSpacing: '0.05em',
+                      ...badgeStyle
                     }}>
-                      {subscription?.status === "expired" ? "Expired" : hasPaidSubscription ? "Active" : "Free"}
+                      {badgeText}
                     </span>
                   </div>
 
                   {hasPaidSubscription && subscription && (
                     <div className="p-3 rounded-lg" style={{ background: '#161616', border: '1px solid #1A1A1A' }}>
-                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666' }}>Expires on {expirationDate}</p>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666' }}>
+                        Expires on {expirationDate}
+                      </p>
                     </div>
                   )}
 
-                  {subscription?.status === "expired" && (
+                  {isExpired && (
                     <div className="p-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                      <p style={{ fontSize: '13px', color: '#EF4444' }}>Your subscription has expired. Please upgrade to continue using premium features.</p>
+                      <p style={{ fontSize: '13px', color: '#EF4444' }}>
+                        Your subscription has expired. Please upgrade to continue using premium features.
+                      </p>
                     </div>
                   )}
 
