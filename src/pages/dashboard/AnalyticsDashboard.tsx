@@ -72,6 +72,7 @@ const AnalyticsDashboard = () => {
   const [platformFilter, setPlatformFilter] = useState("all");
   const [hasLoadedData, setHasLoadedData] = useState(false);
 
+  // FIX: Initialize chatMessages as guaranteed empty array
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -95,7 +96,8 @@ const AnalyticsDashboard = () => {
           .eq("status", "connected");
         
         if (error) throw error;
-        setConnections((data as PlatformConnection[]) || []);
+        // FIX: Always ensure connections is an array
+        setConnections(Array.isArray(data) ? (data as PlatformConnection[]) : []);
       } catch (error) {
         console.error("Error loading connections:", error);
         setConnections([]);
@@ -174,9 +176,13 @@ const AnalyticsDashboard = () => {
           .limit(50);
         
         if (error) throw error;
-        if (data) setChatMessages((data as ChatMessage[]) || []);
+        // FIX: Use Array.isArray to guarantee chatMessages is always an array
+        // Previously: if (data) setChatMessages((data as ChatMessage[]) || []);
+        // The old code could set chatMessages to a non-array if data was truthy but not an array
+        setChatMessages(Array.isArray(data) ? (data as ChatMessage[]) : []);
       } catch (error) {
         console.error("Error loading chat messages:", error);
+        setChatMessages([]);
       }
     };
 
@@ -195,7 +201,8 @@ const AnalyticsDashboard = () => {
         },
         (payload: any) => {
           const newMessage = payload.new as ChatMessage;
-          setChatMessages((prev) => [...prev, newMessage]);
+          // FIX: Protect prev state in case it's somehow not an array
+          setChatMessages((prev) => [...(Array.isArray(prev) ? prev : []), newMessage]);
         }
       )
       .subscribe();
@@ -222,7 +229,8 @@ const AnalyticsDashboard = () => {
         .eq("status", "connected");
       
       if (error) throw error;
-      setConnections((data as PlatformConnection[]) || []);
+      // FIX: Always ensure connections is an array
+      setConnections(Array.isArray(data) ? (data as PlatformConnection[]) : []);
     } catch (error) {
       console.error("Error fetching connections:", error);
     } finally {
@@ -304,8 +312,7 @@ const AnalyticsDashboard = () => {
       if (error) throw error;
       
       if (data?.reply) {
-        // The edge function will save the assistant message, but we can also add it locally
-        // The real-time subscription will handle adding it to the UI
+        // The real-time subscription handles adding the assistant reply to the UI
         console.log("AI response received and will be synced via real-time subscription");
       }
     } catch (e: any) {
@@ -644,7 +651,8 @@ const AnalyticsDashboard = () => {
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '20px', fontFamily: "'Syne', sans-serif", letterSpacing: '-0.3px' }}>AI Advisor</h3>
                     <ScrollArea className="flex-1 mb-4">
                       <div className="space-y-4 pr-4">
-                        {chatMessages.length === 0 ? (
+                        {/* FIX: Guard chatMessages with Array.isArray before mapping */}
+                        {!Array.isArray(chatMessages) || chatMessages.length === 0 ? (
                           <div style={{ textAlign: 'center', color: '#777777', fontSize: '13px', paddingTop: '32px', fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
                             Ask me anything about your analytics
                           </div>
