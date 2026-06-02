@@ -125,7 +125,22 @@ const AnalyticsDashboard = () => {
         if (error) throw error;
         
         if (data && typeof data === 'object' && 'summary' in data) {
-          setAnalytics(data as AnalyticsData);
+          // Normalize products and orders to ensure they are arrays
+          let products: any[] = [];
+          let orders: any[] = [];
+          
+          if (Array.isArray(data.products)) {
+            products = data.products;
+          }
+          if (Array.isArray(data.orders)) {
+            orders = data.orders;
+          }
+          
+          setAnalytics({
+            summary: data.summary || { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 },
+            products,
+            orders
+          });
         } else {
           setAnalytics({ summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] });
         }
@@ -302,10 +317,12 @@ const AnalyticsDashboard = () => {
   }, [chatInput, chatLoading, user, analytics, toast, hasAccess]);
 
   const revenueData = useMemo(() => {
-    if (!analytics?.orders || analytics.orders.length === 0) return [];
+    // Ensure orders is an array before using array methods
+    const orders = Array.isArray(analytics?.orders) ? analytics.orders : [];
+    if (!orders || orders.length === 0) return [];
     
     const groups: Record<string, number> = {};
-    (analytics?.orders || []).forEach(order => {
+    orders.forEach(order => {
       const date = new Date(order.date).toLocaleDateString();
       groups[date] = (groups[date] || 0) + order.amount;
     });
