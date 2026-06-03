@@ -37,7 +37,41 @@ const DashboardSidebar = () => {
   const isCreatorOrAbove = (planType === "creator" || planType === "pro") && !isExpired;
   const isProPlan = planType === "pro" && !isExpired;
 
-  const planLabel = getPlanDisplayName(planType);
+  // FIX: Show correct label — "Pro", "Creator", or "Free"
+  const planLabel = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
+
+  // FIX: Distinct badge colors for Pro, Creator, Expired, and Free
+  const planBadgeStyle = {
+    fontSize: '10px',
+    fontWeight: 600,
+    padding: '2px 8px',
+    borderRadius: '4px',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    ...(isExpired
+      ? {
+          background: 'rgba(239,68,68,0.1)',
+          border: '1px solid rgba(239,68,68,0.3)',
+          color: '#EF4444',
+        }
+      : planType === "pro" && hasPaidSubscription
+      ? {
+          background: 'rgba(0,212,170,0.1)',
+          border: '1px solid rgba(0,212,170,0.3)',
+          color: '#00d4aa',
+        }
+      : planType === "creator" && hasPaidSubscription
+      ? {
+          background: 'rgba(139,92,246,0.1)',
+          border: '1px solid rgba(139,92,246,0.3)',
+          color: '#8B5CF6',
+        }
+      : {
+          background: '#1A1A1A',
+          border: '1px solid #2A2A2A',
+          color: 'rgba(255,255,255,0.6)',
+        }),
+  };
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", access: "free" as const },
@@ -89,20 +123,9 @@ const DashboardSidebar = () => {
                 className="flex items-center gap-2"
               >
                 <span className="font-bold text-lg text-white">NexoraOS</span>
-                <span
-                  style={{
-                    background: '#1A1A1A',
-                    border: '1px solid #2A2A2A',
-                    color: 'rgba(255,255,255,0.6)',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {planLabel}
+                {/* FIX: Badge shows Pro (teal), Creator (purple), Expired (red), or Free (grey) */}
+                <span style={planBadgeStyle}>
+                  {isExpired ? "Expired" : planLabel}
                 </span>
               </motion.div>
             )}
