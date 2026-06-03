@@ -112,23 +112,30 @@ class EbookPDFRenderer {
     return ctx;
   }
 
-  // Justify text across a fixed width
+  // Wrap text into lines that fit within maxW — always measures with current ctx font
   private wrapJustified(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
-    const words = text.split(" ");
+    // Normalise: collapse multiple spaces, trim
+    const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
     const lines: string[] = [];
     let line = "";
     for (const w of words) {
-      const t = line ? `${line} ${w}` : w;
-      if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; }
-      else line = t;
+      const candidate = line ? `${line} ${w}` : w;
+      // If even a single word is wider than maxW, still push it alone to avoid infinite loops
+      if (ctx.measureText(candidate).width > maxW && line) {
+        lines.push(line);
+        line = w;
+      } else {
+        line = candidate;
+      }
     }
     if (line) lines.push(line);
     return lines;
   }
 
-  // Draw justified text — last line left-aligned
+  // Draw justified text — last line always left-aligned
+  // Guard: if computed gap is negative (word wider than line) or > 40px (too sparse), fall back to left-align
   private drawJustified(ctx: CanvasRenderingContext2D, line: string, isLast: boolean, x: number, y: number, maxW: number) {
-    const words = line.split(" ");
+    const words = line.split(" ").filter(Boolean);
     if (words.length <= 1 || isLast) {
       ctx.textAlign = "left";
       ctx.fillText(line, x, y);
@@ -136,6 +143,12 @@ class EbookPDFRenderer {
     }
     const totalWordW = words.reduce((s, w) => s + ctx.measureText(w).width, 0);
     const gap = (maxW - totalWordW) / (words.length - 1);
+    // Safety: if gap is unreasonable, just left-align
+    if (gap < 0 || gap > 40) {
+      ctx.textAlign = "left";
+      ctx.fillText(words.join(" "), x, y);
+      return;
+    }
     let cx = x;
     for (const w of words) {
       ctx.fillText(w, cx, y);
@@ -350,9 +363,16 @@ class EbookPDFRenderer {
       if (block.type === "heading") {
         newPageIfNeeded(80);
         state.y += HEAD_GAP;
-        state.ctx.fillStyle = HEAD_COLOR; state.ctx.font = "bold 17px Georgia, serif"; state.ctx.textAlign = "left";
+        state.ctx.font = "bold 17px Georgia, serif";
+        state.ctx.fillStyle = HEAD_COLOR;
+        state.ctx.textAlign = "left";
         const hLines = this.wrapJustified(state.ctx, block.text, CONTENT_W2);
-        for (const l of hLines) { state.ctx.fillText(l, MX2, state.y); state.y += 24; }
+        for (const l of hLines) {
+          state.ctx.font = "bold 17px Georgia, serif";
+          state.ctx.fillStyle = HEAD_COLOR;
+          state.ctx.fillText(l, MX2, state.y);
+          state.y += 24;
+        }
         state.y += 10;
 
       } else if (block.type === "pullquote") {
@@ -369,11 +389,16 @@ class EbookPDFRenderer {
 
       } else {
         // Body paragraph — justified
-        state.ctx.fillStyle = BODY_COLOR; state.ctx.font = BODY_FONT; state.ctx.textAlign = "left";
+        // Always set font explicitly before measuring to avoid stale context state
+        state.ctx.font = BODY_FONT;
+        state.ctx.fillStyle = BODY_COLOR;
+        state.ctx.textAlign = "left";
         const lines = this.wrapJustified(state.ctx, block.text, CONTENT_W2);
         for (let i = 0; i < lines.length; i++) {
           newPageIfNeeded(LINE_H);
-          state.ctx.fillStyle = BODY_COLOR; state.ctx.font = BODY_FONT;
+          // Re-set font after potential page break (new ctx)
+          state.ctx.font = BODY_FONT;
+          state.ctx.fillStyle = BODY_COLOR;
           this.drawJustified(state.ctx, lines[i], i === lines.length - 1, MX2, state.y, CONTENT_W2);
           state.y += LINE_H;
         }
@@ -417,9 +442,18 @@ class EbookPDFRenderer {
       if (/^Chapter:\s*[""]?.{3,120}[""]?\s*$/i.test(t)) continue;
       if (/^here is the (improved|rewritten|final|humanized)/i.test(t)) continue;
       if (/^(note:|editor.?s? note:|revision:)/i.test(t)) continue;
+      // ── AI leakage / meta-commentary filters ──────────────────────────────────
+      if (/^however,?\s+(to better adhere|since the last|it is essential to replace|it is essential to rephrase)/i.test(t)) continue;
+      if (/\b(to better adhere to the format|eliminate the word.{0,20}in conclusion|the last (paragraph|section) was rephrased|let.?s provide a final thought|conclusion is not allowed)\b/i.test(t)) continue;
+      if (/\b(as (per|per the) (the )?(instructions?|format|guidelines?|prompt)|following (the|your) instructions?|per your (request|instructions?))\b/i.test(t)) continue;
+      if (/\b(rewritten to (avoid|remove|eliminate)|rephrased (to|for)|revised (to|for) (comply|follow|adhere))\b/i.test(t)) continue;
+      if (/\b(still contain(s)? some repetition|last two sections|the text still|some repetition,? it is essential)\b/i.test(t)) continue;
+      if (/^(conclusion is not allowed|note:|please note:|important note:)/i.test(t)) continue;
 
       if (/^#{2,3}\s+/.test(t)) {
         const headingText = t.replace(/^#{2,3}\s+/, "").replace(/\*\*/g, "").split("\n")[0].trim();
+        // Skip headings that are AI meta-commentary
+        if (/conclusion is not allowed|let.?s provide a final|to better adhere|rephrase the last/i.test(headingText)) continue;
         if (headingText.length > 3) {
           blocks.push({ type: "heading", text: headingText });
           const afterHeading = t.replace(/^#{2,3}\s+[^\n]+/, "").trim();
