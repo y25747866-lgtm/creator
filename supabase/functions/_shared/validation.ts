@@ -189,6 +189,58 @@ export async function verifyAuthOnly(req: Request): Promise<AccessResult> {
 }
 
 // Create error response with CORS headers
+/**
+ * RATE LIMITING
+ * Max 10 requests per minute per user
+ */
+export async function checkRateLimit(supabase: any, userId: string): Promise<{ allowed: boolean; error?: string }> {
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+  
+  const { count, error } = await supabase
+    .from('request_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gt('created_at', oneMinuteAgo);
+
+  if (error) {
+    console.error('Rate limit check error:', error.message);
+    return { allowed: true }; // Allow on error to avoid blocking users
+  }
+
+  if (count !== null && count >= 10) {
+    return { allowed: false, error: "Rate limit exceeded. Please wait before trying again." };
+  }
+
+  // Log the request
+  await supabase.from('request_logs').insert({ user_id: userId });
+
+  return { allowed: true };
+}
+
+/**
+ * INPUT VALIDATION & SANITIZATION
+ */
+export function validateAndSanitize(input: any, maxLength: number = 2000): string {
+  if (input === undefined || input === null) {
+    throw new Error("Input is required");
+  }
+  
+  let strInput = String(input).trim();
+  if (strInput.length === 0) {
+    throw new Error("Input cannot be empty");
+  }
+
+  // Strip HTML tags
+  strInput = strInput.replace(/<[^>]*>?/gm, '');
+  
+  // Limit length
+  if (strInput.length > maxLength) {
+    strInput = strInput.substring(0, maxLength);
+  }
+
+  return strInput;
+}
+
 export function errorResponse(message: string, status: number = 400): Response {
   return new Response(
     JSON.stringify({ error: message }),

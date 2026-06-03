@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
   verifyAuthOnly, 
-  errorResponse 
+  errorResponse,
+  checkRateLimit,
+  validateAndSanitize
 } from "../_shared/validation.ts";
 
 interface LengthConfig {
@@ -285,18 +288,35 @@ serve(async (req) => {
 
   try {
     const access = await verifyAuthOnly(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Authentication required', 401);
     }
 
-    let body: { topic?: string; title?: string; description?: string; length?: string; category?: string; targetAudience?: string; tone?: string };
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    let body: any;
     try {
       body = await req.json();
     } catch {
       return errorResponse("Invalid JSON body");
     }
 
-    const { topic, title, description = "", length = "medium", category = "", targetAudience = "", tone = "" } = body;
+    // Input validation & sanitization
+    const topic = validateAndSanitize(body.topic, 500);
+    const title = body.title ? validateAndSanitize(body.title, 100) : topic;
+    const description = body.description ? validateAndSanitize(body.description, 1000) : "";
+    const length = body.length ? validateAndSanitize(body.length, 50) : "medium";
+    const category = body.category ? validateAndSanitize(body.category, 100) : "";
+    const targetAudience = body.targetAudience ? validateAndSanitize(body.targetAudience, 200) : "";
+    const tone = body.tone ? validateAndSanitize(body.tone, 100) : "";
 
     const validation = validateEbookInput(topic, title);
     if (!validation.valid) {

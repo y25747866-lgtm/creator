@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyAuthOnly, corsHeaders, errorResponse } from "../_shared/validation.ts";
+import { verifyAuthOnly, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -9,12 +9,28 @@ serve(async (req) => {
 
   try {
     const access = await verifyAuthOnly(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Authentication required', 401);
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
     const body = await req.json();
-    const { platform, title, description, targetAudience, offerDetails } = body;
+    
+    // Input validation & sanitization
+    const platform = validateAndSanitize(body.platform, 100);
+    const title = validateAndSanitize(body.title, 100);
+    const description = body.description ? validateAndSanitize(body.description, 1000) : "";
+    const targetAudience = body.targetAudience ? validateAndSanitize(body.targetAudience, 200) : "General";
+    const offerDetails = body.offerDetails ? validateAndSanitize(body.offerDetails, 500) : "Premium offer";
 
     console.log("📥 Request received:", { platform, title });
 

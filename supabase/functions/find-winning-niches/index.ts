@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
   sanitizeInput, 
   verifyAuthOnly, 
-  errorResponse 
+  errorResponse,
+  checkRateLimit,
+  validateAndSanitize
 } from "../_shared/validation.ts";
 
 serve(async (req) => {
@@ -13,21 +16,32 @@ serve(async (req) => {
 
   try {
     const access = await verifyAuthOnly(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Authentication required', 401);
     }
 
-    let body: { topic?: string; language?: string };
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    let body: any;
     try {
       body = await req.json();
     } catch {
       return errorResponse('Invalid JSON body');
     }
 
-    const { topic, language = "English" } = body;
-    if (!topic) return errorResponse('Topic is required');
+    // Input validation & sanitization
+    const topic = validateAndSanitize(body.topic, 500);
+    const language = body.language ? validateAndSanitize(body.language, 50) : "English";
     
-    const sanitizedTopic = sanitizeInput(topic);
+    const sanitizedTopic = topic;
     const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
     if (!GROQ_API_KEY) {

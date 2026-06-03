@@ -97,6 +97,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const rawBody = await req.text();
+    if (!rawBody) {
+      return new Response(
+        JSON.stringify({ error: "Empty request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // Verify signature if secret is configured
     if (webhookSecret) {
@@ -112,9 +118,25 @@ serve(async (req) => {
       console.warn("WHOP_WEBHOOK_SECRET not configured – skipping verification");
     }
 
-    const body = JSON.parse(rawBody);
+    let body: any;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const action = body.action || body.type;
     const data = body.data;
+    
+    if (!action) {
+      return new Response(
+        JSON.stringify({ error: "Action is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     console.log("Whop webhook received:", JSON.stringify({ action }));
 

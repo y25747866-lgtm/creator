@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
   verifyAuthOnly, 
-  errorResponse 
+  errorResponse,
+  checkRateLimit,
+  validateAndSanitize
 } from "../_shared/validation.ts";
 
 serve(async (req) => {
@@ -14,19 +17,31 @@ serve(async (req) => {
 
   try {
     const access = await verifyAuthOnly(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Authentication required', 401);
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
     // Parse and validate input
-    let body: { title?: string; topic?: string };
+    let body: any;
     try {
       body = await req.json();
     } catch {
       return errorResponse('Invalid JSON body');
     }
 
-    const { title, topic } = body;
+    // Input validation & sanitization
+    const topic = validateAndSanitize(body.topic, 500);
+    const title = body.title ? validateAndSanitize(body.title, 100) : topic;
     
     // Validate input
     const validation = validateEbookInput(topic, title);
@@ -35,8 +50,8 @@ serve(async (req) => {
     }
 
     // Sanitize inputs
-    const sanitizedTitle = title ? sanitizeInput(title).substring(0, 200) : 'Ebook';
-    const sanitizedTopic = sanitizeInput(topic!);
+    const sanitizedTitle = title;
+    const sanitizedTopic = topic;
 
     const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 

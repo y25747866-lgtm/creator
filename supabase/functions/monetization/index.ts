@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyAccess, errorResponse, corsHeaders } from "../_shared/validation.ts";
+import { verifyAccess, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 function getSupabase() {
   return createClient(
@@ -22,15 +22,21 @@ serve(async (req) => {
 
   try {
     const access = await verifyAccess(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Subscription required', 403);
+    }
+
+    const sb = getSupabase();
+    
+    // Rate limiting
+    const rateLimit = await checkRateLimit(sb, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
     }
 
     const userId = access.userId;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
-
-    const sb = getSupabase();
 
     //////////////////////////////////////////////////////
     // CREATE PRODUCT
@@ -38,16 +44,23 @@ serve(async (req) => {
     if (action === "create-product" && req.method === "POST") {
 
       const body = await req.json();
+      
+      // Input validation & sanitization
+      const title = validateAndSanitize(body.title, 100);
+      const topic = validateAndSanitize(body.topic, 500);
+      const description = body.description ? validateAndSanitize(body.description, 1000) : null;
+      const sourceType = body.sourceType ? validateAndSanitize(body.sourceType, 100) : "ebook";
+      const sourceProductId = body.sourceProductId ? validateAndSanitize(body.sourceProductId, 100) : null;
 
       const { data, error } = await sb
         .from("monetization_products")
         .insert({
           user_id: userId,
-          title: body.title,
-          topic: body.topic,
-          description: body.description ?? null,
-          source_type: body.sourceType ?? "ebook",
-          source_product_id: body.sourceProductId ?? null
+          title,
+          topic,
+          description,
+          source_type: sourceType,
+          source_product_id: sourceProductId
         })
         .select()
         .single();
@@ -70,7 +83,9 @@ serve(async (req) => {
 
       const body = await req.json();
 
-      const productId = body.productId;
+      const productId = validateAndSanitize(body.productId, 100);
+      const moduleType = validateAndSanitize(body.moduleType, 100);
+      const title = validateAndSanitize(body.title, 100);
 
       const { data: product } = await sb
         .from("monetization_products")
@@ -88,8 +103,8 @@ serve(async (req) => {
         .from("monetization_modules")
         .insert({
           product_id: productId,
-          module_type: body.moduleType,
-          title: body.title,
+          module_type: moduleType,
+          title,
           status: "draft"
         })
         .select()
@@ -112,6 +127,12 @@ serve(async (req) => {
     if (action === "generate-module" && req.method === "POST") {
 
       const body = await req.json();
+      
+      // Input validation & sanitization
+      const title = validateAndSanitize(body.title, 100);
+      const topic = validateAndSanitize(body.topic, 500);
+      const sourceContent = body.sourceContent ? validateAndSanitize(body.sourceContent, 10000) : "";
+      const moduleId = validateAndSanitize(body.moduleId, 100);
 
       const GROQ_KEY = Deno.env.get("GROQ_API_KEY");
 
@@ -119,13 +140,13 @@ serve(async (req) => {
         throw new Error("Missing GROQ_API_KEY");
 
       const prompt = `
-Create monetizable product content.
-
-TITLE: ${body.title}
-TOPIC: ${body.topic}
-
-${body.sourceContent || ""}
-`;
+	Create monetizable product content.
+	
+	TITLE: ${title}
+	TOPIC: ${topic}
+	
+	${sourceContent}
+	`;
 
       const aiRes = await fetch(
         "https://api.groq.com/openai/v1/chat/completions",

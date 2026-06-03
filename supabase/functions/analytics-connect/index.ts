@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyAccess, corsHeaders, errorResponse } from "../_shared/validation.ts";
+import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -9,29 +9,31 @@ serve(async (req) => {
 
   try {
     const access = await verifyAccess(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Subscription required', 403);
     }
 
-    const authHeader = req.headers.get("Authorization");
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader! } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) throw new Error("User not found after verification");
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabaseAdmin, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    const user = { id: access.userId };
 
     const body = await req.json();
-    const { platform, apiKey, action } = body;
+    
+    // Input validation & sanitization
+    const platform = body.platform ? validateAndSanitize(body.platform, 100) : null;
+    const apiKey = body.apiKey ? validateAndSanitize(body.apiKey, 500) : null;
+    const action = body.action ? validateAndSanitize(body.action, 100) : null;
 
     // Handle disconnect
     if (action === "disconnect") {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
       
       const { error: deleteError } = await supabaseAdmin
         .from("platform_connections")
@@ -50,7 +52,6 @@ serve(async (req) => {
     }
 
     if (!platform || !apiKey) throw new Error("Platform and API key are required");
-    if (typeof platform !== 'string' || typeof apiKey !== 'string') throw new Error("Invalid platform or API key format");
 
     console.log(`🔗 Verifying ${platform} API key...`);
 
@@ -80,10 +81,6 @@ serve(async (req) => {
     }
 
     // Use SERVICE ROLE for upsert (bypasses RLS)
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const { error: upsertError } = await supabaseAdmin
       .from("platform_connections")

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { verifyAuthOnly, errorResponse, corsHeaders } from "../_shared/validation.ts";
+import { verifyAuthOnly, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -9,16 +9,28 @@ serve(async (req) => {
 
   try {
     const access = await verifyAuthOnly(req);
-    if (!access.authorized) {
+    if (!access.authorized || !access.userId) {
       return errorResponse(access.error || 'Authentication required', 401);
     }
-
-    const { moduleId, moduleType, title, topic } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    const body = await req.json();
+    
+    // Input validation & sanitization
+    const moduleId = validateAndSanitize(body.moduleId, 100);
+    const moduleType = validateAndSanitize(body.moduleType, 100);
+    const title = validateAndSanitize(body.title, 100);
+    const topic = validateAndSanitize(body.topic, 500);
 
     const GROQ_KEY = Deno.env.get("GROQ_API_KEY");
 
