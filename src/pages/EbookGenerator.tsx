@@ -127,6 +127,16 @@ function isAILeakage(text: string): boolean {
   return AI_LEAKAGE_PATTERNS.some(p => p.test(t));
 }
 
+// ─── HELPER: Strip markdown from AI text ─────────────────────────────────────
+function stripMarkdown(text: string): string {
+  return (text || "")
+    .replace(/\*\*/g, "")
+    .replace(/\*/g, "")
+    .replace(/^#+\s/gm, "")
+    .replace(/`/g, "")
+    .trim();
+}
+
 class EbookPDFRenderer {
   readonly pages: HTMLCanvasElement[] = [];
   private _lastCtx: CanvasRenderingContext2D | null = null;
@@ -142,7 +152,6 @@ class EbookPDFRenderer {
     return ctx;
   }
 
-  // Wrap text into lines fitting maxW — always uses current ctx font
   private wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
     const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
     const lines: string[] = [];
@@ -160,8 +169,6 @@ class EbookPDFRenderer {
     return lines;
   }
 
-  // FIX: Pure left-align — eliminates all garbled/overlapping text corruption
-  // Canvas justified text causes word-spacing glyphs to overlap at body font sizes
   private drawText(ctx: CanvasRenderingContext2D, line: string, x: number, y: number) {
     ctx.textAlign = "left";
     ctx.fillText(line, x, y);
@@ -184,7 +191,6 @@ class EbookPDFRenderer {
     ctx.beginPath(); ctx.moveTo(PAGE_W / 2 - 40, FOOTER_Y); ctx.lineTo(PAGE_W / 2 + 40, FOOTER_Y); ctx.stroke();
   }
 
-  // ── COVER ────────────────────────────────────────────────────────────────────
   async drawCover(title: string, subtitle: string, _topic: string, img64: string | null) {
     this._bookTitle = title;
     const ctx = this.newPage();
@@ -229,7 +235,6 @@ class EbookPDFRenderer {
     ctx.beginPath(); ctx.moveTo(MX2, h - 48); ctx.lineTo(w - MX2, h - 48); ctx.stroke();
   }
 
-  // ── TITLE PAGE ───────────────────────────────────────────────────────────────
   drawTitlePage(title: string) {
     this._bookTitle = title;
     const ctx = this.newPage();
@@ -249,7 +254,6 @@ class EbookPDFRenderer {
     ctx.fillText("Copyrighted Material", PAGE_W / 2, 24);
   }
 
-  // ── TABLE OF CONTENTS ────────────────────────────────────────────────────────
   drawTOC(toc: Array<{ type: string; number?: number; label: string }>, bookTitle: string) {
     const ctx = this.newPage();
     ctx.fillStyle = WHITE; ctx.fillRect(0, 0, PAGE_W, PAGE_H);
@@ -289,7 +293,6 @@ class EbookPDFRenderer {
 
   drawChapterSplash(_num: number, _title: string, _bookTitle: string) { /* no-op */ }
 
-  // ── CONTENT PAGES ────────────────────────────────────────────────────────────
   drawContentPages(title: string, rawContent: string, bookTitle: string, isChapter = false, chNum?: number) {
     if (isChapter) this.trimOrphanPages();
 
@@ -388,7 +391,6 @@ class EbookPDFRenderer {
     if (nonWhitePixels < 80) { this.pages.pop(); this._lastCtx = null; this._lastY = 0; }
   }
 
-  // ── CONTENT PARSER ───────────────────────────────────────────────────────────
   private parseBlocks(content: string): Array<{ type: string; text: string }> {
     const blocks: Array<{ type: string; text: string }> = [];
 
@@ -403,11 +405,7 @@ class EbookPDFRenderer {
     for (const para of preprocessed.split(/\n\n+/)) {
       const t = para.trim();
       if (!t) continue;
-
-      // Skip AI leakage
       if (isAILeakage(t)) continue;
-
-      // Skip known junk
       if (/^Chapter:\s*[""]?.{3,120}[""]?\s*$/i.test(t)) continue;
       if (/^here is the (improved|rewritten|final|humanized)/i.test(t)) continue;
       if (/^(note:|editor.?s? note:|revision:)/i.test(t)) continue;
@@ -452,7 +450,6 @@ class EbookPDFRenderer {
     return blocks;
   }
 
-  // FIX: quality 0.95 → 1.0 + revokeObjectURL delayed to prevent race condition
   async exportPDF(filename: string) {
     this.trimOrphanPages();
     const jpegUrls = this.pages.map(c => c.toDataURL("image/jpeg", 1.0));
@@ -476,6 +473,13 @@ interface NicheCard {
   demand: number;
   speed: number;
 }
+
+// ─── SCORE BAR COLORS ────────────────────────────────────────────────────────
+const SCORE_BAR_COLORS: Record<string, string> = {
+  pain: "#EF4444",
+  demand: "#00d4aa",
+  speed: "#8B5CF6",
+};
 
 const EbookGenerator = () => {
   const navigate = useNavigate();
@@ -524,12 +528,13 @@ const EbookGenerator = () => {
       });
       if (error) throw error;
       if (data?.niches) {
+        // FIX: Strip markdown from all text fields on the frontend as safety layer
         const mapped = data.niches.map((n: any) => ({
           id: crypto.randomUUID(),
-          category: n.category,
-          subNiche: n.subNiche,
-          headline: n.headline,
-          description: n.painDescription,
+          category: stripMarkdown(n.category),
+          subNiche: stripMarkdown(n.subNiche),
+          headline: stripMarkdown(n.headline),
+          description: stripMarkdown(n.painDescription),
           pain: n.scores?.pain ?? n.pain ?? 7,
           demand: n.scores?.demand ?? n.demand ?? 7,
           speed: n.scores?.speed ?? n.speed ?? 7,
@@ -647,26 +652,17 @@ const EbookGenerator = () => {
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center gap-8 mb-12">
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 1 ? <Check className="w-3 h-3" /> : "1"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 1 ? "text-white" : "text-zinc-600"}`}>Niche</span>
-      </div>
-      <div className="w-12 h-[1px] bg-zinc-800" />
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 2 ? <Check className="w-3 h-3" /> : step === 2 ? <div className="w-2 h-2 bg-black rounded-full" /> : "2"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 2 ? "text-white" : "text-zinc-600"}`}>Script</span>
-      </div>
-      <div className="w-12 h-[1px] bg-zinc-800" />
-      <div className="flex items-center gap-2">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= 3 ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-          {step > 3 ? <Check className="w-3 h-3" /> : "3"}
-        </div>
-        <span className={`text-sm font-bold uppercase tracking-wider ${step >= 3 ? "text-white" : "text-zinc-600"}`}>Render</span>
-      </div>
+      {[{ label: "Niche", n: 1 }, { label: "Script", n: 2 }, { label: "Render", n: 3 }].map((s, i) => (
+        <>
+          <div key={s.n} className="flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= s.n ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
+              {step > s.n ? <Check className="w-3 h-3" /> : s.n}
+            </div>
+            <span className={`text-sm font-bold uppercase tracking-wider ${step >= s.n ? "text-white" : "text-zinc-600"}`}>{s.label}</span>
+          </div>
+          {i < 2 && <div key={`div-${i}`} className="w-12 h-[1px] bg-zinc-800" />}
+        </>
+      ))}
     </div>
   );
 
@@ -684,7 +680,8 @@ const EbookGenerator = () => {
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. Biohacking, Real Estate, Parenting..."
+              onKeyDown={(e) => e.key === "Enter" && findWinningNiches()}
+              placeholder="I don't know, you can find a good topic for me."
               className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
             />
             <p className="text-xs text-zinc-500 mt-2">Enter a broad idea and AI will search trending markets to find the best angle to sell.</p>
@@ -730,18 +727,33 @@ const EbookGenerator = () => {
               onClick={() => setSelectedNiche(niche)}
               className={`bg-[#111111] border-2 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] ${selectedNiche?.id === niche.id ? "border-white" : "border-zinc-900"}`}
             >
-              <span className="inline-block px-2 py-1 bg-zinc-800 text-[10px] font-bold text-zinc-400 rounded mb-4 tracking-widest uppercase">{niche.category}</span>
+              <span className="inline-block px-2 py-1 bg-zinc-800 text-[10px] font-bold text-zinc-400 rounded mb-4 tracking-widest uppercase">
+                {niche.category}
+              </span>
+              {/* FIX: subNiche and headline are now stripped of ** markdown */}
               <p className="text-xs text-zinc-500 mb-1">{niche.subNiche}</p>
-              <h3 className="text-lg font-bold text-white mb-3 leading-tight" style={{ fontFamily: "Syne" }}>{niche.headline}</h3>
+              <h3 className="text-lg font-bold text-white mb-3 leading-tight" style={{ fontFamily: "Syne" }}>
+                {niche.headline}
+              </h3>
               <p className="text-sm text-zinc-400 mb-6 line-clamp-2">{niche.description}</p>
+
+              {/* FIX: Replaced broken dots with proper colored progress bars */}
               <div className="space-y-3">
                 {(["pain", "demand", "speed"] as const).map(key => (
-                  <div key={key} className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tighter">
-                    <span className="text-zinc-500">{key}</span>
-                    <div className="flex gap-1">
-                      {[...Array(10)].map((_, i) => (
-                        <div key={i} className={`w-2 h-1 rounded-full ${i < niche[key] ? "bg-white" : "bg-zinc-800"}`} />
-                      ))}
+                  <div key={key} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{key}</span>
+                      <span className="text-[10px] font-bold text-zinc-400">{niche[key]}/10</span>
+                    </div>
+                    <div style={{ background: '#1A1A1A', borderRadius: '4px', height: '5px', width: '100%' }}>
+                      <div style={{
+                        background: SCORE_BAR_COLORS[key],
+                        width: `${niche[key] * 10}%`,
+                        height: '5px',
+                        borderRadius: '4px',
+                        transition: 'width 0.4s ease',
+                        opacity: selectedNiche?.id === niche.id ? 1 : 0.7,
+                      }} />
                     </div>
                   </div>
                 ))}
