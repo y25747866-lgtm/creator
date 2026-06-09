@@ -22,6 +22,8 @@ serve(async (req) => {
       return errorResponse(rateLimit.error!, 429);
     }
 
+    const user = { id: access.userId };
+
     const body = await req.json();
     
     // Input validation & sanitization
