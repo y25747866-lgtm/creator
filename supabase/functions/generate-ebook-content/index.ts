@@ -7,7 +7,8 @@ import {
   verifyAuthOnly, 
   errorResponse,
   checkRateLimit,
-  validateAndSanitize
+  validateAndSanitize,
+  checkDailyLimit
 } from "../_shared/validation.ts";
 
 interface LengthConfig {
@@ -300,6 +301,12 @@ serve(async (req) => {
     const rateLimit = await checkRateLimit(supabase, access.userId);
     if (!rateLimit.allowed) {
       return errorResponse(rateLimit.error!, 429);
+    }
+
+    // Server-side daily limit for free users
+    const dailyLimit = await checkDailyLimit(supabase, access.userId);
+    if (!dailyLimit.allowed) {
+      return errorResponse(dailyLimit.error!, 403);
     }
 
     let body: any;

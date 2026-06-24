@@ -218,6 +218,58 @@ export async function checkRateLimit(supabase: any, userId: string): Promise<{ a
 }
 
 /**
+ * SERVER-SIDE DAILY GENERATION LIMIT
+ * Free tier users can only generate once every 24 hours.
+ */
+export async function checkDailyLimit(supabase: any, userId: string): Promise<{ allowed: boolean; error?: string }> {
+  // 1. Check if user is on free tier
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('plan, plan_type, status')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const plan = subscription?.plan || subscription?.plan_type || 'free';
+  const isExpired = subscription?.status === 'expired';
+  const isFree = plan === 'free' || isExpired;
+
+  // If not free, allow generation
+  if (!isFree) return { allowed: true };
+
+  // 2. Check last_generated_at in profiles
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('last_generated_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (profile?.last_generated_at) {
+    const lastGenerated = new Date(profile.last_generated_at);
+    const now = new Date();
+    const diffMs = now.getTime() - lastGenerated.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+      const remainingHours = Math.ceil(24 - diffHours);
+      return { 
+        allowed: false, 
+        error: `Daily limit reached. Resets in ${remainingHours} hours.` 
+      };
+    }
+  }
+
+  // 3. Update last_generated_at to now
+  await supabase
+    .from('profiles')
+    .update({ last_generated_at: new Date().toISOString() })
+    .eq('user_id', userId);
+
+  return { allowed: true };
+}
+
+/**
  * INPUT VALIDATION & SANITIZATION
  */
 export function validateAndSanitize(input: any, maxLength: number = 2000): string {
