@@ -64,15 +64,17 @@ export function aggregateMetrics(metrics: MetricRecord[], feedback: FeedbackReco
   // Trend: compare last 7 days vs previous 7 days downloads
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const recentDownloads = metrics.filter(
-    (m) => (m.metric_type === "download" || m.metric_type === "cover_download") && new Date(m.recorded_at).getTime() > now - weekMs
-  ).length;
-  const previousDownloads = metrics.filter(
-    (m) =>
-      (m.metric_type === "download" || m.metric_type === "cover_download") &&
-      new Date(m.recorded_at).getTime() > now - 2 * weekMs &&
-      new Date(m.recorded_at).getTime() <= now - weekMs
-  ).length;
+  const recentDownloads = metrics
+    .filter((m) => (m.metric_type === "download" || m.metric_type === "cover_download") && new Date(m.recorded_at).getTime() > now - weekMs)
+    .reduce((s, m) => s + m.value, 0);
+  const previousDownloads = metrics
+    .filter(
+      (m) =>
+        (m.metric_type === "download" || m.metric_type === "cover_download") &&
+        new Date(m.recorded_at).getTime() > now - 2 * weekMs &&
+        new Date(m.recorded_at).getTime() <= now - weekMs
+    )
+    .reduce((s, m) => s + m.value, 0);
 
   const trend: "up" | "down" | "neutral" =
     recentDownloads > previousDownloads ? "up" : recentDownloads < previousDownloads ? "down" : "neutral";

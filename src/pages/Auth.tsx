@@ -1,33 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Check, Loader2 } from 'lucide-react';
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mail, Loader2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable/index";
-import nexoraLogo from "@/assets/nexora-logo.png";
 import { z } from "zod";
-import { signInWithGoogle } from "@/lib/auth/login"; // ← Added this import
+import { signInWithGoogle } from "@/lib/auth/login";
+import nexoraLogo from "@/assets/nexora-logo.png";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 
-const GoogleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
-    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
-    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
-    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 2.58 9 3.58Z" fill="#EA4335"/>
-  </svg>
-);
-
-const Auth = () => {
-  const [email, setEmail] = useState("");
+const NexoraOSSignIn = () => {
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [error, setError] = useState('');
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -45,31 +31,31 @@ const Auth = () => {
     }
   }, [user, loading, navigate, redirectTo]);
 
-  const validateEmail = () => {
-    try {
-      emailSchema.parse(email);
-      setEmailError(null);
-      return true;
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        setEmailError(e.errors[0].message);
-      }
-      return false;
-    }
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateEmail()) return;
+    setError('');
+    
+    if (!email) {
+      setError('Email is required');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const { error } = await sendMagicLink(email);
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+      const { error: authError } = await sendMagicLink(email);
+      if (authError) {
+        setError(authError.message || 'Failed to send magic link');
+        toast({ title: "Error", description: authError.message, variant: "destructive" });
         return;
       }
-      setMagicLinkSent(true);
-    } catch {
+      toast({ title: "Success", description: "Check your email for the sign-in link" });
+    } catch (err: any) {
+      setError('Something went wrong. Please try again.');
       toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -79,7 +65,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithGoogle(); // Uses Supabase directly → redirects to Google → back to /auth/callback
+      await signInWithGoogle();
     } catch (err: any) {
       console.error("Google sign-in error:", err);
       toast({
@@ -92,124 +78,328 @@ const Auth = () => {
     }
   };
 
-  const anyLoading = isLoading || isGoogleLoading;
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <Loader2 className="w-6 h-6 animate-spin text-[#666666]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-[400px]"
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <style>{`
+        ::selection {
+          background: #FFFFFF;
+          color: #0A0A0A;
+        }
+        
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 100px #111111 inset;
+          -webkit-text-fill-color: #FFFFFF;
+        }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease forwards;
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease forwards;
+        }
+        
+        .stagger-1 {
+          animation-delay: 0.1s;
+          opacity: 0;
+        }
+        
+        .stagger-2 {
+          animation-delay: 0.2s;
+          opacity: 0;
+        }
+        
+        .stagger-3 {
+          animation-delay: 0.3s;
+          opacity: 0;
+        }
+        
+        .stagger-4 {
+          animation-delay: 0.4s;
+          opacity: 0;
+        }
+        
+        .stagger-5 {
+          animation-delay: 0.5s;
+          opacity: 0;
+        }
+        
+        .stagger-6 {
+          animation-delay: 0.6s;
+          opacity: 0;
+        }
+        
+        .stagger-7 {
+          animation-delay: 0.7s;
+          opacity: 0;
+        }
+      `}</style>
+
+      {/* Left Panel */}
+      <div 
+        className="md:w-[55%] bg-[#0A0A0A] relative overflow-hidden h-14 md:h-screen flex flex-col"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }}
       >
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <img src={nexoraLogo} alt="NexoraOS" className="h-10 w-auto" />
+        {/* Subtle glow effect */}
+        <div 
+          className="absolute bottom-0 left-0 w-[600px] h-[600px] pointer-events-none hidden md:block"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)',
+          }}
+        />
+        
+        {/* Logo - Always visible */}
+        <div className="absolute top-0 left-0 p-6 md:p-8 flex items-center gap-2 animate-fade-in stagger-1 z-20">
+          <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
+          <span className="text-white font-semibold text-base">NexoraOS</span>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-          {magicLinkSent ? (
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground mb-1">Check your email</h1>
-                <p className="text-sm text-muted-foreground">
-                  We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>
-                </p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Didn't get it? Check spam or try again.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => { setMagicLinkSent(false); setEmail(""); }}
-                className="w-full rounded-xl"
+        {/* Center Content - Hidden on mobile */}
+        <div className="hidden md:flex flex-col justify-center items-start h-full px-12 relative z-10">
+          <div className="max-w-lg">
+            {/* Badge */}
+            <div className="mb-6 animate-fade-in stagger-2">
+              <span 
+                className="inline-block px-3 py-1.5 text-[10px] font-semibold tracking-wider"
+                style={{
+                  background: '#111111',
+                  border: '1px solid #1A1A1A',
+                  color: '#FFFFFF',
+                  opacity: 0.5,
+                }}
               >
-                Use a different email
-              </Button>
+                AI-POWERED BUSINESS OS
+              </span>
             </div>
-          ) : (
-            <>
-              <div className="text-center mb-6">
-                <h1 className="text-lg font-semibold text-foreground mb-1">Sign in to NexoraOS</h1>
-                <p className="text-sm text-muted-foreground">
-                  Create AI-powered digital businesses instantly.
-                </p>
-              </div>
 
-              {/* Email form */}
-              <form onSubmit={handleEmailSubmit} className="space-y-3">
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-                    disabled={anyLoading}
-                    className="h-11 rounded-xl bg-background"
-                    autoFocus
-                  />
-                  {emailError && (
-                    <p className="text-xs text-destructive mt-1.5">{emailError}</p>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full h-11 rounded-xl font-medium"
-                  disabled={anyLoading}
+            {/* Headline */}
+            <h1 
+              className="text-white mb-4 animate-fade-in stagger-3"
+              style={{
+                fontFamily: 'Syne, sans-serif',
+                fontSize: '40px',
+                fontWeight: 900,
+                lineHeight: 1.2,
+              }}
+            >
+              Turn your idea into income.
+            </h1>
+
+            {/* Subheadline */}
+            <p 
+              className="text-[#666666] mb-6 animate-fade-in stagger-4"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                lineHeight: 1.6,
+              }}
+            >
+              Everything you need to build, launch, and sell digital products — in one place.
+            </p>
+
+            {/* Features */}
+            <div className="space-y-3 mt-6">
+              {[
+                'Generate a full ebook in under 60 seconds',
+                'Launch a sales page without touching code',
+                'Sell on Whop, Gumroad, Payhip and more'
+              ].map((feature, index) => (
+                <div 
+                  key={index} 
+                  className={`flex items-center gap-3 animate-fade-in stagger-${index + 5}`}
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
-                </Button>
-              </form>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground font-medium">OR</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-
-              {/* Google */}
-              <Button
-                variant="outline"
-                className="w-full h-11 rounded-xl font-medium gap-3"
-                onClick={handleGoogleSignIn}
-                disabled={anyLoading}
-              >
-                {isGoogleLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <GoogleIcon />
-                )}
-                Continue with Google
-              </Button>
-            </>
-          )}
+                  <Check className="w-4 h-4 text-white flex-shrink-0" />
+                  <span 
+                    className="text-[#999999]"
+                    style={{
+                      fontFamily: 'DM Sans, sans-serif',
+                      fontSize: '14px',
+                    }}
+                  >
+                    {feature}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
-          By signing in, you agree to our{" "}
-          <a href="#" className="underline hover:text-foreground transition-colors">Terms of Service</a>
-          {" "}and{" "}
-          <a href="#" className="underline hover:text-foreground transition-colors">Privacy Policy</a>.
-        </p>
-      </motion.div>
+        {/* Copyright - Hidden on mobile */}
+        <div className="hidden md:block absolute bottom-0 left-0 p-8 z-20">
+          <p className="text-[#333333] text-[11px]">© 2026 NexoraOS</p>
+        </div>
+      </div>
+
+      {/* Right Panel */}
+      <div className="flex-1 md:w-[45%] bg-[#080808] flex flex-col justify-center items-center h-screen p-12">
+        <div className="w-full max-w-[340px] animate-fade-in-up">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 
+              className="text-white mb-2"
+              style={{
+                fontFamily: 'Syne, sans-serif',
+                fontSize: '24px',
+                fontWeight: 700,
+              }}
+            >
+              Sign in to NexoraOS
+            </h2>
+            <p 
+              className="text-[#666666]"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '13px',
+              }}
+            >
+              Create AI-powered digital businesses instantly.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleContinue} className="space-y-4">
+            {/* Email Input */}
+            <div>
+              <label 
+                htmlFor="email"
+                className="text-[#444444] text-[10px] font-semibold tracking-wider mb-2 block"
+              >
+                EMAIL
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className={`w-full h-11 bg-[#111111] border rounded-md px-3.5 text-white placeholder:text-[#333333] focus:outline-none transition-all ${
+                  error 
+                    ? 'border-[#FF4444]' 
+                    : 'border-[#1A1A1A] focus:border-[rgba(255,255,255,0.3)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.05)]'
+                }`}
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: '14px',
+                }}
+              />
+              {error && (
+                <p className="text-[#FF4444] text-xs mt-1.5">{error}</p>
+              )}
+            </div>
+
+            {/* Continue Button */}
+            <button
+              type="submit"
+              disabled={isLoading || isGoogleLoading}
+              className="w-full bg-white text-[#0A0A0A] font-bold rounded-md hover:bg-[#F0F0F0] transition-all disabled:opacity-50 disabled:cursor-not-allowed border-none flex items-center justify-center gap-2"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                height: '44px',
+                fontWeight: 700,
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Continue →'
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-[#1A1A1A]" />
+              <span className="text-[#333333] text-xs">OR</span>
+              <div className="flex-1 h-px bg-[#1A1A1A]" />
+            </div>
+
+            {/* Google Button */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading || isGoogleLoading}
+              className="w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-md flex items-center justify-center gap-3 text-[#999999] hover:border-[rgba(255,255,255,0.15)] hover:bg-[#161616] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '14px',
+                fontWeight: 500,
+              }}
+            >
+              {isGoogleLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.20443C17.64 8.56625 17.5827 7.95262 17.4764 7.36353H9V10.8449H13.8436C13.635 11.9699 13.0009 12.9231 12.0477 13.5613V15.8194H14.9564C16.6582 14.2526 17.64 11.9453 17.64 9.20443Z" fill="#4285F4"/>
+                    <path d="M8.99976 18C11.4298 18 13.467 17.1941 14.9561 15.8195L12.0475 13.5613C11.2416 14.1013 10.2107 14.4204 8.99976 14.4204C6.65567 14.4204 4.67158 12.8372 3.96385 10.71H0.957031V13.0418C2.43794 15.9831 5.48158 18 8.99976 18Z" fill="#34A853"/>
+                    <path d="M3.96409 10.7098C3.78409 10.1698 3.68182 9.59301 3.68182 8.99983C3.68182 8.40665 3.78409 7.82983 3.96409 7.28983V4.95801H0.957273C0.347727 6.17301 0 7.54755 0 8.99983C0 10.4521 0.347727 11.8266 0.957273 13.0416L3.96409 10.7098Z" fill="#FBBC05"/>
+                    <path d="M8.99976 3.57955C10.3211 3.57955 11.5075 4.03364 12.4402 4.92545L15.0216 2.34409C13.4629 0.891818 11.4257 0 8.99976 0C5.48158 0 2.43794 2.01682 0.957031 4.95818L3.96385 7.29C4.67158 5.16273 6.65567 3.57955 8.99976 3.57955Z" fill="#EA4335"/>
+                  </svg>
+                  Continue with Google
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Terms */}
+          <p 
+            className="text-[#333333] text-center mt-6"
+            style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: '11px',
+              lineHeight: 1.5,
+            }}
+          >
+            By signing in, you agree to our{' '}
+            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
+              Privacy Policy
+            </a>
+            .
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Auth;
+export default NexoraOSSignIn;
