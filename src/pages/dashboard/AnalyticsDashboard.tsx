@@ -288,19 +288,9 @@ const AnalyticsDashboard = () => {
     setChatLoading(true);
     
     try {
-      // Save user message to Supabase immediately
-      const { error: saveError } = await supabase
-        .from("analytics_chat_messages")
-        .insert({
-          user_id: user.id,
-          role: "user",
-          content: msg,
-        });
-
-      if (saveError) {
-        throw new Error(`Failed to save message: ${saveError.message}`);
-      }
-
+      // The Edge Function will handle saving both the user message and the assistant reply
+      // to ensure consistency and proper ordering.
+      
       // Call AI function to get response
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
         body: { 

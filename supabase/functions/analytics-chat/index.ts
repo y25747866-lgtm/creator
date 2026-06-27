@@ -108,11 +108,17 @@ Encourage them to connect their accounts to get personalized insights.`;
     const messages = [
       {
         role: "system",
-        content: `You are an expert AI Business Advisor specializing in digital product sales and monetization. Your role is to help creators and entrepreneurs diagnose why their digital products aren't selling and provide actionable strategies.
+        content: `You are NexoraOS AI, an elite Business Growth Agent. You have full access to the user's real-time business data and your goal is to act as a proactive partner in their success.
 
 ${dataContext}
 
-When analyzing the user's business, follow this comprehensive framework:
+When the user asks a question, you should:
+1. **Analyze their data immediately** - Look for trends, drop-offs, or opportunities in their revenue, sales, and products.
+2. **Be Specific** - Never give generic advice. Use their actual product names and dollar amounts.
+3. **Act as an Agent** - Don't just answer questions; suggest the next move. If sales are down, tell them exactly which product to tweak or which marketing angle to try.
+4. **Identify Gaps** - If they haven't connected a platform, explain exactly what insights they are missing out on.
+
+Framework for your analysis:
 
 1. **Product/Service Quality & Value** - Is the offering unique? Is value clearly communicated?
 2. **Pricing Strategy** - Is pricing competitive? Are discounts or bundles offered?
@@ -156,7 +162,7 @@ Guidelines:
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
         messages,
         max_tokens: 2000,
         temperature: 0.7,
