@@ -447,11 +447,18 @@ const Landing = () => {
               <p className="text-[#333333] text-sm">Built by a creator, for creators.</p>
               <p className="text-[#222222] text-xs mt-1">No VC money. No corporate BS.</p>
             </div>
-            <div className="flex gap-8 text-sm text-[#333333]">
-              <a href="#features" className="hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-              <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-              <span>© 2026 NexoraOS</span>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-8 text-sm text-[#333333]">
+                <a href="#features" className="hover:text-white transition-colors">Features</a>
+                <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+                <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+                <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+                <span>© 2026 NexoraOS</span>
+              </div>
+              <div className="text-sm text-[#333333]">
+                <span>Support: </span>
+                <a href="mailto:support@nexoraos.digital" className="hover:text-white transition-colors">support@nexoraos.digital</a>
+              </div>
             </div>
           </div>
         </div>

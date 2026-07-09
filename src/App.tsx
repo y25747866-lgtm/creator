@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Pricing from "./pages/Pricing";
+import Contact from "./pages/Contact";
 import WhopSuccess from "./pages/WhopSuccess";
 import NotFound from "./pages/NotFound";
 import ProductsDashboard from "./pages/dashboard/ProductsDashboard";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/whop/success" element={<WhopSuccess />} />
             <Route
               path="/dashboard"
