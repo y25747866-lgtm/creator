@@ -22,8 +22,8 @@ import {
   Send, Bot, User, Loader2, BarChart2, Lock,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from "recharts";
-import whopLogo from "@/assets/whop-logo.png";
-import payhipLogo from "@/assets/payhip-logo.png";
+import whopLogo from "@/assets/whop-logo.webp";
+import payhipLogo from "@/assets/payhip-logo.webp";
 
 interface PlatformConnection { 
   platform: string; 

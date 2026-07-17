@@ -278,7 +278,7 @@ export async function downloadCoverImage(ebook: Ebook): Promise<void> {
     const filename = (ebook.title || "cover")
       .replace(/[^a-zA-Z0-9\s]/g, "")
       .replace(/\s+/g, "_");
-    link.download = `${filename}_cover.png`;
+    link.download = `${filename}_cover.webp`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

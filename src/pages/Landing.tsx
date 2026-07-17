@@ -6,8 +6,8 @@ import {
   ArrowRight, Check, Sparkles, DollarSign,
   TrendingUp, Rocket, BarChart2
 } from 'lucide-react';
-import nexoraLogo from '@/assets/nexora-logo.png';
-import founderPhoto from '@/assets/founder-photo.jpg';
+import nexoraLogo from '@/assets/nexora-logo.webp';
+import founderPhoto from '@/assets/founder-photo.webp';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';
 import OptimizedHeroBackground from '@/components/OptimizedHeroBackground';
@@ -238,7 +238,7 @@ const Landing = () => {
             {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
               <img
                 key={i}
-                src={`/logos/logo-${n}.png`}
+                src={`/logos/logo-${n}.webp`}
                 alt={`Platform logo ${n}`}
                 width="120"
                 height="40"
