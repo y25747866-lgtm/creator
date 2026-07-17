@@ -1,15 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 
 import { 
-  ArrowRight, Check, Sparkles, Globe, DollarSign,
-  Zap, TrendingUp, Rocket, ChevronDown, ChevronUp,
-  CreditCard, Layout, Share2, Lightbulb, BarChart2
+  ArrowRight, Check, Sparkles, DollarSign,
+  TrendingUp, Rocket, BarChart2
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.png';
 import founderPhoto from '@/assets/founder-photo.jpg';
-import { PlasmaWeb } from '@/components/PlasmaWeb';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';
 import OptimizedHeroBackground from '@/components/OptimizedHeroBackground';
@@ -34,7 +32,7 @@ const Section = ({ children, className = '', id }: { children: React.ReactNode; 
 
 const Landing = () => {
   const heroWordsRef = useRef<HTMLDivElement>(null);
-  const { isLoading } = useLandingLoading(100); // Minimal delay for instant display
+  const { isLoading } = useLandingLoading(100);
 
   useEffect(() => {
     if (heroWordsRef.current && !isLoading) {
@@ -49,14 +47,13 @@ const Landing = () => {
 
   const faqs = [
     { q: 'Do I need technical skills?', a: 'No. If you can type and click, you can use NexoraOS. The AI handles the technical stuff.' },
-    { q: 'How long does it take to create a product?', a: 'Most products are done in under an hour. Some take 20 minutes. Depends on what you\'re building.' },
+    { q: 'How long does it take to create a product?', a: 'Most products are done in under 3 minutes. The AI handles everything from research to generation.' },
     { q: 'Can I sell on my own platform?', a: 'Yes. NexoraOS integrates with Gumroad, Whop, Shopify, and more. Or use our built-in checkout.' },
     { q: 'What if I don\'t like it?', a: 'Cancel anytime. No contracts, no commitments, no hard feelings.' },
     { q: 'Is this another course or template library?', a: 'No. This is software that builds products for you. Not tutorials. Not inspiration. Actual products you can sell today.' },
     { q: 'Is there a free plan?', a: 'Yes. Start free, no credit card needed. Upgrade when you\'re ready.' },
   ];
 
-  // Show skeleton while loading
   if (isLoading) {
     return <LandingSkeleton />;
   }
@@ -73,7 +70,7 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
+            <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" className="w-8 h-8" />
             <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#666666] absolute left-1/2 -translate-x-1/2">
@@ -90,16 +87,9 @@ const Landing = () => {
       </motion.nav>
 
       {/* ═══ HERO ═══ */}
-      <section
-        id="hero"
-        className="pt-48 pb-24 hero-section"
-        style={{ position: 'relative', overflow: 'hidden' }}
-      >
-        {/* Optimized animated background with lazy loading */}
+      <section id="hero" className="pt-48 pb-24 hero-section relative overflow-hidden">
         <OptimizedHeroBackground />
-
-        {/* Hero content wrapper */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="relative z-10">
           <div className="max-w-7xl mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -107,7 +97,6 @@ const Landing = () => {
               transition={{ duration: 0.8 }}
               className="max-w-7xl mx-auto"
             >
-              {/* Badge */}
               <div className="flex justify-start mb-8">
                 <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
                   style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
@@ -116,7 +105,6 @@ const Landing = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                {/* Left: Text */}
                 <div className="text-left">
                   <div ref={heroWordsRef}>
                     <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
@@ -129,23 +117,17 @@ const Landing = () => {
                       <div className="hero-word transition-opacity duration-500 text-white/85">In one session.</div>
                     </h1>
                   </div>
-
                   <p className="text-[#666666] mb-10 text-lg leading-relaxed max-w-lg">
                     NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
                   </p>
-
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <Link
-                      to="/auth"
-                      className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2"
-                    >
+                    <Link to="/auth" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
                       Start Building Now <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                   <p className="text-[#333333] text-xs">No credit card. No fluff.</p>
                 </div>
 
-                {/* Right: Terminal Window */}
                 <div className="hidden lg:block">
                   <motion.div
                     initial={{ opacity: 0, x: 40 }}
@@ -173,7 +155,7 @@ const Landing = () => {
                       </div>
                       <div className="pt-4 border-t border-[#1A1A1A]">
                         <span className="text-[#666666]">Time elapsed: </span>
-                        <span className="text-white">47 minutes</span>
+                        <span className="text-white">2 minutes</span>
                       </div>
                     </div>
                   </motion.div>
@@ -197,16 +179,14 @@ const Landing = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-10 gap-4">
-            {/* Generate - 60% */}
             <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Generate</h3>
-              <p className="text-[#666666] leading-relaxed">AI builds your digital product from scratch. eBooks, courses, templates, software—whatever you can sell, we can generate.</p>
+              <p className="text-[#666666] leading-relaxed">AI builds your digital product from scratch. Products, courses, templates, software—whatever you can sell, we can generate.</p>
             </div>
 
-            {/* Launch - 40% */}
             <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Rocket className="w-6 h-6 text-white" />
@@ -215,7 +195,6 @@ const Landing = () => {
               <p className="text-[#666666] leading-relaxed">Sales page, checkout, delivery—all automated. You just share the link.</p>
             </div>
 
-            {/* Sell - 40% */}
             <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <DollarSign className="w-6 h-6 text-white" />
@@ -224,7 +203,6 @@ const Landing = () => {
               <p className="text-[#666666] leading-relaxed">Plug into any platform. Keep 100% of your earnings.</p>
             </div>
 
-            {/* Track - 60% */}
             <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <BarChart2 className="w-6 h-6 text-white" />
@@ -233,7 +211,6 @@ const Landing = () => {
               <p className="text-[#666666] leading-relaxed">Real-time analytics. Know what's working. Know what's making money. No guesswork.</p>
             </div>
 
-            {/* Scale - 100% width, inline format */}
             <div className="md:col-span-10 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
               <div className="flex flex-col md:flex-row md:items-center gap-6">
                 <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -250,46 +227,23 @@ const Landing = () => {
       </Section>
 
       {/* ═══ PLATFORM STRIP ═══ */}
-      <section
-        className="relative overflow-hidden"
-        style={{ background: '#080808', borderTop: '1px solid #1A1A1A', borderBottom: '1px solid #1A1A1A', padding: '32px 0' }}
-        onMouseEnter={(e) => {
-          const track = e.currentTarget.querySelector('.platform-track') as HTMLElement;
-          if (track) track.style.animationPlayState = 'paused';
-        }}
-        onMouseLeave={(e) => {
-          const track = e.currentTarget.querySelector('.platform-track') as HTMLElement;
-          if (track) track.style.animationPlayState = 'running';
-        }}
-      >
-        <p style={{ textAlign: 'center', fontSize: '10px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#333333', marginBottom: '20px', fontFamily: "'DM Sans', sans-serif" }}>
+      <section className="relative overflow-hidden py-8 bg-[#080808] border-y border-[#1A1A1A]">
+        <p className="text-center text-[10px] font-semibold tracking-[0.12em] uppercase text-[#333333] mb-5 font-['DM_Sans']">
           SELL ON ANY PLATFORM
         </p>
-
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '120px', background: 'linear-gradient(to right, #080808, transparent)' }} />
-        <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none" style={{ width: '120px', background: 'linear-gradient(to left, #080808, transparent)' }} />
-
-        <div style={{ overflow: 'hidden', width: '100%' }}>
-          <div
-            className="platform-track"
-            style={{
-              display: 'flex',
-              flexWrap: 'nowrap',
-              alignItems: 'center',
-              gap: '80px',
-              width: 'max-content',
-              animation: 'platform-scroll 35s linear infinite',
-            }}
-          >
+        <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-r from-[#080808] to-transparent" />
+        <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-l from-[#080808] to-transparent" />
+        <div className="overflow-hidden w-full">
+          <div className="platform-track flex nowrap items-center gap-20 w-max-content animate-platform-scroll">
             {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
               <img
                 key={i}
                 src={`/logos/logo-${n}.png`}
                 alt={`Platform logo ${n}`}
-                style={{ height: '40px', width: 'auto', flexShrink: 0, opacity: 0.5, transition: 'opacity 300ms ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }}
+                width="120"
+                height="40"
+                loading="lazy"
+                className="h-10 w-auto shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-300"
               />
             ))}
           </div>
@@ -305,13 +259,11 @@ const Landing = () => {
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            {/* Founder Photo */}
             <div className="flex justify-center">
               <div className="aspect-square w-full max-w-sm rounded-3xl overflow-hidden border border-[#1A1A1A]">
-                <img src={founderPhoto} alt="Yesh Malik — Founder of NexoraOS" className="w-full h-full object-cover" />
+                <img src={founderPhoto} alt="Yesh Malik — Founder of NexoraOS" width="400" height="400" loading="lazy" className="w-full h-full object-cover" />
               </div>
             </div>
-            {/* Quote */}
             <div>
               <p className="text-[#333333] text-7xl font-serif leading-none mb-6">"</p>
               <p className="text-white text-xl md:text-2xl leading-relaxed mb-8 -mt-8" style={{ fontFamily: "'Syne', sans-serif" }}>
@@ -339,7 +291,6 @@ const Landing = () => {
           <p className="text-left text-[#666666] mb-16">Pick what works. Cancel anytime.</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Creator */}
             <div className="bg-white border border-white rounded-2xl p-8 flex flex-col md:order-2 relative">
               <h3 className="text-lg font-bold mb-2 text-[#0A0A0A]">Creator</h3>
               <div className="flex items-baseline gap-1 mb-2">
@@ -360,7 +311,6 @@ const Landing = () => {
               </Link>
             </div>
 
-            {/* Free */}
             <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-1">
               <h3 className="text-lg font-bold mb-2">Free</h3>
               <div className="flex items-baseline mb-2">
@@ -380,7 +330,6 @@ const Landing = () => {
               </Link>
             </div>
 
-            {/* Pro */}
             <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-3">
               <h3 className="text-lg font-bold mb-2">Pro</h3>
               <div className="flex items-baseline gap-1 mb-2">
@@ -420,7 +369,6 @@ const Landing = () => {
               Questions
             </h2>
           </div>
-          
           <div className="space-y-12">
             {faqs.map((faq, i) => (
               <div key={i} className="relative pl-20">
@@ -441,7 +389,7 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-10">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
+                <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" loading="lazy" className="w-8 h-8" />
                 <span className="font-bold text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
               </div>
               <p className="text-[#333333] text-sm">Built by a creator, for creators.</p>

@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="PEpKCfx9erZxkdYk1CGDdB123G9UtgbF0XbjZeEbpaM" />
-    <title>NexoraOS – AI Ebook Generator | No Writing Required</title>
-    <meta name="description" content="Generate a complete, professional ebook in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
+    <title>NexoraOS – AI Digital Product Generator | No Writing Required</title>
+    <meta name="description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
     <meta name="author" content="NexoraOS" />
     
     <!-- OpenGraph / Facebook -->
     <meta property="og:site_name" content="NexoraOS" />
-    <meta property="og:title" content="NexoraOS – AI Ebook Generator | No Writing Required" />
-    <meta property="og:description" content="Generate a complete, professional ebook in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
+    <meta property="og:title" content="NexoraOS – AI Digital Product Generator | No Writing Required" />
+    <meta property="og:description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
     <meta property="og:image" content="https://nexoraos.digital/nexora-logo.png" />
     <meta property="og:url" content="https://nexoraos.digital" />
     <meta property="og:type" content="website" />
@@ -19,8 +19,8 @@
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="NexoraOS – AI Ebook Generator | No Writing Required" />
-    <meta name="twitter:description" content="Generate a complete, professional ebook in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
+    <meta name="twitter:title" content="NexoraOS – AI Digital Product Generator | No Writing Required" />
+    <meta name="twitter:description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
     <meta name="twitter:image" content="https://nexoraos.digital/nexora-logo.png" />
     
     <!-- Favicon -->
@@ -29,6 +29,11 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/nexora-logo-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/nexora-logo-512.png" />
     <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Preconnect to Font Origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.fontshare.com">
 
     <script type="application/ld+json">
     {
@@ -39,26 +44,29 @@
     }
     </script>
 
-    <!-- Unicorn Studio Script -->
+    <!-- Deferred Unicorn Studio Script -->
     <script type="text/javascript">
-    !function(){
-      var u=window.UnicornStudio;
-      if(u&&u.init){
-        if(document.readyState==="loading"){
-          document.addEventListener("DOMContentLoaded",function(){u.init()})
-        }else{u.init()}
-      }else{
-        window.UnicornStudio={isInitialized:!1};
-        var i=document.createElement("script");
-        i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.6/dist/unicornStudio.umd.js";
-        i.onload=function(){
-          if(document.readyState==="loading"){
-            document.addEventListener("DOMContentLoaded",function(){UnicornStudio.init()})
-          }else{UnicornStudio.init()}
-        };
-        (document.head||document.body).appendChild(i)
-      }
-    }();
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        !function(){
+          var u=window.UnicornStudio;
+          if(u&&u.init){
+            u.init()
+          }else{
+            window.UnicornStudio={isInitialized:!1};
+            var i=document.createElement("script");
+            i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.6/dist/unicornStudio.umd.js";
+            i.async=true;
+            i.onload=function(){
+              if(window.UnicornStudio && typeof window.UnicornStudio.init === 'function') {
+                window.UnicornStudio.init();
+              }
+            };
+            (document.head||document.body).appendChild(i)
+          }
+        }();
+      }, 3000); // Load after 3 seconds to prioritize main thread
+    });
     </script>
   </head>
   <body>

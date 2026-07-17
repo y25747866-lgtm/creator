@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import UnicornScene from 'unicornstudio-react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+
+// Lazy load the heavy library to reduce initial bundle size
+const UnicornScene = lazy(() => import('unicornstudio-react'));
 
 /**
  * OptimizedHeroBackground - Lazy-loaded background with performance optimization
@@ -7,35 +9,24 @@ import UnicornScene from 'unicornstudio-react';
  */
 const OptimizedHeroBackground = () => {
   const [isReady, setIsReady] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Use requestIdleCallback to defer heavy background loading with fallback
     let id: number | NodeJS.Timeout;
     
+    const activate = () => setIsReady(true);
+
     if (typeof requestIdleCallback !== 'undefined') {
-      id = requestIdleCallback(() => {
-        setIsReady(true);
-      }, { timeout: 2000 });
-      
-      return () => {
-        if (typeof cancelIdleCallback !== 'undefined') {
-          cancelIdleCallback(id as number);
-        }
-      };
+      id = requestIdleCallback(activate, { timeout: 3000 });
+      return () => cancelIdleCallback(id as number);
     } else {
-      // Fallback for browsers that don't support requestIdleCallback
-      id = setTimeout(() => {
-        setIsReady(true);
-      }, 100);
-      
+      id = setTimeout(activate, 1000);
       return () => clearTimeout(id as NodeJS.Timeout);
     }
   }, []);
 
   return (
     <div
-      ref={containerRef}
       style={{
         position: 'absolute',
         top: 0,
@@ -45,19 +36,21 @@ const OptimizedHeroBackground = () => {
         zIndex: 0,
         opacity: isReady ? 0.3 : 0,
         pointerEvents: 'none',
-        transition: 'opacity 0.5s ease-in-out',
+        transition: 'opacity 1s ease-in-out',
         willChange: 'opacity',
       }}
     >
       {isReady && (
-        <UnicornScene
-          projectId="mphmwraF225iCJdgjLPD"
-          width="100%"
-          height="100%"
-          scale={1}
-          dpi={1}
-          sdkUrl="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@2.1.6/dist/unicornStudio.umd.js"
-        />
+        <Suspense fallback={null}>
+          <UnicornScene
+            projectId="mphmwraF225iCJdgjLPD"
+            width="100%"
+            height="100%"
+            scale={1}
+            dpi={1}
+            sdkUrl="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@2.1.6/dist/unicornStudio.umd.js"
+          />
+        </Suspense>
       )}
     </div>
   );
