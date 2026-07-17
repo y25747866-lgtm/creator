@@ -641,7 +641,7 @@ const EbookGenerator = () => {
       return;
     }
     if (ebookData) {
-      await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename || "ebook.pdf");
+      await (ebookData as any)._renderer?.exportPDF((ebookData as any)._filename || "digital-product.pdf");
     }
   };
 
@@ -670,7 +670,7 @@ const EbookGenerator = () => {
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold mb-4 tracking-tight" style={{ fontFamily: "Syne" }}>AI Product Generator</h1>
-        <p className="text-zinc-400">Discover winning niches and generate professional ebooks in minutes.</p>
+        <p className="text-zinc-400">Discover winning niches and generate professional digital products in minutes.</p>
       </div>
       <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
