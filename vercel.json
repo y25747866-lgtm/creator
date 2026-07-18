@@ -24,8 +24,8 @@
   ],
   "rewrites": [
     {
-      "source": "/(assets|logos|fonts)/:path*",
-      "destination": "/$1/:path*"
+      "source": "/auth/callback",
+      "destination": "/index.html"
     },
     {
       "source": "/(.*)",
