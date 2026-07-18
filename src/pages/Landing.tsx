@@ -196,7 +196,7 @@ const Landing = () => {
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Generate</h3>
-              <p className="text-[#666666] leading-relaxed">AI builds your digital product from scratch. Products, courses, templates, software—whatever you can sell, we can generate.</p>
+              <p className="text-[#666666] leading-relaxed">AI builds your digital product from scratch. digital products, courses, templates, software—whatever you can sell, we can generate.</p>
             </div>
 
             <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
