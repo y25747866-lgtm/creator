@@ -30,6 +30,18 @@ const Section = ({ children, className = '', id }: { children: React.ReactNode; 
   );
 };
 
+// ─── Platform logo names mapped to logo-1.webp through logo-8.webp ───────────
+const PLATFORM_NAMES = [
+  'Gumroad',
+  'Whop',
+  'Shopify',
+  'Etsy',
+  'Payhip',
+  'Teachable',
+  'Kajabi',
+  'Sellfy',
+];
+
 const Landing = () => {
   const heroWordsRef = useRef<HTMLDivElement>(null);
   const { isLoading } = useLandingLoading(100);
@@ -70,7 +82,7 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" className="w-8 h-8" />
+            <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" className="w-8 h-8" />
             <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#666666] absolute left-1/2 -translate-x-1/2">
@@ -239,7 +251,7 @@ const Landing = () => {
               <img
                 key={i}
                 src={`/logos/logo-${n}.webp`}
-                alt={`Platform logo ${n}`}
+                alt={`${PLATFORM_NAMES[n - 1]} Logo`}
                 width="120"
                 height="40"
                 loading="lazy"
@@ -389,7 +401,7 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-10">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" loading="lazy" className="w-8 h-8" />
+                <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
                 <span className="font-bold text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
               </div>
               <p className="text-[#333333] text-sm">Built by a creator, for creators.</p>
