@@ -412,7 +412,7 @@ const Landing = () => {
                 <a href="#features" className="hover:text-white transition-colors">Features</a>
                 <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
                 <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-                <a href="/contact" className="hover:text-white transition-colors">Contact</a>
+                <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
                 <span>© 2026 NexoraOS</span>
               </div>
               <div className="text-sm text-[#333333]">
