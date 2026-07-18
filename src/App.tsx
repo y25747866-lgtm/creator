@@ -60,7 +60,7 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/dashboard/product-generator"
+                  path="/dashboard/ebook-generator"
                   element={
                     <ViewableRoute>
                       <EbookGenerator />
