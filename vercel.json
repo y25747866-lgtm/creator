@@ -23,6 +23,10 @@
   ],
   "rewrites": [
     {
+      "source": "/(assets|logos|fonts)/:path*",
+      "destination": "/$1/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
