@@ -1,6 +1,5 @@
 {
   "framework": "vite",
-  "cleanUrls": true,
   "headers": [
     {
       "source": "/(fonts|logos|assets)/(.*)",
