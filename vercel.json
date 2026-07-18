@@ -1,7 +1,6 @@
 {
   "framework": "vite",
   "cleanUrls": true,
-  "trailingSlash": false,
   "headers": [
     {
       "source": "/(fonts|logos|assets)/(.*)",
@@ -13,7 +12,7 @@
       ]
     },
     {
-      "source": "/(.*).(png|jpg|jpeg|gif|webp|avif|svg|ico)",
+      "source": "/(.*)\\.(png|jpg|jpeg|gif|webp|avif|svg|ico)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -23,10 +22,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/auth/callback",
-      "destination": "/index.html"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
