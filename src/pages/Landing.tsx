@@ -246,7 +246,7 @@ const Landing = () => {
         <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-r from-[#080808] to-transparent" />
         <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-l from-[#080808] to-transparent" />
         <div className="overflow-hidden w-full">
-          <div className="platform-track flex nowrap items-center gap-20 w-max-content animate-platform-scroll">
+          <div className="platform-track flex flex-nowrap items-center gap-20 w-max animate-platform-scroll">
             {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
               <img
                 key={i}
