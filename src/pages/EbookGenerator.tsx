@@ -496,6 +496,7 @@ const EbookGenerator = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
   const [niches, setNiches] = useState<NicheCard[]>([]);
+  const [scoreDescriptions, setScoreDescriptions] = useState<{pain: string; demand: string; speed: string} | null>(null);
   const [selectedNiche, setSelectedNiche] = useState<NicheCard | null>(null);
   const [isDrafting, setIsDrafting] = useState(false);
   const [draftingProgress, setDraftingProgress] = useState(0);
@@ -540,6 +541,7 @@ const EbookGenerator = () => {
           speed: n.scores?.speed ?? n.speed ?? 7,
         }));
         setNiches(mapped);
+        if (data.scoreDescriptions) setScoreDescriptions(data.scoreDescriptions);
       } else {
         throw new Error("No niches found");
       }
@@ -743,6 +745,9 @@ const EbookGenerator = () => {
                   <div key={key} className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{key}</span>
+                      {scoreDescriptions?.[key] && (
+                        <p className="text-[9px] text-zinc-600 mt-0.5 leading-tight">{scoreDescriptions[key]}</p>
+                      )}
                       <span className="text-[10px] font-bold text-zinc-400">{niche[key]}/10</span>
                     </div>
                     <div style={{ background: '#1A1A1A', borderRadius: '4px', height: '5px', width: '100%' }}>
