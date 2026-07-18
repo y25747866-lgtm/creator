@@ -1,121 +1,145 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Check, Zap, Crown, Rocket, ArrowLeft, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Check, ArrowLeft, LogOut } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import Background3D from "@/components/Background3D";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
-import nexoraLogo from "@/assets/nexora-logo.png";
 import { useToast } from "@/hooks/use-toast";
+import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
+import nexoraLogo from '@/assets/nexora-logo.webp';
 
 const PAYMENT_LINKS = {
-  creator: "https://whop.com/checkout/5q5mTvNs1ODMBL3RPr-Z5Wp-Zly1-KwwP-lGktR6dgK7UO/",
-  pro: "https://whop.com/checkout/plan_PFB3YG5Pyzlme",
+  creator: "https://whop.com/nexora-b5b0/creator-d2/?ref=related_products&funnelId=product_f1bf7e78-2e66-48fc-89fd-90cd24354d47",
+  pro: "https://whop.com/nexora-b5b0/pro-24-ca4a/?ref=related_products&funnelId=product_cdcea7cf-32f3-489e-b11e-1b3014193cac",
 };
 
-type Plan = {
+type PlanDef = {
   id: string;
   name: string;
   price: string;
   period: string;
   description: string;
-  icon: typeof Zap;
-  features: string[];
+  features: { text: string; included: boolean }[];
   popular: boolean;
-  link: string;
   badge?: string;
+  cta: string;
+  link?: string;
 };
 
-const PLANS: Plan[] = [
+const PLANS: PlanDef[] = [
+  {
+    id: "free",
+    name: "Free",
+    price: "$0",
+    period: "",
+    description: "Explore the platform. Upgrade to export and monetize.",
+    features: [
+      { text: "1 AI Product Generation per day", included: true },
+      { text: "1 Marketing Studio generation per day", included: true },
+      { text: "1 Sales Page generation per day", included: true },
+      { text: "Analytics Dashboard (view access)", included: true },
+      { text: "Downloads & Exports", included: false },
+      { text: "AI Business Assistant", included: false },
+    ],
+    popular: false,
+    cta: "Start Free",
+  },
   {
     id: "creator",
     name: "Creator",
-    price: "$50.99",
+    price: "$19",
     period: "/month",
-    description: "Full access to create, monetize, and export",
-    icon: Crown,
+    description: "Everything you need to create and sell digital products.",
     features: [
-      "Unlimited AI Product Creation",
-      "Monetization Engine Access",
-      "Funnel + Course Builder",
-      "Analytics Dashboard",
-      "Download & Export System",
-      "Priority Support",
+      { text: "AI Product Generator (full access)", included: true },
+      { text: "Marketing Studio (full access)", included: true },
+      { text: "Sales Page Builder (full access)", included: true },
+      { text: "Analytics Dashboard", included: true },
+      { text: "Downloads & Exports", included: true },
+      { text: "AI Business Assistant", included: false },
     ],
     popular: true,
-    link: PAYMENT_LINKS.creator,
     badge: "Most Popular",
+    cta: "Start Creating",
+    link: PAYMENT_LINKS.creator,
   },
   {
     id: "pro",
     name: "Pro",
-    price: "$99",
+    price: "$39",
     period: "/month",
-    description: "Enterprise-grade AI with self-evolving intelligence",
-    icon: Rocket,
+    description: "Advanced tools for power users and scaling creators.",
     features: [
-      "Everything in Creator",
-      "Self-Evolving AI System",
-      "Micro SaaS Blueprints",
-      "Version Intelligence",
-      "Priority AI Queue",
-      "Early Feature Access",
+      { text: "Everything in Creator", included: true },
+      { text: "AI Business Assistant", included: true },
+      { text: "Priority AI processing", included: true },
+      { text: "Early feature access", included: true },
+      { text: "Advanced automation tools", included: true },
     ],
     popular: false,
+    badge: "Best for Power Users",
+    cta: "Go Pro",
     link: PAYMENT_LINKS.pro,
-    badge: "Best Value",
   },
 ];
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { hasActiveSubscription, loading: subLoading } = useSubscription();
+  const { hasPaidSubscription, loading: subLoading } = useSubscription();
   const { toast } = useToast();
 
   const [purchaseStarted, setPurchaseStarted] = useState(false);
-  const [checkingAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(false);
 
   const isReady = useMemo(() => !!user && !subLoading, [user, subLoading]);
 
   useEffect(() => {
-    if (hasActiveSubscription) {
+    if (hasPaidSubscription) {
       navigate("/dashboard", { replace: true });
     }
-  }, [hasActiveSubscription, navigate]);
+  }, [hasPaidSubscription, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
-    toast({ title: "Signed out", description: "You have been signed out successfully." });
+    toast({ title: "Signed out" });
     navigate("/");
   };
 
-  const handlePurchase = (link: string) => {
-    setPurchaseStarted(true);
-    window.open(link, "_blank");
+  const handlePurchase = (plan: PlanDef) => {
+    if (!user) { navigate("/auth"); return; }
+    if (plan.id === "free") { navigate("/dashboard"); return; }
+    if (plan.link) {
+      setPurchaseStarted(true);
+      window.open(plan.link, "_blank");
+    }
   };
 
   const checkAccessNow = async () => {
     if (!user) { navigate("/auth"); return; }
+    setCheckingAccess(true);
     try {
       const { data } = await supabase
         .from("subscriptions")
-        .select("id, status, expires_at")
+        .select("id, status, plan_type, expires_at, updated_at")
         .eq("user_id", user.id)
-        .eq("status", "active")
-        .gt("expires_at", new Date().toISOString())
-        .limit(1);
-      if (data && data.length > 0) {
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const paid = !!data && isSubscriptionActive(data) && isPaidPlan(normalizePlanType(data.plan_type));
+
+      if (paid) {
         navigate("/dashboard", { replace: true });
       } else {
-        toast({ title: "No active subscription found", description: "Complete payment to unlock access.", variant: "default" });
+        toast({ title: "No paid subscription found", description: "Complete payment to unlock access." });
       }
     } catch (err) {
       console.error("Error checking subscription:", err);
     }
+    setCheckingAccess(false);
   };
 
   useEffect(() => {
@@ -127,113 +151,121 @@ const Pricing = () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purchaseStarted, isReady]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <Background3D />
-      <div className="relative z-10 min-h-screen">
-        <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img src={nexoraLogo} alt="NexoraOS logo" className="h-8 w-auto" loading="lazy" />
-              </div>
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => navigate("/")} className="gap-2">
-                  <ArrowLeft className="w-4 h-4" /> Home
-                </Button>
-                {user && (
-                  <Button variant="outline" onClick={handleSignOut} className="gap-2">
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="container mx-auto px-6 pt-32 pb-20">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Choose Your <span className="gradient-text">Plan</span>
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Unlock the full power of NexoraOS. Build scalable AI-powered products and monetize instantly.
-            </p>
-            {!user && (
-              <p className="text-sm text-muted-foreground mt-4">
-                Already have an account?{" "}
-                <button onClick={() => navigate("/auth")} className="text-primary hover:underline font-medium">Sign in</button>
-              </p>
+    <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl">
+        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src={nexoraLogo} alt="NexoraOS" className="w-8 h-8" />
+            <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/")} className="text-[#9EA4C0] hover:text-white gap-2">
+              <ArrowLeft className="w-4 h-4" /> Back to Home
+            </Button>
+            {user && (
+              <Button variant="outline" onClick={handleSignOut} className="border-white/10 text-[#9EA4C0] hover:text-white gap-2">
+                <LogOut className="w-4 h-4" /> Sign Out
+              </Button>
             )}
-          </motion.div>
+          </div>
+        </div>
+      </header>
 
-          {user && purchaseStarted && (
-            <div className="max-w-4xl mx-auto mb-8">
-              <Card className="glass-panel p-6 text-left">
-                <p className="text-sm text-muted-foreground">
-                  After completing checkout, come back to this tab. We'll unlock your account as soon as the payment confirmation arrives.
-                </p>
-                <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                  <Button onClick={checkAccessNow} disabled={checkingAccess} className="sm:w-auto">
-                    {checkingAccess ? "Checking…" : "I've paid — Unlock access"}
-                  </Button>
-                  <Button variant="outline" onClick={() => navigate("/dashboard")} disabled={!hasActiveSubscription} className="sm:w-auto">
-                    Go to Dashboard
-                  </Button>
+      <main className="container mx-auto px-6 pt-32 pb-20">
+        <div className="text-center mb-16 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 font-clash">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="text-lg text-[#9EA4C0] max-w-2xl mx-auto">
+            Choose the plan that fits your stage of growth. No hidden fees.
+          </p>
+          {!user && (
+            <p className="text-sm text-[#9EA4C0] mt-4">
+              Already have an account?{" "}
+              <button onClick={() => navigate("/auth")} className="text-[#0A26E6] hover:underline font-medium">Sign in</button>
+            </p>
+          )}
+        </div>
+
+        {user && purchaseStarted && (
+          <div className="max-w-5xl mx-auto mb-8 animate-fade-in">
+            <Card className="bg-[#0F0F0F] border-[#1A1A1A] p-6 text-left">
+              <p className="text-sm text-[#666666]">
+                After completing checkout, come back to this tab. We'll unlock your account as soon as the payment confirmation arrives.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <Button onClick={checkAccessNow} disabled={checkingAccess} className="bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] sm:w-auto">
+                  {checkingAccess ? "Checking…" : "I've paid — Unlock access"}
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/dashboard")} className="border-[#1A1A1A] text-[#666666] hover:text-white sm:w-auto">
+                  Go to Dashboard
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <section className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start" aria-label="Pricing plans">
+          {PLANS.map((plan, index) => (
+            <div
+              key={plan.id}
+              className={`animate-fade-in h-full`}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <Card
+                className={`bg-[#0F0F0F] p-8 relative h-full flex flex-col rounded-2xl border transition-all duration-200 ${
+                  plan.popular
+                    ? "border-white shadow-xl shadow-white/5"
+                    : "border-[#1A1A1A] shadow-sm"
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-white text-[#0A0A0A] text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full whitespace-nowrap">
+                      {plan.badge}
+                    </span>
+                  </div>
+                )}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>{plan.name}</h2>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    {plan.period && <span className="text-sm text-[#666666]">{plan.period}</span>}
+                  </div>
+                  <p className="text-sm text-[#666666] leading-relaxed">{plan.description}</p>
                 </div>
+                <div className="border-t border-[#1A1A1A] my-1" />
+                <ul className="space-y-4 mb-8 flex-1 pt-6">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <Check className={`w-4 h-4 mt-0.5 shrink-0 ${feature.included ? "text-white" : "text-[#333333]"}`} />
+                      <span className={`text-sm ${feature.included ? "text-[#999999]" : "text-[#333333]"}`}>{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="lg"
+                  className={`w-full rounded-lg font-bold transition-all ${
+                    plan.popular 
+                      ? "bg-white text-[#0A0A0A] hover:bg-[#F0F0F0]" 
+                      : "bg-[#1A1A1A] hover:bg-[#222222] text-white border border-[#333333]"
+                  }`}
+                  onClick={() => handlePurchase(plan)}
+                >
+                  {plan.cta}
+                </Button>
               </Card>
             </div>
-          )}
+          ))}
+        </section>
 
-          <section className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto" aria-label="Pricing plans">
-            {PLANS.map((plan, index) => (
-              <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }}>
-                <Card className={`glass-panel p-8 relative h-full flex flex-col ${plan.popular ? "border-primary/50 shadow-lg shadow-primary/10" : ""}`}>
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-primary text-primary-foreground text-xs font-semibold px-4 py-1.5 rounded-full">{plan.badge}</span>
-                    </div>
-                  )}
-                  <div className="text-center mb-6">
-                    <div className={`inline-flex p-3 rounded-xl mb-4 ${plan.popular ? "bg-primary/10" : "bg-muted"}`}>
-                      <plan.icon className={`w-6 h-6 ${plan.popular ? "text-primary" : "text-muted-foreground"}`} />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">{plan.name}</h2>
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl font-bold">{plan.price}</span>
-                      <span className="text-muted-foreground">{plan.period}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-                  </div>
-                  <ul className="space-y-3 mb-8 flex-1">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    size="lg"
-                    className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90" : ""}`}
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => { if (!user) { navigate("/auth"); return; } handlePurchase(plan.link); }}
-                  >
-                    {user ? `Get ${plan.name}` : "Sign Up to Purchase"}
-                  </Button>
-                </Card>
-              </motion.div>
-            ))}
-          </section>
-
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }} className="mt-16 text-center">
-            <p className="text-sm text-muted-foreground">Secure payment processing powered by Whop • Cancel anytime</p>
-          </motion.div>
-        </main>
-      </div>
+        <div className="mt-16 text-center animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-sm text-[#6B7280]">Secure payment processing powered by Whop • Cancel anytime</p>
+        </div>
+      </main>
     </div>
   );
 };

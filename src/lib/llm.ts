@@ -17,24 +17,20 @@ export async function callLLM(
     temperature = 0.7,
   } = options;
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
 
-  if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not set in environment variables");
-  }
+
+
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("/api/call-openrouter", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://nexoraos.vercel.app", // optional — helps OpenRouter track usage
-        "X-Title": "NexoraOS Ebook Generator",        // optional
+        Authorization: `Bearer ${localStorage.getItem("supabase.auth.token")}`,
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: "user", content: prompt }],
+        prompt,
         temperature,
         max_tokens: maxTokens,
         stream: false,
@@ -47,7 +43,7 @@ export async function callLLM(
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content?.trim();
+    const content = data.content?.trim();
 
     if (!content) {
       throw new Error("No content returned from LLM");

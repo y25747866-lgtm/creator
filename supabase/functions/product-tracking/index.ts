@@ -1,11 +1,7 @@
 // Product tracking edge function
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,28 +9,22 @@ serve(async (req) => {
   }
 
   try {
+    const access = await verifyAccess(req);
+    if (!access.authorized || !access.userId) {
+      return errorResponse(access.error || 'Subscription required', 403);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    // Get user from auth
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
     }
+    
+    const user = { id: access.userId };
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
@@ -44,12 +34,19 @@ serve(async (req) => {
       const body = await req.json();
 
       if (action === "create-product") {
-        const { title, topic, description, length, content, coverImageUrl, pages } = body;
+        // Input validation & sanitization
+        const title = validateAndSanitize(body.title, 100);
+        const topic = validateAndSanitize(body.topic, 500);
+        const description = body.description ? validateAndSanitize(body.description, 1000) : null;
+        const length = body.length ? validateAndSanitize(body.length, 50) : "medium";
+        const content = body.content ? validateAndSanitize(body.content, 10000) : "";
+        const coverImageUrl = body.coverImageUrl ? validateAndSanitize(body.coverImageUrl, 500) : null;
+        const pages = Number(body.pages) || 0;
 
         // Insert product
         const { data: product, error: prodErr } = await supabase
           .from("ebook_products")
-          .insert({ user_id: user.id, title, topic, description, length: length || "medium", status: "published" })
+          .insert({ user_id: user.id, title, topic, description, length, status: "published" })
           .select()
           .single();
 
@@ -83,14 +80,17 @@ serve(async (req) => {
       }
 
       if (action === "record-metric") {
-        const { productId, metricType, value, metadata } = body;
+        const productId = validateAndSanitize(body.productId, 100);
+        const metricType = validateAndSanitize(body.metricType, 100);
+        const value = Number(body.value) || 1;
+        const metadata = body.metadata;
 
         const { error } = await supabase
           .from("product_metrics")
           .insert({
             product_id: productId,
             metric_type: metricType,
-            value: value || 1,
+            value,
             metadata: metadata || null,
           });
 
@@ -102,17 +102,21 @@ serve(async (req) => {
       }
 
       if (action === "submit-feedback") {
-        const { productId, rating, comment, sectionReference, feedbackType } = body;
+        const productId = validateAndSanitize(body.productId, 100);
+        const rating = Number(body.rating) || null;
+        const comment = body.comment ? validateAndSanitize(body.comment, 1000) : null;
+        const sectionReference = body.sectionReference ? validateAndSanitize(body.sectionReference, 500) : null;
+        const feedbackType = body.feedbackType ? validateAndSanitize(body.feedbackType, 100) : "general";
 
         const { data, error } = await supabase
           .from("product_feedback")
           .insert({
             product_id: productId,
             user_id: user.id,
-            rating: rating || null,
-            comment: comment || null,
-            section_reference: sectionReference || null,
-            feedback_type: feedbackType || "general",
+            rating,
+            comment,
+            section_reference: sectionReference,
+            feedback_type: feedbackType,
           })
           .select()
           .single();
@@ -221,9 +225,6 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("product-tracking error:", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(err instanceof Error ? err.message : "Internal error", 500);
   }
 });

@@ -1,0 +1,109 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyAuthOnly, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const access = await verifyAuthOnly(req);
+    if (!access.authorized || !access.userId) {
+      return errorResponse(access.error || 'Authentication required', 401);
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    const body = await req.json();
+    
+    // Input validation & sanitization
+    const moduleId = validateAndSanitize(body.moduleId, 100);
+    const moduleType = validateAndSanitize(body.moduleType, 100);
+    const title = validateAndSanitize(body.title, 100);
+    const topic = validateAndSanitize(body.topic, 500);
+
+    const GROQ_KEY = Deno.env.get("GROQ_API_KEY");
+
+    let prompt = `
+You are a professional marketing copywriter.
+
+Create a ${moduleType} for this product:
+
+Title: ${title}
+Topic: ${topic}
+
+Write detailed, high-quality, real-world marketing content.
+Return markdown.
+`;
+
+    const groqRes = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GROQ_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert digital marketing strategist.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 4000,
+        }),
+      }
+    );
+
+    const data = await groqRes.json();
+
+    const aiText =
+      data.choices?.[0]?.message?.content ||
+      "Failed to generate content.";
+
+    // insert version
+    await supabase.from("monetization_versions").insert({
+      module_id: moduleId,
+      version_number: 1,
+      content: {
+        markdown: aiText,
+      },
+    });
+
+    // update module status
+    await supabase
+      .from("monetization_modules")
+      .update({
+        status: "generated",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", moduleId);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return errorResponse(msg, 500);
+  }
+});

@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
   validateEbookInput, 
   sanitizeInput, 
-  verifyAccess, 
-  errorResponse 
+  verifyAuthOnly, 
+  errorResponse,
+  checkRateLimit,
+  validateAndSanitize,
+  checkDailyLimit
 } from "../_shared/validation.ts";
 
 interface LengthConfig {
@@ -105,8 +109,8 @@ INPUTS:
 - Title: "${title}"
 - Target Audience: ${targetAudience || "General readers interested in this topic"}
 - Tone: ${tone || "professional, educational"}
-- Length: \( {config.label} ( \){config.pageTarget} pages)
-\( {description ? `- Author's Vision: " \){description}"` : ""}
+- Length: ${config.label} (${config.pageTarget} pages)
+${description ? `- Author's Vision: "${description}"` : ""}
 
 OUTPUT REQUIREMENTS:
 
@@ -152,7 +156,7 @@ async function generateContent(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",   // ← Changed to Groq model
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: getSystemPrompt(config) },
         { role: "user", content: getUserPrompt(title, topic, description, config, category, targetAudience, tone) },
@@ -197,7 +201,7 @@ async function generateLongContent(
         },
         {
           role: "user",
-          content: `Create \( {config.chaptersNum} chapter titles for an ebook titled " \){title}" about "${topic}". \( {description ? `Vision: " \){description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
+          content: `Create ${config.chaptersNum} chapter titles for an ebook titled "${title}" about "${topic}". ${description ? `Vision: "${description}".` : ""} Include Introduction and Conclusion. Return JSON array only.`,
         },
       ],
       max_tokens: 500,
@@ -239,7 +243,7 @@ async function generateLongContent(
   let fullContent = "";
 
   for (const batch of batches) {
-    const batchPrompt = `Continue writing the ebook "\( {title}" about " \){topic}".
+    const batchPrompt = `Continue writing the ebook "${title}" about "${topic}".
     
 Write the following chapters in full detail (1500-2000 words each):
 ${batch.map((ch) => `- ${ch}`).join("\n")}
@@ -284,19 +288,42 @@ serve(async (req) => {
   }
 
   try {
-    const access = await verifyAccess(req);
-    if (!access.authorized) {
-      return errorResponse(access.error || "Unauthorized", 401);
+    const access = await verifyAuthOnly(req);
+    if (!access.authorized || !access.userId) {
+      return errorResponse(access.error || 'Authentication required', 401);
     }
 
-    let body: { topic?: string; title?: string; description?: string; length?: string; category?: string; targetAudience?: string; tone?: string };
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
+    }
+
+    // Server-side daily limit for free users
+    const dailyLimit = await checkDailyLimit(supabase, access.userId);
+    if (!dailyLimit.allowed) {
+      return errorResponse(dailyLimit.error!, 403);
+    }
+
+    let body: any;
     try {
       body = await req.json();
     } catch {
       return errorResponse("Invalid JSON body");
     }
 
-    const { topic, title, description = "", length = "medium", category = "", targetAudience = "", tone = "" } = body;
+    // Input validation & sanitization
+    const topic = validateAndSanitize(body.topic, 500);
+    const title = body.title ? validateAndSanitize(body.title, 100) : topic;
+    const description = body.description ? validateAndSanitize(body.description, 1000) : "";
+    const length = body.length ? validateAndSanitize(body.length, 50) : "medium";
+    const category = body.category ? validateAndSanitize(body.category, 100) : "";
+    const targetAudience = body.targetAudience ? validateAndSanitize(body.targetAudience, 200) : "";
+    const tone = body.tone ? validateAndSanitize(body.tone, 100) : "";
 
     const validation = validateEbookInput(topic, title);
     if (!validation.valid) {
@@ -317,12 +344,16 @@ serve(async (req) => {
     if (!GROQ_API_KEY) {
       console.log("No API key - generating fallback content");
       return new Response(
-        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
+        JSON.stringify({
+          content: `# ${sanitizedTitle}\n\n## Introduction\n\nThis is a placeholder for the ebook content about ${sanitizedTopic}. To generate full content, please configure your GROQ_API_KEY.`,
+          title: sanitizedTitle,
+          topic: sanitizedTopic
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Generating ${config.label} ebook for user \( {access.userId}: " \){sanitizedTitle}"`);
+    console.log("Generating ebook content for:", sanitizedTitle.substring(0, 30) + "...");
 
     const content = await generateContent(
       GROQ_API_KEY,
@@ -335,102 +366,15 @@ serve(async (req) => {
       sanitizedTone
     );
 
-    if (!content || content.length < 500) {
-      console.log("Content too short, using fallback");
-      return new Response(
-        JSON.stringify(generateFallbackContent(sanitizedTitle, sanitizedTopic)),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const pages = Math.max(
-      parseInt(config.pageTarget.split("-")[0]),
-      Math.ceil(content.split(/\s+/).length / 250)
-    );
-
-    console.log(`Generated \( {content.length} chars, \~ \){pages} pages`);
+    console.log("Generated content successfully, length:", content.length);
 
     return new Response(
-      JSON.stringify({ title: sanitizedTitle, content, pages }),
+      JSON.stringify({ content, title: sanitizedTitle, topic: sanitizedTopic }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Error in generate-ebook-content:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(message, 500);
   }
 });
-
-function generateFallbackContent(title: string, topic: string): { title: string; content: string; pages: number } {
-  const safeTitle = title.replace(/[<>]/g, "");
-  const safeTopic = topic.replace(/[<>]/g, "");
-
-  const content = `# Introduction
-
-Welcome to "${safeTitle}". This comprehensive guide will walk you through everything you need to know about ${safeTopic}.
-
-In today's rapidly evolving world, understanding ${safeTopic} has become more important than ever. Whether you're a beginner just starting out or someone looking to deepen your knowledge, this ebook will provide you with valuable insights and practical strategies.
-
-## What You'll Learn
-
-Throughout this guide, you will discover:
-- The fundamental concepts and principles of ${safeTopic}
-- Practical strategies you can implement immediately
-- Common mistakes to avoid and how to overcome challenges
-- Expert tips and best practices from industry leaders
-
-# Chapter 1: Understanding the Basics
-
-Before diving deep into ${safeTopic}, it's essential to build a strong foundation. This chapter covers the core concepts that will serve as building blocks for your journey.
-
-## Core Concepts
-
-The first step in mastering ${safeTopic} is understanding its fundamental principles. These concepts form the backbone of everything else you'll learn in this guide.
-
-### Getting Started
-
-Every expert was once a beginner. The key is to start with the right mindset and approach. Focus on understanding the "why" behind each concept, not just the "how."
-
-### Building Your Foundation
-
-A solid foundation will help you progress faster and avoid common pitfalls. Take your time with this chapter and make sure you truly understand each concept before moving forward.
-
-# Chapter 2: Practical Strategies
-
-Now that you understand the basics, it's time to put that knowledge into action. This chapter provides step-by-step strategies you can implement right away.
-
-## Strategy 1: Start Small
-
-Don't try to do everything at once. Begin with one small step and build momentum from there.
-
-## Strategy 2: Learn from Others
-
-Find mentors, join communities, and learn from those who have already achieved what you're working toward.
-
-## Strategy 3: Track Your Progress
-
-What gets measured gets improved. Keep track of your progress and celebrate your wins.
-
-# Conclusion
-
-Congratulations on completing this guide! You now have a solid understanding of ${safeTopic} and practical strategies to implement what you've learned.
-
-## Key Takeaways
-
-1. Start with a strong foundation in the basics
-2. Implement practical strategies consistently
-3. Expect and prepare for challenges
-4. Continue learning and growing
-
-Remember: the best time to start was yesterday. The second best time is now.
-
----
-
-*Generated by NexoraOS*
-`;
-
-  return { title: safeTitle, content, pages: 12 };
-  }

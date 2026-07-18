@@ -1,316 +1,291 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Palette, Bell, Shield, CreditCard, LogOut } from "lucide-react";
+import { User, Palette, Bell, Shield, CreditCard, LogOut, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useEbookStore } from "@/hooks/useEbookStore";
+import { getPlanDisplayName, getPlanPrice } from "@/lib/subscription";
+
+const SectionIcon = ({ icon: Icon }: { icon: any }) => (
+  <div style={{
+    width: '32px', height: '32px', background: '#1A1A1A',
+    border: '1px solid #222222', borderRadius: '6px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  }}>
+    <Icon className="w-[14px] h-[14px] text-white" />
+  </div>
+);
 
 const Settings = () => {
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { subscription, hasActiveSubscription } = useSubscription();
-  
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-  });
-  const [notifications, setNotifications] = useState({
-    email: true,
-    updates: true,
-  });
+  const {
+    subscription, planType, hasPaidSubscription, expirationDate, loading: subLoading,
+  } = useSubscription();
+
+  const [profile, setProfile] = useState({ name: "", email: "" });
+  const [notifications, setNotifications] = useState({ email: true, updates: true });
 
   useEffect(() => {
     if (user?.email) {
-      setProfile(prev => ({ ...prev, email: user.email || "" }));
+      setProfile((prev) => ({ ...prev, email: user.email || "" }));
     }
   }, [user]);
 
   const handleSaveProfile = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
-    });
+    toast({ title: "Profile Updated", description: "Your profile has been saved successfully." });
   };
 
   const handleSignOut = async () => {
+    useEbookStore.getState().clearAllEbooks();
     await signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
+    toast({ title: "Signed out", description: "You have been signed out successfully." });
     navigate("/");
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   };
+
+  const isExpired = subscription?.status === "expired";
+
+  // FIX: If plan is expired or not paid, always show Free plan info
+  // Previously, it would still show "Pro Plan" even after expiry
+  const displayPlanName = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
+  const displayPlanPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
+
+  // Badge logic
+  const badgeText = isExpired ? "Expired" : hasPaidSubscription ? "Active" : "Free";
+  const badgeStyle = isExpired
+    ? { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444' }
+    : hasPaidSubscription
+    ? { background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)', color: '#00d4aa' }
+    : { background: '#1A1A1A', border: '1px solid #2A2A2A', color: 'rgba(255,255,255,0.6)' };
+
+  const labelStyle = { fontFamily: "'DM Sans', sans-serif", fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#555555', marginBottom: '8px', display: 'block' };
+  const inputStyle = { background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '14px', padding: '12px 14px', width: '100%' };
+  const cardStyle = { background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px' };
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account and preferences.
-          </p>
-        </motion.div>
+      <div style={{ background: '#0A0A0A', padding: '40px', paddingBottom: '120px' }}>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>Settings</h1>
+            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555555' }}>Manage your account and preferences.</p>
+          </motion.div>
 
-        {/* Subscription Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-white" />
+          {/* Subscription */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }}>
+            <div style={cardStyle}>
+              <div className="flex items-center gap-3 mb-6">
+                <SectionIcon icon={CreditCard} />
+                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Subscription</h2>
               </div>
-              <h2 className="text-xl font-semibold">Subscription</h2>
-            </div>
-
-            {hasActiveSubscription && subscription ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/10 border border-primary/20">
-                  <div>
-                    <p className="font-semibold text-lg capitalize">
-                      {subscription.plan_type} Plan
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Active since {formatDate(subscription.started_at)}
-                    </p>
+              {subLoading ? (
+                <p style={{ color: '#555555', fontSize: '13px' }}>Loading subscription...</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg gap-3" style={{ background: '#0F0F0F', border: '1px solid #1A1A1A' }}>
+                    <div>
+                      {/* FIX: Now correctly shows "Free Plan" when expired or not paid */}
+                      <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', textTransform: 'capitalize' }}>
+                        {displayPlanName} Plan
+                      </p>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#555555', marginTop: '4px' }}>
+                        {hasPaidSubscription && subscription
+                          ? `Active since ${formatDate(subscription.start_date || subscription.started_at)} · ${displayPlanPrice}`
+                          : displayPlanPrice}
+                      </p>
+                    </div>
+                    {/* FIX: Badge now shows correct color — teal for active, red for expired, grey for free */}
+                    <span style={{
+                      fontSize: '10px', fontWeight: 700, padding: '4px 12px', borderRadius: '4px',
+                      textTransform: 'uppercase', letterSpacing: '0.05em',
+                      ...badgeStyle
+                    }}>
+                      {badgeText}
+                    </span>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                    Active
-                  </span>
+
+                  {hasPaidSubscription && subscription && (
+                    <div className="p-3 rounded-lg" style={{ background: '#161616', border: '1px solid #1A1A1A' }}>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666' }}>
+                        Expires on {expirationDate}
+                      </p>
+                    </div>
+                  )}
+
+                  {isExpired && (
+                    <div className="p-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                      <p style={{ fontSize: '13px', color: '#EF4444' }}>
+                        Your subscription has expired. Please upgrade to continue using premium features.
+                      </p>
+                    </div>
+                  )}
+
+                  {!hasPaidSubscription && (
+                    <button onClick={() => navigate("/pricing")} style={{
+                      width: '100%', background: '#FFFFFF', color: '#0A0A0A',
+                      fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '14px',
+                      padding: '14px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                      transition: 'background 150ms',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
+                    >
+                      Upgrade Plan
+                    </button>
+                  )}
                 </div>
-                {subscription.expires_at && (
-                  <p className="text-sm text-muted-foreground">
-                    Renews on {formatDate(subscription.expires_at)}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">No active subscription</p>
-                <Button onClick={() => navigate("/pricing")}>
-                  View Plans
-                </Button>
-              </div>
-            )}
-          </Card>
-        </motion.div>
-
-        {/* Profile Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Profile Information</h2>
+              )}
             </div>
+          </motion.div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  className="mt-2"
-                />
+          {/* Profile */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <div style={cardStyle}>
+              <div className="flex items-center gap-3 mb-6">
+                <SectionIcon icon={User} />
+                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Profile Information</h2>
               </div>
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={profile.email}
-                  disabled
-                  className="mt-2"
-                />
-              </div>
-            </div>
-
-            <Button onClick={handleSaveProfile} className="mt-6">
-              Save Changes
-            </Button>
-          </Card>
-        </motion.div>
-
-        {/* Theme Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Appearance</h2>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Dark Mode</p>
-                <p className="text-sm text-muted-foreground">
-                  Toggle between light and dark themes
-                </p>
-              </div>
-              <Switch
-                checked={theme === "dark"}
-                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-              />
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Notifications Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Notifications</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="grid gap-5 md:grid-cols-2">
                 <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receive emails about your activity
-                  </p>
+                  <label style={labelStyle}>Full Name</label>
+                  <Input placeholder="Enter your name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={inputStyle} className="placeholder:text-[#333333] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
                 </div>
-                <Switch
-                  checked={notifications.email}
-                  onCheckedChange={(checked) =>
-                    setNotifications({ ...notifications, email: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">Product Updates</p>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified about new features
-                  </p>
+                  <label style={labelStyle}>Email Address</label>
+                  <Input type="email" value={profile.email} disabled style={{ ...inputStyle, color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }} />
                 </div>
-                <Switch
-                  checked={notifications.updates}
-                  onCheckedChange={(checked) =>
-                    setNotifications({ ...notifications, updates: checked })
-                  }
-                />
               </div>
+              <button onClick={handleSaveProfile} style={{
+                marginTop: '20px', background: 'transparent', border: '1px solid #1A1A1A',
+                color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
+                fontWeight: 600, padding: '10px 20px', borderRadius: '6px', cursor: 'pointer',
+                transition: 'border-color 150ms',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+              >
+                Save Changes
+              </button>
             </div>
-          </Card>
-        </motion.div>
+          </motion.div>
 
-        {/* Account Security Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
+          {/* Appearance & Notifications */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
+              <div style={{ ...cardStyle, height: '100%' }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <SectionIcon icon={Palette} />
+                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Appearance</h2>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#0F0F0F', border: '1px solid #1A1A1A' }}>
+                  <div>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Dark Mode</p>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#555555', marginTop: '2px' }}>Always dark for professional focus</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Moon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>Active</span>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-xl font-semibold">Account Security</h2>
-            </div>
+            </motion.div>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  placeholder="Enter current password"
-                  className="mt-2"
-                />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+              <div style={{ ...cardStyle, height: '100%' }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <SectionIcon icon={Bell} />
+                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Notifications</h2>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    { key: 'email' as const, label: 'Email Alerts', desc: 'Activity updates' },
+                    { key: 'updates' as const, label: 'Product Updates', desc: 'New features' },
+                  ].map((item) => (
+                    <div key={item.key} className="flex items-center justify-between">
+                      <div>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>{item.label}</p>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#555555' }}>{item.desc}</p>
+                      </div>
+                      <Switch
+                        checked={notifications[item.key]}
+                        onCheckedChange={(checked) => setNotifications({ ...notifications, [item.key]: checked })}
+                        className="data-[state=checked]:bg-white data-[state=unchecked]:bg-[#2A2A2A]"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Enter new password"
-                  className="mt-2"
-                />
+            </motion.div>
+          </div>
+
+          {/* Account Security */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+            <div style={cardStyle}>
+              <div className="flex items-center gap-3 mb-6">
+                <SectionIcon icon={Shield} />
+                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Account Security</h2>
               </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Confirm new password"
-                  className="mt-2"
-                />
+              <div className="grid md:grid-cols-3 gap-4">
+                {['Current Password', 'New Password', 'Confirm Password'].map((label) => (
+                  <div key={label}>
+                    <label style={labelStyle}>{label}</label>
+                    <Input type="password" placeholder="••••••••" style={inputStyle} className="placeholder:text-[#333333] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                  </div>
+                ))}
               </div>
-              <Button variant="outline" className="mt-2">
+              <button style={{
+                marginTop: '20px', background: 'transparent', border: '1px solid #1A1A1A',
+                color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
+                fontWeight: 600, padding: '10px 20px', borderRadius: '6px', cursor: 'pointer',
+                transition: 'border-color 150ms',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
+              >
                 Update Password
-              </Button>
+              </button>
             </div>
-          </Card>
-        </motion.div>
+          </motion.div>
 
-        {/* Sign Out Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Sign Out</p>
-                <p className="text-sm text-muted-foreground">
-                  Sign out of your account on this device
-                </p>
+          {/* Sign Out */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}>
+            <div style={{ background: 'rgba(239,68,68,0.03)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: '10px', padding: '32px' }}>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="text-center md:text-left">
+                  <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Sign Out</p>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#555555', marginTop: '4px' }}>Sign out of your account on this device</p>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  style={{
+                    background: 'transparent', border: '1px solid #EF4444', color: '#EF4444',
+                    fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '14px',
+                    padding: '10px 24px', borderRadius: '6px', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    transition: 'all 150ms',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#FFFFFF'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#EF4444'; }}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
               </div>
-              <Button variant="destructive" onClick={handleSignOut} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
             </div>
-          </Card>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </DashboardLayout>
   );
