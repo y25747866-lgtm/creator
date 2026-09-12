@@ -406,6 +406,25 @@ const Landing = () => {
                 <span className="font-bold text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
               </div>
               <p className="text-[#707070] text-sm">Built by a creator, for creators.</p>
+              <div className="flex items-center gap-4 mt-4">
+                <a href="https://www.instagram.com/nexoraos" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-[#707070] hover:text-[#00e68e] transition-colors">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+                <a href="https://www.tiktok.com/@nexoraos_" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#707070] hover:text-[#00e68e] transition-colors">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.5 3c.2 1.8 1.2 3.2 3 3.8v2.8a7.4 7.4 0 0 1-3-.8v6.1a5.1 5.1 0 1 1-4.4-5v2.9a2.2 2.2 0 1 0 1.5 2.1V3h2.9Z" />
+                  </svg>
+                </a>
+                <a href="https://x.com/NexoraOS" target="_blank" rel="noopener noreferrer" aria-label="X" className="text-[#707070] hover:text-[#00e68e] transition-colors">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.2 3H21l-6.1 7 7.2 11h-5.6l-4.4-6.7L6.2 21H3.4l6.5-7.4L3 3h5.7l4 6.1L18.2 3Zm-1 16.1h1.6L7.1 4.8H5.4l11.8 14.3Z" />
+                  </svg>
+                </a>
+              </div>
               <p className="text-[#222222] text-xs mt-1">No VC money. No corporate BS.</p>
             </div>
             <div className="flex flex-col gap-4">
