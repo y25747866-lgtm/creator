@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analytics_data: {
+        Row: {
+          data: Json
+          data_type: string
+          fetched_at: string
+          id: string
+          period_end: string | null
+          period_start: string | null
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          data_type: string
+          fetched_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          platform: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          data_type?: string
+          fetched_at?: string
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_usage: {
+        Row: {
+          count: number
+          feature: string
+          id: string
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          feature: string
+          id?: string
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          feature?: string
+          id?: string
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ebook_products: {
         Row: {
           created_at: string
@@ -237,6 +318,36 @@ export type Database = {
           },
         ]
       }
+      platform_connections: {
+        Row: {
+          api_key_encrypted: string
+          connected_at: string
+          id: string
+          last_sync_at: string | null
+          platform: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          connected_at?: string
+          id?: string
+          last_sync_at?: string | null
+          platform: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          connected_at?: string
+          id?: string
+          last_sync_at?: string | null
+          platform?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_feedback: {
         Row: {
           comment: string | null
@@ -381,12 +492,84 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_marketing_results: {
+        Row: {
+          created_at: string
+          cta: string
+          hashtags: string | null
+          hook: string
+          id: string
+          main_copy: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cta?: string
+          hashtags?: string | null
+          hook?: string
+          id?: string
+          main_copy?: string
+          platform?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cta?: string
+          hashtags?: string | null
+          hook?: string
+          id?: string
+          main_copy?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_sales_page_results: {
+        Row: {
+          benefits: string
+          created_at: string
+          cta: string
+          headline: string
+          id: string
+          problem: string
+          solution: string
+          subheadline: string
+          user_id: string
+        }
+        Insert: {
+          benefits?: string
+          created_at?: string
+          cta?: string
+          headline?: string
+          id?: string
+          problem?: string
+          solution?: string
+          subheadline?: string
+          user_id: string
+        }
+        Update: {
+          benefits?: string
+          created_at?: string
+          cta?: string
+          headline?: string
+          id?: string
+          problem?: string
+          solution?: string
+          subheadline?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
+          end_date: string | null
           expires_at: string | null
           id: string
+          plan: string | null
           plan_type: string
+          start_date: string | null
           started_at: string
           status: string
           updated_at: string
@@ -396,9 +579,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          end_date?: string | null
           expires_at?: string | null
           id?: string
+          plan?: string | null
           plan_type: string
+          start_date?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -408,9 +594,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          end_date?: string | null
           expires_at?: string | null
           id?: string
+          plan?: string | null
           plan_type?: string
+          start_date?: string | null
           started_at?: string
           status?: string
           updated_at?: string
@@ -425,6 +614,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_account_records: { Args: never; Returns: undefined }
       has_active_subscription: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {

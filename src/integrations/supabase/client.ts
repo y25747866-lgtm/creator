@@ -8,6 +8,38 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: "pkce", // ← THIS LINE IS CRITICAL
+    flowType: "pkce",
   },
 });
+
+// Fix 2: Session Inactivity Logout (24 hours)
+const INACTIVITY_LIMIT = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+const checkInactivity = () => {
+  const lastActive = localStorage.getItem("last_active");
+  const now = Date.now();
+
+  if (lastActive && now - parseInt(lastActive) > INACTIVITY_LIMIT) {
+    console.log("Session expired due to 24h inactivity. Signing out...");
+    localStorage.removeItem("last_active");
+    void supabase.auth.signOut().then(() => {
+      window.location.href = "/auth";
+    });
+  } else {
+    localStorage.setItem("last_active", now.toString());
+  }
+};
+
+// Update activity on interactions
+if (typeof window !== "undefined") {
+  const activityEvents = ["mousedown", "keydown", "touchstart", "scroll"];
+  activityEvents.forEach((event) => {
+    window.addEventListener(event, () => {
+      localStorage.setItem("last_active", Date.now().toString());
+    });
+  });
+
+  // Check on load and periodically
+  checkInactivity();
+  setInterval(checkInactivity, 60 * 1000); // Check every minute
+}
