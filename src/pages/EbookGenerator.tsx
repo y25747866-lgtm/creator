@@ -509,6 +509,7 @@ const EbookGenerator = () => {
 
   const [step, setStep] = useState(1);
   const [topic, setTopic] = useState("");
+  const [topicError, setTopicError] = useState(false);
   const [language, setLanguage] = useState("English");
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState("");
@@ -531,7 +532,7 @@ const EbookGenerator = () => {
 
   const findWinningNiches = async () => {
     if (!topic.trim()) {
-      toast({ title: "Topic Required", description: "Please enter a broad idea to search.", variant: "destructive" });
+      setTopicError(true);
       return;
     }
     setIsSearching(true);
@@ -699,11 +700,15 @@ const EbookGenerator = () => {
             <input
               type="text"
               value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={(e) => {
+                setTopic(e.target.value);
+                if (e.target.value.trim()) setTopicError(false);
+              }}
               onKeyDown={(e) => e.key === "Enter" && findWinningNiches()}
               placeholder="I don't know, you can find a good topic for me."
-              className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors topic-input-glow"
+              className={`w-full bg-black border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors topic-input-glow ${topicError ? "border-red-500" : "border-zinc-800"}`}
             />
+            {topicError && <p className="text-xs text-red-500 mt-2">Enter a topic to continue</p>}
             <p className="text-xs text-zinc-500 mt-2">Enter a broad idea and AI will search trending markets to find the best angle to sell.</p>
           </div>
           <div>
