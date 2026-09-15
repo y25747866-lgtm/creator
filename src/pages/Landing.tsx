@@ -1,4 +1,4 @@
-import { useRef, useEffect, lazy, Suspense } from 'react';
+import { useRef, useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { m, useInView } from 'framer-motion';
 
@@ -45,6 +45,7 @@ const PLATFORM_NAMES = [
 const Landing = () => {
   const heroWordsRef = useRef<HTMLDivElement>(null);
   const { isLoading } = useLandingLoading(100);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     if (heroWordsRef.current && !isLoading) {
@@ -382,14 +383,34 @@ const Landing = () => {
               Questions
             </h2>
           </div>
-          <div className="space-y-12">
+          <div className="space-y-4">
             {faqs.map((faq, i) => (
-              <div key={i} className="relative pl-20">
-                <span className="absolute left-0 top-0 text-6xl font-bold text-white/5 font-mono leading-none">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3 className="text-xl font-bold text-white mb-3">{faq.q}</h3>
-                <p className="text-[#A1A1A1] leading-relaxed max-w-2xl">{faq.a}</p>
+              <div key={i} className="rounded-2xl bg-[#111111] border border-[#1A1A1A] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  aria-expanded={openFaq === i}
+                  className="w-full flex items-center justify-between gap-6 p-6 text-left"
+                >
+                  <h3 className="text-xl font-bold text-white">{faq.q}</h3>
+                  <svg
+                    aria-hidden="true"
+                    className={`w-5 h-5 shrink-0 text-[#A1A1A1] transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                <div className={`grid transition-[grid-template-rows] duration-300 ${openFaq === i ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                  <div className="overflow-hidden">
+                    <p className="px-6 pb-6 text-[#A1A1A1] leading-relaxed">{faq.a}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
