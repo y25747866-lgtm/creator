@@ -18,6 +18,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { ThinkingOrb } from "thinking-orbs";
+import { BorderBeam } from "border-beam";
 
 // ─── TOPIC INPUT GLOW ─────────────────────────────────────────────────────────
 const glowStyles = `
@@ -721,8 +722,9 @@ const EbookGenerator = () => {
         <h1 className="text-4xl font-extrabold mb-4 tracking-tight" style={{ fontFamily: "Syne" }}>AI Product Generator</h1>
         <p className="text-zinc-400">Discover winning niches and generate professional digital products in minutes.</p>
       </div>
-      <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <BorderBeam size="pulse-outside" colorVariant="mono" theme="dark">
+        <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2">
             <label className="block text-sm font-bold text-white mb-2 uppercase tracking-wider">What's your topic?</label>
             <input
@@ -749,16 +751,17 @@ const EbookGenerator = () => {
               {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
             </select>
           </div>
+          </div>
+          <Button
+            onClick={findWinningNiches}
+            disabled={isSearching}
+            className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl transition-all"
+          >
+            {isSearching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
+            Find Winning Niches
+          </Button>
         </div>
-        <Button
-          onClick={findWinningNiches}
-          disabled={isSearching}
-          className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl transition-all"
-        >
-          {isSearching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
-          Find Winning Niches
-        </Button>
-      </div>
+      </BorderBeam>
 
       {isSearching && (
         <div className="text-center py-20">
