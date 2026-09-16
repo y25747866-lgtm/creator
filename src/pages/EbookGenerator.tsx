@@ -17,6 +17,7 @@ import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
+import { ThinkingOrb } from "thinking-orbs";
 
 // ─── TOPIC INPUT GLOW ─────────────────────────────────────────────────────────
 const glowStyles = `
@@ -671,18 +672,45 @@ const EbookGenerator = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center gap-8 mb-12">
-      {[{ label: "Niche", n: 1 }, { label: "Script", n: 2 }, { label: "Render", n: 3 }].map((s, i) => (
-        <>
-          <div key={s.n} className="flex items-center gap-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${step >= s.n ? "bg-white text-black" : "bg-zinc-800 text-zinc-500"}`}>
-              {step > s.n ? <Check className="w-3 h-3" /> : s.n}
+    <div className="mb-12 rounded-2xl border border-zinc-900 bg-[#0A0A0A] p-6 md:p-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Building your AI Digital Product</h2>
+          <p className="mt-2 text-sm text-zinc-400">Three steps: lock in the niche, generate the product, then export the final file.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">{topic || "No topic selected"}</span>
+          <span className="rounded-full bg-[#00e68e] px-3 py-1 text-xs font-bold text-[#0A0A0A]">
+            {step === 1 ? "Niche" : step === 2 ? "Generating" : "Ready to export"}
+          </span>
+        </div>
+      </div>
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-4">
+        {[
+          { label: "Niche", state: "searching" as const },
+          { label: "Generate", state: "working" as const },
+          { label: "Export", state: "solving" as const },
+        ].map((s, i) => {
+          const stepNumber = i + 1;
+          const completed = step > stepNumber;
+          const active = step === stepNumber;
+          return (
+            <div key={s.label} className="relative">
+              <div className="flex items-center gap-4">
+                <ThinkingOrb state={s.state} size={64} theme="dark" paused={!active} aria-label={`${s.label} step`} />
+                <div className="min-w-0 flex-1">
+                  <div className={`text-sm font-bold ${active || completed ? "text-white" : "text-zinc-600"}`}>Step {stepNumber}</div>
+                  <div className={`text-lg font-semibold ${active || completed ? "text-white" : "text-zinc-600"}`}>{s.label}</div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-900">
+                    <div className="h-full rounded-full bg-[#00e68e] transition-all duration-500" style={{ width: completed ? "100%" : active ? "50%" : "0%" }} />
+                  </div>
+                </div>
+              </div>
+              {i < 2 && <div className="my-2 hidden h-px bg-zinc-900 md:block" />}
             </div>
-            <span className={`text-sm font-bold uppercase tracking-wider ${step >= s.n ? "text-white" : "text-zinc-600"}`}>{s.label}</span>
-          </div>
-          {i < 2 && <div key={`div-${i}`} className="w-12 h-[1px] bg-zinc-800" />}
-        </>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 
@@ -803,7 +831,6 @@ const EbookGenerator = () => {
 
   const renderScript = () => (
     <div className="max-w-4xl mx-auto">
-      {renderStepIndicator()}
       <div className="flex justify-center mb-8">
         <div className="px-4 py-1.5 bg-white text-black rounded-full text-[11px] font-bold uppercase tracking-wider">
           {selectedNiche?.headline}
@@ -844,7 +871,6 @@ const EbookGenerator = () => {
 
   const renderFinal = () => (
     <div className="max-w-4xl mx-auto">
-      {renderStepIndicator()}
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Render Complete</h2>
         <div className="px-2 py-0.5 bg-[#7C3AED] text-white text-[10px] font-bold rounded uppercase tracking-wider">Ready</div>
@@ -906,6 +932,7 @@ const EbookGenerator = () => {
   return (
     <DashboardLayout>
       <div className="p-6 md:p-10 min-h-screen bg-[#0A0A0A] text-white">
+        {renderStepIndicator()}
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
