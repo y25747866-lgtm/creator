@@ -38,7 +38,7 @@ const glowStyles = `
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const PAGE_W = 595, PAGE_H = 842;
 const MX = 50, MY = 50, CONTENT_W = PAGE_W - MX * 2;
-const ACCENT = "#7C3AED", BLACK = "#000000", WHITE = "#FFFFFF";
+const ACCENT = "#ffffff", BLACK = "#000000", WHITE = "#FFFFFF";
 
 // ─── UTILS ───────────────────────────────────────────────────────────────────
 function base64ToBytes(base64: string): Uint8Array {

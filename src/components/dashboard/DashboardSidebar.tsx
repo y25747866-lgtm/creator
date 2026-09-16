@@ -278,7 +278,7 @@ const DashboardSidebar = () => {
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
             className="w-full justify-center rounded-lg"
-            style={{ color: 'rgba(255,255,255,0.3)' }}
+            style={{ background: '#ffffff', color: '#0A0A0A' }}
           >
             {collapsed ? (
               <ChevronRight className="w-[18px] h-[18px]" />
