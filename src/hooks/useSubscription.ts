@@ -90,30 +90,6 @@ export function useSubscription() {
 
   useEffect(() => {
     void fetchSubscription();
-
-    // Set up real-time subscription updates
-    if (!user) return;
-
-    const channel = supabase
-      .channel(`subscriptions:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "subscriptions",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          console.log("📡 Subscription updated, refetching...");
-          void fetchSubscription();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      void channel.unsubscribe();
-    };
   }, [user, fetchSubscription]);
 
   // Use new 'plan' column if available, fallback to 'plan_type'

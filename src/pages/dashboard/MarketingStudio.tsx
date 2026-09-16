@@ -77,35 +77,7 @@ const MarketingStudio = () => {
       setLoadingSaved(false);
     };
     load();
-
-    const channel = supabase
-      .channel(`marketing_results_${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "saved_marketing_results",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const newResult = {
-            id: payload.new.id,
-            hook: payload.new.hook,
-            main_copy: payload.new.main_copy,
-            cta: payload.new.cta,
-            hashtags: payload.new.hashtags,
-            platform: payload.new.platform,
-          };
-          setResults((prev) => [newResult, ...prev]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, hasAccess]);
+  }, [user?.id, hasAccess]);
 
   const generate = async () => {
     if (isExpired) {

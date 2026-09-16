@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 type Status = "checking" | "active" | "timeout";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 60_000;
 const MAX_TRIES = 10;
 
 const WhopSuccess = () => {

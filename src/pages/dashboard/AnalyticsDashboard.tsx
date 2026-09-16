@@ -187,29 +187,6 @@ const AnalyticsDashboard = () => {
     };
 
     loadChatMessages();
-
-    // Subscribe to real-time updates for new messages
-    const subscription = supabase
-      .channel(`analytics_chat_${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "analytics_chat_messages",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload: any) => {
-          const newMessage = payload.new as ChatMessage;
-          // FIX: Protect prev state in case it's somehow not an array
-          setChatMessages((prev) => [...(Array.isArray(prev) ? prev : []), newMessage]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [user?.id, hasAccess]);
 
   useEffect(() => {

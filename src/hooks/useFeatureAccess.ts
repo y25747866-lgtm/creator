@@ -44,7 +44,7 @@ export function useFeatureAccess() {
       setUsageLoading(false);
     };
     fetchUsage();
-  }, [user, isFreePlan]);
+  }, [user?.id, isFreePlan]);
 
   const recordUsage = useCallback(async (feature: Feature) => {
     // Paid active users always allowed
