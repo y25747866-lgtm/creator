@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,8 +17,8 @@ import { createTrackedProduct, recordMetric } from "@/lib/productTracking";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
-import { ThinkingOrb } from "thinking-orbs";
-import { BorderBeam } from "border-beam";
+const ThinkingOrb = lazy(() => import("thinking-orbs").then(({ ThinkingOrb }) => ({ default: ThinkingOrb })));
+const BorderBeam = lazy(() => import("border-beam").then(({ BorderBeam }) => ({ default: BorderBeam })));
 
 // ─── TOPIC INPUT GLOW ─────────────────────────────────────────────────────────
 const glowStyles = `
@@ -707,7 +707,9 @@ const EbookGenerator = () => {
           return (
             <div key={s.label} className="relative">
               <div className="flex items-center gap-4">
-                <ThinkingOrb state={s.state} size={64} theme="dark" paused={!active} aria-label={`${s.label} step`} />
+                <Suspense fallback={<div className="h-16 w-16 shrink-0" aria-hidden="true" />}>
+                  <ThinkingOrb state={s.state} size={64} theme="dark" paused={!active} aria-label={`${s.label} step`} />
+                </Suspense>
                 <div className="min-w-0 flex-1">
                   <div className={`text-sm font-bold ${active || completed ? "text-white" : "text-zinc-600"}`}>Step {stepNumber}</div>
                   <div className={`text-lg font-semibold ${active || completed ? "text-white" : "text-zinc-600"}`}>{s.label}</div>
@@ -731,7 +733,7 @@ const EbookGenerator = () => {
         <h1 className="text-4xl font-extrabold mb-4 tracking-tight" style={{ fontFamily: "Syne" }}>AI Product Generator</h1>
         <p className="text-zinc-400">Discover winning niches and generate professional digital products in minutes.</p>
       </div>}
-      {!showNicheResults && <BorderBeam size="pulse-outside" colorVariant="mono" theme="dark">
+      {!showNicheResults && <Suspense fallback={null}><BorderBeam size="pulse-outside" colorVariant="mono" theme="dark">
         <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2">
@@ -770,7 +772,7 @@ const EbookGenerator = () => {
             Find Winning Niches
           </Button>
         </div>
-      </BorderBeam>}
+      </BorderBeam></Suspense>}
 
       {isSearching && (
         <div className="text-center py-20">
