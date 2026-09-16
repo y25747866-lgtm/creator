@@ -497,7 +497,7 @@ interface NicheCard {
 const SCORE_BAR_COLORS: Record<string, string> = {
   pain: "#EF4444",
   demand: "#00d4aa",
-  speed: "#8B5CF6",
+  speed: "#F97316",
 };
 
 const EbookGenerator = () => {
@@ -522,6 +522,7 @@ const EbookGenerator = () => {
   const [draftingProgress, setDraftingProgress] = useState(0);
   const [scriptContent, setScriptContent] = useState<{ title: string; sections: { heading: string; body: string }[] } | null>(null);
   const [ebookData, setEbookData] = useState<Ebook | null>(null);
+  const showNicheResults = isSearching || niches.length > 0;
 
   const searchSteps = [
     "Scanning trending topics…",
@@ -680,10 +681,18 @@ const EbookGenerator = () => {
           <p className="mt-2 text-sm text-zinc-400">Three steps: lock in the niche, generate the product, then export the final file.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-300">{topic || "No topic selected"}</span>
-          <span className="rounded-full bg-[#00e68e] px-3 py-1 text-xs font-bold text-[#0A0A0A]">
-            {step === 1 ? "Niche" : step === 2 ? "Generating" : "Ready to export"}
-          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setNiches([]);
+              setSelectedNiche(null);
+              setTopicError(false);
+            }}
+            className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 transition-colors hover:border-[#00e68e] hover:text-white"
+          >
+            {topic || "No topic selected"}
+          </button>
+          <span className="rounded-full bg-[#00e68e] px-3 py-1 text-xs font-bold text-[#0A0A0A]">Niche</span>
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-4">
@@ -718,11 +727,11 @@ const EbookGenerator = () => {
   const renderNicheDiscovery = () => (
     <div className="max-w-4xl mx-auto">
       <style>{glowStyles}</style>
-      <div className="text-center mb-10">
+      {!showNicheResults && <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold mb-4 tracking-tight" style={{ fontFamily: "Syne" }}>AI Product Generator</h1>
         <p className="text-zinc-400">Discover winning niches and generate professional digital products in minutes.</p>
-      </div>
-      <BorderBeam size="pulse-outside" colorVariant="mono" theme="dark">
+      </div>}
+      {!showNicheResults && <BorderBeam size="pulse-outside" colorVariant="mono" theme="dark">
         <div className="bg-[#111111] border border-zinc-800 rounded-2xl p-8 mb-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2">
@@ -761,7 +770,7 @@ const EbookGenerator = () => {
             Find Winning Niches
           </Button>
         </div>
-      </BorderBeam>
+      </BorderBeam>}
 
       {isSearching && (
         <div className="text-center py-20">
@@ -781,7 +790,7 @@ const EbookGenerator = () => {
             <div
               key={niche.id}
               onClick={() => setSelectedNiche(niche)}
-              className={`bg-[#111111] border-2 rounded-2xl p-6 cursor-pointer transition-all hover:scale-[1.02] ${selectedNiche?.id === niche.id ? "border-white" : "border-zinc-900"}`}
+              className={`bg-[#111111] border-[0.5px] rounded-[12px] p-6 cursor-pointer transition-all hover:scale-[1.02] ${selectedNiche?.id === niche.id ? "border-white" : "border-[#222]"}`}
             >
               <span className="inline-block px-2 py-1 bg-zinc-800 text-[10px] font-bold text-zinc-400 rounded mb-4 tracking-widest uppercase">
                 {niche.category}
@@ -935,7 +944,7 @@ const EbookGenerator = () => {
   return (
     <DashboardLayout>
       <div className="p-6 md:p-10 min-h-screen bg-[#0A0A0A] text-white">
-        {renderStepIndicator()}
+        {showNicheResults && renderStepIndicator()}
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
