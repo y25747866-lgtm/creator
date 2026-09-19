@@ -36,13 +36,27 @@ const ProductsDashboard = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    listProducts()
-      .then((data) => {
-        const list: ProductRecord[] = data.products ?? data ?? [];
+    const loadProducts = async () => {
+      try {
+        const data = await listProducts();
+        // Ensure we have an array
+        let list: ProductRecord[] = [];
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data?.products && Array.isArray(data.products)) {
+          list = data.products;
+        } else if (data && typeof data === 'object') {
+          list = [];
+        }
         setProducts(list);
-      })
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error("Failed to load products:", error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
   }, []);
 
   const fetchDetails = useCallback(
@@ -55,9 +69,34 @@ const ProductsDashboard = () => {
           getProductFeedback(id),
           getProductVersions(id),
         ]);
-        setMetricsCache((c) => ({ ...c, [id]: mRes.metrics ?? mRes ?? [] }));
-        setFeedbackCache((c) => ({ ...c, [id]: fRes.feedback ?? fRes ?? [] }));
-        setVersionsCache((c) => ({ ...c, [id]: vRes.versions ?? vRes ?? [] }));
+        
+        // Ensure metrics is an array
+        let metrics: MetricRecord[] = [];
+        if (Array.isArray(mRes)) {
+          metrics = mRes;
+        } else if (mRes?.metrics && Array.isArray(mRes.metrics)) {
+          metrics = mRes.metrics;
+        }
+
+        // Ensure feedback is an array
+        let feedback: FeedbackRecord[] = [];
+        if (Array.isArray(fRes)) {
+          feedback = fRes;
+        } else if (fRes?.feedback && Array.isArray(fRes.feedback)) {
+          feedback = fRes.feedback;
+        }
+
+        // Ensure versions is an array
+        let versions: VersionRecord[] = [];
+        if (Array.isArray(vRes)) {
+          versions = vRes;
+        } else if (vRes?.versions && Array.isArray(vRes.versions)) {
+          versions = vRes.versions;
+        }
+
+        setMetricsCache((c) => ({ ...c, [id]: metrics }));
+        setFeedbackCache((c) => ({ ...c, [id]: feedback }));
+        setVersionsCache((c) => ({ ...c, [id]: versions }));
       } catch {
         setMetricsCache((c) => ({ ...c, [id]: [] }));
         setFeedbackCache((c) => ({ ...c, [id]: [] }));

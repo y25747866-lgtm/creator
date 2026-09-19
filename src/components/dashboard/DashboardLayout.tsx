@@ -1,38 +1,57 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, createContext, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
-import Background3D from "@/components/Background3D";
-import ThemeToggle from "@/components/ThemeToggle";
-import TrialTimer from "@/components/TrialTimer";
-import TrialExpiredModal from "@/components/TrialExpiredModal";
-import { useFreeTrial } from "@/hooks/useFreeTrial";
+
+interface SidebarContextType {
+  collapsed: boolean;
+  setCollapsed: (v: boolean) => void;
+}
+
+const SidebarContext = createContext<SidebarContextType>({ collapsed: false, setCollapsed: () => {} });
+export const useSidebarState = () => useContext(SidebarContext);
+
+const SIDEBAR_KEY = "nexora_sidebar_collapsed";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { expired, isFreeUser } = useFreeTrial();
+  const [collapsed, setCollapsedState] = useState(() => {
+    try { return localStorage.getItem(SIDEBAR_KEY) === "true"; } catch { return false; }
+  });
+  const location = useLocation();
+
+  const setCollapsed = (v: boolean) => {
+    setCollapsedState(v);
+    try { localStorage.setItem(SIDEBAR_KEY, String(v)); } catch {}
+  };
 
   return (
-    <div className="min-h-screen">
-      <Background3D />
-      <DashboardSidebar />
-      
-      <main className="ml-[280px] min-h-screen transition-all duration-300">
-        <header className="sticky top-0 z-30 glass-panel border-b border-border/50 px-8 py-4">
-          <div className="flex items-center justify-end gap-3">
-            <TrialTimer />
-            <ThemeToggle />
-          </div>
-        </header>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+      <div className="min-h-screen" style={{ background: '#0A0A0A', color: '#FFFFFF' }}>
+        <DashboardSidebar />
         
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
-
-      {isFreeUser && <TrialExpiredModal open={expired} />}
-    </div>
+        <main
+          className="relative z-10 min-h-screen transition-all duration-300"
+          style={{ marginLeft: collapsed ? 80 : 280, background: '#0A0A0A' }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ background: '#0A0A0A' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
+    </SidebarContext.Provider>
   );
 };
 

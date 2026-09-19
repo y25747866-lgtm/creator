@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 type Status = "checking" | "active" | "timeout";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 60_000;
 const MAX_TRIES = 10;
 
 const WhopSuccess = () => {
@@ -56,7 +56,7 @@ const WhopSuccess = () => {
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="max-w-md w-full text-center space-y-6">
           <div className="flex items-center justify-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <Loader2 className="w-12 h-12 animate-spin text-white" />
           </div>
           <h1 className="text-2xl font-semibold">Verifying access…</h1>
           <p className="text-muted-foreground">
