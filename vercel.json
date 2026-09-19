@@ -33,17 +33,8 @@
   ],
   "redirects": [
     {
-      "source": "http://nexoraos.digital/(.*)",
-      "destination": "https://www.nexoraos.digital/$1",
-      "permanent": true
-    },
-    {
-      "source": "http://www.nexoraos.digital/(.*)",
-      "destination": "https://www.nexoraos.digital/$1",
-      "permanent": true
-    },
-    {
-      "source": "https://nexoraos.digital/(.*)",
+      "source": "/(.*)",
+      "has": [{"type": "host", "value": "nexoraos.digital"}],
       "destination": "https://www.nexoraos.digital/$1",
       "permanent": true
     }
