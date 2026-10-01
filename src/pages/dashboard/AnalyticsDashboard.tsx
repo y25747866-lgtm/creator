@@ -412,7 +412,7 @@ const AnalyticsDashboard = () => {
                       <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', fontFamily: "'Syne', sans-serif" }}>{platform.name}</h3>
                       <p style={{ fontSize: '13px', color: '#777777', fontFamily: "'DM Sans', sans-serif", lineHeight: '1.5' }}>{platform.description}</p>
                     </div>
-                    <img src={platform.logo} alt={platform.name} style={{ width: '48px', height: '48px' }} />
+                    <img src={platform.logo} alt={platform.name} width="48" height="48" loading="lazy" style={{ width: '48px', height: '48px' }} />
                   </div>
                   
                   {isConnected ? (

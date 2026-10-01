@@ -113,7 +113,7 @@ const DashboardSidebar = () => {
       {/* Logo & Plan Badge */}
       <div className="p-5" style={{ borderBottom: '1px solid #1A1A1A' }}>
         <Link to="/" className="flex items-center gap-3">
-          <img src={nexoraLogo} alt="NexoraOS" className="w-9 h-9 shrink-0" />
+          <img src={nexoraLogo} alt="NexoraOS" width="36" height="36" loading="lazy" className="w-9 h-9 shrink-0" />
           <AnimatePresence>
             {!collapsed && (
               <motion.div

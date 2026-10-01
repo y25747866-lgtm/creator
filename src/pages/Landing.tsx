@@ -83,7 +83,7 @@ const Landing = () => {
       >
         <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" className="w-8 h-8" />
+            <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
             <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#A1A1A1] absolute left-1/2 -translate-x-1/2">

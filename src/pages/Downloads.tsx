@@ -195,7 +195,7 @@ const Downloads = () => {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#111111] border-[#1A1A1A] text-white">
             <DialogHeader><DialogTitle className="text-white">{previewEbook?.title}</DialogTitle></DialogHeader>
             {previewEbook?.coverImageUrl && (
-              <div className="mb-6"><img src={previewEbook.coverImageUrl} alt={previewEbook.title} className="w-48 mx-auto rounded-lg shadow-lg" /></div>
+              <div className="mb-6"><img src={previewEbook.coverImageUrl} alt={previewEbook.title} width="192" height="256" loading="lazy" className="w-48 mx-auto rounded-lg shadow-lg" /></div>
             )}
             <div className="prose prose-sm dark:prose-invert max-w-none text-gray-300">
               {previewEbook?.content.split("\n").map((line, i) => {
