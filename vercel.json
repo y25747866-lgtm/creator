@@ -33,6 +33,11 @@
   ],
   "redirects": [
     {
+      "source": "/blog",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
       "source": "/(.*)",
       "has": [{"type": "host", "value": "nexoraos.digital"}],
       "destination": "https://www.nexoraos.digital/$1",

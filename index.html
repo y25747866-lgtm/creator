@@ -77,6 +77,7 @@
           "alternateName": "NexoraOS",
           "url": "https://www.nexoraos.digital/",
           "inLanguage": "en-US",
+          "description": "NexoraOS generates digital products—not ebooks—including courses, templates, software, and other downloadable products.",
           "publisher": {
             "@id": "https://www.nexoraos.digital/#organization"
           }
@@ -88,7 +89,7 @@
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
           "url": "https://www.nexoraos.digital/",
-          "description": "AI-powered digital product creation platform. Find winning niches and generate complete downloadable digital products in minutes.",
+          "description": "NexoraOS generates digital products—not ebooks—including courses, templates, software, and other downloadable products.",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -112,7 +113,38 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main>
+        <header>
+          <a href="/">NexoraOS</a>
+          <nav aria-label="Primary navigation">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/blog/">Blog</a>
+          </nav>
+        </header>
+        <section aria-labelledby="hero-heading">
+          <p>AI-POWERED BUSINESS OS</p>
+          <h1 id="hero-heading">NexoraOS: Your idea. Your product. Your income.</h1>
+          <p>NexoraOS helps creators generate, launch, and sell complete digital products in one place. Build digital products, courses, templates, and software with AI—without writing or design skills.</p>
+          <p><a href="/auth">Start Building Now</a></p>
+        </section>
+        <section id="features" aria-labelledby="features-heading">
+          <h2 id="features-heading">What you can do</h2>
+          <h3>Generate</h3>
+          <p>AI builds your digital product from scratch.</p>
+          <h3>Launch</h3>
+          <p>Create a sales page, checkout, and delivery experience.</p>
+          <h3>Sell</h3>
+          <p>Connect with the platforms where your audience already buys.</p>
+        </section>
+        <section id="pricing" aria-labelledby="pricing-heading">
+          <h2 id="pricing-heading">Simple pricing</h2>
+          <p>Start free and upgrade when you are ready to create more.</p>
+        </section>
+        <footer><p>Built by a creator, for creators. Contact: hello@nexoraos.digital</p></footer>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

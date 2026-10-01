@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Landing from "./pages/Landing";
+import Blog from "./pages/Blog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Lazy load non-critical pages
@@ -48,6 +49,8 @@ const App = () => (
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                 <Route path="/" element={<Landing />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/" element={<Blog />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/pricing" element={<Pricing />} />
