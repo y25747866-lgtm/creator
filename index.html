@@ -45,6 +45,11 @@
       <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700,800,900&f[]=satoshi@300,400,500,600,700,900&display=swap" />
     </noscript>
 
+    <style>
+      #root:empty ~ * { display: none; }
+      body { background: #0a0a0a; }
+    </style>
+
     <!-- Schema: Brand Entity -->
     <script type="application/ld+json">
     {
@@ -116,9 +121,10 @@
       gtag('config', 'G-RPJ5LMLMVM');
     </script>
   </head>
-  <body>
+  <body style="background:#0a0a0a;">
     <div id="root">
-      <main>
+      <div style="display: none;">
+        <main>
         <header>
           <a href="/">NexoraOS</a>
           <nav aria-label="Primary navigation">
@@ -146,8 +152,9 @@
           <h2 id="pricing-heading">Simple pricing</h2>
           <p>Start free and upgrade when you are ready to create more.</p>
         </section>
-        <footer><p>Built by a creator, for creators. Contact: hello@nexoraos.digital</p></footer>
-      </main>
+          <footer><p>Built by a creator, for creators. Contact: hello@nexoraos.digital</p></footer>
+        </main>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
