@@ -6,7 +6,7 @@ import {
   ArrowRight, Check, Sparkles, DollarSign,
   TrendingUp, Rocket, BarChart2
 } from 'lucide-react';
-import nexoraLogo from '@/assets/nexora-logo.png';
+import nexoraLogo from '@/assets/nexora-logo.webp';
 import founderPhoto from '@/assets/founder-photo.webp';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';

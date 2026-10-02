@@ -3,13 +3,13 @@
   "name": "NexoraOS - AI Digital Product Generator",
   "icons": [
     {
-      "src": "/nexora-logo-192.png",
-      "type": "image/png",
+      "src": "/nexora-logo-192.webp",
+      "type": "image/webp",
       "sizes": "192x192"
     },
     {
-      "src": "/nexora-logo-512.png",
-      "type": "image/png",
+      "src": "/nexora-logo-512.webp",
+      "type": "image/webp",
       "sizes": "512x512"
     }
   ],
