@@ -2,34 +2,160 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="application-name" content="NexoraOS" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NexoraOS - AI Ebook Generator</title>
-    <meta name="description" content="Create professional AI-generated ebooks with NexoraOS. Short, medium, or long (40-50 pages) on any topic." />
+    <meta name="google-site-verification" content="PEpKCfx9erZxkdYk1CGDdB123G9UtgbF0XbjZeEbpaM" />
+    <title>NexoraOS</title>
+    <meta name="description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
     <meta name="author" content="NexoraOS" />
-
+    
     <!-- OpenGraph / Facebook -->
-    <meta property="og:title" content="NexoraOS - AI Ebook Generator" />
-    <meta property="og:description" content="Turn any topic into a real ebook instantly. Powered by AI." />
-    <meta property="og:image" content="https://nexoraos.vercel.app/nexora-logo.png" /> <!-- Replace with your actual logo URL -->
-    <meta property="og:url" content="https://nexoraos.vercel.app" />
+    <meta property="og:site_name" content="NexoraOS" />
+    <meta property="og:title" content="NexoraOS | AI Digital Product Generator" />
+    <meta property="og:description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
+    <meta property="og:image" content="https://www.nexoraos.digital/nexora-logo.webp" />
+    <meta property="og:url" content="https://www.nexoraos.digital/" />
     <meta property="og:type" content="website" />
+    <link rel="canonical" href="https://www.nexoraos.digital/" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="NexoraOS - AI Ebook Generator" />
-    <meta name="twitter:description" content="Create professional AI-generated ebooks." />
-    <meta name="twitter:image" content="https://nexoraos.vercel.app/nexora-logo.png" /> <!-- Replace with your actual logo URL -->
+    <meta name="twitter:site" content="@NexoraOS" />
+    <meta name="twitter:title" content="NexoraOS | AI Digital Product Generator" />
+    <meta name="twitter:description" content="Generate a complete, professional digital product in minutes — no writing, no design skills. AI handles content, formatting & cover. Try NexoraOS free." />
+    <meta name="twitter:image" content="https://www.nexoraos.digital/nexora-logo.webp" />
     
-    <!-- Favicon (replace with your own logo files) -->
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Favicon -->
+    <link rel="icon" href="/nexora-logo-512.webp" />
+    <link rel="icon" type="image/webp" sizes="32x32" href="/nexora-logo-32.webp" />
+    <link rel="icon" type="image/webp" sizes="16x16" href="/nexora-logo-16.webp" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/nexora-logo-180.webp" />
     <link rel="manifest" href="/site.webmanifest" />
-  </head>
 
-  <body>
-    <div id="root"></div>
+    <!-- Preconnect to Font Origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.fontshare.com">
+    
+    <!-- Optimized Font Loading -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700&family=DM+Sans:wght@400;600&display=swap" onLoad="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700,800&f[]=satoshi@300,400,500,600,700,900&display=swap" onLoad="this.onload=null;this.rel='stylesheet'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@700&family=DM+Sans:wght@400;600&display=swap" />
+      <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700,800,900&f[]=satoshi@300,400,500,600,700,900&display=swap" />
+    </noscript>
+
+    <style>
+      #root:empty ~ * { display: none; }
+      body { background: #0a0a0a; }
+    </style>
+
+    <!-- Schema: Brand Entity -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.nexoraos.digital/#organization",
+          "name": "NexoraOS",
+          "url": "https://www.nexoraos.digital",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://www.nexoraos.digital/nexora-logo.webp"
+          },
+          "description": "NexoraOS is an AI-powered digital product generator. Create and sell complete digital products in minutes — no writing, no design skills needed.",
+          "foundingDate": "2024",
+          "founder": {
+            "@type": "Person",
+            "name": "Yesh"
+          },
+          "sameAs": [
+            "https://www.instagram.com/nexoraos",
+            "https://www.tiktok.com/@nexoraos_",
+            "https://www.youtube.com/@nexoraos",
+            "https://x.com/NexoraOS",
+            "https://www.producthunt.com/products/nexoraos",
+            "https://whop.com/nexoraos"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.nexoraos.digital/#website",
+          "name": "NexoraOS",
+          "alternateName": "NexoraOS",
+          "url": "https://www.nexoraos.digital/",
+          "inLanguage": "en-US",
+          "description": "NexoraOS generates digital products—not ebooks—including courses, templates, software, and other downloadable products.",
+          "publisher": {
+            "@id": "https://www.nexoraos.digital/#organization"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.nexoraos.digital/#app",
+          "name": "NexoraOS",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "url": "https://www.nexoraos.digital/",
+          "description": "NexoraOS generates digital products—not ebooks—including courses, templates, software, and other downloadable products.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "publisher": {
+            "@id": "https://www.nexoraos.digital/#organization"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RPJ5LMLMVM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-RPJ5LMLMVM');
+    </script>
+  </head>
+  <body style="background:#0a0a0a;">
+    <div id="root">
+      <div style="display: none;">
+        <main>
+        <header>
+          <a href="/">NexoraOS</a>
+          <nav aria-label="Primary navigation">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="/blog/">Blog</a>
+          </nav>
+        </header>
+        <section aria-labelledby="hero-heading">
+          <p>AI-POWERED BUSINESS OS</p>
+          <h1 id="hero-heading">NexoraOS: Your idea. Your product. Your income.</h1>
+          <p>NexoraOS helps creators generate, launch, and sell complete digital products in one place. Build digital products, courses, templates, and software with AI—without writing or design skills.</p>
+          <p><a href="/auth">Start Building Now</a></p>
+        </section>
+        <section id="features" aria-labelledby="features-heading">
+          <h2 id="features-heading">What you can do</h2>
+          <h3>Generate</h3>
+          <p>AI builds your digital product from scratch.</p>
+          <h3>Launch</h3>
+          <p>Create a sales page, checkout, and delivery experience.</p>
+          <h3>Sell</h3>
+          <p>Connect with the platforms where your audience already buys.</p>
+        </section>
+        <section id="pricing" aria-labelledby="pricing-heading">
+          <h2 id="pricing-heading">Simple pricing</h2>
+          <p>Start free and upgrade when you are ready to create more.</p>
+        </section>
+          <footer><p>Built by a creator, for creators. Contact: hello@nexoraos.digital</p></footer>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
- </html>
+</html>

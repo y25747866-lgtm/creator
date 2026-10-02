@@ -17,3 +17,17 @@ verify_jwt = false
 
 [functions.monetization]
 verify_jwt = false
+
+[functions.generate-marketing]
+verify_jwt = false
+
+[functions.analytics-connect]
+verify_jwt = false
+
+[functions.analytics-fetch]
+verify_jwt = false
+
+[functions.analytics-chat]
+verify_jwt = false
+[functions.find-winning-niches]
+verify_jwt = false
