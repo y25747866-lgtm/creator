@@ -7,7 +7,6 @@ import {
   TrendingUp, Rocket, BarChart2
 } from 'lucide-react';
 import nexoraLogo from '@/assets/nexora-logo.webp';
-import founderPhoto from '@/assets/founder-photo.webp';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';
 import OptimizedHeroBackground from '@/components/OptimizedHeroBackground';
@@ -274,8 +273,8 @@ const Landing = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="flex justify-center">
-              <div className="aspect-square w-full max-w-sm rounded-3xl overflow-hidden border border-[#1A1A1A]">
-                <img src={founderPhoto} alt="Yesh Malik — Founder of NexoraOS" width="400" height="400" loading="lazy" className="w-full h-full object-cover" />
+              <div className="w-full max-w-sm rounded-3xl border border-[#1A1A1A]">
+                <img src="/yesh-founder.webp" alt="Yesh Malik - Founder of NexoraOS" width="400" height="500" loading="lazy" style={{ width: '100%', height: 'auto', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '8px' }} />
               </div>
             </div>
             <div>
