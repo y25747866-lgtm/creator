@@ -17,7 +17,7 @@ vi.mock("recharts", () => {
 
 function makeQuery(data: any[] = []) {
   const query: Record<string, any> = {};
-  for (const method of ["select", "eq", "order", "limit", "insert", "delete", "update", "upsert"]) query[method] = vi.fn(() => query);
+  for (const method of ["select", "eq", "order", "limit", "or", "insert", "delete", "update", "upsert"]) query[method] = vi.fn(() => query);
   const result = Promise.resolve({ data, error: null });
   query.then = result.then.bind(result);
   return query;
@@ -70,5 +70,70 @@ describe("Analytics Dashboard baseline", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(await screen.findByText("Recovered answer")).toBeInTheDocument();
     expect(chatAttempts).toBe(2);
+  });
+
+  it("loads chat history in stable 20-message pages without duplicating older rows", async () => {
+    const latestRows = Array.from({ length: 21 }, (_, index) => ({
+      id: `00000000-0000-4000-8000-${String(21 - index).padStart(12, "0")}`,
+      role: "user",
+      content: `History ${index}`,
+      created_at: "2026-10-08T00:00:00.000Z",
+    }));
+    const olderRows = [1, 0].map((suffix, index) => ({
+      id: `00000000-0000-4000-8000-${String(suffix).padStart(12, "0")}`,
+      role: "user",
+      content: `Earlier ${index}`,
+      created_at: "2026-10-08T00:00:00.000Z",
+    }));
+    const chatQueries: any[] = [];
+    let pageRequest = 0;
+    mocks.from.mockImplementation((table: string) => {
+      if (table === "analytics_chat_messages") {
+        const query = makeQuery(pageRequest++ === 0 ? latestRows : olderRows);
+        chatQueries.push(query);
+        return query;
+      }
+      return makeQuery(table === "platform_connections" ? [{ platform: "whop", status: "connected", connected_at: new Date().toISOString(), last_sync_at: null }] : []);
+    });
+
+    render(<AnalyticsDashboard />);
+    const loadEarlier = await screen.findByRole("button", { name: "Load earlier messages" });
+    expect(chatQueries[0].limit).toHaveBeenCalledWith(21);
+    expect(screen.getByText("History 19")).toBeInTheDocument();
+    expect(screen.queryByText("History 20")).not.toBeInTheDocument();
+    fireEvent.click(loadEarlier);
+    await waitFor(() => expect(chatQueries).toHaveLength(2));
+    expect(chatQueries[1].or).toHaveBeenCalledWith(expect.stringContaining("id.lt."));
+    expect(await screen.findByText("Earlier 0")).toBeInTheDocument();
+  });
+
+  it("requests the next Whop provider page using returned API cursors", async () => {
+    const whopCursors = { products: "products-cursor", orders: "orders-cursor" };
+    let analyticsRequests = 0;
+    mocks.invoke.mockImplementation(async (name: string, options: any) => {
+      if (name !== "analytics-fetch") return { data: { reply: "ok" }, error: null };
+      analyticsRequests += 1;
+      if (analyticsRequests === 1) {
+        return { data: {
+          summary: { totalRevenue: 10, totalSales: 1, activeProducts: 1, conversionRate: 100, completedSales: 1 },
+          products: [{ id: "w1", platform: "whop", name: "First page product", sales: 1, revenue: 10 }],
+          orders: [],
+          nextCursors: { whop: whopCursors },
+        }, error: null };
+      }
+      expect(options.body).toEqual({ platform: "whop", cursors: { whop: whopCursors } });
+      return { data: {
+        summary: { totalRevenue: 20, totalSales: 1, activeProducts: 1, conversionRate: 100, completedSales: 1 },
+        products: [{ id: "w2", platform: "whop", name: "Second page product", sales: 1, revenue: 20 }],
+        orders: [],
+        nextCursors: { whop: null },
+      }, error: null };
+    });
+
+    render(<AnalyticsDashboard />);
+    const button = await screen.findByRole("button", { name: "Load more provider results" });
+    fireEvent.click(button);
+    expect(await screen.findByText("Second page product")).toBeInTheDocument();
+    expect(analyticsRequests).toBe(2);
   });
 });

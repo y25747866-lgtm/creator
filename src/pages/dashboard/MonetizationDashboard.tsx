@@ -8,12 +8,9 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MonetizationWizard from "@/components/monetization/MonetizationWizard";
 import MonetizationProductCard from "@/components/monetization/MonetizationProductCard";
 import ModulePreview from "@/components/monetization/ModulePreview";
-import {
-  listMonetizationProducts,
-  MonetizationProduct,
-  MonetizationModule,
-} from "@/lib/monetization";
-import { useQuery } from "@tanstack/react-query";
+import { listMonetizationProducts, type MonetizationModule } from "@/lib/monetization";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 import { Link } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
@@ -32,18 +29,16 @@ const MonetizationDashboard = () => {
   const isExpired = subscription?.status === "expired";
   const hasAccess = hasPaidSubscription && !isExpired;
 
-  const {
-    data: products,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const productsQuery = useInfiniteQuery({
     queryKey: ["monetization-products"],
-    queryFn: async () => {
-      const res = await listMonetizationProducts();
-      return (res.products || []) as MonetizationProduct[];
-    },
+    initialPageParam: null as KeysetCursor | null,
+    queryFn: ({ pageParam }) => listMonetizationProducts(pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: hasAccess,
   });
+  const products = productsQuery.data?.pages.flatMap((page) => page.products) ?? [];
+  const isLoading = productsQuery.isLoading;
+  const refetch = productsQuery.refetch;
 
   const handleWizardComplete = useCallback(() => {
     setView({ mode: "list" });
@@ -162,6 +157,13 @@ const MonetizationDashboard = () => {
                         onModuleClick={(mod) => handleModuleClick(mod, product.title)}
                       />
                     ))}
+                    {productsQuery.hasNextPage && (
+                      <div className="md:col-span-2 flex justify-center">
+                        <Button variant="outline" onClick={() => productsQuery.fetchNextPage()} disabled={productsQuery.isFetchingNextPage}>
+                          {productsQuery.isFetchingNextPage ? "Loading campaigns…" : "Load more campaigns"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </motion.div>

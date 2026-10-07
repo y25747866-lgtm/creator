@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 
 /*
 ==========================================
@@ -160,14 +161,16 @@ LIST PRODUCTS
 ==========================================
 */
 
-export async function listMonetizationProducts() {
+export async function listMonetizationProducts(cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=list-products`, {
+  const params = new URLSearchParams({ action: "list-products", paged: "true" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, {
     method: "GET",
     headers,
   });
   if (!res.ok) throw new Error("Failed to fetch campaigns");
-  return res.json();
+  return res.json() as Promise<{ products: MonetizationProduct[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
 }
 
 /*
@@ -176,13 +179,12 @@ GET MODULE + VERSIONS
 ==========================================
 */
 
-export async function getModuleWithVersions(moduleId: string) {
+export async function getModuleWithVersions(moduleId: string, cursor: KeysetCursor | null = null) {
   if (!moduleId) throw new Error("Module ID required");
   const headers = await getHeaders();
-  const res = await fetch(
-    `${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${encodeURIComponent(moduleId)}`,
-    { method: "GET", headers }
-  );
+  const params = new URLSearchParams({ action: "get-module", moduleId });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch asset");
   return res.json();
 }

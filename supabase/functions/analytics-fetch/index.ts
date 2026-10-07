@@ -2,18 +2,23 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
-async function fetchWhopData(apiKey: string) {
+const PROVIDER_PAGE_SIZE = 20;
+
+async function fetchWhopData(apiKey: string, cursors: { products?: string | null; orders?: string | null } = {}) {
   const headers = { Authorization: `Bearer ${apiKey}` };
   let products: any[] = [];
   let orders: any[] = [];
+  let productCursor: string | null = null;
+  let orderCursor: string | null = null;
 
   try {
-    console.log("Fetching Whop products with key:", apiKey.substring(0, 10) + "...");
-    const res = await fetch("https://api.whop.com/api/v5/company/products", { headers });
+    const params = new URLSearchParams({ first: String(PROVIDER_PAGE_SIZE) });
+    if (cursors.products) params.set("after", cursors.products);
+    const res = await fetch(`https://api.whop.com/api/v5/company/products?${params}`, { headers });
     if (res.ok) {
       const data = await res.json();
       products = (data.data || []).filter((p: any) => p && typeof p === 'object');
-      console.log("✅ Whop products fetched:", products.length);
+      if (data.page_info?.has_next_page && data.page_info?.end_cursor) productCursor = data.page_info.end_cursor;
     } else {
       const errText = await res.text();
       console.error("❌ Whop products error:", res.status, errText);
@@ -23,12 +28,13 @@ async function fetchWhopData(apiKey: string) {
   }
 
   try {
-    console.log("Fetching Whop memberships...");
-    const res = await fetch("https://api.whop.com/api/v5/company/memberships?per=100", { headers });
+    const params = new URLSearchParams({ first: String(PROVIDER_PAGE_SIZE) });
+    if (cursors.orders) params.set("after", cursors.orders);
+    const res = await fetch(`https://api.whop.com/api/v5/company/memberships?${params}`, { headers });
     if (res.ok) {
       const data = await res.json();
       orders = (data.data || []).filter((o: any) => o && typeof o === 'object');
-      console.log("✅ Whop memberships fetched:", orders.length);
+      if (data.page_info?.has_next_page && data.page_info?.end_cursor) orderCursor = data.page_info.end_cursor;
     } else {
       const errText = await res.text();
       // Whop API might return 401 if key is invalid
@@ -51,7 +57,8 @@ async function fetchWhopData(apiKey: string) {
   const activeProducts = products.length;
 
   return {
-    summary: { totalRevenue, totalSales, activeProducts, conversionRate },
+    summary: { totalRevenue, totalSales, activeProducts, conversionRate, completedSales: completedOrders },
+    cursors: { products: productCursor, orders: orderCursor },
     products: products.map((p: any) => ({ 
       id: p?.id || "unknown", 
       name: p?.name || p?.title || "Unknown Product", 
@@ -59,7 +66,7 @@ async function fetchWhopData(apiKey: string) {
       platform: "whop",
       description: p?.description || ""
     })),
-    orders: orders.slice(0, 50).map((o: any) => ({
+    orders: orders.map((o: any) => ({
       id: o?.id || "unknown",
       product: o?.product?.name || "Unknown",
       amount: parseFloat(o?.amount_total || "0") / 100,
@@ -115,7 +122,7 @@ async function fetchPayhipData(apiKey: string) {
   const conversionRate = products.length > 0 ? parseFloat(((totalSales / (products.length * 10)) * 100).toFixed(2)) : 0;
 
   return {
-    summary: { totalRevenue, totalSales, activeProducts: products.length, conversionRate },
+    summary: { totalRevenue, totalSales, activeProducts: products.length, conversionRate, completedSales: totalSales },
     products: products.map((p: any) => ({ 
       id: p?.id || p?.product_id || "unknown", 
       name: p?.name || p?.title || "Unknown Product", 
@@ -157,6 +164,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const platform = body.platform ? validateAndSanitize(body.platform, 100) : null;
+    const whopCursors = body.cursors?.whop || {};
 
     // Fetch from all connected platforms if no specific platform
     const { data: connections, error: connError } = await supabase
@@ -177,9 +185,10 @@ serve(async (req) => {
     }
 
     let allData = { 
-      summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, 
+      summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0, completedSales: 0 },
       products: [] as any[], 
-      orders: [] as any[] 
+      orders: [] as any[],
+      nextCursors: { whop: null as { products: string | null; orders: string | null } | null },
     };
 
     for (const conn of connections) {
@@ -195,7 +204,7 @@ serve(async (req) => {
 
       try {
         if (conn.platform === "whop") {
-          platformData = await fetchWhopData(apiKey);
+          platformData = await fetchWhopData(apiKey, whopCursors);
         } else if (conn.platform === "payhip") {
           platformData = await fetchPayhipData(apiKey);
         } else {
@@ -207,8 +216,10 @@ serve(async (req) => {
           allData.summary.totalRevenue += platformData.summary.totalRevenue;
           allData.summary.totalSales += platformData.summary.totalSales;
           allData.summary.activeProducts += platformData.summary.activeProducts;
+          allData.summary.completedSales += platformData.summary.completedSales || 0;
           allData.products.push(...platformData.products);
           allData.orders.push(...platformData.orders);
+          if (conn.platform === "whop") allData.nextCursors.whop = platformData.cursors;
         }
       } catch (e) {
         console.error(`❌ Error fetching ${conn.platform} data:`, e);
@@ -239,8 +250,11 @@ serve(async (req) => {
     allData.orders.sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
-      return dateB - dateA;
+      return dateB - dateA || String(b.id).localeCompare(String(a.id));
     });
+    allData.summary.conversionRate = allData.summary.totalSales > 0
+      ? Number(((allData.summary.completedSales / allData.summary.totalSales) * 100).toFixed(2))
+      : 0;
 
     console.log("✅ Analytics fetch complete:", {
       totalRevenue: allData.summary.totalRevenue,

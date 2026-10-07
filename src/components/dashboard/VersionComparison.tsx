@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Clock, FileText, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { VersionRecord, MetricRecord } from "@/lib/dashboardMetrics";
@@ -10,9 +11,12 @@ interface Props {
   versions: VersionRecord[];
   metrics: MetricRecord[];
   loading: boolean;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-const VersionComparison = ({ versions, metrics, loading }: Props) => {
+const VersionComparison = ({ versions, metrics, loading, hasMore = false, loadingMore = false, onLoadMore }: Props) => {
   const ranked = useMemo(() => rankVersions(versions, metrics), [versions, metrics]);
 
   if (loading) {
@@ -36,6 +40,7 @@ const VersionComparison = ({ versions, metrics, loading }: Props) => {
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Version History</h3>
       <div className="relative pl-6 border-l-2 border-border space-y-4">
         {versions
+          .slice()
           .sort((a, b) => b.version_number - a.version_number)
           .map((v) => {
             const dl = ranked.find((r) => r.id === v.id)?.downloads ?? 0;
@@ -63,6 +68,13 @@ const VersionComparison = ({ versions, metrics, loading }: Props) => {
             );
           })}
       </div>
+      {hasMore && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+            {loadingMore ? "Loading versions…" : "Load more versions"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

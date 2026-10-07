@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
+import { useLocalPagination } from "@/hooks/useLocalPagination";
+import { DEFAULT_PAGE_SIZE, keysetCursorFilter, toKeysetPage, type KeysetCursor, type KeysetPage } from "@/lib/keysetPagination";
 
 interface SalesPageDraft {
   id: string;
@@ -26,6 +28,7 @@ interface SalesPageDraft {
   benefits: string;
   cta: string;
   pending?: boolean;
+  created_at: string;
 }
 
 const SalesPageBuilder = () => {
@@ -41,6 +44,7 @@ const SalesPageBuilder = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const allEbooks = useEbookStore((s) => s.ebooks);
+  const { visibleItems: visibleEbooks, hasMore: hasMoreEbooks, loadMore: loadMoreEbooks } = useLocalPagination(allEbooks, 20, user?.id);
 
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
   const { recordUsage, getRemainingUses, isFreePlan } = useFeatureAccess();
@@ -49,22 +53,32 @@ const SalesPageBuilder = () => {
   const hasAccess = !isExpired || hasPaidSubscription;
   const queryClient = useQueryClient();
   const draftsQueryKey = ["saved-sales-page-results", user?.id] as const;
-  const { data: drafts = [], isLoading: loadingSaved } = useQuery<SalesPageDraft[]>({
+  const draftsQuery = useInfiniteQuery<KeysetPage<SalesPageDraft>, Error, InfiniteData<KeysetPage<SalesPageDraft>, KeysetCursor | null>, typeof draftsQueryKey, KeysetCursor | null>({
     queryKey: draftsQueryKey,
     enabled: Boolean(user && hasAccess),
-    queryFn: async () => {
-      const { data, error } = await supabase
+    initialPageParam: null,
+    queryFn: async ({ pageParam }) => {
+      let query = supabase
         .from("saved_sales_page_results")
         .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user!.id);
+      if (pageParam) query = query.or(keysetCursorFilter(pageParam));
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(DEFAULT_PAGE_SIZE + 1);
       if (error) throw error;
-      return (data ?? []).map((d) => ({
+      const page = toKeysetPage(data ?? []);
+      return { ...page, items: page.items.map((d) => ({
         id: d.id, headline: d.headline, subheadline: d.subheadline,
         problem: d.problem, solution: d.solution, benefits: d.benefits, cta: d.cta,
-      }));
+        created_at: d.created_at,
+      })) };
     },
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
+  const drafts = draftsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const loadingSaved = draftsQuery.isLoading;
 
   const saveMutation = useMutation({
     mutationFn: async (items: SalesPageDraft[]) => {
@@ -104,19 +118,20 @@ const SalesPageBuilder = () => {
     },
     onMutate: async (items) => {
       await queryClient.cancelQueries({ queryKey: draftsQueryKey });
-      const previous = queryClient.getQueryData<SalesPageDraft[]>(draftsQueryKey) ?? [];
-      queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, [
-        ...items.map((item) => ({ ...item, pending: true })),
-        ...previous,
-      ]);
+      const previous = queryClient.getQueryData<InfiniteData<KeysetPage<SalesPageDraft>, KeysetCursor | null>>(draftsQueryKey);
+      const firstPage = previous?.pages[0] ?? { items: [], nextCursor: null, hasMore: false };
+      const optimisticPage = { ...firstPage, items: [...items.map((item) => ({ ...item, pending: true })), ...firstPage.items] };
+      queryClient.setQueryData<InfiniteData<KeysetPage<SalesPageDraft>, KeysetCursor | null>>(draftsQueryKey, previous
+        ? { ...previous, pages: [optimisticPage, ...previous.pages.slice(1)] }
+        : { pages: [optimisticPage], pageParams: [null] });
       return { previous };
     },
     onSuccess: ({ saved, failed, message }, items) => {
       const itemIds = new Set(items.map((item) => item.id));
-      queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, (current = []) => [
-        ...saved,
-        ...current.filter((item) => !itemIds.has(item.id)),
-      ]);
+      queryClient.setQueryData<InfiniteData<KeysetPage<SalesPageDraft>, KeysetCursor | null>>(draftsQueryKey, (current) => {
+        const pages = current?.pages ?? [{ items: [], nextCursor: null, hasMore: false }];
+        return { pages: [{ ...pages[0], items: [...saved, ...pages[0].items.filter((item) => !itemIds.has(item.id))] }, ...pages.slice(1)], pageParams: current?.pageParams ?? [null] };
+      });
       if (failed.length) {
         setSaveRetry({ items: failed, message });
         toast({ title: "Some drafts could not be saved", description: message, variant: "destructive" });
@@ -172,6 +187,7 @@ const SalesPageBuilder = () => {
         benefits: r.benefits || "",
         cta: r.cta || "",
         pending: true,
+        created_at: new Date().toISOString(),
       }));
       if (newDrafts.length) saveMutation.mutate(newDrafts);
       else toast({ title: "No drafts generated", description: "Try adjusting your prompt and generate again." });
@@ -204,7 +220,10 @@ const SalesPageBuilder = () => {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
       return;
     }
-    queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, (current = []) => current.filter((d) => d.id !== id));
+    queryClient.setQueryData<InfiniteData<KeysetPage<SalesPageDraft>, KeysetCursor | null>>(draftsQueryKey, (current) => current && ({
+      ...current,
+      pages: current.pages.map((page) => ({ ...page, items: page.items.filter((d) => d.id !== id) })),
+    }));
     setDeleteConfirm(null);
     toast({ title: "Deleted" });
   };
@@ -302,7 +321,7 @@ const SalesPageBuilder = () => {
                         overflowY: 'auto'
                       }}
                     >
-                      {allEbooks.map((ebook) => (
+                      {visibleEbooks.map((ebook) => (
                         <button
                           key={ebook.id}
                           onClick={() => selectEbookFromHistory(ebook)}
@@ -326,6 +345,11 @@ const SalesPageBuilder = () => {
                           <div style={{ fontSize: '11px', color: '#555555' }}>{ebook.topic}</div>
                         </button>
                       ))}
+                      {hasMoreEbooks && (
+                        <Button variant="ghost" className="w-full text-xs" onClick={loadMoreEbooks}>
+                          Load more ebooks ({allEbooks.length - visibleEbooks.length} remaining)
+                        </Button>
+                      )}
                     </motion.div>
                   )}
                   
@@ -539,6 +563,13 @@ const SalesPageBuilder = () => {
                     </Card>
                   </motion.div>
                 ))}
+                {draftsQuery.hasNextPage && (
+                  <div className="flex justify-center pt-4">
+                    <Button variant="outline" onClick={() => draftsQuery.fetchNextPage()} disabled={draftsQuery.isFetchingNextPage}>
+                      {draftsQuery.isFetchingNextPage ? "Loading…" : "Load more saved drafts"}
+                    </Button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

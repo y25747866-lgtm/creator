@@ -12,6 +12,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
+import { useLocalPagination } from "@/hooks/useLocalPagination";
 
 const Downloads = () => {
   const allEbooks = useEbookStore((s) => s.ebooks);
@@ -30,6 +31,7 @@ const Downloads = () => {
     if (!user) return [];
     return allEbooks.filter((e) => e.userId === user.id || !e.userId);
   }, [allEbooks, user]);
+  const { visibleItems: visibleEbooks, hasMore, loadMore } = useLocalPagination(ebooks, 20, user?.id);
 
   const guardedDownload = (fn: () => void, ebook?: Ebook, metricType?: string) => {
     if (!hasAccess) {
@@ -129,7 +131,7 @@ const Downloads = () => {
             </motion.div>
           ) : (
             <div className="flex flex-col">
-              {ebooks.map((ebook, index) => (
+              {visibleEbooks.map((ebook, index) => (
                 <motion.div 
                   key={ebook.id} 
                   initial={{ opacity: 0, y: 20 }} 
@@ -187,6 +189,11 @@ const Downloads = () => {
                   </div>
                 </motion.div>
               ))}
+              {hasMore && (
+                <Button variant="outline" className="mt-3 self-center" onClick={loadMore}>
+                  Load more downloads ({ebooks.length - visibleEbooks.length} remaining)
+                </Button>
+              )}
             </div>
           )}
         </div>

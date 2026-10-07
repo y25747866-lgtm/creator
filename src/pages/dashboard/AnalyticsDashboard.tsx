@@ -17,6 +17,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeOverlay } from "@/components/UpgradeOverlay";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { keysetCursorFilter, toKeysetPage, type KeysetCursor } from "@/lib/keysetPagination";
 import {
   Link2, Unlink, RefreshCw, DollarSign, ShoppingCart, Package, TrendingUp,
   Send, Bot, User, Loader2, BarChart2, Lock,
@@ -38,14 +39,17 @@ interface AnalyticsData {
     totalSales: number; 
     activeProducts: number; 
     conversionRate: number 
-  }; 
+    completedSales?: number;
+  };
   products: any[]; 
   orders: any[]; 
+  nextCursors?: { whop: { products: string | null; orders: string | null } | null };
 }
 
 interface ChatMessage { 
   role: "user" | "assistant"; 
   content: string; 
+  id?: string;
   created_at?: string; 
   clientId?: string;
   status?: "sending" | "failed";
@@ -78,7 +82,13 @@ const AnalyticsDashboard = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatCursor, setChatCursor] = useState<KeysetCursor | null>(null);
+  const [chatHasMore, setChatHasMore] = useState(false);
+  const [chatLoadingEarlier, setChatLoadingEarlier] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const shouldScrollChatToEnd = useRef(true);
+  const [visibleProductsCount, setVisibleProductsCount] = useState(20);
+  const [loadingMoreProviderResults, setLoadingMoreProviderResults] = useState(false);
 
   // Load connections
   useEffect(() => {
@@ -121,6 +131,7 @@ const AnalyticsDashboard = () => {
 
     const loadAnalytics = async () => {
       setLoadingData(true);
+      setVisibleProductsCount(20);
       try {
         const { data, error } = await supabase.functions.invoke("analytics-fetch", {
           body: { platform: platformFilter === "all" ? undefined : platformFilter }
@@ -141,12 +152,13 @@ const AnalyticsDashboard = () => {
           }
           
           setAnalytics({
-            summary: data.summary || { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 },
+            summary: data.summary || { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0, completedSales: 0 },
             products,
-            orders
+            orders,
+            nextCursors: data.nextCursors || { whop: null },
           });
         } else {
-          setAnalytics({ summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] });
+          setAnalytics({ summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0, completedSales: 0 }, products: [], orders: [], nextCursors: { whop: null } });
         }
         setHasLoadedData(true);
       } catch (e: any) {
@@ -165,6 +177,8 @@ const AnalyticsDashboard = () => {
   useEffect(() => {
     if (!user || !hasAccess) {
       setChatMessages([]);
+      setChatCursor(null);
+      setChatHasMore(false);
       return;
     }
 
@@ -172,13 +186,17 @@ const AnalyticsDashboard = () => {
       try {
         const { data, error } = await supabase
           .from("analytics_chat_messages")
-          .select("role, content, created_at")
+          .select("id, role, content, created_at")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: true })
-          .limit(50);
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(21);
         
         if (error) throw error;
-        const persistedMessages = Array.isArray(data) ? (data as ChatMessage[]) : [];
+        const page = toKeysetPage(Array.isArray(data) ? data : []);
+        const persistedMessages = page.items.reverse() as ChatMessage[];
+        setChatCursor(page.nextCursor);
+        setChatHasMore(page.hasMore);
         setChatMessages((current) => {
           const unsavedOptimistic = current.filter((localMessage) => {
             if (!localMessage.clientId) return false;
@@ -202,10 +220,45 @@ const AnalyticsDashboard = () => {
   }, [user?.id, hasAccess]);
 
   useEffect(() => {
+    if (!shouldScrollChatToEnd.current) {
+      shouldScrollChatToEnd.current = true;
+      return;
+    }
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages]);
+
+  const loadEarlierMessages = async () => {
+    if (!user || !chatCursor || !chatHasMore || chatLoadingEarlier) return;
+    setChatLoadingEarlier(true);
+    shouldScrollChatToEnd.current = false;
+    try {
+      const { data, error } = await supabase
+        .from("analytics_chat_messages")
+        .select("id, role, content, created_at")
+        .eq("user_id", user.id)
+        .or(keysetCursorFilter(chatCursor))
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(21);
+      if (error) throw error;
+      const page = toKeysetPage(Array.isArray(data) ? data : []);
+      const olderMessages = page.items.reverse() as ChatMessage[];
+      setChatCursor(page.nextCursor);
+      setChatHasMore(page.hasMore);
+      setChatMessages((current) => {
+        const currentIds = new Set(current.map((message) => message.id).filter(Boolean));
+        return [...olderMessages.filter((message) => !message.id || !currentIds.has(message.id)), ...current];
+      });
+    } catch (error) {
+      shouldScrollChatToEnd.current = true;
+      console.error("Error loading earlier analytics messages:", error);
+      toast({ title: "Could not load earlier messages", variant: "destructive" });
+    } finally {
+      setChatLoadingEarlier(false);
+    }
+  };
 
   const fetchConnections = useCallback(async () => {
     if (!user || !hasAccess) return;
@@ -268,6 +321,53 @@ const AnalyticsDashboard = () => {
       toast({ title: "Error", description: e?.message || "Unknown error", variant: "destructive" });
     }
   }, [fetchConnections, toast, hasAccess]);
+
+  const loadMoreProviderResults = async () => {
+    if (!analytics || loadingMoreProviderResults) return;
+    if (analytics.products.length > visibleProductsCount) {
+      setVisibleProductsCount((count) => count + 20);
+      return;
+    }
+    const whopCursors = analytics.nextCursors?.whop;
+    if (!whopCursors || (!whopCursors.products && !whopCursors.orders)) return;
+    setLoadingMoreProviderResults(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analytics-fetch", {
+        body: { platform: "whop", cursors: { whop: whopCursors } },
+      });
+      if (error) throw error;
+      const incomingProducts = Array.isArray(data?.products) ? data.products : [];
+      const incomingOrders = Array.isArray(data?.orders) ? data.orders : [];
+      setAnalytics((current) => {
+        if (!current) return current;
+        const productsById = new Map(current.products.map((product) => [`${product.platform}:${product.id}`, product]));
+        for (const product of incomingProducts) productsById.set(`${product.platform}:${product.id}`, product);
+        const ordersById = new Map(current.orders.map((order) => [`${order.platform}:${order.id}`, order]));
+        for (const order of incomingOrders) ordersById.set(`${order.platform}:${order.id}`, order);
+        const summary = data?.summary ?? {};
+        const totalSales = current.summary.totalSales + (Number(summary.totalSales) || 0);
+        const completedSales = (current.summary.completedSales || 0) + (Number(summary.completedSales) || 0);
+        return {
+          ...current,
+          products: Array.from(productsById.values()),
+          orders: Array.from(ordersById.values()).sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || String(b.id).localeCompare(String(a.id))),
+          summary: {
+            totalRevenue: current.summary.totalRevenue + (Number(summary.totalRevenue) || 0),
+            totalSales,
+            activeProducts: current.summary.activeProducts + (Number(summary.activeProducts) || 0),
+            completedSales,
+            conversionRate: totalSales > 0 ? Number(((completedSales / totalSales) * 100).toFixed(2)) : 0,
+          },
+          nextCursors: data?.nextCursors || { whop: null },
+        };
+      });
+      setVisibleProductsCount((count) => count + 20);
+    } catch (error) {
+      toast({ title: "Could not load provider results", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setLoadingMoreProviderResults(false);
+    }
+  };
 
   const handleSendChat = useCallback(async (retryContent?: string, retryClientId?: string) => {
     const msg = (retryContent ?? chatInput).trim();
@@ -622,8 +722,8 @@ const AnalyticsDashboard = () => {
                               </TableRow>
                             ))
                           ) : analytics?.products && analytics.products.length > 0 ? (
-                            analytics.products.map((product, i) => (
-                              <TableRow key={i} style={{ borderBottomColor: '#252525' }}>
+                            analytics.products.slice(0, visibleProductsCount).map((product, i) => (
+                              <TableRow key={`${product.platform}:${product.id ?? i}`} style={{ borderBottomColor: '#252525' }}>
                                 <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>{product.name}</TableCell>
                                 <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>{product.sales}</TableCell>
                                 <TableCell style={{ color: '#FFFFFF', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>${product.revenue}</TableCell>
@@ -639,6 +739,16 @@ const AnalyticsDashboard = () => {
                         </TableBody>
                       </Table>
                     </div>
+                    {(analytics?.products?.length > visibleProductsCount || Boolean(analytics?.nextCursors?.whop && (analytics.nextCursors.whop.products || analytics.nextCursors.whop.orders))) && (
+                      <div className="mt-4 flex justify-center">
+                        <Button variant="outline" onClick={loadMoreProviderResults} disabled={loadingMoreProviderResults}>
+                          {loadingMoreProviderResults ? "Loading provider results…" : "Load more provider results"}
+                        </Button>
+                      </div>
+                    )}
+                    {connections.some((connection) => connection.platform === "payhip") && (
+                      <p className="mt-3 text-xs text-muted-foreground">Payhip's current API documentation does not provide cursor parameters for these list endpoints; this view uses the records returned by the API response.</p>
+                    )}
                   </div>
                 </div>
 
@@ -648,6 +758,13 @@ const AnalyticsDashboard = () => {
                     <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '20px', fontFamily: "'Syne', sans-serif", letterSpacing: '-0.3px' }}>AI Advisor</h3>
                     <ScrollArea className="flex-1 mb-4">
                       <div className="space-y-4 pr-4">
+                        {chatHasMore && (
+                          <div className="flex justify-center">
+                            <Button variant="outline" size="sm" onClick={loadEarlierMessages} disabled={chatLoadingEarlier}>
+                              {chatLoadingEarlier ? "Loading earlier messages…" : "Load earlier messages"}
+                            </Button>
+                          </div>
+                        )}
                         {/* FIX: Guard chatMessages with Array.isArray before mapping */}
                         {!Array.isArray(chatMessages) || chatMessages.length === 0 ? (
                           <div style={{ textAlign: 'center', color: '#777777', fontSize: '13px', paddingTop: '32px', fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
@@ -655,7 +772,7 @@ const AnalyticsDashboard = () => {
                           </div>
                         ) : (
                           chatMessages.map((msg, i) => (
-                            <div key={msg.clientId ?? `${msg.role}-${msg.created_at ?? i}`} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                            <div key={msg.clientId ?? msg.id ?? `${msg.role}-${msg.created_at ?? i}`} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                               {msg.role === "assistant" && (
                                 <div style={{ width: '28px', height: '28px', background: '#1A1A1A', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid #2A2A2A' }}>
                                   <Bot className="w-4 h-4 text-white" />

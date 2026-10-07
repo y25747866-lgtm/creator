@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { BookOpen, Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/hooks/useSubscription";
-import { listProducts, getProductMetrics, getProductFeedback } from "@/lib/productTracking";
+import { listProductsPage, getProductMetrics, getProductFeedback } from "@/lib/productTracking";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 import { aggregateMetrics, type ProductRecord, type MetricRecord, type FeedbackRecord } from "@/lib/dashboardMetrics";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,70 +102,57 @@ const Dashboard = () => {
   const [metricsCache, setMetricsCache] = useState<Record<string, MetricRecord[]>>({});
   const [feedbackCache, setFeedbackCache] = useState<Record<string, FeedbackRecord[]>>({});
   const [loading, setLoading] = useState(true);
+  const [productCursor, setProductCursor] = useState<KeysetCursor | null>(null);
+  const [hasMoreProducts, setHasMoreProducts] = useState(false);
+  const [loadingMoreProducts, setLoadingMoreProducts] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load products on mount
-  useEffect(() => {
-    const loadProducts = async () => {
+  const loadProductPage = useCallback(async (cursor: KeysetCursor | null = null) => {
+    const page = await listProductsPage(cursor);
+    const pageProducts = page.items as ProductRecord[];
+    setProducts((current) => {
+      if (!cursor) return pageProducts;
+      const ids = new Set(current.map((product) => product.id));
+      return [...current, ...pageProducts.filter((product) => !ids.has(product.id))];
+    });
+    setProductCursor(page.nextCursor);
+    setHasMoreProducts(page.hasMore);
+
+    const productDetails = await Promise.all(pageProducts.map(async (product) => {
       try {
-        const data = await listProducts();
-        // Ensure we have an array
-        let list: ProductRecord[] = [];
-        if (Array.isArray(data)) {
-          list = data;
-        } else if (data?.products && Array.isArray(data.products)) {
-          list = data.products;
-        } else if (data && typeof data === 'object') {
-          list = [];
-        }
-        setProducts(list);
-        
-        // Load metrics for all products
-        if (Array.isArray(list) && list.length > 0) {
-          const metricsData: Record<string, MetricRecord[]> = {};
-          const feedbackData: Record<string, FeedbackRecord[]> = {};
-          
-          for (const product of list) {
-            try {
-              const [mRes, fRes] = await Promise.all([
-                getProductMetrics(product.id),
-                getProductFeedback(product.id),
-              ]);
-              // Ensure metrics is an array
-              let metrics: MetricRecord[] = [];
-              if (Array.isArray(mRes)) {
-                metrics = mRes;
-              } else if (mRes?.metrics && Array.isArray(mRes.metrics)) {
-                metrics = mRes.metrics;
-              }
-              // Ensure feedback is an array
-              let feedback: FeedbackRecord[] = [];
-              if (Array.isArray(fRes)) {
-                feedback = fRes;
-              } else if (fRes?.feedback && Array.isArray(fRes.feedback)) {
-                feedback = fRes.feedback;
-              }
-              metricsData[product.id] = metrics;
-              feedbackData[product.id] = feedback;
-            } catch (error) {
-              metricsData[product.id] = [];
-              feedbackData[product.id] = [];
-            }
-          }
-          
-          setMetricsCache(metricsData);
-          setFeedbackCache(feedbackData);
-        }
-      } catch (error) {
-        console.error("Failed to load products:", error);
-        setProducts([]);
-      } finally {
-        setLoading(false);
+        const [metricsResponse, feedbackResponse] = await Promise.all([
+          getProductMetrics(product.id),
+          getProductFeedback(product.id),
+        ]);
+        const metrics = Array.isArray(metricsResponse?.metrics) ? metricsResponse.metrics as MetricRecord[] : [];
+        const feedback = Array.isArray(feedbackResponse?.items) ? feedbackResponse.items as FeedbackRecord[] : [];
+        return { id: product.id, metrics, feedback };
+      } catch {
+        return { id: product.id, metrics: [] as MetricRecord[], feedback: [] as FeedbackRecord[] };
       }
-    };
-    
-    loadProducts();
+    }));
+    setMetricsCache((current) => ({ ...current, ...Object.fromEntries(productDetails.map(({ id, metrics }) => [id, metrics])) }));
+    setFeedbackCache((current) => ({ ...current, ...Object.fromEntries(productDetails.map(({ id, feedback }) => [id, feedback])) }));
   }, []);
+
+  useEffect(() => {
+    loadProductPage().catch((error) => {
+      console.error("Failed to load products:", error);
+      setProducts([]);
+    }).finally(() => setLoading(false));
+  }, [loadProductPage]);
+
+  const loadMoreProducts = async () => {
+    if (!productCursor || !hasMoreProducts || loadingMoreProducts) return;
+    setLoadingMoreProducts(true);
+    try {
+      await loadProductPage(productCursor);
+    } catch (error) {
+      console.error("Failed to load more products:", error);
+    } finally {
+      setLoadingMoreProducts(false);
+    }
+  };
 
   // Calculate aggregated stats
   const aggregatedStats = useMemo(() => {
@@ -482,6 +470,14 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {hasMoreProducts && (
+                <div className="mt-4 space-y-2 text-center">
+                  <Button variant="outline" onClick={loadMoreProducts} disabled={loadingMoreProducts}>
+                    {loadingMoreProducts ? "Loading products…" : "Load more products"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground">Search and the top-five ranking include products loaded so far.</p>
                 </div>
               )}
             </div>

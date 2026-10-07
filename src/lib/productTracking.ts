@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 
 const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -73,32 +74,38 @@ export async function listProducts() {
   return res.json();
 }
 
-export async function getProductMetrics(productId: string) {
+export async function listProductsPage(cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?action=get-metrics&productId=${productId}`, {
-    method: "GET",
-    headers,
-  });
+  const params = new URLSearchParams({ action: "list-products-page" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
+  if (!res.ok) throw new Error("Failed to fetch products");
+  return res.json() as Promise<{ items: unknown[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
+}
+
+export async function getProductMetrics(productId: string, cursor: KeysetCursor | null = null) {
+  const headers = await getHeaders();
+  const params = new URLSearchParams({ action: "get-metrics", productId, paged: "true" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch metrics");
   return res.json();
 }
 
-export async function getProductFeedback(productId: string) {
+export async function getProductFeedback(productId: string, cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?action=get-feedback&productId=${productId}`, {
-    method: "GET",
-    headers,
-  });
+  const params = new URLSearchParams({ action: "get-feedback", productId, paged: "true" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch feedback");
   return res.json();
 }
 
-export async function getProductVersions(productId: string) {
+export async function getProductVersions(productId: string, cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?action=get-versions&productId=${productId}`, {
-    method: "GET",
-    headers,
-  });
+  const params = new URLSearchParams({ action: "get-versions", productId, paged: "true" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch versions");
   return res.json();
 }

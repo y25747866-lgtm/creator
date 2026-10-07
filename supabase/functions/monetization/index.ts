@@ -2,6 +2,31 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
+const PAGE_SIZE = 20;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseCursor(raw: string | null): { created_at: string; id: string } | null {
+  if (!raw || raw.length > 2048) return null;
+  try {
+    const value = JSON.parse(raw);
+    if (typeof value?.created_at === "string" && Number.isFinite(Date.parse(value.created_at)) && typeof value?.id === "string" && UUID_PATTERN.test(value.id)) {
+      return { created_at: value.created_at, id: value.id };
+    }
+  } catch { /* malformed cursor */ }
+  return null;
+}
+
+function cursorFilter(cursor: { created_at: string; id: string }) {
+  return `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`;
+}
+
+function pageRows(rows: Record<string, unknown>[]) {
+  const hasMore = rows.length > PAGE_SIZE;
+  const items = rows.slice(0, PAGE_SIZE);
+  const last = items[items.length - 1];
+  return { items, hasMore, nextCursor: hasMore && last ? { created_at: last.created_at as string, id: last.id as string } : null };
+}
+
 function getSupabase() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -229,22 +254,58 @@ serve(async (req) => {
     // LIST PRODUCTS
     //////////////////////////////////////////////////////
     if (action === "list-products") {
-
-      const { data } = await sb
+      const paged = url.searchParams.get("paged") === "true";
+      const cursor = paged ? parseCursor(url.searchParams.get("cursor")) : null;
+      let query = sb
         .from("monetization_products")
         .select(`
           *,
           monetization_modules(*)
         `)
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+        .eq("user_id", userId);
+      if (cursor) query = query.or(cursorFilter(cursor));
+      query = query.order("created_at", { ascending: false });
+      if (paged) query = query.order("id", { ascending: false }).limit(PAGE_SIZE + 1);
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const result = paged ? pageRows(data || []) : { items: data || [], hasMore: false, nextCursor: null };
 
       return new Response(
         JSON.stringify({
-          products: data
+          products: result.items,
+          nextCursor: result.nextCursor,
+          hasMore: result.hasMore,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (action === "get-module" && req.method === "GET") {
+      const moduleId = url.searchParams.get("moduleId");
+      if (!moduleId) return errorResponse("moduleId required", 400);
+
+      const { data: module, error: moduleError } = await sb
+        .from("monetization_modules")
+        .select("id, product_id, monetization_products!inner(user_id)")
+        .eq("id", moduleId)
+        .eq("monetization_products.user_id", userId)
+        .maybeSingle();
+      if (moduleError) throw moduleError;
+      if (!module) return errorResponse("Asset not found", 404);
+
+      const cursor = parseCursor(url.searchParams.get("cursor"));
+      let query = sb.from("monetization_versions").select("*").eq("module_id", moduleId);
+      if (cursor) query = query.or(cursorFilter(cursor));
+      const { data: versions, error } = await query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(PAGE_SIZE + 1);
+      if (error) throw error;
+      const page = pageRows(versions || []);
+      return new Response(JSON.stringify({ versions: page.items, nextCursor: page.nextCursor, hasMore: page.hasMore }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return errorResponse("Unknown action", 400);

@@ -17,7 +17,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from,
 
 function makeQuery() {
   const query: Record<string, any> = {};
-  for (const method of ["select", "eq", "order", "limit", "insert", "delete", "update", "upsert"]) query[method] = vi.fn(() => query);
+  for (const method of ["select", "eq", "order", "limit", "or", "insert", "delete", "update", "upsert"]) query[method] = vi.fn(() => query);
   query.single = vi.fn().mockResolvedValue({ data: { id: "saved-result" }, error: null });
   const result = Promise.resolve({ data: [], error: null });
   query.then = result.then.bind(result);
@@ -81,5 +81,46 @@ describe("Sales Page Builder baseline", () => {
     expect(await screen.findByText("Launch headline")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
     expect(saveAttempts).toBe(2);
+  });
+
+  it("loads saved drafts in 20-item keyset pages", async () => {
+    const pageRows = Array.from({ length: 21 }, (_, index) => ({
+      id: `00000000-0000-4000-8000-${String(21 - index).padStart(12, "0")}`,
+      created_at: "2026-10-08T00:00:00.000Z",
+      headline: `Headline ${index}`,
+      subheadline: "Subhead",
+      problem: "Problem",
+      solution: "Solution",
+      benefits: "Benefits",
+      cta: "Start",
+    }));
+    const olderRows = [1, 0].map((suffix, index) => ({
+      id: `00000000-0000-4000-8000-${String(suffix).padStart(12, "0")}`,
+      created_at: "2026-10-08T00:00:00.000Z",
+      headline: `Older headline ${index}`,
+      subheadline: "Subhead",
+      problem: "Problem",
+      solution: "Solution",
+      benefits: "Benefits",
+      cta: "Start",
+    }));
+    let pageRequest = 0;
+    mocks.from.mockImplementation(() => {
+      const query = makeQuery();
+      const result = Promise.resolve({ data: pageRequest++ === 0 ? pageRows : olderRows, error: null });
+      query.then = result.then.bind(result);
+      return query;
+    });
+
+    renderWithQueryClient(<SalesPageBuilder />);
+    const loadMore = await screen.findByRole("button", { name: "Load more saved drafts" });
+    expect(mocks.from.mock.results[0].value.limit).toHaveBeenCalledWith(21);
+    expect(mocks.from.mock.results[0].value.order).toHaveBeenNthCalledWith(2, "id", { ascending: false });
+    expect(screen.getByText("Headline 19")).toBeInTheDocument();
+    expect(screen.queryByText("Headline 20")).not.toBeInTheDocument();
+
+    fireEvent.click(loadMore);
+    await waitFor(() => expect(mocks.from).toHaveBeenCalledTimes(2));
+    expect(mocks.from.mock.results[1].value.or).toHaveBeenCalledWith(expect.stringContaining("id.lt."));
   });
 });

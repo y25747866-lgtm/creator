@@ -22,6 +22,7 @@ import {
   generateModuleContent,
   recordMonetizationMetric,
 } from "@/lib/monetization";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 
 interface Props {
   module: MonetizationModule;
@@ -38,6 +39,9 @@ export default function ModulePreview({
 
   const [versions, setVersions] =
     useState<MonetizationVersion[]>([]);
+  const [versionCursor, setVersionCursor] = useState<KeysetCursor | null>(null);
+  const [hasMoreVersions, setHasMoreVersions] = useState(false);
+  const [loadingMoreVersions, setLoadingMoreVersions] = useState(false);
   const [selectedVersion, setSelectedVersion] =
     useState<number | null>(null);
   const [loading, setLoading] =
@@ -91,6 +95,8 @@ export default function ModulePreview({
         : [];
 
       setVersions(safeVersions);
+      setVersionCursor(res?.nextCursor ?? null);
+      setHasMoreVersions(Boolean(res?.hasMore));
 
       setSelectedVersion(
         safeVersions[0]?.version_number ?? null
@@ -110,6 +116,25 @@ export default function ModulePreview({
       setLoading(false);
     }
   }, [module.id, toast]);
+
+  const loadMoreVersions = useCallback(async () => {
+    if (!versionCursor || loadingMoreVersions) return;
+    setLoadingMoreVersions(true);
+    try {
+      const res = await getModuleWithVersions(module.id, versionCursor);
+      const nextVersions = Array.isArray(res?.versions) ? res.versions as MonetizationVersion[] : [];
+      setVersions((current) => {
+        const existing = new Set(current.map((version) => version.id));
+        return [...current, ...nextVersions.filter((version) => !existing.has(version.id))];
+      });
+      setVersionCursor(res?.nextCursor ?? null);
+      setHasMoreVersions(Boolean(res?.hasMore));
+    } catch {
+      toast({ title: "Failed to load more versions", variant: "destructive" });
+    } finally {
+      setLoadingMoreVersions(false);
+    }
+  }, [module.id, versionCursor, loadingMoreVersions, toast]);
 
   useEffect(() => {
     if (module?.id) {
@@ -286,24 +311,23 @@ export default function ModulePreview({
       </div>
 
       {versions.length > 1 && (
-        <div className="flex gap-2">
-          {versions.map((v) => (
-            <Button
-              key={v.id}
-              variant={
-                v.version_number === selectedVersion
-                  ? "default"
-                  : "outline"
-              }
-              onClick={() =>
-                setSelectedVersion(
-                  v.version_number
-                )
-              }
-            >
-              v{v.version_number}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {versions.map((v) => (
+              <Button
+                key={v.id}
+                variant={v.version_number === selectedVersion ? "default" : "outline"}
+                onClick={() => setSelectedVersion(v.version_number)}
+              >
+                v{v.version_number}
+              </Button>
+            ))}
+          </div>
+          {hasMoreVersions && (
+            <Button variant="outline" size="sm" onClick={loadMoreVersions} disabled={loadingMoreVersions}>
+              {loadingMoreVersions ? "Loading versions…" : "Load more versions"}
             </Button>
-          ))}
+          )}
         </div>
       )}
 

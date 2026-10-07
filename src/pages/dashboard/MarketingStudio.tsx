@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Loader2 as LoaderIcon, 
@@ -23,6 +23,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useEbookStore } from "@/hooks/useEbookStore";
+import { useLocalPagination } from "@/hooks/useLocalPagination";
+import { DEFAULT_PAGE_SIZE, keysetCursorFilter, toKeysetPage, type KeysetCursor, type KeysetPage } from "@/lib/keysetPagination";
 
 interface SocialResult {
   id: string;
@@ -32,12 +34,14 @@ interface SocialResult {
   hashtags?: string;
   platform: string;
   pending?: boolean;
+  created_at: string;
 }
 
 const MarketingStudio = () => {
   const { user } = useAuth();
   const { getEbooksForUser } = useEbookStore();
   const userEbooks = user ? getEbooksForUser(user.id) : [];
+  const { visibleItems: visibleUserEbooks, hasMore: hasMoreUserEbooks, loadMore: loadMoreUserEbooks } = useLocalPagination(userEbooks, 20, user?.id);
   const [selectedEbook, setSelectedEbook] = useState<string>("custom");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -54,26 +58,36 @@ const MarketingStudio = () => {
   const hasAccess = !isExpired || hasPaidSubscription;
   const queryClient = useQueryClient();
   const resultsQueryKey = ["saved-marketing-results", user?.id] as const;
-  const { data: results = [], isLoading: loadingSaved } = useQuery<SocialResult[]>({
+  const resultsQuery = useInfiniteQuery<KeysetPage<SocialResult>, Error, InfiniteData<KeysetPage<SocialResult>, KeysetCursor | null>, typeof resultsQueryKey, KeysetCursor | null>({
     queryKey: resultsQueryKey,
     enabled: Boolean(user && hasAccess),
-    queryFn: async () => {
-      const { data, error } = await supabase
+    initialPageParam: null,
+    queryFn: async ({ pageParam }) => {
+      let query = supabase
         .from("saved_marketing_results")
         .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user!.id);
+      if (pageParam) query = query.or(keysetCursorFilter(pageParam));
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(DEFAULT_PAGE_SIZE + 1);
       if (error) throw error;
-      return (data ?? []).map((r) => ({
+      const page = toKeysetPage(data ?? []);
+      return { ...page, items: page.items.map((r) => ({
         id: r.id,
         hook: r.hook,
         main_copy: r.main_copy,
         cta: r.cta,
         hashtags: r.hashtags,
         platform: r.platform,
-      }));
+        created_at: r.created_at,
+      })) };
     },
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
+  const results = resultsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const loadingSaved = resultsQuery.isLoading;
 
   const saveMutation = useMutation({
     mutationFn: async (items: SocialResult[]) => {
@@ -112,19 +126,20 @@ const MarketingStudio = () => {
     },
     onMutate: async (items) => {
       await queryClient.cancelQueries({ queryKey: resultsQueryKey });
-      const previous = queryClient.getQueryData<SocialResult[]>(resultsQueryKey) ?? [];
-      queryClient.setQueryData<SocialResult[]>(resultsQueryKey, [
-        ...items.map((item) => ({ ...item, pending: true })),
-        ...previous,
-      ]);
+      const previous = queryClient.getQueryData<InfiniteData<KeysetPage<SocialResult>, KeysetCursor | null>>(resultsQueryKey);
+      const firstPage = previous?.pages[0] ?? { items: [], nextCursor: null, hasMore: false };
+      const optimisticPage = { ...firstPage, items: [...items.map((item) => ({ ...item, pending: true })), ...firstPage.items] };
+      queryClient.setQueryData<InfiniteData<KeysetPage<SocialResult>, KeysetCursor | null>>(resultsQueryKey, previous
+        ? { ...previous, pages: [optimisticPage, ...previous.pages.slice(1)] }
+        : { pages: [optimisticPage], pageParams: [null] });
       return { previous };
     },
     onSuccess: ({ saved, failed, message }, items) => {
       const itemIds = new Set(items.map((item) => item.id));
-      queryClient.setQueryData<SocialResult[]>(resultsQueryKey, (current = []) => [
-        ...saved,
-        ...current.filter((item) => !itemIds.has(item.id)),
-      ]);
+      queryClient.setQueryData<InfiniteData<KeysetPage<SocialResult>, KeysetCursor | null>>(resultsQueryKey, (current) => {
+        const pages = current?.pages ?? [{ items: [], nextCursor: null, hasMore: false }];
+        return { pages: [{ ...pages[0], items: [...saved, ...pages[0].items.filter((item) => !itemIds.has(item.id))] }, ...pages.slice(1)], pageParams: current?.pageParams ?? [null] };
+      });
       if (failed.length) {
         setSaveRetry({ items: failed, message });
         toast({ title: "Some posts could not be saved", description: message, variant: "destructive" });
@@ -170,6 +185,7 @@ const MarketingStudio = () => {
         hashtags: r.hashtags || undefined,
         platform,
         pending: true,
+        created_at: new Date().toISOString(),
       }));
       if (newResults.length) saveMutation.mutate(newResults);
       else toast({ title: "No posts generated", description: "Try adjusting your prompt and generate again." });
@@ -194,7 +210,10 @@ const MarketingStudio = () => {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
       return;
     }
-    queryClient.setQueryData<SocialResult[]>(resultsQueryKey, (current = []) => current.filter((r) => r.id !== id));
+    queryClient.setQueryData<InfiniteData<KeysetPage<SocialResult>, KeysetCursor | null>>(resultsQueryKey, (current) => current && ({
+      ...current,
+      pages: current.pages.map((page) => ({ ...page, items: page.items.filter((r) => r.id !== id) })),
+    }));
     setDeleteConfirm(null);
     toast({ title: "Deleted" });
   };
@@ -224,6 +243,10 @@ const MarketingStudio = () => {
               <div className="space-y-1.5">
                 <label style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555555', marginBottom: '8px', display: 'block' }}>Select from your ebooks</label>
                 <Select value={selectedEbook} onValueChange={(v) => {
+                  if (v === "__load_more_ebooks__") {
+                    loadMoreUserEbooks();
+                    return;
+                  }
                   setSelectedEbook(v);
                   if (v !== "custom") {
                     const ebook = userEbooks.find(e => e.id === v);
@@ -238,9 +261,10 @@ const MarketingStudio = () => {
                   </SelectTrigger>
                   <SelectContent style={{ background: '#161616', border: '1px solid #1A1A1A', color: '#FFFFFF' }}>
                     <SelectItem value="custom">Enter manually</SelectItem>
-                    {userEbooks.map(eb => (
+                    {visibleUserEbooks.map(eb => (
                       <SelectItem key={eb.id} value={eb.id}>{eb.title}</SelectItem>
                     ))}
+                    {hasMoreUserEbooks && <SelectItem value="__load_more_ebooks__">Load more ebooks…</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -361,6 +385,13 @@ const MarketingStudio = () => {
                   ))}
                 </motion.div>
               </AnimatePresence>
+              {resultsQuery.hasNextPage && (
+                <div className="flex justify-center pt-4">
+                  <Button variant="outline" onClick={() => resultsQuery.fetchNextPage()} disabled={resultsQuery.isFetchingNextPage}>
+                    {resultsQuery.isFetchingNextPage ? "Loading…" : "Load more saved posts"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

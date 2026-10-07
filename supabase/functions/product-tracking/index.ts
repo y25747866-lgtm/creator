@@ -3,6 +3,36 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
+const PAGE_SIZE = 20;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseCursor(raw: string | null): { created_at: string; id: string } | null {
+  if (!raw || raw.length > 2048) return null;
+  try {
+    const value = JSON.parse(raw);
+    if (
+      typeof value?.created_at === "string" && Number.isFinite(Date.parse(value.created_at)) &&
+      typeof value?.id === "string" && UUID_PATTERN.test(value.id)
+    ) return { created_at: value.created_at, id: value.id };
+  } catch { /* malformed cursor */ }
+  return null;
+}
+
+function cursorFilter(cursor: { created_at: string; id: string }, timeColumn = "created_at") {
+  return `${timeColumn}.lt.${cursor.created_at},and(${timeColumn}.eq.${cursor.created_at},id.lt.${cursor.id})`;
+}
+
+function pageRows(rows: Record<string, unknown>[], timeColumn = "created_at") {
+  const hasMore = rows.length > PAGE_SIZE;
+  const items = rows.slice(0, PAGE_SIZE);
+  const last = items[items.length - 1];
+  return {
+    items,
+    hasMore,
+    nextCursor: hasMore && last ? { created_at: last[timeColumn] as string, id: last.id as string } : null,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -145,6 +175,23 @@ serve(async (req) => {
         });
       }
 
+      if (action === "list-products-page") {
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        let query = supabase
+          .from("ebook_products")
+          .select("*, product_versions(id, version_number, pages, created_at, change_summary)")
+          .eq("user_id", user.id);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(PAGE_SIZE + 1);
+        if (error) throw error;
+        return new Response(JSON.stringify(pageRows(data || [])), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (action === "get-metrics") {
         const productId = url.searchParams.get("productId");
         if (!productId) {
@@ -154,20 +201,40 @@ serve(async (req) => {
           });
         }
 
-        // Aggregate metrics
+        const paged = url.searchParams.get("paged") === "true";
+        const cursor = paged ? parseCursor(url.searchParams.get("cursor")) : null;
+        const { data: allMetrics, error: allMetricsError } = await supabase
+          .from("product_metrics")
+          .select("metric_type, value")
+          .eq("product_id", productId);
+
+        if (allMetricsError) throw allMetricsError;
+
+        const summary: Record<string, number> = {};
+        for (const m of allMetrics || []) {
+          summary[m.metric_type] = (summary[m.metric_type] || 0) + m.value;
+        }
+
+        if (paged) {
+          let query = supabase.from("product_metrics").select("*").eq("product_id", productId);
+          if (cursor) query = query.or(cursorFilter(cursor, "recorded_at"));
+          const { data: rows, error } = await query
+            .order("recorded_at", { ascending: false })
+            .order("id", { ascending: false })
+            .limit(PAGE_SIZE + 1);
+          if (error) throw error;
+          const page = pageRows(rows || [], "recorded_at");
+          return new Response(JSON.stringify({ metrics: page.items, summary, nextCursor: page.nextCursor, hasMore: page.hasMore }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         const { data: metrics, error } = await supabase
           .from("product_metrics")
           .select("*")
           .eq("product_id", productId)
           .order("recorded_at", { ascending: false });
-
         if (error) throw error;
-
-        // Summarize
-        const summary: Record<string, number> = {};
-        for (const m of metrics || []) {
-          summary[m.metric_type] = (summary[m.metric_type] || 0) + m.value;
-        }
 
         return new Response(JSON.stringify({ metrics, summary }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -183,13 +250,24 @@ serve(async (req) => {
           });
         }
 
-        const { data, error } = await supabase
+        const paged = url.searchParams.get("paged") === "true";
+        const cursor = paged ? parseCursor(url.searchParams.get("cursor")) : null;
+        let query = supabase
           .from("product_feedback")
           .select("*")
-          .eq("product_id", productId)
-          .order("created_at", { ascending: false });
+          .eq("product_id", productId);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        if (paged) query = query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(PAGE_SIZE + 1);
+        else query = query.order("created_at", { ascending: false });
+        const { data, error } = await query;
 
         if (error) throw error;
+
+        if (paged) {
+          return new Response(JSON.stringify(pageRows(data || [])), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -205,13 +283,24 @@ serve(async (req) => {
           });
         }
 
-        const { data, error } = await supabase
+        const paged = url.searchParams.get("paged") === "true";
+        const cursor = paged ? parseCursor(url.searchParams.get("cursor")) : null;
+        let query = supabase
           .from("product_versions")
           .select("*")
-          .eq("product_id", productId)
-          .order("version_number", { ascending: false });
+          .eq("product_id", productId);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        if (paged) query = query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(PAGE_SIZE + 1);
+        else query = query.order("version_number", { ascending: false });
+        const { data, error } = await query;
 
         if (error) throw error;
+
+        if (paged) {
+          return new Response(JSON.stringify(pageRows(data || [])), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

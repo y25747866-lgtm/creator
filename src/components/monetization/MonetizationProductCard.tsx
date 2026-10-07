@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MonetizationProduct, MonetizationModule, MODULE_TYPES } from "@/lib/monetization";
 import { format } from "date-fns";
 import { Eye } from "lucide-react";
+import { useLocalPagination } from "@/hooks/useLocalPagination";
 
 interface Props {
   product: MonetizationProduct;
@@ -13,6 +14,7 @@ interface Props {
 
 const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
   const modules = product.monetization_modules || [];
+  const { visibleItems: visibleModules, hasMore, loadMore } = useLocalPagination(modules, 20, product.id);
 
   return (
     <Card className="p-6 hover-lift">
@@ -32,7 +34,7 @@ const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
 
       {modules.length > 0 && (
         <div className="space-y-2 mb-4">
-          {modules.map((mod) => {
+          {visibleModules.map((mod) => {
             const typeLabel =
               MODULE_TYPES.find((m) => m.value === mod.module_type)?.label || mod.module_type;
             return (
@@ -54,6 +56,11 @@ const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
               </button>
             );
           })}
+          {hasMore && (
+            <Button variant="ghost" size="sm" className="w-full" onClick={loadMore}>
+              Load more assets ({modules.length - visibleModules.length} remaining)
+            </Button>
+          )}
         </div>
       )}
 
