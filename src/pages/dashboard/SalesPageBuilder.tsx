@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface SalesPageDraft {
   solution: string;
   benefits: string;
   cta: string;
+  pending?: boolean;
 }
 
 const SalesPageBuilder = () => {
@@ -31,11 +33,11 @@ const SalesPageBuilder = () => {
   const [description, setDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [offerDetails, setOfferDetails] = useState("");
-  const [drafts, setDrafts] = useState<SalesPageDraft[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showEbookSelector, setShowEbookSelector] = useState(false);
+  const [saveRetry, setSaveRetry] = useState<{ items: SalesPageDraft[]; message: string } | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const allEbooks = useEbookStore((s) => s.ebooks);
@@ -45,25 +47,85 @@ const SalesPageBuilder = () => {
   
   const isExpired = subscription?.status === "expired";
   const hasAccess = !isExpired || hasPaidSubscription;
-
-  // Load saved results
-  useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      const { data } = await supabase
+  const queryClient = useQueryClient();
+  const draftsQueryKey = ["saved-sales-page-results", user?.id] as const;
+  const { data: drafts = [], isLoading: loadingSaved } = useQuery<SalesPageDraft[]>({
+    queryKey: draftsQueryKey,
+    enabled: Boolean(user && hasAccess),
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("saved_sales_page_results")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-      if (data) {
-        setDrafts(data.map((d: any) => ({
-          id: d.id, headline: d.headline, subheadline: d.subheadline,
-          problem: d.problem, solution: d.solution, benefits: d.benefits, cta: d.cta,
-        })));
+      if (error) throw error;
+      return (data ?? []).map((d) => ({
+        id: d.id, headline: d.headline, subheadline: d.subheadline,
+        problem: d.problem, solution: d.solution, benefits: d.benefits, cta: d.cta,
+      }));
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (items: SalesPageDraft[]) => {
+      const saved: SalesPageDraft[] = [];
+      const failed: SalesPageDraft[] = [];
+      let message = "Could not save one or more generated sales-page drafts.";
+      if (!user) return { saved, failed: items, message: "Sign in again, then retry saving." };
+
+      for (const item of items) {
+        try {
+          const { data, error } = await supabase
+            .from("saved_sales_page_results")
+            .insert({
+              id: item.id,
+              user_id: user.id,
+              headline: item.headline,
+              subheadline: item.subheadline,
+              problem: item.problem,
+              solution: item.solution,
+              benefits: item.benefits,
+              cta: item.cta,
+            })
+            .select()
+            .single();
+          if (error || !data) {
+            failed.push(item);
+            message = error?.message || message;
+          } else {
+            saved.push(data as SalesPageDraft);
+          }
+        } catch (error) {
+          failed.push(item);
+          message = error instanceof Error ? error.message : message;
+        }
       }
-    };
-    load();
-  }, [user, hasAccess]);
+      return { saved, failed, message };
+    },
+    onMutate: async (items) => {
+      await queryClient.cancelQueries({ queryKey: draftsQueryKey });
+      const previous = queryClient.getQueryData<SalesPageDraft[]>(draftsQueryKey) ?? [];
+      queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, [
+        ...items.map((item) => ({ ...item, pending: true })),
+        ...previous,
+      ]);
+      return { previous };
+    },
+    onSuccess: ({ saved, failed, message }, items) => {
+      const itemIds = new Set(items.map((item) => item.id));
+      queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, (current = []) => [
+        ...saved,
+        ...current.filter((item) => !itemIds.has(item.id)),
+      ]);
+      if (failed.length) {
+        setSaveRetry({ items: failed, message });
+        toast({ title: "Some drafts could not be saved", description: message, variant: "destructive" });
+      } else {
+        setSaveRetry(null);
+        toast({ title: "Sales page drafts generated!", description: `${saved.length} drafts created` });
+      }
+    },
+  });
 
   const selectEbookFromHistory = (ebook: Ebook) => {
     setTitle(ebook.title);
@@ -80,10 +142,6 @@ const SalesPageBuilder = () => {
       return;
     }
 
-    // Check free plan daily limit
-    const allowed = await recordUsage("sales_page_builder");
-    if (!allowed) return;
-
     if (!title.trim()) {
       toast({ title: "Product title is required", variant: "destructive" });
       return;
@@ -91,6 +149,9 @@ const SalesPageBuilder = () => {
 
     setLoading(true);
     try {
+      const allowed = await recordUsage("sales_page_builder");
+      if (!allowed) return;
+
       const { data, error } = await supabase.functions.invoke("generate-marketing", {
         body: { platform: "sales_page", title: title.trim(), description: description.trim(), targetAudience: targetAudience.trim(), offerDetails: offerDetails.trim() },
       });
@@ -102,31 +163,18 @@ const SalesPageBuilder = () => {
         throw new Error("Invalid response from AI");
       }
 
-      const newDrafts: SalesPageDraft[] = [];
-      
-      for (const r of results) {
-        const { data: saved, error: saveErr } = await supabase
-          .from("saved_sales_page_results")
-          .insert({
-            user_id: user!.id,
-            headline: r.headline || "", subheadline: r.subheadline || "",
-            problem: r.problem || "", solution: r.solution || "",
-            benefits: r.benefits || "", cta: r.cta || "",
-          })
-          .select()
-          .single();
-
-        if (saveErr) {
-          console.error("Save error:", saveErr);
-        }
-        
-        if (saved) {
-          newDrafts.push({ id: saved.id, headline: saved.headline, subheadline: saved.subheadline, problem: saved.problem, solution: saved.solution, benefits: saved.benefits, cta: saved.cta });
-        }
-      }
-
-      setDrafts((prev) => [...newDrafts, ...prev]);
-      toast({ title: "Sales page drafts generated!", description: `${newDrafts.length} drafts created` });
+      const newDrafts: SalesPageDraft[] = results.map((r) => ({
+        id: crypto.randomUUID(),
+        headline: r.headline || "",
+        subheadline: r.subheadline || "",
+        problem: r.problem || "",
+        solution: r.solution || "",
+        benefits: r.benefits || "",
+        cta: r.cta || "",
+        pending: true,
+      }));
+      if (newDrafts.length) saveMutation.mutate(newDrafts);
+      else toast({ title: "No drafts generated", description: "Try adjusting your prompt and generate again." });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err?.message || "Unknown error", variant: "destructive" });
     } finally {
@@ -151,8 +199,12 @@ const SalesPageBuilder = () => {
   };
 
   const deleteDraft = async (id: string) => {
-    await supabase.from("saved_sales_page_results").delete().eq("id", id);
-    setDrafts((prev) => prev.filter((d) => d.id !== id));
+    const { error } = await supabase.from("saved_sales_page_results").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    queryClient.setQueryData<SalesPageDraft[]>(draftsQueryKey, (current = []) => current.filter((d) => d.id !== id));
     setDeleteConfirm(null);
     toast({ title: "Deleted" });
   };
@@ -356,13 +408,26 @@ const SalesPageBuilder = () => {
                   onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  Generate 3 Sales Page Drafts
+                  {loading ? "Checking access / generating…" : "Generate 3 Sales Page Drafts"}
                 </button>
               </div>
             </div>
           </Card>
 
-          {drafts.length === 0 && (
+          {saveRetry && (
+            <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-900/60 bg-red-950/20 p-4 text-sm text-red-200">
+              <span>Generated drafts are not fully saved. {saveRetry.message}</span>
+              <Button variant="outline" disabled={saveMutation.isPending} onClick={() => {
+                const items = saveRetry.items;
+                setSaveRetry(null);
+                saveMutation.mutate(items);
+              }}>
+                {saveMutation.isPending ? "Retrying…" : `Retry saving ${saveRetry.items.length} draft${saveRetry.items.length === 1 ? "" : "s"}`}
+              </Button>
+            </div>
+          )}
+
+          {drafts.length === 0 && !loadingSaved && (
             <div style={{ maxWidth: '580px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
               <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#2A2A2A' }}>
                 Your generated sales pages will appear here
@@ -386,7 +451,7 @@ const SalesPageBuilder = () => {
                     <Card style={{ background: '#111111', border: '1px solid #2A2A2A', borderRadius: '10px', padding: '24px', transition: 'all 0.2s ease' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                         <span style={{ display: 'inline-block', background: '#161616', border: '1px solid #1A1A1A', color: '#555555', fontSize: '9px', fontWeight: 600, letterSpacing: '0.1em', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', fontFamily: 'DM Sans' }}>
-                          Sales Page Draft
+                          Sales Page Draft{draft.pending ? " · Saving…" : ""}
                         </span>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button

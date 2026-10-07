@@ -576,12 +576,16 @@ const EbookGenerator = () => {
 
   const startDrafting = async () => {
     if (!selectedNiche) return;
-    const allowed = await recordUsage("ebook_generator");
-    if (!allowed) return;
     setStep(2);
     setIsDrafting(true);
     setDraftingProgress(0);
     try {
+      const allowed = await recordUsage("ebook_generator");
+      if (!allowed) {
+        setStep(1);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-ebook", {
         body: {
           topic: selectedNiche.headline,
@@ -611,10 +615,11 @@ const EbookGenerator = () => {
         setDraftingProgress(i + 1);
         setScriptContent({ title: data.title || selectedNiche.headline, sections: [...sections] });
       }
-      setIsDrafting(false);
     } catch (err: any) {
       toast({ title: "Drafting Failed", description: err.message, variant: "destructive" });
       setStep(1);
+    } finally {
+      setIsDrafting(false);
     }
   };
 

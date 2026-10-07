@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Loader2 as LoaderIcon, 
@@ -30,6 +31,7 @@ interface SocialResult {
   cta: string;
   hashtags?: string;
   platform: string;
+  pending?: boolean;
 }
 
 const MarketingStudio = () => {
@@ -40,44 +42,98 @@ const MarketingStudio = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [platform, setPlatform] = useState<"instagram" | "x">("instagram");
-  const [results, setResults] = useState<SocialResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [loadingSaved, setLoadingSaved] = useState(true);
+  const [saveRetry, setSaveRetry] = useState<{ items: SocialResult[]; message: string } | null>(null);
   const { toast } = useToast();
   const { recordUsage, getRemainingUses, isFreePlan, canUseFeature } = useFeatureAccess();
   const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
   const hasAccess = !isExpired || hasPaidSubscription;
-
-  useEffect(() => {
-    if (!user || !hasAccess) {
-      setLoadingSaved(false);
-      return;
-    }
-    const load = async () => {
-      setLoadingSaved(true);
-      const { data } = await supabase
+  const queryClient = useQueryClient();
+  const resultsQueryKey = ["saved-marketing-results", user?.id] as const;
+  const { data: results = [], isLoading: loadingSaved } = useQuery<SocialResult[]>({
+    queryKey: resultsQueryKey,
+    enabled: Boolean(user && hasAccess),
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("saved_marketing_results")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
-      if (data) {
-        setResults(data.map((r: any) => ({
-          id: r.id,
-          hook: r.hook,
-          main_copy: r.main_copy,
-          cta: r.cta,
-          hashtags: r.hashtags,
-          platform: r.platform,
-        })));
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id,
+        hook: r.hook,
+        main_copy: r.main_copy,
+        cta: r.cta,
+        hashtags: r.hashtags,
+        platform: r.platform,
+      }));
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (items: SocialResult[]) => {
+      const saved: SocialResult[] = [];
+      const failed: SocialResult[] = [];
+      let message = "Could not save one or more generated posts.";
+      if (!user) return { saved, failed: items, message: "Sign in again, then retry saving." };
+
+      for (const item of items) {
+        try {
+          const { data, error } = await supabase
+            .from("saved_marketing_results")
+            .insert({
+              id: item.id,
+              user_id: user.id,
+              platform: item.platform,
+              hook: item.hook,
+              main_copy: item.main_copy,
+              cta: item.cta,
+              hashtags: item.hashtags || null,
+            })
+            .select()
+            .single();
+          if (error || !data) {
+            failed.push(item);
+            message = error?.message || message;
+          } else {
+            saved.push(data as SocialResult);
+          }
+        } catch (error) {
+          failed.push(item);
+          message = error instanceof Error ? error.message : message;
+        }
       }
-      setLoadingSaved(false);
-    };
-    load();
-  }, [user?.id, hasAccess]);
+      return { saved, failed, message };
+    },
+    onMutate: async (items) => {
+      await queryClient.cancelQueries({ queryKey: resultsQueryKey });
+      const previous = queryClient.getQueryData<SocialResult[]>(resultsQueryKey) ?? [];
+      queryClient.setQueryData<SocialResult[]>(resultsQueryKey, [
+        ...items.map((item) => ({ ...item, pending: true })),
+        ...previous,
+      ]);
+      return { previous };
+    },
+    onSuccess: ({ saved, failed, message }, items) => {
+      const itemIds = new Set(items.map((item) => item.id));
+      queryClient.setQueryData<SocialResult[]>(resultsQueryKey, (current = []) => [
+        ...saved,
+        ...current.filter((item) => !itemIds.has(item.id)),
+      ]);
+      if (failed.length) {
+        setSaveRetry({ items: failed, message });
+        toast({ title: "Some posts could not be saved", description: message, variant: "destructive" });
+      } else {
+        setSaveRetry(null);
+        toast({ title: "Content generated!", description: `${saved.length} posts created` });
+      }
+    },
+  });
 
   const generate = async () => {
     if (isExpired) {
@@ -90,53 +146,33 @@ const MarketingStudio = () => {
       return;
     }
 
-    const allowed = await recordUsage("marketing_studio");
-    if (!allowed) return;
-
     setLoading(true);
     try {
+      const allowed = await recordUsage("marketing_studio");
+      if (!allowed) return;
+
       const { data, error } = await supabase.functions.invoke("generate-marketing", {
         body: { platform, title: title.trim(), description: description.trim() },
       });
 
       if (error) throw new Error(error.message);
-      
+
       const resultsData = data?.results;
       if (!resultsData || !Array.isArray(resultsData)) {
         throw new Error("Invalid response from AI");
       }
 
-      const newResults: SocialResult[] = [];
-      for (const r of resultsData) {
-        const { data: saved, error: saveErr } = await supabase
-          .from("saved_marketing_results")
-          .insert({
-            user_id: user!.id,
-            platform: platform,
-            hook: r.hook || "",
-            main_copy: r.main_copy || "",
-            cta: r.cta || "",
-            hashtags: r.hashtags || null,
-          })
-          .select()
-          .single();
-
-        if (saveErr) throw new Error(`Failed to save result: ${saveErr.message}`);
-        
-        if (saved) {
-          newResults.push({
-            id: saved.id,
-            hook: saved.hook,
-            main_copy: saved.main_copy,
-            cta: saved.cta,
-            hashtags: saved.hashtags,
-            platform: saved.platform,
-          });
-        }
-      }
-
-      setResults((prev) => [...newResults, ...prev]);
-      toast({ title: "Content generated!", description: `${newResults.length} posts created` });
+      const newResults: SocialResult[] = resultsData.map((r) => ({
+        id: crypto.randomUUID(),
+        hook: r.hook || "",
+        main_copy: r.main_copy || "",
+        cta: r.cta || "",
+        hashtags: r.hashtags || undefined,
+        platform,
+        pending: true,
+      }));
+      if (newResults.length) saveMutation.mutate(newResults);
+      else toast({ title: "No posts generated", description: "Try adjusting your prompt and generate again." });
     } catch (err: any) {
       toast({ title: "Generation failed", description: err?.message || "Unknown error", variant: "destructive" });
     } finally {
@@ -153,8 +189,12 @@ const MarketingStudio = () => {
   };
 
   const deleteResult = async (id: string) => {
-    await supabase.from("saved_marketing_results").delete().eq("id", id);
-    setResults((prev) => prev.filter((r) => r.id !== id));
+    const { error } = await supabase.from("saved_marketing_results").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    queryClient.setQueryData<SocialResult[]>(resultsQueryKey, (current = []) => current.filter((r) => r.id !== id));
     setDeleteConfirm(null);
     toast({ title: "Deleted" });
   };
@@ -248,10 +288,23 @@ const MarketingStudio = () => {
                 className="hover:bg-[#F0F0F0]"
               >
                 {loading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
-                Generate Posts
+                {loading ? "Checking access / generating…" : "Generate Posts"}
               </Button>
             </div>
           </Card>
+
+          {saveRetry && (
+            <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-900/60 bg-red-950/20 p-4 text-sm text-red-200">
+              <span>Generated posts are not fully saved. {saveRetry.message}</span>
+              <Button variant="outline" disabled={saveMutation.isPending} onClick={() => {
+                const items = saveRetry.items;
+                setSaveRetry(null);
+                saveMutation.mutate(items);
+              }}>
+                {saveMutation.isPending ? "Retrying…" : `Retry saving ${saveRetry.items.length} post${saveRetry.items.length === 1 ? "" : "s"}`}
+              </Button>
+            </div>
+          )}
 
           {results.length === 0 && !loadingSaved && (
             <div style={{ maxWidth: '580px', marginTop: '16px', background: '#0D0D0D', border: '1px dashed #1A1A1A', borderRadius: '10px', padding: '48px 32px', textAlign: 'center' }}>
@@ -268,7 +321,10 @@ const MarketingStudio = () => {
                     <motion.div key={result.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} layout>
                       <Card style={{ background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '20px' }} className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px]">{result.platform === "instagram" ? "Instagram" : "X (Twitter)"}</Badge>
+                            {result.pending && <Badge variant="outline" className="text-[10px]">Saving…</Badge>}
+                          </div>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => copyResult(result)} className="gap-1 text-xs h-8 text-white hover:bg-white/10">
                               {copiedId === result.id ? <CheckIcon className="w-3.5 h-3.5 text-primary" /> : <CopyIcon className="w-3.5 h-3.5" />}

@@ -1,0 +1,84 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+
+const mocks = vi.hoisted(() => ({ invoke: vi.fn(), from: vi.fn(), recordUsage: vi.fn(), toast: vi.fn(), user: { id: "test-user" } }));
+vi.mock("@/components/dashboard/DashboardLayout", () => ({ default: ({ children }: any) => <div>{children}</div> }));
+vi.mock("@/components/UpgradeOverlay", () => ({ UpgradeOverlay: () => null }));
+vi.mock("framer-motion", () => ({ motion: new Proxy({}, { get: (_target, tag: string) => tag }), AnimatePresence: ({ children }: any) => <>{children}</> }));
+vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: mocks.user }) }));
+vi.mock("@/hooks/useSubscription", () => ({ useSubscription: () => ({ hasPaidSubscription: true, subscription: { status: "active" }, loading: false }) }));
+vi.mock("@/hooks/useFeatureAccess", () => ({ useFeatureAccess: () => ({ recordUsage: mocks.recordUsage, getRemainingUses: () => null, isFreePlan: false, canUseFeature: () => true }) }));
+vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
+vi.mock("@/hooks/useEbookStore", () => ({ useEbookStore: () => ({ getEbooksForUser: () => [] }) }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from, functions: { invoke: mocks.invoke } } }));
+
+function makeQuery() {
+  const query: Record<string, any> = {};
+  for (const method of ["select", "eq", "order", "limit", "insert", "delete", "update", "upsert"]) query[method] = vi.fn(() => query);
+  query.single = vi.fn().mockResolvedValue({ data: { id: "saved-result" }, error: null });
+  query.then = Promise.resolve({ data: [], error: null }).then.bind(Promise.resolve({ data: [], error: null }));
+  return query;
+}
+
+beforeEach(() => {
+  mocks.invoke.mockReset().mockResolvedValue({ data: { results: [] }, error: null });
+  mocks.from.mockReset().mockImplementation(() => makeQuery());
+  mocks.recordUsage.mockReset().mockResolvedValue(true);
+  mocks.toast.mockReset();
+  localStorage.clear();
+});
+
+function renderWithQueryClient(ui: ReactNode) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
+
+import MarketingStudio from "./MarketingStudio";
+
+describe("Marketing Studio baseline", () => {
+  it("renders and invokes the existing generation endpoint", async () => {
+    renderWithQueryClient(<MarketingStudio />);
+    expect(screen.getByRole("heading", { name: "Marketing Studio" })).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("e.g. Launch of my SaaS tool"), { target: { value: "Test launch" } });
+    fireEvent.click(screen.getByRole("button", { name: /Generate Posts/ }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("generate-marketing", expect.objectContaining({ body: expect.objectContaining({ title: "Test launch" }) })));
+  });
+
+  it("shows generated posts optimistically and rolls back with a working save retry", async () => {
+    let resolveFirstSave: (result: any) => void = () => undefined;
+    let resolveUsage: (allowed: boolean) => void = () => undefined;
+    let saveAttempts = 0;
+    mocks.recordUsage.mockImplementation(() => new Promise((resolve) => { resolveUsage = resolve; }));
+    mocks.invoke.mockResolvedValue({ data: { results: [{ hook: "Launch hook", main_copy: "Launch copy", cta: "Try it" }] }, error: null });
+    mocks.from.mockImplementation(() => {
+      const query = makeQuery();
+      query.single.mockImplementation(() => {
+        saveAttempts += 1;
+        if (saveAttempts === 1) return new Promise((resolve) => { resolveFirstSave = resolve; });
+        return Promise.resolve({ data: { id: "saved-result", hook: "Launch hook", main_copy: "Launch copy", cta: "Try it", platform: "instagram" }, error: null });
+      });
+      return query;
+    });
+
+    renderWithQueryClient(<MarketingStudio />);
+    fireEvent.change(screen.getByPlaceholderText("e.g. Launch of my SaaS tool"), { target: { value: "Test launch" } });
+    fireEvent.click(screen.getByRole("button", { name: /Generate Posts/ }));
+    expect(screen.getByRole("button", { name: /Checking access/ })).toBeDisabled();
+    resolveUsage(true);
+    expect(await screen.findByText("Launch hook")).toBeInTheDocument();
+    expect(screen.getByText("Saving…")).toBeInTheDocument();
+
+    resolveFirstSave({ data: null, error: { message: "Temporary database error" } });
+    const retryButton = await screen.findByRole("button", { name: /Retry saving 1 post/ });
+    expect(screen.getByRole("alert")).toHaveTextContent("Temporary database error");
+    expect(screen.queryByText("Launch hook")).not.toBeInTheDocument();
+    fireEvent.click(retryButton);
+
+    expect(await screen.findByText("Launch hook")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    expect(saveAttempts).toBe(2);
+  });
+});

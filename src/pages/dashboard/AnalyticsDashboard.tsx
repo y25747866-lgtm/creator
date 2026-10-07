@@ -47,6 +47,8 @@ interface ChatMessage {
   role: "user" | "assistant"; 
   content: string; 
   created_at?: string; 
+  clientId?: string;
+  status?: "sending" | "failed";
 }
 
 const PLATFORMS = [
@@ -176,13 +178,23 @@ const AnalyticsDashboard = () => {
           .limit(50);
         
         if (error) throw error;
-        // FIX: Use Array.isArray to guarantee chatMessages is always an array
-        // Previously: if (data) setChatMessages((data as ChatMessage[]) || []);
-        // The old code could set chatMessages to a non-array if data was truthy but not an array
-        setChatMessages(Array.isArray(data) ? (data as ChatMessage[]) : []);
+        const persistedMessages = Array.isArray(data) ? (data as ChatMessage[]) : [];
+        setChatMessages((current) => {
+          const unsavedOptimistic = current.filter((localMessage) => {
+            if (!localMessage.clientId) return false;
+            if (localMessage.status === "failed") return true;
+            return !persistedMessages.some((savedMessage) => {
+              if (savedMessage.role !== localMessage.role || savedMessage.content !== localMessage.content) return false;
+              const savedAt = Date.parse(savedMessage.created_at || "");
+              const localAt = Date.parse(localMessage.created_at || "");
+              return Number.isFinite(savedAt) && Number.isFinite(localAt) && Math.abs(savedAt - localAt) < 30_000;
+            });
+          });
+          return [...persistedMessages, ...unsavedOptimistic];
+        });
       } catch (error) {
         console.error("Error loading chat messages:", error);
-        setChatMessages([]);
+        setChatMessages((current) => current.filter((message) => Boolean(message.clientId)));
       }
     };
 
@@ -257,33 +269,51 @@ const AnalyticsDashboard = () => {
     }
   }, [fetchConnections, toast, hasAccess]);
 
-  const handleSendChat = useCallback(async () => {
-    if (!chatInput.trim() || chatLoading || !user || !hasAccess) return;
-    
-    const msg = chatInput.trim();
-    setChatInput("");
+  const handleSendChat = useCallback(async (retryContent?: string, retryClientId?: string) => {
+    const msg = (retryContent ?? chatInput).trim();
+    if (!msg || chatLoading || !user || !hasAccess) return;
+
+    const clientId = retryClientId ?? crypto.randomUUID();
+    if (retryClientId) {
+      setChatMessages((current) => current.map((message) =>
+        message.clientId === clientId ? { ...message, status: "sending" } : message,
+      ));
+    } else {
+      setChatInput("");
+      setChatMessages((current) => [...current, {
+        role: "user",
+        content: msg,
+        created_at: new Date().toISOString(),
+        clientId,
+        status: "sending",
+      }]);
+    }
     setChatLoading(true);
-    
+
     try {
-      // The Edge Function will handle saving both the user message and the assistant reply
-      // to ensure consistency and proper ordering.
-      
-      // Call AI function to get response
       const { data, error } = await supabase.functions.invoke("analytics-chat", {
-        body: { 
+        body: {
           message: msg,
-          analyticsContext: analytics
-        }
+          analyticsContext: analytics,
+        },
       });
-      
-      if (error) throw error;
-      
-      if (data?.reply) {
-        // The real-time subscription handles adding the assistant reply to the UI
-        console.log("AI response received and will be synced via real-time subscription");
-      }
+
+      if (error) throw new Error(error.message);
+      if (!data?.reply) throw new Error("AI Advisor did not return a response.");
+
+      setChatMessages((current) => [
+        ...current.map((message) => message.clientId === clientId ? { ...message, status: undefined } : message),
+        {
+          role: "assistant",
+          content: data.reply,
+          created_at: new Date().toISOString(),
+          clientId: `${clientId}-reply`,
+        },
+      ]);
     } catch (e: any) {
-      console.error("Chat error:", e);
+      setChatMessages((current) => current.map((message) =>
+        message.clientId === clientId ? { ...message, status: "failed" } : message,
+      ));
       toast({ title: "Chat failed", description: e?.message || "AI Advisor is currently unavailable", variant: "destructive" });
     } finally {
       setChatLoading(false);
@@ -625,7 +655,7 @@ const AnalyticsDashboard = () => {
                           </div>
                         ) : (
                           chatMessages.map((msg, i) => (
-                            <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                            <div key={msg.clientId ?? `${msg.role}-${msg.created_at ?? i}`} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                               {msg.role === "assistant" && (
                                 <div style={{ width: '28px', height: '28px', background: '#1A1A1A', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid #2A2A2A' }}>
                                   <Bot className="w-4 h-4 text-white" />
@@ -646,9 +676,26 @@ const AnalyticsDashboard = () => {
                                 }}
                               >
                                 {msg.content}
+                                {msg.status === "sending" && <div className="mt-1 text-[10px] opacity-60">Sending…</div>}
+                                {msg.status === "failed" && msg.clientId && (
+                                  <div className="mt-2 flex items-center justify-end gap-2 text-[10px]">
+                                    <span role="status">Not sent</span>
+                                    <Button variant="ghost" size="sm" disabled={chatLoading} onClick={() => handleSendChat(msg.content, msg.clientId)} className="h-6 px-2 text-[10px]">
+                                      Retry
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))
+                        )}
+                        {chatLoading && (
+                          <div className="flex justify-start gap-3" role="status" aria-label="AI Advisor is responding">
+                            <div style={{ width: '28px', height: '28px', background: '#1A1A1A', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid #2A2A2A' }}>
+                              <Bot className="w-4 h-4 text-white" />
+                            </div>
+                            <div style={{ background: '#1A1A1A', color: '#FFFFFF', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', border: '1px solid #2A2A2A' }}>Thinking…</div>
+                          </div>
                         )}
                         <div ref={chatEndRef} />
                       </div>
@@ -672,7 +719,7 @@ const AnalyticsDashboard = () => {
                       />
                       <Button
                         size="icon"
-                        onClick={handleSendChat}
+                        onClick={() => handleSendChat()}
                         disabled={chatLoading || !chatInput.trim()}
                         style={{
                           background: '#FFFFFF',
