@@ -10,7 +10,13 @@ STABLE
 SECURITY INVOKER
 SET search_path = public
 AS $$
-  SELECT pm.metric_type, COALESCE(SUM(pm.value), 0)::bigint
+  SELECT pm.metric_type,
+    COALESCE(SUM(
+      CASE
+        WHEN pm.value::text ~ '^-?[0-9]+$' THEN pm.value::text::bigint
+        ELSE 0::bigint
+      END
+    ), 0)::bigint
   FROM public.product_metrics AS pm
   WHERE pm.product_id = p_product_id
   GROUP BY pm.metric_type;
