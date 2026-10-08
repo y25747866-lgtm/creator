@@ -75,6 +75,10 @@ const AnalyticsDashboard = () => {
   const [connectModal, setConnectModal] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [connecting, setConnecting] = useState(false);
+  const [pendingConnections, setPendingConnections] = useState<string[]>([]);
+  const [pendingDisconnects, setPendingDisconnects] = useState<string[]>([]);
+  const [connectionErrors, setConnectionErrors] = useState<Record<string, { message: string }>>({});
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [platformFilter, setPlatformFilter] = useState("all");
   const [hasLoadedData, setHasLoadedData] = useState(false);
 
@@ -282,29 +286,51 @@ const AnalyticsDashboard = () => {
 
   const handleConnect = useCallback(async () => {
     if (!apiKeyInput.trim() || !connectModal || !hasAccess) return;
+    const platform = connectModal;
     setConnecting(true);
+    setConnectError(null);
+    setPendingConnections((current) => current.includes(platform) ? current : [...current, platform]);
     try {
       const { data, error } = await supabase.functions.invoke("analytics-connect", {
-        body: { platform: connectModal, apiKey: apiKeyInput.trim() }
+        body: { platform, apiKey: apiKeyInput.trim() }
       });
       
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || "Connection failed");
       
-      toast({ title: "Connected!", description: `${connectModal} account connected successfully.` });
+      const connectedAt = new Date().toISOString();
+      setConnections((current) => current.some((item) => item.platform === platform)
+        ? current
+        : [...current, { platform, status: "connected", connected_at: connectedAt, last_sync_at: null }]);
+      setConnectionErrors((current) => {
+        const next = { ...current };
+        delete next[platform];
+        return next;
+      });
+      toast({ title: "Connected!", description: `${platform} account connected successfully.` });
       setConnectModal(null);
       setApiKeyInput("");
       await fetchConnections();
     } catch (e: any) {
       console.error("Connection error:", e);
-      toast({ title: "Connection failed", description: e?.message || "Unknown error", variant: "destructive" });
+      const message = e?.message || "Unknown error";
+      setConnectError(message);
+      toast({ title: "Connection failed", description: message, variant: "destructive" });
     } finally {
+      setPendingConnections((current) => current.filter((item) => item !== platform));
       setConnecting(false);
     }
   }, [apiKeyInput, connectModal, fetchConnections, toast, hasAccess]);
 
   const handleDisconnect = useCallback(async (platform: string) => {
-    if (!hasAccess) return;
+    if (!hasAccess || pendingDisconnects.includes(platform)) return;
+    if (!connections.some((item) => item.platform === platform)) return;
+    setPendingDisconnects((current) => [...current, platform]);
+    setConnectionErrors((current) => {
+      const next = { ...current };
+      delete next[platform];
+      return next;
+    });
     try {
       const { error } = await supabase.functions.invoke("analytics-connect", {
         body: { platform, action: "disconnect" }
@@ -312,15 +338,20 @@ const AnalyticsDashboard = () => {
       
       if (error) throw error;
       
-      toast({ title: "Disconnected", description: `${platform} has been disconnected.` });
-      await fetchConnections();
+      setConnections((current) => current.filter((item) => item.platform !== platform));
       setAnalytics(null);
       setHasLoadedData(false);
+      toast({ title: "Disconnected", description: `${platform} has been disconnected.` });
+      await fetchConnections();
     } catch (e: any) {
       console.error("Disconnect error:", e);
-      toast({ title: "Error", description: e?.message || "Unknown error", variant: "destructive" });
+      const message = e?.message || "Unknown error";
+      setConnectionErrors((current) => ({ ...current, [platform]: { message } }));
+      toast({ title: "Disconnect failed", description: message, variant: "destructive" });
+    } finally {
+      setPendingDisconnects((current) => current.filter((item) => item !== platform));
     }
-  }, [fetchConnections, toast, hasAccess]);
+  }, [connections, fetchConnections, toast, hasAccess, pendingDisconnects]);
 
   const loadMoreProviderResults = async () => {
     if (!analytics || loadingMoreProviderResults) return;
@@ -517,6 +548,8 @@ const AnalyticsDashboard = () => {
             {PLATFORMS.map(platform => {
               const connection = connections.find(c => c.platform === platform.id);
               const isConnected = !!connection;
+              const isConnecting = pendingConnections.includes(platform.id);
+              const disconnectError = connectionErrors[platform.id];
               
               return (
                 <div 
@@ -545,15 +578,25 @@ const AnalyticsDashboard = () => {
                     <img src={platform.logo} alt={platform.name} width="48" height="48" loading="lazy" style={{ width: '48px', height: '48px' }} />
                   </div>
                   
-                  {isConnected ? (
+                  {isConnecting ? (
+                    <p className="mt-6 text-sm text-muted-foreground" role="status">Connecting…</p>
+                  ) : isConnected ? (
                     <div className="mt-6 space-y-3">
                       <div style={{ fontSize: '12px', color: '#777777', fontFamily: "'DM Sans', sans-serif" }}>
                         <p>Connected on {new Date(connection.connected_at).toLocaleDateString()}</p>
                         {connection.last_sync_at && <p>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</p>}
                       </div>
+                      {disconnectError && (
+                        <div className="space-y-2" role="alert">
+                          <p className="text-sm text-destructive">Disconnect failed: {disconnectError.message}</p>
+                          <Button variant="outline" onClick={() => handleDisconnect(platform.id)} disabled={pendingDisconnects.includes(platform.id)}>
+                            Retry disconnect
+                          </Button>
+                        </div>
+                      )}
                       <Button 
                         onClick={() => handleDisconnect(platform.id)} 
-                        disabled={!hasAccess}
+                        disabled={!hasAccess || pendingDisconnects.includes(platform.id)}
                         style={{
                           background: 'transparent',
                           border: '1px solid #252525',
@@ -568,7 +611,8 @@ const AnalyticsDashboard = () => {
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FF6B6B'; e.currentTarget.style.color = '#FF6B6B'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.color = '#FFFFFF'; }}
                       >
-                        <Unlink className="w-4 h-4 mr-2" /> Disconnect
+                        {pendingDisconnects.includes(platform.id) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Unlink className="w-4 h-4 mr-2" />}
+                        {pendingDisconnects.includes(platform.id) ? "Disconnecting…" : "Disconnect"}
                       </Button>
                     </div>
                   ) : (
@@ -869,7 +913,7 @@ const AnalyticsDashboard = () => {
               type="password"
               placeholder="API Key"
               value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
+              onChange={(e) => { setApiKeyInput(e.target.value); setConnectError(null); }}
               style={{
                 background: '#0A0A0A',
                 border: '1px solid #252525',
@@ -880,6 +924,7 @@ const AnalyticsDashboard = () => {
                 fontSize: '13px'
               }}
             />
+            {connectError && <p className="text-sm text-destructive" role="alert">Connection failed: {connectError}</p>}
             <div className="flex gap-3 justify-end">
               <Button 
                 variant="outline" 
@@ -913,7 +958,7 @@ const AnalyticsDashboard = () => {
                 }}
               >
                 {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Connect
+                {connectError ? "Retry connection" : "Connect"}
               </Button>
             </div>
           </div>

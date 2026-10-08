@@ -136,4 +136,81 @@ describe("Analytics Dashboard baseline", () => {
     expect(await screen.findByText("Second page product")).toBeInTheDocument();
     expect(analyticsRequests).toBe(2);
   });
+
+  it("connects a platform through the analytics-connect endpoint", async () => {
+    mocks.invoke.mockImplementation(async (name: string) => name === "analytics-fetch"
+      ? { data: { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] }, error: null }
+      : { data: { success: true }, error: null });
+    render(<AnalyticsDashboard />);
+    const payhipButtons = await screen.findAllByRole("button", { name: "Connect Payhip" });
+    fireEvent.click(payhipButtons[payhipButtons.length - 1]);
+    fireEvent.change(screen.getByPlaceholderText("API Key"), { target: { value: "payhip-test-key" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Connect$/ }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("analytics-connect", {
+      body: { platform: "payhip", apiKey: "payhip-test-key" },
+    }));
+    await waitFor(() => expect(screen.queryByPlaceholderText("API Key")).not.toBeInTheDocument());
+  });
+
+  it("disconnects a platform through the analytics-connect endpoint", async () => {
+    render(<AnalyticsDashboard />);
+    fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("analytics-connect", {
+      body: { platform: "whop", action: "disconnect" },
+    }));
+  });
+
+  it("shows Connect progress immediately, preserves the form on failure, and retries successfully", async () => {
+    let resolveFirstAttempt: (result: any) => void = () => undefined;
+    let attempts = 0;
+    let connectionRows: any[] = [{ platform: "whop", status: "connected", connected_at: new Date().toISOString(), last_sync_at: null }];
+    mocks.from.mockImplementation((table: string) => makeQuery(table === "platform_connections" ? connectionRows : []));
+    mocks.invoke.mockImplementation(async (name: string) => {
+      if (name === "analytics-fetch") return { data: { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] }, error: null };
+      attempts += 1;
+      if (attempts === 1) return new Promise((resolve) => { resolveFirstAttempt = resolve; });
+      connectionRows = [...connectionRows, { platform: "payhip", status: "connected", connected_at: new Date().toISOString(), last_sync_at: null }];
+      return { data: { success: true }, error: null };
+    });
+
+    render(<AnalyticsDashboard />);
+    const payhipButtons = await screen.findAllByRole("button", { name: "Connect Payhip" });
+    fireEvent.click(payhipButtons[payhipButtons.length - 1]);
+    fireEvent.change(screen.getByPlaceholderText("API Key"), { target: { value: "payhip-test-key" } });
+    fireEvent.click(screen.getByRole("button", { name: /^Connect$/ }));
+    expect(await screen.findByText("Connecting…")).toBeInTheDocument();
+
+    resolveFirstAttempt({ data: null, error: { message: "Invalid API key" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid API key");
+    expect(screen.getByPlaceholderText("API Key")).toHaveValue("payhip-test-key");
+    fireEvent.click(screen.getByRole("button", { name: "Retry connection" }));
+    expect(await screen.findByText(/Connected on/)).toBeInTheDocument();
+    expect(attempts).toBe(2);
+  });
+
+  it("shows disconnect progress, retains the card on failure, and retries successfully", async () => {
+    let resolveFirstAttempt: (result: any) => void = () => undefined;
+    let attempts = 0;
+    let connectionRows: any[] = [{ platform: "whop", status: "connected", connected_at: new Date().toISOString(), last_sync_at: null }];
+    mocks.from.mockImplementation((table: string) => makeQuery(table === "platform_connections" ? connectionRows : []));
+    mocks.invoke.mockImplementation(async (name: string) => {
+      if (name === "analytics-fetch") return { data: { summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, products: [], orders: [] }, error: null };
+      attempts += 1;
+      if (attempts === 1) return new Promise((resolve) => { resolveFirstAttempt = resolve; });
+      connectionRows = [];
+      return { data: { success: true }, error: null };
+    });
+
+    render(<AnalyticsDashboard />);
+    fireEvent.click(await screen.findByRole("button", { name: "Disconnect" }));
+    expect(await screen.findByRole("button", { name: "Disconnecting…" })).toBeInTheDocument();
+    expect(screen.getByText(/Connected on/)).toBeInTheDocument();
+
+    resolveFirstAttempt({ data: null, error: { message: "Temporary server error" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Temporary server error");
+    expect(await screen.findByRole("button", { name: "Disconnect" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry disconnect" }));
+    expect(await screen.findByText("No Platforms Connected")).toBeInTheDocument();
+    expect(attempts).toBe(2);
+  });
 });
