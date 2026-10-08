@@ -18,7 +18,7 @@ AS $$
       END
     ), 0)::bigint
   FROM public.product_metrics AS pm
-  WHERE pm.product_id = p_product_id
+  WHERE pm.product_id::text = p_product_id::text
   GROUP BY pm.metric_type;
 $$;
 
