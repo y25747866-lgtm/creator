@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/hooks/useSubscription";
-import { listProductsPage, getDashboardAggregates } from "@/lib/productTracking";
+import { listProductsPage, getDashboardAggregates, getProductMetrics, getProductFeedback } from "@/lib/productTracking";
 import type { KeysetCursor } from "@/lib/keysetPagination";
 import { aggregateMetrics, type ProductRecord, type MetricRecord, type FeedbackRecord } from "@/lib/dashboardMetrics";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
@@ -126,7 +126,23 @@ const Dashboard = () => {
         for (const metric of aggregates.metrics) metricsData[metric.product_id]?.push(metric);
         for (const feedback of aggregates.feedback) feedbackData[feedback.product_id]?.push(feedback);
       } catch (error) {
-        console.error("Failed to load dashboard aggregates:", error);
+        // Batch action unavailable (for example before the Edge Function is redeployed):
+        // fall back to the per-product endpoints so metrics still load.
+        console.warn("Falling back to per-product metrics:", error);
+        await Promise.all(pageProducts.map(async (product) => {
+          try {
+            const [metricsResponse, feedbackResponse] = await Promise.all([
+              getProductMetrics(product.id),
+              getProductFeedback(product.id),
+            ]);
+            if (Array.isArray(metricsResponse?.metrics)) metricsData[product.id] = metricsResponse.metrics as MetricRecord[];
+            const feedbackItems = Array.isArray(feedbackResponse?.items) ? feedbackResponse.items as FeedbackRecord[] : [];
+            feedbackData[product.id] = feedbackItems;
+          } catch {
+            metricsData[product.id] = [];
+            feedbackData[product.id] = [];
+          }
+        }));
       }
     }
     setMetricsCache((current) => ({ ...current, ...metricsData }));

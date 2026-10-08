@@ -50,4 +50,16 @@ describe("Dashboard product pages", () => {
     // One product-page request plus one batch request, regardless of product count
     expect(listProductsPage.mock.calls.length + getDashboardAggregates.mock.calls.length).toBe(2);
   });
+
+  it("falls back to per-product metrics when the batch action is unavailable", async () => {
+    const products = [1, 2].map((index) => ({ id: `p${index}`, title: `Product ${index}`, topic: "Topic", created_at: cursor.created_at }));
+    listProductsPage.mockResolvedValue({ items: products, nextCursor: null, hasMore: false });
+    getDashboardAggregates.mockRejectedValue(new Error("Failed to fetch dashboard aggregates"));
+    getProductMetrics.mockResolvedValue({ metrics: [{ id: "m1", product_id: "p1", metric_type: "download", value: 4, recorded_at: new Date().toISOString() }], summary: {} });
+    getProductFeedback.mockResolvedValue({ items: [] });
+
+    render(<Dashboard />);
+    await waitFor(() => expect(getProductMetrics).toHaveBeenCalledTimes(products.length));
+    expect(getProductFeedback).toHaveBeenCalledTimes(products.length);
+  });
 });
