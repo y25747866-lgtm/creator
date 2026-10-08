@@ -82,39 +82,32 @@ const SalesPageBuilder = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (items: SalesPageDraft[]) => {
-      const saved: SalesPageDraft[] = [];
-      const failed: SalesPageDraft[] = [];
       let message = "Could not save one or more generated sales-page drafts.";
-      if (!user) return { saved, failed: items, message: "Sign in again, then retry saving." };
+      if (!user) return { saved: [] as SalesPageDraft[], failed: items, message: "Sign in again, then retry saving." };
 
-      for (const item of items) {
-        try {
-          const { data, error } = await supabase
-            .from("saved_sales_page_results")
-            .insert({
-              id: item.id,
-              user_id: user.id,
-              headline: item.headline,
-              subheadline: item.subheadline,
-              problem: item.problem,
-              solution: item.solution,
-              benefits: item.benefits,
-              cta: item.cta,
-            })
-            .select()
-            .single();
-          if (error || !data) {
-            failed.push(item);
-            message = error?.message || message;
-          } else {
-            saved.push(data as SalesPageDraft);
-          }
-        } catch (error) {
-          failed.push(item);
-          message = error instanceof Error ? error.message : message;
+      // One batched insert request covers every generated draft
+      try {
+        const { data, error } = await supabase
+          .from("saved_sales_page_results")
+          .insert(items.map((item) => ({
+            id: item.id,
+            user_id: user.id,
+            headline: item.headline,
+            subheadline: item.subheadline,
+            problem: item.problem,
+            solution: item.solution,
+            benefits: item.benefits,
+            cta: item.cta,
+          })))
+          .select();
+
+        if (error || !data) {
+          return { saved: [] as SalesPageDraft[], failed: items, message: error?.message || message };
         }
+        return { saved: data as SalesPageDraft[], failed: [] as SalesPageDraft[], message };
+      } catch (error) {
+        return { saved: [] as SalesPageDraft[], failed: items, message: error instanceof Error ? error.message : message };
       }
-      return { saved, failed, message };
     },
     onMutate: async (items) => {
       await queryClient.cancelQueries({ queryKey: draftsQueryKey });

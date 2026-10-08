@@ -55,10 +55,14 @@ describe("Marketing Studio baseline", () => {
     mocks.invoke.mockResolvedValue({ data: { results: [{ hook: "Launch hook", main_copy: "Launch copy", cta: "Try it" }] }, error: null });
     mocks.from.mockImplementation(() => {
       const query = makeQuery();
-      query.single.mockImplementation(() => {
+      query.insert = vi.fn(() => {
         saveAttempts += 1;
-        if (saveAttempts === 1) return new Promise((resolve) => { resolveFirstSave = resolve; });
-        return Promise.resolve({ data: { id: "saved-result", hook: "Launch hook", main_copy: "Launch copy", cta: "Try it", platform: "instagram" }, error: null });
+        const result: Promise<any> = saveAttempts === 1
+          ? new Promise((resolve) => { resolveFirstSave = resolve; })
+          : Promise.resolve({ data: [{ id: "saved-result", hook: "Launch hook", main_copy: "Launch copy", cta: "Try it", platform: "instagram" }], error: null });
+        const chain: any = { select: vi.fn(() => chain) };
+        chain.then = (onFulfilled: any, onRejected: any) => result.then(onFulfilled, onRejected);
+        return chain;
       });
       return query;
     });
@@ -119,5 +123,28 @@ describe("Marketing Studio baseline", () => {
     fireEvent.click(loadMore);
     await waitFor(() => expect(mocks.from).toHaveBeenCalledTimes(2));
     expect(mocks.from.mock.results[1].value.or).toHaveBeenCalledWith(expect.stringContaining("id.lt."));
+  });
+
+  it("saves every generated post in a single batched insert request", async () => {
+    mocks.invoke.mockResolvedValue({ data: { results: [1, 2, 3].map((n) => ({ hook: `Hook ${n}`, main_copy: `Copy ${n}`, cta: "Try it" })) }, error: null });
+    const insertCalls: any[][] = [];
+    mocks.from.mockImplementation(() => {
+      const query = makeQuery();
+      query.insert = vi.fn((rows: any) => {
+        insertCalls.push(rows);
+        const chain: any = { select: vi.fn(() => chain) };
+        chain.then = (onFulfilled: any, onRejected: any) => Promise.resolve({ data: rows.map((row: any) => ({ ...row })), error: null }).then(onFulfilled, onRejected);
+        return chain;
+      });
+      return query;
+    });
+
+    renderWithQueryClient(<MarketingStudio />);
+    fireEvent.change(screen.getByPlaceholderText("e.g. Launch of my SaaS tool"), { target: { value: "Test launch" } });
+    fireEvent.click(screen.getByRole("button", { name: /Generate Posts/ }));
+    await waitFor(() => expect(insertCalls).toHaveLength(1));
+    expect(insertCalls[0]).toHaveLength(3);
+    await waitFor(() => expect(screen.getByText("Hook 1")).toBeInTheDocument());
+    expect(screen.getAllByText(/^Hook \d$/)).toHaveLength(3);
   });
 });

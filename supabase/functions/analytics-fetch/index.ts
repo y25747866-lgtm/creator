@@ -191,6 +191,8 @@ serve(async (req) => {
       nextCursors: { whop: null as { products: string | null; orders: string | null } | null },
     };
 
+    const syncedConnectionIds: string[] = [];
+
     for (const conn of connections) {
       if (platform && conn.platform !== platform) continue;
       
@@ -225,11 +227,19 @@ serve(async (req) => {
         console.error(`❌ Error fetching ${conn.platform} data:`, e);
       }
 
-      // Update last sync
+      // Collect for one batched sync-time write after the loop
+      syncedConnectionIds.push(conn.id);
+    }
+
+    // Update last sync for every processed connection in a single statement
+    if (syncedConnectionIds.length > 0) {
       try {
-        await supabase.from("platform_connections").update({ last_sync_at: new Date().toISOString() }).eq("id", conn.id);
+        await supabase
+          .from("platform_connections")
+          .update({ last_sync_at: new Date().toISOString() })
+          .in("id", syncedConnectionIds);
       } catch (e) {
-        console.error("Error updating sync time:", e);
+        console.error("Error updating sync times:", e);
       }
     }
 

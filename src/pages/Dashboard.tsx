@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSubscription } from "@/hooks/useSubscription";
-import { listProductsPage, getProductMetrics, getProductFeedback } from "@/lib/productTracking";
+import { listProductsPage, getDashboardAggregates } from "@/lib/productTracking";
 import type { KeysetCursor } from "@/lib/keysetPagination";
 import { aggregateMetrics, type ProductRecord, type MetricRecord, type FeedbackRecord } from "@/lib/dashboardMetrics";
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
@@ -118,21 +118,19 @@ const Dashboard = () => {
     setProductCursor(page.nextCursor);
     setHasMoreProducts(page.hasMore);
 
-    const productDetails = await Promise.all(pageProducts.map(async (product) => {
+    const metricsData: Record<string, MetricRecord[]> = Object.fromEntries(pageProducts.map((product) => [product.id, []]));
+    const feedbackData: Record<string, FeedbackRecord[]> = Object.fromEntries(pageProducts.map((product) => [product.id, []]));
+    if (pageProducts.length) {
       try {
-        const [metricsResponse, feedbackResponse] = await Promise.all([
-          getProductMetrics(product.id),
-          getProductFeedback(product.id),
-        ]);
-        const metrics = Array.isArray(metricsResponse?.metrics) ? metricsResponse.metrics as MetricRecord[] : [];
-        const feedback = Array.isArray(feedbackResponse?.items) ? feedbackResponse.items as FeedbackRecord[] : [];
-        return { id: product.id, metrics, feedback };
-      } catch {
-        return { id: product.id, metrics: [] as MetricRecord[], feedback: [] as FeedbackRecord[] };
+        const aggregates = await getDashboardAggregates(pageProducts.map((product) => product.id));
+        for (const metric of aggregates.metrics) metricsData[metric.product_id]?.push(metric);
+        for (const feedback of aggregates.feedback) feedbackData[feedback.product_id]?.push(feedback);
+      } catch (error) {
+        console.error("Failed to load dashboard aggregates:", error);
       }
-    }));
-    setMetricsCache((current) => ({ ...current, ...Object.fromEntries(productDetails.map(({ id, metrics }) => [id, metrics])) }));
-    setFeedbackCache((current) => ({ ...current, ...Object.fromEntries(productDetails.map(({ id, feedback }) => [id, feedback])) }));
+    }
+    setMetricsCache((current) => ({ ...current, ...metricsData }));
+    setFeedbackCache((current) => ({ ...current, ...feedbackData }));
   }, []);
 
   useEffect(() => {

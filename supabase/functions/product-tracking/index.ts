@@ -4,6 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 const PAGE_SIZE = 20;
+const MAX_BATCH_PRODUCTS = 100;
+const MAX_BATCH_ROWS = 5000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function parseCursor(raw: string | null): { created_at: string; id: string } | null {
@@ -154,6 +156,56 @@ serve(async (req) => {
         if (error) throw error;
 
         return new Response(JSON.stringify(data), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Single set-based read for many products, replacing per-product metric/feedback requests
+      if (action === "get-dashboard-aggregates") {
+        const rawIds = Array.isArray(body.productIds) ? body.productIds : [];
+        const requestedIds = [...new Set(rawIds.filter((id: unknown) => typeof id === "string" && UUID_PATTERN.test(id)))].slice(0, MAX_BATCH_PRODUCTS);
+
+        if (requestedIds.length === 0) {
+          return new Response(JSON.stringify({ metrics: [], feedback: [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Ownership guard: the service-role client bypasses RLS, so scope reads to this user's products
+        const { data: owned, error: ownedErr } = await supabase
+          .from("ebook_products")
+          .select("id")
+          .eq("user_id", user.id)
+          .in("id", requestedIds);
+
+        if (ownedErr) throw ownedErr;
+
+        const ownedIds = (owned || []).map((row) => row.id as string);
+        if (ownedIds.length === 0) {
+          return new Response(JSON.stringify({ metrics: [], feedback: [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const [metricsRes, feedbackRes] = await Promise.all([
+          supabase
+            .from("product_metrics")
+            .select("id, product_id, metric_type, value, recorded_at")
+            .in("product_id", ownedIds)
+            .order("recorded_at", { ascending: false })
+            .limit(MAX_BATCH_ROWS),
+          supabase
+            .from("product_feedback")
+            .select("id, product_id, user_id, rating, comment, section_reference, feedback_type, created_at")
+            .in("product_id", ownedIds)
+            .order("created_at", { ascending: false })
+            .limit(MAX_BATCH_ROWS),
+        ]);
+
+        if (metricsRes.error) throw metricsRes.error;
+        if (feedbackRes.error) throw feedbackRes.error;
+
+        return new Response(JSON.stringify({ metrics: metricsRes.data || [], feedback: feedbackRes.data || [] }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

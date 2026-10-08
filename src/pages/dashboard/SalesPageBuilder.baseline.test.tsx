@@ -56,10 +56,14 @@ describe("Sales Page Builder baseline", () => {
     mocks.invoke.mockResolvedValue({ data: { results: [{ headline: "Launch headline", subheadline: "A strong subhead", problem: "Pain", solution: "Fix", benefits: "Value", cta: "Start" }] }, error: null });
     mocks.from.mockImplementation(() => {
       const query = makeQuery();
-      query.single.mockImplementation(() => {
+      query.insert = vi.fn(() => {
         saveAttempts += 1;
-        if (saveAttempts === 1) return new Promise((resolve) => { resolveFirstSave = resolve; });
-        return Promise.resolve({ data: { id: "saved-draft", headline: "Launch headline", subheadline: "A strong subhead", problem: "Pain", solution: "Fix", benefits: "Value", cta: "Start" }, error: null });
+        const result: Promise<any> = saveAttempts === 1
+          ? new Promise((resolve) => { resolveFirstSave = resolve; })
+          : Promise.resolve({ data: [{ id: "saved-draft", headline: "Launch headline", subheadline: "A strong subhead", problem: "Pain", solution: "Fix", benefits: "Value", cta: "Start" }], error: null });
+        const chain: any = { select: vi.fn(() => chain) };
+        chain.then = (onFulfilled: any, onRejected: any) => result.then(onFulfilled, onRejected);
+        return chain;
       });
       return query;
     });
@@ -122,5 +126,27 @@ describe("Sales Page Builder baseline", () => {
     fireEvent.click(loadMore);
     await waitFor(() => expect(mocks.from).toHaveBeenCalledTimes(2));
     expect(mocks.from.mock.results[1].value.or).toHaveBeenCalledWith(expect.stringContaining("id.lt."));
+  });
+
+  it("saves every generated draft in a single batched insert request", async () => {
+    mocks.invoke.mockResolvedValue({ data: { results: [1, 2, 3].map((n) => ({ headline: `Headline ${n}`, subheadline: "Subhead", problem: "Problem", solution: "Solution", benefits: "Benefits", cta: "Start" })) }, error: null });
+    const insertCalls: any[][] = [];
+    mocks.from.mockImplementation(() => {
+      const query = makeQuery();
+      query.insert = vi.fn((rows: any) => {
+        insertCalls.push(rows);
+        const chain: any = { select: vi.fn(() => chain) };
+        chain.then = (onFulfilled: any, onRejected: any) => Promise.resolve({ data: rows.map((row: any) => ({ ...row })), error: null }).then(onFulfilled, onRejected);
+        return chain;
+      });
+      return query;
+    });
+
+    renderWithQueryClient(<SalesPageBuilder />);
+    fireEvent.change(screen.getByPlaceholderText("Your product name"), { target: { value: "Test product" } });
+    fireEvent.click(screen.getByRole("button", { name: /Generate 3 Sales Page Drafts/ }));
+    await waitFor(() => expect(insertCalls).toHaveLength(1));
+    expect(insertCalls[0]).toHaveLength(3);
+    await waitFor(() => expect(screen.getByText("Headline 1")).toBeInTheDocument());
   });
 });

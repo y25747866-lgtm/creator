@@ -91,38 +91,31 @@ const MarketingStudio = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (items: SocialResult[]) => {
-      const saved: SocialResult[] = [];
-      const failed: SocialResult[] = [];
       let message = "Could not save one or more generated posts.";
-      if (!user) return { saved, failed: items, message: "Sign in again, then retry saving." };
+      if (!user) return { saved: [] as SocialResult[], failed: items, message: "Sign in again, then retry saving." };
 
-      for (const item of items) {
-        try {
-          const { data, error } = await supabase
-            .from("saved_marketing_results")
-            .insert({
-              id: item.id,
-              user_id: user.id,
-              platform: item.platform,
-              hook: item.hook,
-              main_copy: item.main_copy,
-              cta: item.cta,
-              hashtags: item.hashtags || null,
-            })
-            .select()
-            .single();
-          if (error || !data) {
-            failed.push(item);
-            message = error?.message || message;
-          } else {
-            saved.push(data as SocialResult);
-          }
-        } catch (error) {
-          failed.push(item);
-          message = error instanceof Error ? error.message : message;
+      // One batched insert request covers every generated post
+      try {
+        const { data, error } = await supabase
+          .from("saved_marketing_results")
+          .insert(items.map((item) => ({
+            id: item.id,
+            user_id: user.id,
+            platform: item.platform,
+            hook: item.hook,
+            main_copy: item.main_copy,
+            cta: item.cta,
+            hashtags: item.hashtags || null,
+          })))
+          .select();
+
+        if (error || !data) {
+          return { saved: [] as SocialResult[], failed: items, message: error?.message || message };
         }
+        return { saved: data as SocialResult[], failed: [] as SocialResult[], message };
+      } catch (error) {
+        return { saved: [] as SocialResult[], failed: items, message: error instanceof Error ? error.message : message };
       }
-      return { saved, failed, message };
     },
     onMutate: async (items) => {
       await queryClient.cancelQueries({ queryKey: resultsQueryKey });
