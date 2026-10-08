@@ -65,14 +65,8 @@ export async function submitFeedback(params: {
   return res.json();
 }
 
-export async function listProducts() {
-  const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?action=list-products`, {
-    method: "GET",
-    headers,
-  });
-  if (!res.ok) throw new Error("Failed to fetch products");
-  return res.json();
+export async function listProducts(cursor: KeysetCursor | null = null) {
+  return listProductsPage(cursor);
 }
 
 export async function listProductsPage(cursor: KeysetCursor | null = null) {
@@ -97,7 +91,7 @@ export async function getDashboardAggregates(productIds: string[]) {
 
 export async function getProductMetrics(productId: string, cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const params = new URLSearchParams({ action: "get-metrics", productId, paged: "true" });
+  const params = new URLSearchParams({ action: "get-metrics", productId });
   if (cursor) params.set("cursor", JSON.stringify(cursor));
   const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch metrics");
@@ -106,7 +100,7 @@ export async function getProductMetrics(productId: string, cursor: KeysetCursor 
 
 export async function getProductFeedback(productId: string, cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const params = new URLSearchParams({ action: "get-feedback", productId, paged: "true" });
+  const params = new URLSearchParams({ action: "get-feedback", productId });
   if (cursor) params.set("cursor", JSON.stringify(cursor));
   const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch feedback");
@@ -115,7 +109,7 @@ export async function getProductFeedback(productId: string, cursor: KeysetCursor
 
 export async function getProductVersions(productId: string, cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const params = new URLSearchParams({ action: "get-versions", productId, paged: "true" });
+  const params = new URLSearchParams({ action: "get-versions", productId });
   if (cursor) params.set("cursor", JSON.stringify(cursor));
   const res = await fetch(`${BASE_URL}/functions/v1/product-tracking?${params}`, { method: "GET", headers });
   if (!res.ok) throw new Error("Failed to fetch versions");

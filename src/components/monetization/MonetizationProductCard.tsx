@@ -1,11 +1,12 @@
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MonetizationProduct, MonetizationModule, MODULE_TYPES } from "@/lib/monetization";
 import { format } from "date-fns";
 import { Eye } from "lucide-react";
-import { useLocalPagination } from "@/hooks/useLocalPagination";
+import { listMonetizationModules } from "@/lib/monetization";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 
 interface Props {
   product: MonetizationProduct;
@@ -13,8 +14,34 @@ interface Props {
 }
 
 const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
-  const modules = product.monetization_modules || [];
-  const { visibleItems: visibleModules, hasMore, loadMore } = useLocalPagination(modules, 20, product.id);
+  const [modules, setModules] = useState(product.monetization_modules || []);
+  const [moduleCursor, setModuleCursor] = useState<KeysetCursor | null>(product.moduleNextCursor ?? null);
+  const [hasMore, setHasMore] = useState(Boolean(product.moduleHasMore));
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  useEffect(() => {
+    setModules(product.monetization_modules || []);
+    setModuleCursor(product.moduleNextCursor ?? null);
+    setHasMore(Boolean(product.moduleHasMore));
+  }, [product.id, product.monetization_modules, product.moduleNextCursor, product.moduleHasMore]);
+
+  const loadMore = async () => {
+    if (!moduleCursor || !hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await listMonetizationModules(product.id, moduleCursor);
+      setModules((current) => {
+        const ids = new Set(current.map((module) => module.id));
+        return [...current, ...page.items.filter((module) => !ids.has(module.id))];
+      });
+      setModuleCursor(page.nextCursor);
+      setHasMore(page.hasMore);
+    } catch (error) {
+      console.error("Failed to load more campaign assets:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   return (
     <Card className="p-6 hover-lift">
@@ -24,7 +51,7 @@ const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
           <p className="text-sm text-muted-foreground mt-0.5">{product.topic}</p>
         </div>
         <Badge variant="secondary" className="text-xs shrink-0">
-          {modules.length} asset{modules.length !== 1 ? "s" : ""}
+          {modules.length}{hasMore ? "+" : ""} asset{modules.length === 1 && !hasMore ? "" : "s"}
         </Badge>
       </div>
 
@@ -34,7 +61,7 @@ const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
 
       {modules.length > 0 && (
         <div className="space-y-2 mb-4">
-          {visibleModules.map((mod) => {
+          {modules.map((mod) => {
             const typeLabel =
               MODULE_TYPES.find((m) => m.value === mod.module_type)?.label || mod.module_type;
             return (
@@ -57,8 +84,8 @@ const MonetizationProductCard = ({ product, onModuleClick }: Props) => {
             );
           })}
           {hasMore && (
-            <Button variant="ghost" size="sm" className="w-full" onClick={loadMore}>
-              Load more assets ({modules.length - visibleModules.length} remaining)
+            <Button variant="ghost" size="sm" className="w-full" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? "Loading assets…" : "Load more assets"}
             </Button>
           )}
         </div>

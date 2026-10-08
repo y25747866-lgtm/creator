@@ -53,6 +53,8 @@ export interface MonetizationProduct {
   source_type: string;
   created_at: string;
   monetization_modules?: MonetizationModule[];
+  moduleNextCursor?: KeysetCursor | null;
+  moduleHasMore?: boolean;
 }
 
 /*
@@ -100,7 +102,8 @@ export async function createMonetizationProduct(params: Record<string, unknown>)
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as any)?.error || "Failed to create product");
+    const message = err && typeof err === "object" ? (err as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : "Failed to create product");
   }
   const data = await res.json();
   if (!data?.id && !data?.product?.id) throw new Error("Product created but no ID returned");
@@ -150,7 +153,8 @@ export async function generateModuleContent(params: { moduleId: string }) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as any)?.error || "Generation failed");
+    const message = err && typeof err === "object" ? (err as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : "Generation failed");
   }
   return res.json();
 }
@@ -163,7 +167,7 @@ LIST PRODUCTS
 
 export async function listMonetizationProducts(cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const params = new URLSearchParams({ action: "list-products", paged: "true" });
+  const params = new URLSearchParams({ action: "list-products" });
   if (cursor) params.set("cursor", JSON.stringify(cursor));
   const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, {
     method: "GET",
@@ -171,6 +175,15 @@ export async function listMonetizationProducts(cursor: KeysetCursor | null = nul
   });
   if (!res.ok) throw new Error("Failed to fetch campaigns");
   return res.json() as Promise<{ products: MonetizationProduct[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
+}
+
+export async function listMonetizationModules(productId: string, cursor: KeysetCursor | null = null) {
+  const headers = await getHeaders();
+  const params = new URLSearchParams({ action: "list-modules-page", productId });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, { method: "GET", headers });
+  if (!res.ok) throw new Error("Failed to fetch campaign assets");
+  return res.json() as Promise<{ items: MonetizationModule[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
 }
 
 /*

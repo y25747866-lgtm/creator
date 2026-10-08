@@ -254,31 +254,71 @@ serve(async (req) => {
     // LIST PRODUCTS
     //////////////////////////////////////////////////////
     if (action === "list-products") {
-      const paged = url.searchParams.get("paged") === "true";
-      const cursor = paged ? parseCursor(url.searchParams.get("cursor")) : null;
+      const cursor = parseCursor(url.searchParams.get("cursor"));
       let query = sb
         .from("monetization_products")
         .select(`
-          *,
-          monetization_modules(*)
+          *, monetization_modules(id, product_id, module_type, title, status, created_at)
         `)
         .eq("user_id", userId);
       if (cursor) query = query.or(cursorFilter(cursor));
-      query = query.order("created_at", { ascending: false });
-      if (paged) query = query.order("id", { ascending: false }).limit(PAGE_SIZE + 1);
+      query = query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .order("created_at", { referencedTable: "monetization_modules", ascending: false })
+        .order("id", { referencedTable: "monetization_modules", ascending: false })
+        .limit(PAGE_SIZE + 1, { referencedTable: "monetization_modules" })
+        .limit(PAGE_SIZE + 1);
       const { data, error } = await query;
       if (error) throw error;
 
-      const result = paged ? pageRows(data || []) : { items: data || [], hasMore: false, nextCursor: null };
+      const result = pageRows(data || []);
+      const products = result.items.map((product) => {
+        const moduleRows = Array.isArray(product.monetization_modules)
+          ? product.monetization_modules as Record<string, unknown>[]
+          : [];
+        const modulePage = pageRows(moduleRows);
+        return {
+          ...product,
+          monetization_modules: modulePage.items,
+          moduleNextCursor: modulePage.nextCursor,
+          moduleHasMore: modulePage.hasMore,
+        };
+      });
 
       return new Response(
         JSON.stringify({
-          products: result.items,
+          products,
           nextCursor: result.nextCursor,
           hasMore: result.hasMore,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (action === "list-modules-page") {
+      const productId = url.searchParams.get("productId");
+      if (!productId) return errorResponse("productId required", 400);
+      const cursor = parseCursor(url.searchParams.get("cursor"));
+      let query = sb
+        .from("monetization_modules")
+        .select("id, product_id, module_type, title, status, created_at, monetization_products!inner(user_id)")
+        .eq("product_id", productId)
+        .eq("monetization_products.user_id", userId);
+      if (cursor) query = query.or(cursorFilter(cursor));
+      const { data, error } = await query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(PAGE_SIZE + 1);
+      if (error) throw error;
+      const page = pageRows(data || []);
+      const items = page.items.map((row) => {
+        const { monetization_products: _owner, ...module } = row;
+        return module;
+      });
+      return new Response(JSON.stringify({ items, nextCursor: page.nextCursor, hasMore: page.hasMore }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (action === "get-module" && req.method === "GET") {
