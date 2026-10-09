@@ -8,6 +8,7 @@ export default function OptimizedHeroBackground() {
     const script = document.createElement('script')
     script.id = 'unicorn-script'
     script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.4.0/dist/unicornStudio.umd.js'
+    script.crossOrigin = 'anonymous'
     script.onload = () => {
       if ((window as any).UnicornStudio) {
         (window as any).UnicornStudio.init()
