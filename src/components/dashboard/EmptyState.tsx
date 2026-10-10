@@ -9,10 +9,10 @@ const EmptyState = () => (
     </div>
     <h2 className="text-xl font-semibold mb-2">No products yet</h2>
     <p className="text-muted-foreground max-w-sm mb-8">
-      Generate your first ebook to unlock analytics and start tracking performance.
+      Generate your first digital product to unlock analytics and start tracking performance.
     </p>
     <Button asChild size="lg">
-      <Link to="/dashboard/ebook-generator">Create Your First Ebook</Link>
+      <Link to="/dashboard/ebook-generator">Create Your First Digital Product</Link>
     </Button>
   </div>
 );
