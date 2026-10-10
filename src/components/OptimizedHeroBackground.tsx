@@ -1,45 +1,30 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 export default function OptimizedHeroBackground() {
-  const containerRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     const existing = document.getElementById('unicorn-script')
-    if (existing) {
-      if ((window as any).UnicornStudio) {
-        (window as any).UnicornStudio.addScene({
-          elementId: 'unicorn-hero',
-          projectId: 'mphmwraF225iCJdgjLPD'
-        })
-      }
-      return
-    }
+    if (existing) return
 
     const script = document.createElement('script')
     script.id = 'unicorn-script'
-    script.src = 'https://cdn.unicorn.studio/v1.3.2/unicornStudio.umd.js'
-    script.async = true
+    script.type = 'text/javascript'
+    script.src = 'https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.4.1/dist/unicornStudio.umd.js'
     script.onload = () => {
-      if ((window as any).UnicornStudio) {
-        (window as any).UnicornStudio.addScene({
-          elementId: 'unicorn-hero',
-          projectId: 'mphmwraF225iCJdgjLPD'
-        })
+      const us = (window as any).UnicornStudio
+      if (us && us.init) {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', () => us.init())
+        } else {
+          us.init()
+        }
       }
     }
-    document.head.appendChild(script)
-
-    return () => {
-      if ((window as any).UnicornStudio) {
-        (window as any).UnicornStudio.destroy?.()
-      }
-    }
+    ;(document.head || document.body).appendChild(script)
   }, [])
 
   return (
     <div
-      id="unicorn-hero"
-      ref={containerRef}
+      data-us-project="mphmwraF225iCJdgjLPD"
       style={{ position: 'absolute', inset: 0, zIndex: 0, width: '100%', height: '100%' }}
     />
   )
