@@ -9,7 +9,7 @@ export default function OptimizedHeroBackground() {
       if ((window as any).UnicornStudio) {
         (window as any).UnicornStudio.addScene({
           elementId: 'unicorn-hero',
-          projectId: 'mphmwraF225iCJdgiLPD'
+          projectId: 'mphmwraF225iCJdgjLPD'
         })
       }
       return
@@ -23,7 +23,7 @@ export default function OptimizedHeroBackground() {
       if ((window as any).UnicornStudio) {
         (window as any).UnicornStudio.addScene({
           elementId: 'unicorn-hero',
-          projectId: 'mphmwraF225iCJdgiLPD'
+          projectId: 'mphmwraF225iCJdgjLPD'
         })
       }
     }
