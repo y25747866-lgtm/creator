@@ -9,7 +9,7 @@ import {
 import nexoraLogo from '@/assets/nexora-logo.webp';
 import LandingSkeleton from '@/components/LandingSkeleton';
 import { useLandingLoading } from '@/hooks/useLandingLoading';
-import OptimizedHeroBackground from '@/components/OptimizedHeroBackground';
+import HeroBackground from '@/components/HeroBackground';
 
 /* ─── Section wrapper with fade-up ─── */
 const Section = ({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) => {
@@ -100,7 +100,7 @@ const Landing = () => {
 
       {/* ═══ HERO ═══ */}
       <section id="hero" className="pt-48 pb-24 hero-section relative overflow-hidden">
-        <OptimizedHeroBackground />
+        <HeroBackground />
         <div className="relative z-10">
           <div className="max-w-7xl mx-auto px-6">
             <m.div
