@@ -67,6 +67,39 @@ export interface AccessResult {
   error?: string;
 }
 
+/**
+ * HARD SUBSCRIPTION ENFORCEMENT
+ * Strictly checks if the subscription is active and not expired.
+ * Returns 403 if expired or missing.
+ */
+export function requireActiveSubscription(subscription: any): { authorized: boolean; error?: string } {
+  console.log("Subscription check:", subscription);
+
+  if (!subscription) {
+    return { authorized: false, error: "No active subscription found" };
+  }
+
+  if (subscription.status !== "active") {
+    return { authorized: false, error: "Subscription is not active" };
+  }
+
+  const now = new Date();
+  const endDate = subscription.end_date ? new Date(subscription.end_date) : null;
+  const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
+
+  const isExpired = (endDate && endDate < now) || (expiresAt && expiresAt < now);
+
+  if (isExpired) {
+    return { authorized: false, error: "Subscription expired" };
+  }
+
+  return { authorized: true };
+}
+
+/**
+ * Verify if the user has a valid active and unexpired subscription.
+ * Strictly enforces: status = 'active' AND (end_date > now OR expires_at > now)
+ */
 export async function verifyAccess(req: Request): Promise<AccessResult> {
   // Extract JWT from Authorization header
   const authHeader = req.headers.get('Authorization');
@@ -95,12 +128,13 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
     return { authorized: false, error: 'Invalid or expired token' };
   }
 
-  // Check for active subscription
+  // Check for valid active + unexpired subscription
   const { data: subscription, error: subError } = await supabase
     .from('subscriptions')
-    .select('id, status, expires_at')
+    .select('id, status, expires_at, end_date')
     .eq('user_id', user.id)
-    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (subError) {
@@ -108,22 +142,157 @@ export async function verifyAccess(req: Request): Promise<AccessResult> {
     return { authorized: false, error: 'Failed to verify subscription' };
   }
 
-  if (!subscription) {
-    return { authorized: false, error: 'No active subscription' };
+  const check = requireActiveSubscription(subscription);
+  if (!check.authorized) {
+    // Auto-update status to expired in background if it was active but now expired
+    if (subscription && subscription.status === 'active' && check.error === "Subscription expired") {
+      supabase
+        .from('subscriptions')
+        .update({ status: 'expired' })
+        .eq('id', subscription.id)
+        .then(({ error }) => {
+          if (error) console.error('Failed to auto-update expired status:', error.message);
+        });
+    }
+    return { authorized: false, error: check.error };
   }
 
-  // Check if subscription has expired
-  if (subscription.expires_at) {
-    const expiresAt = new Date(subscription.expires_at);
-    if (expiresAt < new Date()) {
-      return { authorized: false, error: 'Subscription has expired' };
-    }
+  return { authorized: true, userId: user.id };
+}
+
+/**
+ * Auth-only verification (no subscription check).
+ * Use for features available on free tier with client-side rate limiting.
+ */
+export async function verifyAuthOnly(req: Request): Promise<AccessResult> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { authorized: false, error: 'Missing authorization' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { authorized: false, error: 'Server configuration error' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    return { authorized: false, error: 'Invalid or expired token' };
   }
 
   return { authorized: true, userId: user.id };
 }
 
 // Create error response with CORS headers
+/**
+ * RATE LIMITING
+ * Max 10 requests per minute per user
+ */
+export async function checkRateLimit(supabase: any, userId: string): Promise<{ allowed: boolean; error?: string }> {
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+  
+  const { count, error } = await supabase
+    .from('request_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gt('created_at', oneMinuteAgo);
+
+  if (error) {
+    console.error('Rate limit check error:', error.message);
+    return { allowed: true }; // Allow on error to avoid blocking users
+  }
+
+  if (count !== null && count >= 10) {
+    return { allowed: false, error: "Rate limit exceeded. Please wait before trying again." };
+  }
+
+  // Log the request
+  await supabase.from('request_logs').insert({ user_id: userId });
+
+  return { allowed: true };
+}
+
+/**
+ * SERVER-SIDE DAILY GENERATION LIMIT
+ * Free tier users can only generate once every 24 hours.
+ */
+export async function checkDailyLimit(supabase: any, userId: string): Promise<{ allowed: boolean; error?: string }> {
+  // 1. Check if user is on free tier
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('plan, plan_type, status')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const plan = subscription?.plan || subscription?.plan_type || 'free';
+  const isExpired = subscription?.status === 'expired';
+  const isFree = plan === 'free' || isExpired;
+
+  // If not free, allow generation
+  if (!isFree) return { allowed: true };
+
+  // 2. Check last_generated_at in profiles
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('last_generated_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (profile?.last_generated_at) {
+    const lastGenerated = new Date(profile.last_generated_at);
+    const now = new Date();
+    const diffMs = now.getTime() - lastGenerated.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+      const remainingHours = Math.ceil(24 - diffHours);
+      return { 
+        allowed: false, 
+        error: `Daily limit reached. Resets in ${remainingHours} hours.` 
+      };
+    }
+  }
+
+  // 3. Update last_generated_at to now
+  await supabase
+    .from('profiles')
+    .update({ last_generated_at: new Date().toISOString() })
+    .eq('user_id', userId);
+
+  return { allowed: true };
+}
+
+/**
+ * INPUT VALIDATION & SANITIZATION
+ */
+export function validateAndSanitize(input: any, maxLength: number = 2000): string {
+  if (input === undefined || input === null) {
+    throw new Error("Input is required");
+  }
+  
+  let strInput = String(input).trim();
+  if (strInput.length === 0) {
+    throw new Error("Input cannot be empty");
+  }
+
+  // Strip HTML tags
+  strInput = strInput.replace(/<[^>]*>?/gm, '');
+  
+  // Limit length
+  if (strInput.length > maxLength) {
+    strInput = strInput.substring(0, maxLength);
+  }
+
+  return strInput;
+}
+
 export function errorResponse(message: string, status: number = 400): Response {
   return new Response(
     JSON.stringify({ error: message }),

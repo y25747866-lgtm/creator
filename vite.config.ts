@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '::',
     port: 8080,
+    allowedHosts: true,
+  },
+  preview: {
+    host: '::',
+    port: 8080,
+    allowedHosts: true,
   },
   base: '/',
   build: {

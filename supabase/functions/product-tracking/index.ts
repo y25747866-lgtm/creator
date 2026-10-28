@@ -1,11 +1,39 @@
 // Product tracking edge function
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const PAGE_SIZE = 20;
+const MAX_BATCH_PRODUCTS = 100;
+const MAX_BATCH_ROWS = 5000;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseCursor(raw: string | null): { created_at: string; id: string } | null {
+  if (!raw || raw.length > 2048) return null;
+  try {
+    const value = JSON.parse(raw);
+    if (
+      typeof value?.created_at === "string" && Number.isFinite(Date.parse(value.created_at)) &&
+      typeof value?.id === "string" && UUID_PATTERN.test(value.id)
+    ) return { created_at: value.created_at, id: value.id };
+  } catch { /* malformed cursor */ }
+  return null;
+}
+
+function cursorFilter(cursor: { created_at: string; id: string }, timeColumn = "created_at") {
+  return `${timeColumn}.lt.${cursor.created_at},and(${timeColumn}.eq.${cursor.created_at},id.lt.${cursor.id})`;
+}
+
+function pageRows(rows: Record<string, unknown>[], timeColumn = "created_at") {
+  const hasMore = rows.length > PAGE_SIZE;
+  const items = rows.slice(0, PAGE_SIZE);
+  const last = items[items.length - 1];
+  return {
+    items,
+    hasMore,
+    nextCursor: hasMore && last ? { created_at: last[timeColumn] as string, id: last.id as string } : null,
+  };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,28 +41,22 @@ serve(async (req) => {
   }
 
   try {
+    const access = await verifyAccess(req);
+    if (!access.authorized || !access.userId) {
+      return errorResponse(access.error || 'Subscription required', 403);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    // Get user from auth
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Rate limiting
+    const rateLimit = await checkRateLimit(supabase, access.userId);
+    if (!rateLimit.allowed) {
+      return errorResponse(rateLimit.error!, 429);
     }
+    
+    const user = { id: access.userId };
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
@@ -44,12 +66,19 @@ serve(async (req) => {
       const body = await req.json();
 
       if (action === "create-product") {
-        const { title, topic, description, length, content, coverImageUrl, pages } = body;
+        // Input validation & sanitization
+        const title = validateAndSanitize(body.title, 100);
+        const topic = validateAndSanitize(body.topic, 500);
+        const description = body.description ? validateAndSanitize(body.description, 1000) : null;
+        const length = body.length ? validateAndSanitize(body.length, 50) : "medium";
+        const content = body.content ? validateAndSanitize(body.content, 10000) : "";
+        const coverImageUrl = body.coverImageUrl ? validateAndSanitize(body.coverImageUrl, 500) : null;
+        const pages = Number(body.pages) || 0;
 
         // Insert product
         const { data: product, error: prodErr } = await supabase
           .from("ebook_products")
-          .insert({ user_id: user.id, title, topic, description, length: length || "medium", status: "published" })
+          .insert({ user_id: user.id, title, topic, description, length, status: "published" })
           .select()
           .single();
 
@@ -83,14 +112,17 @@ serve(async (req) => {
       }
 
       if (action === "record-metric") {
-        const { productId, metricType, value, metadata } = body;
+        const productId = validateAndSanitize(body.productId, 100);
+        const metricType = validateAndSanitize(body.metricType, 100);
+        const value = Number(body.value) || 1;
+        const metadata = body.metadata;
 
         const { error } = await supabase
           .from("product_metrics")
           .insert({
             product_id: productId,
             metric_type: metricType,
-            value: value || 1,
+            value,
             metadata: metadata || null,
           });
 
@@ -102,17 +134,21 @@ serve(async (req) => {
       }
 
       if (action === "submit-feedback") {
-        const { productId, rating, comment, sectionReference, feedbackType } = body;
+        const productId = validateAndSanitize(body.productId, 100);
+        const rating = Number(body.rating) || null;
+        const comment = body.comment ? validateAndSanitize(body.comment, 1000) : null;
+        const sectionReference = body.sectionReference ? validateAndSanitize(body.sectionReference, 500) : null;
+        const feedbackType = body.feedbackType ? validateAndSanitize(body.feedbackType, 100) : "general";
 
         const { data, error } = await supabase
           .from("product_feedback")
           .insert({
             product_id: productId,
             user_id: user.id,
-            rating: rating || null,
-            comment: comment || null,
-            section_reference: sectionReference || null,
-            feedback_type: feedbackType || "general",
+            rating,
+            comment,
+            section_reference: sectionReference,
+            feedback_type: feedbackType,
           })
           .select()
           .single();
@@ -123,20 +159,92 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Single set-based read for many products, replacing per-product metric/feedback requests
+      if (action === "get-dashboard-aggregates") {
+        const rawIds = Array.isArray(body.productIds) ? body.productIds : [];
+        const requestedIds = [...new Set(rawIds.filter((id: unknown) => typeof id === "string" && UUID_PATTERN.test(id)))].slice(0, MAX_BATCH_PRODUCTS);
+
+        if (requestedIds.length === 0) {
+          return new Response(JSON.stringify({ metrics: [], feedback: [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Ownership guard: the service-role client bypasses RLS, so scope reads to this user's products
+        const { data: owned, error: ownedErr } = await supabase
+          .from("ebook_products")
+          .select("id")
+          .eq("user_id", user.id)
+          .in("id", requestedIds);
+
+        if (ownedErr) throw ownedErr;
+
+        const ownedIds = (owned || []).map((row) => row.id as string);
+        if (ownedIds.length === 0) {
+          return new Response(JSON.stringify({ metrics: [], feedback: [] }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const [metricsRes, feedbackRes] = await Promise.all([
+          supabase
+            .from("product_metrics")
+            .select("id, product_id, metric_type, value, recorded_at")
+            .in("product_id", ownedIds)
+            .order("recorded_at", { ascending: false })
+            .limit(MAX_BATCH_ROWS),
+          supabase
+            .from("product_feedback")
+            .select("id, product_id, user_id, rating, comment, section_reference, feedback_type, created_at")
+            .in("product_id", ownedIds)
+            .order("created_at", { ascending: false })
+            .limit(MAX_BATCH_ROWS),
+        ]);
+
+        if (metricsRes.error) throw metricsRes.error;
+        if (feedbackRes.error) throw feedbackRes.error;
+
+        return new Response(JSON.stringify({ metrics: metricsRes.data || [], feedback: feedbackRes.data || [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // GET actions
     if (req.method === "GET") {
       if (action === "list-products") {
-        const { data, error } = await supabase
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        let query = supabase
           .from("ebook_products")
-          .select("*, product_versions(id, version_number, pages, created_at, change_summary)")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+          .select("*")
+          .eq("user_id", user.id);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(PAGE_SIZE + 1);
 
         if (error) throw error;
 
-        return new Response(JSON.stringify(data), {
+        return new Response(JSON.stringify(pageRows(data || [])), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "list-products-page") {
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        let query = supabase
+          .from("ebook_products")
+          .select("*")
+          .eq("user_id", user.id);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(PAGE_SIZE + 1);
+        if (error) throw error;
+        return new Response(JSON.stringify(pageRows(data || [])), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -150,22 +258,24 @@ serve(async (req) => {
           });
         }
 
-        // Aggregate metrics
-        const { data: metrics, error } = await supabase
-          .from("product_metrics")
-          .select("*")
-          .eq("product_id", productId)
-          .order("recorded_at", { ascending: false });
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        const [summaryRes, pageRes] = await Promise.all([
+          supabase.rpc("get_product_metric_summary", { p_product_id: productId }),
+          (() => {
+            let query = supabase.from("product_metrics").select("*").eq("product_id", productId);
+            if (cursor) query = query.or(cursorFilter(cursor, "recorded_at"));
+            return query
+              .order("recorded_at", { ascending: false })
+              .order("id", { ascending: false })
+              .limit(PAGE_SIZE + 1);
+          })(),
+        ]);
+        if (summaryRes.error) throw summaryRes.error;
+        if (pageRes.error) throw pageRes.error;
+        const summary = Object.fromEntries((summaryRes.data || []).map((row: { metric_type: string; total_value: number }) => [row.metric_type, row.total_value]));
+        const page = pageRows(pageRes.data || [], "recorded_at");
 
-        if (error) throw error;
-
-        // Summarize
-        const summary: Record<string, number> = {};
-        for (const m of metrics || []) {
-          summary[m.metric_type] = (summary[m.metric_type] || 0) + m.value;
-        }
-
-        return new Response(JSON.stringify({ metrics, summary }), {
+        return new Response(JSON.stringify({ metrics: page.items, summary, nextCursor: page.nextCursor, hasMore: page.hasMore }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -179,15 +289,20 @@ serve(async (req) => {
           });
         }
 
-        const { data, error } = await supabase
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        let query = supabase
           .from("product_feedback")
           .select("*")
-          .eq("product_id", productId)
-          .order("created_at", { ascending: false });
+          .eq("product_id", productId);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(PAGE_SIZE + 1);
 
         if (error) throw error;
 
-        return new Response(JSON.stringify(data), {
+        return new Response(JSON.stringify(pageRows(data || [])), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -201,15 +316,20 @@ serve(async (req) => {
           });
         }
 
-        const { data, error } = await supabase
+        const cursor = parseCursor(url.searchParams.get("cursor"));
+        let query = supabase
           .from("product_versions")
           .select("*")
-          .eq("product_id", productId)
-          .order("version_number", { ascending: false });
+          .eq("product_id", productId);
+        if (cursor) query = query.or(cursorFilter(cursor));
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(PAGE_SIZE + 1);
 
         if (error) throw error;
 
-        return new Response(JSON.stringify(data), {
+        return new Response(JSON.stringify(pageRows(data || [])), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -221,9 +341,6 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("product-tracking error:", err);
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(err instanceof Error ? err.message : "Internal error", 500);
   }
 });

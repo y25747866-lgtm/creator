@@ -1,40 +1,30 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { KeysetCursor } from "@/lib/keysetPagination";
 
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
-
-async function getHeaders() {
-  const { data: { session } } = await supabase.auth.getSession();
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token || ""}`,
-    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  };
-}
+/*
+==========================================
+MODULE TYPES (kept for backward compat)
+==========================================
+*/
 
 export const MODULE_TYPES = [
-  { value: "course", label: "Online Course", description: "Full course with modules, lessons, and exercises" },
-  { value: "lead_magnet", label: "Lead Magnet", description: "High-value freebie to capture emails" },
-  { value: "prompt_pack", label: "Prompt Pack", description: "Curated AI prompts for your niche" },
   { value: "landing_page", label: "Landing Page", description: "High-converting sales page copy" },
-  { value: "email_sequence", label: "Email Sequence", description: "Welcome, nurture, and sales emails" },
-  { value: "affiliate_funnel", label: "Affiliate Funnel", description: "Complete affiliate marketing system" },
-  { value: "upsell_offer", label: "Upsell / Downsell", description: "Post-purchase offer strategy" },
-  { value: "micro_saas_blueprint", label: "Micro SaaS Blueprint", description: "SaaS concept from your expertise" },
+  { value: "email_sequence", label: "Email Campaign", description: "Welcome, nurture, and sales emails" },
+  { value: "lead_magnet", label: "Lead Magnet", description: "Free resource to capture emails" },
+  { value: "social_content", label: "Social Media Content", description: "Twitter, Instagram, TikTok posts" },
+  { value: "ad_copy", label: "Ad Copy", description: "Facebook, Google, TikTok ads" },
+  { value: "video_script", label: "Video Script", description: "YouTube, TikTok, Reel scripts" },
+  { value: "affiliate_funnel", label: "Affiliate Funnel", description: "Full affiliate promotion system" },
+  { value: "course", label: "Mini Course", description: "Course outline and lessons" },
 ] as const;
 
 export type ModuleType = typeof MODULE_TYPES[number]["value"];
 
-export interface MonetizationProduct {
-  id: string;
-  user_id: string;
-  title: string;
-  topic: string;
-  description: string | null;
-  source_type: string;
-  source_product_id: string | null;
-  created_at: string;
-  monetization_modules?: MonetizationModule[];
-}
+/*
+==========================================
+TYPES
+==========================================
+*/
 
 export interface MonetizationModule {
   id: string;
@@ -48,20 +38,62 @@ export interface MonetizationModule {
 export interface MonetizationVersion {
   id: string;
   module_id: string;
-  content: { markdown: string };
-  prompt_used: string | null;
-  model_used: string | null;
   version_number: number;
+  content: { markdown?: string } & Record<string, unknown>;
+  model_used?: string | null;
   created_at: string;
 }
 
-export async function createMonetizationProduct(params: {
+export interface MonetizationProduct {
+  id: string;
+  user_id: string;
   title: string;
   topic: string;
-  description?: string;
-  sourceType?: string;
-  sourceProductId?: string;
-}) {
+  description?: string | null;
+  source_type: string;
+  created_at: string;
+  monetization_modules?: MonetizationModule[];
+  moduleNextCursor?: KeysetCursor | null;
+  moduleHasMore?: boolean;
+}
+
+/*
+==========================================
+ENV SAFETY
+==========================================
+*/
+
+const BASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+if (!BASE_URL) throw new Error("VITE_SUPABASE_URL is not defined");
+if (!PUBLISHABLE_KEY) throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY is not defined");
+
+/*
+==========================================
+AUTH HEADERS
+==========================================
+*/
+
+async function getHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    apikey: PUBLISHABLE_KEY,
+  };
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+  return headers;
+}
+
+/*
+==========================================
+CREATE PRODUCT
+==========================================
+*/
+
+export async function createMonetizationProduct(params: Record<string, unknown>) {
   const headers = await getHeaders();
   const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=create-product`, {
     method: "POST",
@@ -69,76 +101,129 @@ export async function createMonetizationProduct(params: {
     body: JSON.stringify(params),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create product" }));
-    throw new Error(err.error || "Failed to create product");
+    const err = await res.json().catch(() => ({}));
+    const message = err && typeof err === "object" ? (err as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : "Failed to create product");
   }
-  return res.json();
+  const data = await res.json();
+  if (!data?.id && !data?.product?.id) throw new Error("Product created but no ID returned");
+  return data.product || data;
 }
+
+/*
+==========================================
+CREATE MODULE
+==========================================
+*/
 
 export async function createMonetizationModule(params: {
   productId: string;
-  moduleType: string;
+  moduleType: ModuleType;
   title: string;
 }) {
-  const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=create-module`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(params),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create module" }));
-    throw new Error(err.error || "Failed to create module");
-  }
-  return res.json();
+  const { data, error } = await supabase
+    .from("monetization_modules")
+    .insert({
+      product_id: params.productId,
+      module_type: params.moduleType,
+      title: params.title,
+      status: "draft",
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("Module created but no ID returned");
+  return data;
 }
 
-export async function generateModuleContent(params: {
-  moduleId: string;
-  moduleType: string;
-  title: string;
-  topic: string;
-  description?: string;
-  sourceContent?: string;
-}) {
+/*
+==========================================
+GENERATE MODULE CONTENT
+==========================================
+*/
+
+export async function generateModuleContent(params: { moduleId: string }) {
+  if (!params.moduleId) throw new Error("Module ID is required");
   const headers = await getHeaders();
   const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=generate-module`, {
     method: "POST",
     headers,
-    body: JSON.stringify(params),
+    body: JSON.stringify({ moduleId: params.moduleId }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Generation failed" }));
-    throw new Error(err.error || "Generation failed");
+    const err = await res.json().catch(() => ({}));
+    const message = err && typeof err === "object" ? (err as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : "Generation failed");
   }
   return res.json();
 }
 
-export async function listMonetizationProducts() {
+/*
+==========================================
+LIST PRODUCTS
+==========================================
+*/
+
+export async function listMonetizationProducts(cursor: KeysetCursor | null = null) {
   const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=list-products`, {
+  const params = new URLSearchParams({ action: "list-products" });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, {
     method: "GET",
     headers,
   });
-  if (!res.ok) throw new Error("Failed to fetch products");
+  if (!res.ok) throw new Error("Failed to fetch campaigns");
+  return res.json() as Promise<{ products: MonetizationProduct[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
+}
+
+export async function listMonetizationModules(productId: string, cursor: KeysetCursor | null = null) {
+  const headers = await getHeaders();
+  const params = new URLSearchParams({ action: "list-modules-page", productId });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, { method: "GET", headers });
+  if (!res.ok) throw new Error("Failed to fetch campaign assets");
+  return res.json() as Promise<{ items: MonetizationModule[]; nextCursor: KeysetCursor | null; hasMore: boolean }>;
+}
+
+/*
+==========================================
+GET MODULE + VERSIONS
+==========================================
+*/
+
+export async function getModuleWithVersions(moduleId: string, cursor: KeysetCursor | null = null) {
+  if (!moduleId) throw new Error("Module ID required");
+  const headers = await getHeaders();
+  const params = new URLSearchParams({ action: "get-module", moduleId });
+  if (cursor) params.set("cursor", JSON.stringify(cursor));
+  const res = await fetch(`${BASE_URL}/functions/v1/monetization?${params}`, { method: "GET", headers });
+  if (!res.ok) throw new Error("Failed to fetch asset");
   return res.json();
 }
 
-export async function getModuleWithVersions(moduleId: string) {
-  const headers = await getHeaders();
-  const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=get-module&moduleId=${moduleId}`, {
-    method: "GET",
-    headers,
-  });
-  if (!res.ok) throw new Error("Failed to fetch module");
-  return res.json();
-}
+/*
+==========================================
+RECORD METRIC
+==========================================
+*/
 
-export async function recordMonetizationMetric(moduleId: string, eventType: string, metadata?: Record<string, unknown>) {
-  const headers = await getHeaders();
-  await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ moduleId, eventType, metadata }),
-  });
+export async function recordMonetizationMetric(
+  moduleId: string,
+  eventType: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  try {
+    const headers = await getHeaders();
+    const res = await fetch(`${BASE_URL}/functions/v1/monetization?action=record-metric`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ moduleId, eventType, metadata }),
+    });
+    if (!res.ok) {
+      console.error("Metric recording failed:", res.statusText);
+    }
+  } catch (error) {
+    console.error("Error recording monetization metric:", error);
+  }
 }

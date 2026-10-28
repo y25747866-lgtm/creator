@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export async function forgetPassword(email: string) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

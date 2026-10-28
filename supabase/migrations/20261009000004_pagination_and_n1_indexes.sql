@@ -1,0 +1,17 @@
+CREATE INDEX IF NOT EXISTS idx_ebooks_pagination ON public.ebooks(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_ebook_jobs_pagination ON public.ebook_jobs(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_ebook_products_pagination ON public.ebook_products(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_marketing_pagination ON public.saved_marketing_results(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_sales_pagination ON public.saved_sales_page_results(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_monetization_products_pagination ON public.monetization_products(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_monetization_modules_pagination ON public.monetization_modules(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_chat_pagination ON public.analytics_chat_messages(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_pagination ON public.subscriptions(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_product_versions_product_id ON public.product_versions(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_versions_user_id ON public.product_versions(user_id);
+CREATE INDEX IF NOT EXISTS idx_monetization_versions_user_id ON public.monetization_versions(user_id);
+CREATE INDEX IF NOT EXISTS idx_ebook_jobs_status ON public.ebook_jobs(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_usage_limits_user_feature ON public.usage_limits(user_id, feature_name);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_expiry ON public.subscriptions(user_id, status, expires_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_data_platform ON public.analytics_data(user_id, platform);
+CREATE INDEX IF NOT EXISTS idx_platform_connections_status ON public.platform_connections(user_id, status);

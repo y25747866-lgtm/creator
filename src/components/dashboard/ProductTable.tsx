@@ -19,11 +19,14 @@ interface Props {
   loading: boolean;
   onSelect: (id: string) => void;
   selectedId: string | null;
+  hasMoreProducts?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 type SortKey = "title" | "created_at" | "views" | "downloads" | "conversionRate" | "avgRating";
 
-const ProductTable = ({ products, loading, onSelect, selectedId }: Props) => {
+const ProductTable = ({ products, loading, onSelect, selectedId, hasMoreProducts = false, loadingMore = false, onLoadMore }: Props) => {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortAsc, setSortAsc] = useState(false);
@@ -38,7 +41,7 @@ const ProductTable = ({ products, loading, onSelect, selectedId }: Props) => {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    let list = products.filter((p) => p.title.toLowerCase().includes(q) || p.topic.toLowerCase().includes(q));
+    const list = products.filter((p) => p.title.toLowerCase().includes(q) || p.topic.toLowerCase().includes(q));
     list.sort((a, b) => {
       const av = a[sortKey] as number | string;
       const bv = b[sortKey] as number | string;
@@ -71,6 +74,7 @@ const ProductTable = ({ products, loading, onSelect, selectedId }: Props) => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
       </div>
+      <p className="text-xs text-muted-foreground">Search and sorting apply to loaded products. Load more to include earlier products.</p>
 
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center">No products match your search.</p>
@@ -116,6 +120,13 @@ const ProductTable = ({ products, loading, onSelect, selectedId }: Props) => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+      {hasMoreProducts && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+            {loadingMore ? "Loading products…" : "Load more products"}
+          </Button>
         </div>
       )}
     </div>

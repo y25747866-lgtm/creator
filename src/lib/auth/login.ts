@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Email + Password Sign In
@@ -41,4 +41,4 @@ export async function signInWithGoogle() {
     console.error("Google sign-in failed:", error.message, error);
     throw error;
   }
-          }
+}
