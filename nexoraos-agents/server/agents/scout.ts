@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { complete, parseModelJson } from '../model/loader.js'
 import { research, competitorAnalysis } from '../tools/research.js'
 import { lookupDocs } from '../tools/context7.js'
+import { runSwarmSimulation } from '../tools/simulation.js'
 import { emit, setAgentStatus } from '../events/bus.js'
 import type { AgentTask, ToolResult } from '../../shared/types.js'
 
@@ -19,6 +20,7 @@ Your role: Research markets, validate ideas, analyze competitors, find opportuni
 Your tools:
 - research(query, context) — search the web and summarize findings
 - competitorAnalysis(niche) — analyze competitors and market gaps
+- runSwarmSimulation(topic, seedData, userId) — simulate stakeholder reactions after research is complete
 
 Always be specific. Never make up statistics. If live search is unavailable, say so explicitly and mark knowledge-based claims as unverified.
 
@@ -109,7 +111,26 @@ Respond with JSON: { "queries": ["query1", "query2"], "focus": "what matters mos
       }
     }
 
-    // Step 5 — final report (tolerant parse; attach raw content on failure)
+    // Step 5 — simulate likely stakeholder reactions from completed research.
+    // MiroFish is optional at runtime; an unavailable backend is surfaced but
+    // does not discard SCOUT's completed research findings.
+    let simulationData: unknown = null
+    let simulationWarning: string | undefined
+    await emit('scout', task.id, 'tool.called', { tool: 'runSwarmSimulation', topic: input.goal })
+    try {
+      const simulation = await runSwarmSimulation(
+        input.goal,
+        JSON.stringify({ research: researchResults, competitors: competitorData }),
+        task.userId,
+      )
+      simulationData = simulation
+      await emit('scout', task.id, 'tool.result', { tool: 'runSwarmSimulation', ok: true, confidenceScore: simulation.confidenceScore })
+    } catch (error) {
+      simulationWarning = error instanceof Error ? error.message : String(error)
+      await emit('scout', task.id, 'tool.result', { tool: 'runSwarmSimulation', ok: false, error: simulationWarning })
+    }
+
+    // Step 6 — final report (tolerant parse; attach raw content on failure)
     const reportRes = await complete({
       messages: [
         { role: 'system', content: SCOUT_SYSTEM_PROMPT },
@@ -118,6 +139,8 @@ Respond with JSON: { "queries": ["query1", "query2"], "focus": "what matters mos
 GOAL: ${input.goal}
 RESEARCH: ${JSON.stringify(researchResults)}
 COMPETITORS: ${JSON.stringify(competitorData)}
+MIROFISH SWARM SIMULATION: ${JSON.stringify(simulationData)}
+${simulationWarning ? `SIMULATION WARNING: ${simulationWarning}` : ''}
 
 Respond with JSON:
 {
@@ -140,7 +163,9 @@ Respond with JSON:
       data: {
         research: researchResults,
         competitors: competitorData,
+        simulation: simulationData,
         ...reportData,
+        ...(simulationWarning ? { simulationWarning } : {}),
         searchAvailable: searchAvailable ?? false,
         verified: (searchAvailable ?? false) === true,
         ...(reportParsed.ok ? {} : { warning: 'Report was not valid JSON; returned raw content.', rawReport: true }),

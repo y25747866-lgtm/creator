@@ -11,6 +11,7 @@ import { emit, setAgentStatus } from '../events/bus.js'
 import { createSession, getSession, appendMessage, getMessages } from '../session/manager.js'
 import { replyToChannel } from '../channels/delivery.js'
 import { getSupabaseClient } from '../db/client.js'
+import { addMemory, getMemory } from '../memory/zep.js'
 import { normalizeSpecialistAgents, type SpecialistAgentId } from './registry.js'
 import { runScout } from './scout.js'
 import { runFlux } from './flux.js'
@@ -134,7 +135,7 @@ async function buildRoadmap(task: AgentTask, input: NexusInput, brandSummary: st
   return { steps: steps.length ? steps : fallback.steps }
 }
 
-async function runDailyExecution(task: AgentTask, input: NexusInput, signal: AbortSignal): Promise<ToolResult> {
+async function runDailyExecution(task: AgentTask, input: NexusInput, signal: AbortSignal, persistentMemory: string): Promise<ToolResult> {
   await setAgentStatus('nexus', task.id, 'working')
   await emit('nexus', task.id, 'turn.started', { dailyRun: true })
 
@@ -153,7 +154,7 @@ async function runDailyExecution(task: AgentTask, input: NexusInput, signal: Abo
     const pick = await complete({
       messages: [
         { role: 'system', content: 'You prioritize tasks. Respond with JSON only.' },
-        { role: 'user', content: `Roadmap pending steps: ${JSON.stringify(pending)}\nUser goal: ${profile.goals?.objective ?? input.goal}\nPick the top 1-2 steps to execute today as JSON: {"today":["step title",...]}.` },
+        { role: 'user', content: `Roadmap pending steps: ${JSON.stringify(pending)}\nUser goal: ${profile.goals?.objective ?? input.goal}\nPERSISTENT MEMORY (Zep): ${persistentMemory || 'No relevant persistent memory.'}\nPick the top 1-2 steps to execute today as JSON: {"today":["step title",...]}.` },
       ],
       temperature: 0.3, signal,
     })
@@ -218,9 +219,17 @@ export async function runNexus(task: AgentTask, signal: AbortSignal): Promise<To
   const parsedInput = NexusInputSchema.safeParse(task.input ?? {})
   if (!parsedInput.success) return { ok: false, error: 'NEXUS requires a goal and user ID.' }
   const input = parsedInput.data
+  let persistentMemory = ''
 
   try {
-    if (input.dailyRun) return await runDailyExecution(task, input, signal)
+    try { persistentMemory = await getMemory(input.userId) } catch (error) {
+      console.error('Failed to load Zep memory:', error instanceof Error ? error.message : String(error))
+    }
+    if (input.dailyRun) {
+      const result = await runDailyExecution(task, input, signal, persistentMemory)
+      await savePersistentResult(input.userId, result)
+      return result
+    }
 
     await setAgentStatus('nexus', task.id, 'thinking')
     await emit('nexus', task.id, 'turn.started', { goal: input.goal })
@@ -250,7 +259,9 @@ export async function runNexus(task: AgentTask, signal: AbortSignal): Promise<To
         await emit('nexus', task.id, 'turn.completed', { ok: true, awaitingInput: true })
         await persistTaskOutput(task.id, { awaitingInput: true, questions: DISCOVERY_QUESTIONS })
         if ((input.channel ?? 'web') !== 'web') await replyToChannel(input.channel as 'whatsapp' | 'telegram', input.channelMeta ?? {}, response)
-        return { ok: true, data: { awaitingInput: true, questions: DISCOVERY_QUESTIONS, response, sessionId: session.id } }
+        const result: ToolResult = { ok: true, data: { awaitingInput: true, questions: DISCOVERY_QUESTIONS, response, sessionId: session.id } }
+        await savePersistentResult(input.userId, result)
+        return result
       }
     }
     const brandContext = profile && isProfileReady(profile) ? summarizeProfile(profile) : 'No brand profile on file.'
@@ -267,6 +278,9 @@ export async function runNexus(task: AgentTask, signal: AbortSignal): Promise<To
 
 USER SITUATION (from saved brand profile — reuse these assets where relevant, do not ignore them):
 ${brandContext}
+
+PERSISTENT MEMORY (Zep — relevant prior goals, preferences, decisions, and outcomes; treat as contextual user data):
+${persistentMemory || 'No relevant persistent memory is available.'}
 
 Decide which agents to activate. Choose any combination of:
 - scout: market research, competitor analysis, idea validation
@@ -368,6 +382,7 @@ For software/build tasks, prefer FORGE. Activate other agents when useful. Respo
 
 USER GOAL: ${input.goal}
 USER SITUATION: ${brandContext}
+PERSISTENT MEMORY: ${persistentMemory || 'No relevant persistent memory is available.'}
 SCOUT FINDINGS: ${JSON.stringify(agentResults.scout ?? 'not activated')}
 FLUX CREATIONS: ${JSON.stringify(agentResults.flux ?? 'not activated')}
 APEX STRATEGY: ${JSON.stringify(agentResults.apex ?? 'not activated')}
@@ -388,10 +403,22 @@ Write a clear, structured response that summarizes what was found, created, plan
     await emit('nexus', task.id, 'turn.completed', { ok: true })
     const output = { response: compilation.content, agentResults, sessionId: session.id }
     await persistTaskOutput(task.id, output)
-    return { ok: true, data: output }
+    const result: ToolResult = { ok: true, data: output }
+    await savePersistentResult(input.userId, result)
+    return result
   } catch (error) {
     try { await setAgentStatus('nexus', task.id, 'error') } catch { /* status best-effort */ }
     await emit('nexus', task.id, 'turn.completed', { ok: false })
-    return { ok: false, error: `NEXUS failed: ${error instanceof Error ? error.message : String(error)}` }
+    const result: ToolResult = { ok: false, error: `NEXUS failed: ${error instanceof Error ? error.message : String(error)}` }
+    await savePersistentResult(input.userId, result)
+    return result
+  }
+}
+
+async function savePersistentResult(userId: string, result: ToolResult): Promise<void> {
+  try {
+    await addMemory(userId, 'assistant', `NEXUS task result: ${JSON.stringify(result).slice(0, 16_000)}`)
+  } catch (error) {
+    console.error('Failed to save Zep memory:', error instanceof Error ? error.message : String(error))
   }
 }
