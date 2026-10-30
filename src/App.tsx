@@ -10,7 +10,6 @@ import Landing from "./pages/Landing";
 import Blog from "./pages/Blog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// Lazy load non-critical pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const EbookGenerator = lazy(() => import("./pages/EbookGenerator"));
 const Downloads = lazy(() => import("./pages/Downloads"));
@@ -25,20 +24,21 @@ const ProductsDashboard = lazy(() => import("./pages/dashboard/ProductsDashboard
 const MarketingStudio = lazy(() => import("./pages/dashboard/MarketingStudio"));
 const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder"));
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
-
+const HybridAIOS = lazy(() => import("./pages/dashboard/HybridAIOS"));
+const Connectors = lazy(() => import("./pages/dashboard/Connectors"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 const ViewableRoute = lazy(() => import("./components/ViewableRoute"));
 
 const queryClient = new QueryClient();
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+  <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[#00e68e]" />
   </div>
 );
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LazyMotion features={domAnimation}>
@@ -48,79 +48,25 @@ const App = () => (
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/" element={<Blog />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/whop/success" element={<WhopSuccess />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ViewableRoute>
-                      <Dashboard />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ebook-generator"
-                  element={
-                    <ViewableRoute>
-                      <EbookGenerator />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/downloads"
-                  element={
-                    <ViewableRoute>
-                      <Downloads />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings"
-                  element={
-                    <ViewableRoute>
-                      <Settings />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/products"
-                  element={
-                    <ViewableRoute>
-                      <ProductsDashboard />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/marketing-studio"
-                  element={
-                    <ViewableRoute>
-                      <MarketingStudio />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/sales-page-builder"
-                  element={
-                    <ViewableRoute>
-                      <SalesPageBuilder />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/analytics"
-                  element={
-                    <ViewableRoute>
-                      <AnalyticsDashboard />
-                    </ViewableRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/" element={<Blog />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/whop/success" element={<WhopSuccess />} />
+                  <Route path="/dashboard" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
+                  <Route path="/dashboard/hybrid-ai-os" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
+                  <Route path="/dashboard/connectors" element={<ViewableRoute><Connectors /></ViewableRoute>} />
+                  <Route path="/dashboard/ebook-generator" element={<ViewableRoute><EbookGenerator /></ViewableRoute>} />
+                  <Route path="/dashboard/downloads" element={<ViewableRoute><Downloads /></ViewableRoute>} />
+                  <Route path="/dashboard/settings" element={<ViewableRoute><Settings /></ViewableRoute>} />
+                  <Route path="/dashboard/products" element={<ViewableRoute><ProductsDashboard /></ViewableRoute>} />
+                  <Route path="/dashboard/marketing-studio" element={<ViewableRoute><MarketingStudio /></ViewableRoute>} />
+                  <Route path="/dashboard/sales-page-builder" element={<ViewableRoute><SalesPageBuilder /></ViewableRoute>} />
+                  <Route path="/dashboard/analytics" element={<ViewableRoute><AnalyticsDashboard /></ViewableRoute>} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>

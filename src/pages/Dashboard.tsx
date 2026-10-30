@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { BookOpen, Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { BookOpen, Eye, Download, BarChart3, Zap, Search, MoreVertical, TrendingUp, TrendingDown, Minus, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "neutral" }) => {
 const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; label: string; value: string; trend?: "up" | "down" | "neutral"; loading?: boolean }) => (
   <div
     style={{
-      background: "#0F0F0F",
+      background: "#1A1A1A",
       border: "1px solid #252525",
       borderRadius: "12px",
       padding: "24px",
@@ -37,7 +38,7 @@ const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; lab
       e.currentTarget.style.background = "#121212";
     }}
     onMouseLeave={(e) => {
-      e.currentTarget.style.borderColor = "#252525";
+      e.currentTarget.style.borderColor = "#2A2A2A";
       e.currentTarget.style.background = "#0F0F0F";
     }}
   >
@@ -58,7 +59,7 @@ const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; lab
     <div>
       <div
         style={{
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "Inter, sans-serif",
           fontSize: "12px",
           fontWeight: 600,
           letterSpacing: "0.08em",
@@ -71,10 +72,10 @@ const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; lab
       </div>
       <div
         style={{
-          fontFamily: "'Syne', sans-serif",
+          fontFamily: "Inter, sans-serif",
           fontSize: "32px",
           fontWeight: 800,
-          color: "#FFFFFF",
+          color: "#e8e8e8",
           lineHeight: "1",
           marginBottom: trend ? "12px" : "0",
           letterSpacing: "-0.5px",
@@ -83,7 +84,7 @@ const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; lab
         {loading ? "..." : value}
       </div>
       {trend && (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontFamily: "Inter, sans-serif", fontWeight: 500 }}>
           <TrendIcon trend={trend} />
           <span style={{ color: trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#777777" }}>
             {trend === "up" ? "Growing" : trend === "down" ? "Declining" : "Stable"}
@@ -97,6 +98,7 @@ const StatCard = ({ icon: Icon, label, value, trend, loading }: { icon: any; lab
 const Dashboard = () => {
   const { hasPaidSubscription, subscription } = useSubscription();
   const isExpired = subscription?.status === "expired";
+  const [initialBuildQuery, setInitialBuildQuery] = useState(() => new URLSearchParams(window.location.search).get("query") ?? "");
   
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [metricsCache, setMetricsCache] = useState<Record<string, MetricRecord[]>>({});
@@ -330,26 +332,46 @@ const Dashboard = () => {
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
             <div>
-              <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '32px', fontWeight: 800, color: '#FFFFFF', marginBottom: '12px', letterSpacing: '-0.5px' }}>
+              <h1 style={{ fontFamily: "Inter, sans-serif", fontSize: '32px', fontWeight: 800, color: '#e8e8e8', marginBottom: '12px', letterSpacing: '-0.5px' }}>
                 Dashboard
               </h1>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', fontWeight: 400 }}>
+              <p style={{ fontFamily: "Inter, sans-serif", fontSize: '14px', color: '#777777', fontWeight: 400 }}>
                 Your digital product command center. Start creating today.
               </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#0F0F0F', border: '1px solid #252525', borderRadius: '8px', fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#1A1A1A', border: '1px solid #252525', borderRadius: '8px', fontFamily: "Inter, sans-serif", fontSize: '13px', fontWeight: 600, color: '#e8e8e8' }}>
                 <Zap className="w-4 h-4" />
                 AI Credits: {aggregatedStats.aiCredits}
               </div>
-              <Button style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: "'Syne', sans-serif", fontWeight: 700, borderRadius: '8px', padding: '10px 20px' }}>
+              <Button style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: "Inter, sans-serif", fontWeight: 700, borderRadius: '8px', padding: '10px 20px' }}>
                 Export
               </Button>
             </div>
           </div>
 
+          {initialBuildQuery && (
+            <section className="mb-8 rounded-[14px] border border-[#2a2a2a] bg-[#1a1a1a] p-5 sm:p-6">
+              <p className="mb-2 font-mono text-[11px] font-medium tracking-[0.12em] text-[#00e68e]">YOUR FIRST BUILD REQUEST</p>
+              <label htmlFor="initial-build-query" className="sr-only">Edit your initial build request</label>
+              <textarea
+                id="initial-build-query"
+                value={initialBuildQuery}
+                onChange={(event) => setInitialBuildQuery(event.target.value)}
+                rows={2}
+                className="w-full resize-y rounded-lg border border-[#2a2a2a] bg-[#111111] px-3 py-3 text-sm leading-6 text-[#e8e8e8] outline-none focus:border-[#00e68e]/50"
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-[#888888]">Your idea is ready to continue in Product Generator.</p>
+                <Link to={`/dashboard/ebook-generator?prompt=${encodeURIComponent(initialBuildQuery)}`} className="inline-flex h-10 items-center gap-2 rounded-[10px] bg-[#00e68e] px-4 text-sm font-semibold text-black transition-colors hover:bg-[#31f2a6]">
+                  Open Product Generator <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </section>
+          )}
+
           {isExpired && (
-            <div style={{ padding: '16px', borderRadius: '12px', background: '#1A1A1A', border: '1px solid #252525', display: 'flex', alignItems: 'center', gap: '12px', color: '#FFFFFF', marginBottom: '24px', fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 500 }}>
+            <div style={{ padding: '16px', borderRadius: '12px', background: '#1A1A1A', border: '1px solid #252525', display: 'flex', alignItems: 'center', gap: '12px', color: '#e8e8e8', marginBottom: '24px', fontFamily: "Inter, sans-serif", fontSize: '14px', fontWeight: 500 }}>
               <p>Your subscription has expired. Some premium features are locked.</p>
             </div>
           )}
@@ -365,11 +387,11 @@ const Dashboard = () => {
           {/* Charts Section */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '32px' }}>
             {/* Performance Chart */}
-            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+            <div style={{ background: '#1A1A1A', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
                 <div>
-                  <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Performance</h3>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Downloads and views over time</p>
+                  <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, color: '#e8e8e8', letterSpacing: '-0.3px' }}>Performance</h3>
+                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Downloads and views over time</p>
                 </div>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
@@ -388,20 +410,20 @@ const Dashboard = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "Inter, sans-serif"}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "Inter, sans-serif"}} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#0F0F0F",
                           border: "1px solid #252525",
                           borderRadius: 8,
-                          color: "#FFFFFF",
-                          fontFamily: "'DM Sans', sans-serif",
+                          color: "#e8e8e8",
+                          fontFamily: "Inter, sans-serif",
                           fontSize: "13px"
                         }}
                       />
-                      <Legend wrapperStyle={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px" }} />
-                      <Line type="monotone" dataKey="downloads" stroke="#FFFFFF" strokeOpacity={0.9} strokeWidth={2} dot={false} />
+                      <Legend wrapperStyle={{ fontFamily: "Inter, sans-serif", fontSize: "13px" }} />
+                      <Line type="monotone" dataKey="downloads" stroke="#00e68e" strokeOpacity={0.9} strokeWidth={2} dot={false} />
                       <Line type="monotone" dataKey="views" stroke="#777777" strokeWidth={2} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -410,9 +432,9 @@ const Dashboard = () => {
             </div>
 
             {/* Most Day Active */}
-            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+            <div style={{ background: '#1A1A1A', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Most Day Active</h3>
+                <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, color: '#e8e8e8', letterSpacing: '-0.3px' }}>Most Day Active</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
@@ -424,19 +446,19 @@ const Dashboard = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1A1A1A" />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} dy={10} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "'DM Sans', sans-serif"}} />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "Inter, sans-serif"}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#555555', fontFamily: "Inter, sans-serif"}} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#0F0F0F",
                           border: "1px solid #252525",
                           borderRadius: 8,
-                          color: "#FFFFFF",
-                          fontFamily: "'DM Sans', sans-serif",
+                          color: "#e8e8e8",
+                          fontFamily: "Inter, sans-serif",
                           fontSize: "13px"
                         }}
                       />
-                      <Bar dataKey="active" fill="#FFFFFF" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="active" fill="#00e68e" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -447,9 +469,9 @@ const Dashboard = () => {
           {/* Bottom Section */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
             {/* Best Selling Products */}
-            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
+            <div style={{ background: '#1A1A1A', border: '1px solid #252525', borderRadius: '12px', padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Best Selling Products</h3>
+                <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, color: '#e8e8e8', letterSpacing: '-0.3px' }}>Best Selling Products</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
@@ -462,25 +484,25 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : filteredProducts.length === 0 ? (
-                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#777777', textAlign: 'center', padding: '32px 0', fontWeight: 400 }}>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', color: '#777777', textAlign: 'center', padding: '32px 0', fontWeight: 400 }}>
                   No products yet. Create your first digital product to get started!
                 </p>
               ) : (
                 <div className="space-y-4">
                   {filteredProducts.map((product, index) => (
-                    <div key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '10px', background: '#0A0A0A', border: '1px solid #252525', transition: 'all 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#121212'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.background = '#0A0A0A'; }}>
+                    <div key={product.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '10px', background: '#0A0A0A', border: '1px solid #252525', transition: 'all 0.3s ease' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.background = '#121212'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#2A2A2A'; e.currentTarget.style.background = '#0A0A0A'; }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Syne', sans-serif", fontWeight: 700, color: '#0A0A0A', fontSize: '14px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "Inter, sans-serif", fontWeight: 700, color: '#0A0A0A', fontSize: '14px' }}>
                           {index + 1}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 500, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</p>
-                          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>{product.downloads} downloads</p>
+                          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '13px', fontWeight: 500, color: '#e8e8e8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</p>
+                          <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>{product.downloads} downloads</p>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>${(product.revenue / 100).toFixed(0)}</p>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>★ {product.rating.toFixed(1)}</p>
+                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: '14px', fontWeight: 700, color: '#e8e8e8' }}>${(product.revenue / 100).toFixed(0)}</p>
+                        <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: '#777777', marginTop: '4px', fontWeight: 400 }}>★ {product.rating.toFixed(1)}</p>
                       </div>
                     </div>
                   ))}
@@ -497,9 +519,9 @@ const Dashboard = () => {
             </div>
 
             {/* Repeat Rate */}
-            <div style={{ background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: '#1A1A1A', border: '1px solid #252525', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>Repeat Rate</h3>
+                <h3 style={{ fontFamily: "Inter, sans-serif", fontSize: '16px', fontWeight: 700, color: '#e8e8e8', letterSpacing: '-0.3px' }}>Repeat Rate</h3>
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
@@ -523,15 +545,15 @@ const Dashboard = () => {
                           paddingAngle={2}
                           dataKey="value"
                         >
-                          <Cell fill="#FFFFFF" />
+                          <Cell fill="#00e68e" />
                           <Cell fill="#333333" />
                         </Pie>
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '24px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.3px' }}>65%</p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Repeat customers</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: '24px', fontWeight: 700, color: '#e8e8e8', letterSpacing: '-0.3px' }}>65%</p>
+                    <p style={{ fontFamily: "Inter, sans-serif", fontSize: '12px', color: '#777777', marginTop: '6px', fontWeight: 400 }}>Repeat customers</p>
                   </div>
                 </div>
               )}

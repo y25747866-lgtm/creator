@@ -1,42 +1,135 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.nexora-home {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.nexora-home-webgl {
+  opacity: 0.17;
+  filter: grayscale(1) brightness(0.32);
+  pointer-events: none;
+}
+
+.nexora-home-webgl canvas {
+  pointer-events: none;
+}
+
+.nexora-prompt-bar:focus-within .nexora-send-button,
+.nexora-prompt-bar:hover .nexora-send-button,
+.nexora-prompt-bar:focus-within + .nexora-send-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.nexora-send-button {
+  opacity: 0;
+  transform: translateY(2px);
+}
+
+.nexora-home-input::placeholder {
+  color: #444444;
+  opacity: 1;
+}
+
+.nexora-sidebar {
+  width: 240px;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.nexora-sidebar-item:hover {
+  background: #1a1a1a !important;
+  color: #e8e8e8 !important;
+}
+
+.nexora-sidebar-item[aria-disabled="true"]:hover {
+  color: #888888 !important;
+}
+
+.nexora-dashboard-main {
+  margin-left: 240px;
+}
+
+.nexora-mobile-settings {
+  display: none;
+}
+
+.nexora-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nexora-sidebar-nav::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 999px;
+}
+
+@media (max-width: 767px) {
+  .nexora-home-content {
+    transform: translateY(-2vh);
   }
-  to {
-    transform: rotate(360deg);
+
+  .nexora-sidebar {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 72px;
+    flex-direction: row;
+    border-right: 0;
+    border-top: 1px solid #1e1e1e;
+    padding-bottom: env(safe-area-inset-bottom);
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .nexora-sidebar-header,
+  .nexora-sidebar-footer {
+    display: none;
   }
-}
 
-.card {
-  padding: 2em;
-}
+  .nexora-sidebar-nav {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
 
-.read-the-docs {
-  color: #888;
+  .nexora-sidebar-item {
+    min-width: 62px;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 7px;
+    font-size: 9px !important;
+  }
+
+  .nexora-sidebar-item span {
+    max-width: 72px;
+    text-align: center;
+    font-size: 9px;
+  }
+
+  .nexora-sidebar-lock,
+  .nexora-nav-separator {
+    display: none;
+  }
+
+  .nexora-mobile-settings {
+    display: block;
+  }
+
+  .nexora-desktop-settings {
+    display: none;
+  }
+
+  .nexora-dashboard-main {
+    margin-left: 0;
+    padding-bottom: 82px;
+  }
 }
