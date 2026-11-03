@@ -1,16 +1,23 @@
-import { ReactNode, useState, createContext, useContext } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ReactNode, createContext, useContext, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 
 interface SidebarContextType {
   collapsed: boolean;
-  setCollapsed: (v: boolean) => void;
+  setCollapsed: (value: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (value: boolean) => void;
 }
 
-const SidebarContext = createContext<SidebarContextType>({ collapsed: false, setCollapsed: () => {} });
-export const useSidebarState = () => useContext(SidebarContext);
+const SidebarContext = createContext<SidebarContextType>({
+  collapsed: false,
+  setCollapsed: () => {},
+  mobileOpen: false,
+  setMobileOpen: () => {},
+});
 
+export const useSidebarState = () => useContext(SidebarContext);
 const SIDEBAR_KEY = "nexora_sidebar_collapsed";
 
 interface DashboardLayoutProps {
@@ -19,32 +26,46 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [collapsed, setCollapsedState] = useState(() => {
-    try { return localStorage.getItem(SIDEBAR_KEY) === "true"; } catch { return false; }
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) === "true";
+    } catch {
+      return false;
+    }
   });
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const prefersReducedMotion = useReducedMotion();
 
-  const setCollapsed = (v: boolean) => {
-    setCollapsedState(v);
-    try { localStorage.setItem(SIDEBAR_KEY, String(v)); } catch {}
+  const setCollapsed = (value: boolean) => {
+    setCollapsedState(value);
+    try {
+      localStorage.setItem(SIDEBAR_KEY, String(value));
+    } catch {
+      // Sidebar state remains usable if local storage is unavailable.
+    }
   };
 
   return (
-    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
-      <div className="min-h-screen" style={{ background: '#0A0A0A', color: '#FFFFFF' }}>
+    <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
+      <div className="min-h-screen bg-[#151515] text-[#F5F5F5]">
+        {mobileOpen && (
+          <button
+            type="button"
+            aria-label="Close navigation drawer"
+            className="fixed inset-0 z-30 cursor-default bg-black/55 backdrop-blur-[2px] md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
         <DashboardSidebar />
-        
-        <main
-          className="relative z-10 min-h-screen transition-all duration-300"
-          style={{ marginLeft: collapsed ? 80 : 280, background: '#0A0A0A' }}
-        >
-          <AnimatePresence mode="wait">
+        <main className={`relative z-10 min-h-screen transition-[margin] duration-300 ${collapsed ? "md:ml-20" : "md:ml-[280px]"}`}>
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 12 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              style={{ background: '#0A0A0A' }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: "easeOut" }}
+              className="min-h-screen"
             >
               {children}
             </motion.div>

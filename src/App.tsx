@@ -12,7 +12,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Lazy load non-critical pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const EbookGenerator = lazy(() => import("./pages/EbookGenerator"));
 const Downloads = lazy(() => import("./pages/Downloads"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -26,7 +25,6 @@ const MarketingStudio = lazy(() => import("./pages/dashboard/MarketingStudio"));
 const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder"));
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
 
-const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 const ViewableRoute = lazy(() => import("./components/ViewableRoute"));
 
 const queryClient = new QueryClient();
@@ -68,7 +66,7 @@ const App = () => (
                   path="/dashboard/ebook-generator"
                   element={
                     <ViewableRoute>
-                      <EbookGenerator />
+                      <Dashboard />
                     </ViewableRoute>
                   }
                 />
@@ -120,6 +118,7 @@ const App = () => (
                     </ViewableRoute>
                   }
                 />
+                {import.meta.env.DEV && <Route path="/__preview/chat-first-ebook" element={<Dashboard />} />}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

@@ -1,297 +1,177 @@
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Download,
-  Settings,
-  BarChart3,
-  Package,
+  Bot,
   ChevronLeft,
   ChevronRight,
+  Download,
   ExternalLink,
   LogOut,
-  LineChart,
-  Lock,
+  Settings,
   User as UserIcon,
+  X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import nexoraLogo from "@/assets/nexora-logo.webp";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useSubscription } from "@/hooks/useSubscription";
-import { getPlanDisplayName } from "@/lib/subscription";
+import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
 
+const agentRoster = [
+  { name: "NEXUS", role: "Orchestrator" },
+  { name: "SCOUT", role: "Research" },
+  { name: "FLUX", role: "Creative" },
+  { name: "APEX", role: "Strategy" },
+  { name: "FORGE", role: "Builder" },
+];
+
 const DashboardSidebar = () => {
-  const { collapsed, setCollapsed } = useSidebarState();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
-  const { planType, hasPaidSubscription, subscription } = useSubscription();
-
-  const isExpired = subscription?.status === "expired";
-  const isCreatorOrAbove = (planType === "creator" || planType === "pro") && !isExpired;
-  const isProPlan = planType === "pro" && !isExpired;
-
-  // FIX: Show correct label — "Pro", "Creator", or "Free"
-  const planLabel = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
-
-  // FIX: Distinct badge colors for Pro, Creator, Expired, and Free
-  const planBadgeStyle = {
-    fontSize: '10px',
-    fontWeight: 600,
-    padding: '2px 8px',
-    borderRadius: '4px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.05em',
-    ...(isExpired
-      ? {
-          background: 'rgba(239,68,68,0.1)',
-          border: '1px solid rgba(239,68,68,0.3)',
-          color: '#EF4444',
-        }
-      : planType === "pro" && hasPaidSubscription
-      ? {
-          background: 'rgba(0,212,170,0.1)',
-          border: '1px solid rgba(0,212,170,0.3)',
-          color: '#00d4aa',
-        }
-      : planType === "creator" && hasPaidSubscription
-      ? {
-          background: 'rgba(139,92,246,0.1)',
-          border: '1px solid rgba(139,92,246,0.3)',
-          color: '#8B5CF6',
-        }
-      : {
-          background: '#1A1A1A',
-          border: '1px solid #2A2A2A',
-          color: 'rgba(255,255,255,0.6)',
-        }),
-  };
-
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", access: "free" as const },
-    { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator", access: "free" as const },
-    { icon: Package, label: "Marketing Studio", path: "/dashboard/marketing-studio", access: "free" as const },
-    { icon: BarChart3, label: "Sales Page Builder", path: "/dashboard/sales-page-builder", access: "creator" as const },
-    { icon: LineChart, label: "Analytics", path: "/dashboard/analytics", access: "free" as const },
-    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads", access: "creator" as const },
-    { icon: Settings, label: "Settings", path: "/dashboard/settings", access: "free" as const },
-  ];
+  const [agentsOpen, setAgentsOpen] = useState(false);
+  const showLabels = !collapsed || mobileOpen;
 
   const handleSignOut = async () => {
     await signOut();
     toast({ title: "Signed out", description: "You have been signed out successfully." });
+    setMobileOpen(false);
     navigate("/");
   };
 
-  const isLocked = (access: "free" | "creator" | "pro") => {
-    if (access === "free") return false;
-    if (access === "creator") return !isCreatorOrAbove;
-    if (access === "pro") return !isProPlan;
-    return false;
-  };
-
-  const getBadge = (access: "free" | "creator" | "pro") => {
-    if (access === "pro") return "PRO";
-    if (access === "creator") return "CREATOR";
-    return null;
-  };
+  const closeMobile = () => setMobileOpen(false);
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col"
-      style={{ background: '#111111', borderRight: '1px solid #1A1A1A' }}
-    >
-      {/* Logo & Plan Badge */}
-      <div className="p-5" style={{ borderBottom: '1px solid #1A1A1A' }}>
-        <Link to="/" className="flex items-center gap-3">
-          <img src={nexoraLogo} alt="NexoraOS" width="36" height="36" loading="lazy" className="w-9 h-9 shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex items-center gap-2"
-              >
-                <span className="font-bold text-lg text-white">NexoraOS</span>
-                {/* FIX: Badge shows Pro (teal), Creator (purple), Expired (red), or Free (grey) */}
-                <span style={planBadgeStyle}>
-                  {isExpired ? "Expired" : planLabel}
-                </span>
-              </motion.div>
+    <>
+      <aside
+        aria-label="Workspace navigation"
+        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-[#2B2B2B] bg-[#141414] transition-[width,transform] duration-200 md:translate-x-0 ${
+          collapsed ? "md:w-20" : "md:w-[280px]"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4">
+          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]">
+            <img src={nexoraLogo} alt="" width="34" height="34" className="h-[34px] w-[34px] shrink-0 rounded-lg" />
+            {showLabels && (
+              <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-[#F2F2F2]">NexoraOS</span>
             )}
-          </AnimatePresence>
-        </Link>
-      </div>
+          </Link>
+          <button
+            type="button"
+            onClick={closeMobile}
+            aria-label="Close navigation drawer"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] md:hidden"
+          >
+            <X size={17} />
+          </button>
+        </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const locked = isLocked(item.access);
-          const badge = getBadge(item.access);
+        <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-6" aria-label="Main">
+          <p className={`mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#686868] ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          <Link
+            to="/dashboard/downloads"
+            onClick={closeMobile}
+            title={showLabels ? undefined : "Downloads"}
+            aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined}
+            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${
+              location.pathname === "/dashboard/downloads"
+                ? "bg-[#222] text-white"
+                : "text-[#A0A0A0] hover:bg-[#1D1D1D] hover:text-white"
+            } ${showLabels ? "" : "justify-center"}`}
+          >
+            <Download className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+            {showLabels && <span>Downloads</span>}
+          </Link>
+          <button
+            type="button"
+            onClick={() => { setAgentsOpen(true); closeMobile(); }}
+            title={showLabels ? undefined : "Hybrid Agents"}
+            className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-[#A0A0A0] transition hover:bg-[#1D1D1D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
+          >
+            <Bot className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+            {showLabels && <span className="flex-1">Hybrid Agents</span>}
+            {showLabels && <span className="rounded-full border border-[#363636] px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#777]">Service</span>}
+          </button>
+        </nav>
 
-          return (
-            <Link key={item.path} to={item.path}>
-              <motion.div
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 relative",
-                  locked && "opacity-40"
-                )}
-                style={{
-                  background: isActive ? '#1A1A1A' : 'transparent',
-                  color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-                  borderLeft: isActive ? '2px solid #FFFFFF' : '2px solid transparent',
-                }}
-                whileHover={{ x: collapsed ? 0 : 2, background: isActive ? '#1A1A1A' : '#151515' }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="relative">
-                  <item.icon className="w-[18px] h-[18px] shrink-0 ml-1" style={{ color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
-                  {locked && (
-                    <div className="absolute -top-1 -right-1 rounded-full p-0.5" style={{ background: '#111111' }}>
-                      <Lock className="w-2 h-2" style={{ color: 'rgba(255,255,255,0.3)' }} />
-                    </div>
-                  )}
-                </div>
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center justify-between flex-1"
-                    >
-                      <span className="text-sm" style={{ fontWeight: isActive ? 500 : 400 }}>{item.label}</span>
-                      {locked && badge && (
-                        <span style={{
-                          background: '#1A1A1A',
-                          border: '1px solid #2A2A2A',
-                          color: 'rgba(255,255,255,0.6)',
-                          fontSize: '9px',
-                          fontWeight: 700,
-                          padding: '1px 6px',
-                          borderRadius: '3px',
-                        }}>
-                          {badge}
-                        </span>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </Link>
-          );
-        })}
-
-        {/* External Links */}
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-6">
-              <p className="px-3 text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                Start your digital business today
-              </p>
-              <div className="space-y-1">
-                {[
-                  { href: "https://whop.com/?a=zm1a", label: "Whop" },
-                  { href: "https://payhip.com?fp_ref=yesh-malik48", label: "Payhip" },
-                ].map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#151515'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
-                  >
-                    <ExternalLink className="w-4 h-4 shrink-0 ml-1" />
-                    <span className="text-sm">{link.label}</span>
-                  </a>
-                ))}
+        <div className="shrink-0 border-t border-[#292929] p-3">
+          <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
+            <Avatar className="h-8 w-8 shrink-0 border border-[#343434]">
+              <AvatarImage src={user?.user_metadata?.avatar_url} alt="" />
+              <AvatarFallback className="bg-[#252525] text-xs text-[#D0D0D0]">
+                {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <UserIcon size={15} />}
+              </AvatarFallback>
+            </Avatar>
+            {showLabels && (
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-medium text-[#DADADA]">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Account"}</p>
+                <p className="truncate text-[10px] text-[#777]">{user?.email || "Workspace account"}</p>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
-
-      {/* User Profile & Sign Out */}
-      <div className="p-3 space-y-2" style={{ borderTop: '1px solid #1A1A1A' }}>
-        <div className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-lg",
-          collapsed ? "justify-center px-2" : "justify-start"
-        )}>
-          <Avatar className="h-8 w-8" style={{ border: '1px solid #2A2A2A' }}>
-            <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.user_metadata?.full_name || "User"} />
-            <AvatarFallback style={{ background: '#1A1A1A', color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
-              {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <UserIcon className="h-4 w-4" />}
-            </AvatarFallback>
-          </Avatar>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex flex-col overflow-hidden">
-                <span className="text-sm font-medium text-white truncate">
-                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"}
-                </span>
-                <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  {user?.email}
-                </span>
-              </motion.div>
             )}
-          </AnimatePresence>
+          </div>
+          <div className={`mt-2 flex gap-1 ${showLabels ? "flex-col" : "flex-col"}`}>
+            <Link
+              to="/dashboard/settings"
+              onClick={closeMobile}
+              title={showLabels ? undefined : "Settings"}
+              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-xs text-[#8D8D8D] transition hover:bg-[#202020] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
+            >
+              <Settings size={16} className="shrink-0" aria-hidden="true" />
+              {showLabels && <span>Settings</span>}
+            </Link>
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              title={showLabels ? undefined : "Sign out"}
+              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-left text-xs text-[#8D8D8D] transition hover:bg-[#2A1E1E] hover:text-[#F0BABA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
+            >
+              <LogOut size={16} className="shrink-0" aria-hidden="true" />
+              {showLabels && <span>Sign out</span>}
+            </button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCollapsed(!collapsed)}
+              className={`mt-1 hidden min-h-9 rounded-lg text-[#777] hover:bg-[#202020] hover:text-white md:flex ${showLabels ? "justify-start px-3" : "justify-center px-2"}`}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span className="ml-2 text-xs">Collapse</span></>}
+            </Button>
+          </div>
         </div>
+      </aside>
 
-        <div className="space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className={cn(
-              "w-full rounded-lg",
-              collapsed ? "justify-center px-2" : "justify-start"
-            )}
-            style={{ color: 'rgba(255,255,255,0.4)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'transparent'; }}
-          >
-            <LogOut className="w-[18px] h-[18px] shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="ml-2 text-sm">
-                  Sign Out
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="w-full justify-center rounded-lg"
-            style={{ background: '#ffffff', color: '#0A0A0A' }}
-          >
-            {collapsed ? (
-              <ChevronRight className="w-[18px] h-[18px]" />
-            ) : (
-              <>
-                <ChevronLeft className="w-[18px] h-[18px] mr-2" />
-                <span className="text-sm">Collapse</span>
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    </motion.aside>
+      <Dialog open={agentsOpen} onOpenChange={setAgentsOpen}>
+        <DialogContent className="max-w-lg border-[#343434] bg-[#191919] text-[#F2F2F2]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Bot size={19} className="text-[#00E68E]" />
+              Hybrid Agents
+            </DialogTitle>
+            <DialogDescription className="text-[#9A9A9A]">
+              The repository contains a separate NexoraOS agent service. It is not connected to this dashboard yet, so agent runs aren’t available in this preview.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {agentRoster.map((agent) => (
+              <div key={agent.name} className="rounded-xl border border-[#303030] bg-[#202020] p-3">
+                <p className="text-sm font-semibold tracking-wide text-[#E8E8E8]">{agent.name}</p>
+                <p className="mt-1 text-xs text-[#929292]">{agent.role}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-start gap-2 rounded-lg border border-[#343434] bg-[#202020] p-3 text-xs leading-5 text-[#9A9A9A]">
+            <ExternalLink size={14} className="mt-0.5 shrink-0 text-[#777]" />
+            <p>Status: not connected. No agent actions are simulated or claimed as completed here.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
