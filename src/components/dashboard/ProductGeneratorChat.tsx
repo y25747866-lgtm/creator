@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { generatePDF } from "@/lib/pdfGenerator";
 import { Link } from "react-router-dom";
 import { useSidebarState } from "./DashboardLayout";
+import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
+import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
 
 type Template = {
   id: string;
@@ -127,15 +129,16 @@ function estimatePages(content: string): number {
 }
 
 const ProductGeneratorChat = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading, sendMagicLink } = useAuth();
   const { setMobileOpen } = useSidebarState();
   const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
-  const [activeProduct, setActiveProduct] = useState<string | null>(null);
+  const [activeProduct, setActiveProduct] = useState<string>("Ebook");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
@@ -151,6 +154,34 @@ const ProductGeneratorChat = () => {
     }
   }, [messages, hasConversation]);
 
+  useEffect(() => {
+    if (authLoading) return;
+    const pendingTopic = readPendingChatTopic();
+    if (!pendingTopic) return;
+
+    if (user?.id) {
+      clearPendingChatTopic();
+      setAuthPromptOpen(false);
+      setMessages((current) => [
+        ...current,
+        { id: makeId(), role: "user", kind: "text", text: pendingTopic },
+        {
+          id: makeId(),
+          role: "assistant",
+          kind: "templates",
+          text: "Choose a starting point. You can refine the ebook after it’s created.",
+          topic: pendingTopic,
+        },
+      ]);
+      setDraft("");
+      if (composerRef.current) composerRef.current.style.height = "auto";
+      setSelectedTemplate(null);
+      return;
+    }
+
+    setAuthPromptOpen(true);
+  }, [authLoading, user?.id]);
+
   const resizeComposer = () => {
     const element = composerRef.current;
     if (!element) return;
@@ -162,6 +193,26 @@ const ProductGeneratorChat = () => {
     event?.preventDefault();
     if (generationLock.current || !activeProduct || !draft.trim()) return;
     const topic = draft.trim();
+
+    if (topic.length > 500) {
+      toast({ title: "Topic is too long", description: "Keep the ebook topic to 500 characters or fewer.", variant: "destructive" });
+      return;
+    }
+
+    if (authLoading || !user) {
+      if (!savePendingChatTopic(topic)) {
+        toast({
+          title: "Draft could not be saved",
+          description: "Allow local browser storage so your message can be restored after sign-in.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!authLoading) setAuthPromptOpen(true);
+      return;
+    }
+
+    clearPendingChatTopic();
     setMessages((current) => [
       ...current,
       { id: makeId(), role: "user", kind: "text", text: topic },
@@ -192,6 +243,12 @@ const ProductGeneratorChat = () => {
 
   const beginGeneration = async (template: Template, topic: string) => {
     if (generationLock.current || isGenerating) return;
+    if (authLoading || !user) {
+      if (savePendingChatTopic(topic)) setAuthPromptOpen(true);
+      else toast({ title: "Sign-in required", description: "Your topic could not be saved locally. Please allow browser storage before continuing.", variant: "destructive" });
+      return;
+    }
+
     generationLock.current = true;
     setIsGenerating(true);
     setSelectedTemplate(template.id);
@@ -295,6 +352,14 @@ const ProductGeneratorChat = () => {
   };
 
   const downloadEbook = async (ebook: Ebook) => {
+    if (authLoading) {
+      toast({ title: "Checking sign-in", description: "Please try the download again in a moment." });
+      return;
+    }
+    if (!user) {
+      setAuthPromptOpen(true);
+      return;
+    }
     if (!hasPaidSubscription || isExpired) {
       toast({
         title: "Upgrade required",
@@ -315,9 +380,10 @@ const ProductGeneratorChat = () => {
 
   const startNewChat = () => {
     if (isGenerating) return;
+    clearPendingChatTopic();
     setMessages([]);
     setDraft("");
-    setActiveProduct(null);
+    setActiveProduct("Ebook");
     setSelectedTemplate(null);
     composerRef.current?.focus();
   };
@@ -503,6 +569,7 @@ const ProductGeneratorChat = () => {
               id="nexora-topic-composer"
               ref={composerRef}
               rows={1}
+              maxLength={500}
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value);
@@ -595,6 +662,12 @@ const ProductGeneratorChat = () => {
           <p className="mt-2 text-center text-[10px] leading-4 text-[#656565]">AI-generated content should be reviewed before publishing.</p>
         </div>
       </div>
+      <ChatAuthPrompt
+        open={authPromptOpen}
+        onOpenChange={setAuthPromptOpen}
+        pendingTopic={draft || readPendingChatTopic()}
+        sendMagicLink={sendMagicLink}
+      />
     </div>
   );
 };

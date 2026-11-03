@@ -7,13 +7,10 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("AuthCallback: Mounted. URL params:", window.location.search);
-
     const handleCallback = async () => {
       try {
         // Explicitly refresh session (helps with Vercel cookie issues)
-        const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-        console.log("Refresh session result:", { session, refreshError });
+        const { error: refreshError } = await supabase.auth.refreshSession();
 
         if (refreshError) {
           console.error("Refresh error:", refreshError.message);
@@ -21,7 +18,6 @@ export default function AuthCallback() {
 
         // Get current session
         const { data: { session: currentSession }, error: getError } = await supabase.auth.getSession();
-        console.log("Get session result:", { currentSession, getError });
 
         if (getError) {
           console.error("Get session error:", getError.message);
@@ -30,16 +26,13 @@ export default function AuthCallback() {
         }
 
         if (currentSession) {
-          console.log("Session active — redirecting to dashboard");
           navigate("/dashboard");
           return;
         }
 
         // Listen for state change (PKCE exchange may be async)
         const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
-          console.log("Auth state changed:", event);
           if (event === "SIGNED_IN" && newSession) {
-            console.log("Signed in event — redirecting");
             navigate("/dashboard");
           }
         });
@@ -48,7 +41,7 @@ export default function AuthCallback() {
           listener.subscription.unsubscribe();
         };
       } catch (err) {
-        console.error("Callback handling error:", err);
+        console.error("Callback handling error:", err instanceof Error ? err.message : "Unknown sign-in callback error");
         navigate("/auth?error=callback_failed");
       }
     };

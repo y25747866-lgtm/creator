@@ -54,22 +54,8 @@ const App = () => (
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/whop/success" element={<WhopSuccess />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ViewableRoute>
-                      <Dashboard />
-                    </ViewableRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/ebook-generator"
-                  element={
-                    <ViewableRoute>
-                      <Dashboard />
-                    </ViewableRoute>
-                  }
-                />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/ebook-generator" element={<Dashboard />} />
                 <Route
                   path="/dashboard/downloads"
                   element={

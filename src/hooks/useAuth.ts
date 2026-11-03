@@ -16,9 +16,14 @@ export function useAuth() {
   });
 
   useEffect(() => {
+    let mounted = true;
+    let authEventObserved = false;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        authEventObserved = true;
+        if (!mounted) return;
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -29,14 +34,21 @@ export function useAuth() {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted || authEventObserved) return;
       setAuthState({
         user: session?.user ?? null,
         session,
         loading: false,
       });
+    }).catch(() => {
+      if (!mounted || authEventObserved) return;
+      setAuthState({ user: null, session: null, loading: false });
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Magic Link authentication (email only, no password)
