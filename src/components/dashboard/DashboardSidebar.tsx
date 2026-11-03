@@ -10,6 +10,13 @@ import nexoraLogo from "@/assets/nexora-logo.webp";
 
 type Access = "all" | "pro" | "hybrid";
 
+const NAV_PATH_ALIASES: Record<string, string[]> = {
+  "/dashboard/agents": ["/dashboard/hybrid-ai-os"],
+  "/dashboard/generate": ["/dashboard/ebook-generator"],
+  "/dashboard/marketing": ["/dashboard/marketing-studio"],
+  "/dashboard/sales": ["/dashboard/sales-page-builder"],
+};
+
 const DashboardSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -23,10 +30,10 @@ const DashboardSidebar = () => {
   const planName = isHybrid ? "Hybrid AI OS" : planType === "creator" && paid ? "Pro" : "Starter";
 
   const mainItems: Array<{ label: string; path: string; access: Access; icon: typeof Sparkles; accent?: string }> = [
-    { label: "Hybrid AI OS", path: "/dashboard/hybrid-ai-os", access: "hybrid", icon: Sparkles, accent: "#7928ca" },
-    { label: "Product Generator", path: "/dashboard/ebook-generator", access: "all", icon: Package },
-    { label: "Marketing Studio", path: "/dashboard/marketing-studio", access: "all", icon: Megaphone },
-    { label: "Sales Page Builder", path: "/dashboard/sales-page-builder", access: "all", icon: PanelsTopLeft },
+    { label: "Hybrid AI OS", path: "/dashboard/agents", access: "hybrid", icon: Sparkles, accent: "#7928ca" },
+    { label: "Product Generator", path: "/dashboard/generate", access: "all", icon: Package },
+    { label: "Marketing Studio", path: "/dashboard/marketing", access: "all", icon: Megaphone },
+    { label: "Sales Page Builder", path: "/dashboard/sales", access: "all", icon: PanelsTopLeft },
     { label: "Analytics", path: "/dashboard/analytics", access: "pro", icon: BarChart3 },
     { label: "Downloads", path: "/dashboard/downloads", access: "all", icon: Download },
   ];
@@ -45,7 +52,7 @@ const DashboardSidebar = () => {
 
   const navItem = (item: { label: string; path: string; access: Access; icon: typeof Sparkles; accent?: string }, mobile = false) => {
     const isLocked = locked(item.access);
-    const isActive = location.pathname === item.path;
+    const isActive = location.pathname === item.path || NAV_PATH_ALIASES[item.path]?.includes(location.pathname);
     const Icon = item.icon;
     return (
       <Link
@@ -57,7 +64,7 @@ const DashboardSidebar = () => {
         className={cn("nexora-sidebar-item group flex items-center gap-3 rounded-lg px-3 py-[10px] text-[13px] transition-colors", mobile && "nexora-sidebar-mobile-item")}
         style={{
           background: isActive ? "#0d1f17" : "transparent",
-          color: isActive ? "#00e68e" : isLocked ? "#666666" : "#a0a0a0",
+          color: isActive ? "#00e68e" : isLocked ? "#444444" : "#888888",
         }}
       >
         <Icon className="h-[18px] w-[18px] shrink-0" style={{ color: item.accent ?? (isActive ? "#00e68e" : "#888888") }} />
@@ -72,7 +79,7 @@ const DashboardSidebar = () => {
       to={paid ? "/dashboard/connectors" : "/pricing"}
       aria-label="Connectors"
       title="Connectors"
-      className="nexora-sidebar-item flex items-center gap-3 rounded-lg px-3 py-[10px] text-[13px] text-[#a0a0a0] transition-colors"
+      className="nexora-sidebar-item flex items-center gap-3 rounded-lg px-3 py-[10px] text-[13px] text-[#888888] transition-colors"
     >
       <PlugZap className="h-[18px] w-[18px] shrink-0 text-[#888888]" />
       <span className="min-w-0 flex-1 truncate">Connectors</span>
@@ -120,7 +127,7 @@ const DashboardSidebar = () => {
 
         <nav aria-label="Dashboard navigation" className="nexora-sidebar-nav flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
           {mainItems.map((item) => navItem(item))}
-          <div className="nexora-nav-separator my-2 border-t border-[#242424]" />
+          <div className="nexora-nav-separator my-2 border-t border-[#2a2a2a]" />
           {connectorItem}
           <div className="nexora-mobile-settings">{settingsItem}</div>
         </nav>

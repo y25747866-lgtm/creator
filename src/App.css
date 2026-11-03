@@ -8,30 +8,8 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.nexora-home-webgl {
-  opacity: 0.17;
-  filter: grayscale(1) brightness(0.32);
-  pointer-events: none;
-}
-
-.nexora-home-webgl canvas {
-  pointer-events: none;
-}
-
-.nexora-prompt-bar:focus-within .nexora-send-button,
-.nexora-prompt-bar:hover .nexora-send-button,
-.nexora-prompt-bar:focus-within + .nexora-send-button {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.nexora-send-button {
-  opacity: 0;
-  transform: translateY(2px);
-}
-
 .nexora-home-input::placeholder {
-  color: #444444;
+  color: #888888;
   opacity: 1;
 }
 
@@ -42,7 +20,7 @@
 
 .nexora-sidebar-item:hover {
   background: #1a1a1a !important;
-  color: #e8e8e8 !important;
+  color: #00e68e !important;
 }
 
 .nexora-sidebar-item[aria-disabled="true"]:hover {
@@ -67,10 +45,6 @@
 }
 
 @media (max-width: 767px) {
-  .nexora-home-content {
-    transform: translateY(-2vh);
-  }
-
   .nexora-sidebar {
     top: auto;
     right: 0;

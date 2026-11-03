@@ -89,6 +89,52 @@ body *:not(code):not(pre):not(kbd):not(samp):not(.font-mono) {
   border-radius: 10px;
 }
 
+.bg-white {
+  background-color: #1a1a1a !important;
+  color: #e8e8e8 !important;
+}
+
+[class*="data-[state=checked]:bg-white"] {
+  background-color: #1a1a1a !important;
+  color: #e8e8e8 !important;
+}
+
+button.bg-white,
+button[class~="bg-white"],
+a.bg-white,
+a[class~="bg-white"],
+button[class*="data-[state=checked]:bg-white"] {
+  border-color: #00e68e !important;
+  background-color: #00e68e !important;
+  color: #000000 !important;
+}
+
+[style*="255, 255, 255"] {
+  background-color: #1a1a1a !important;
+  color: #e8e8e8 !important;
+}
+
+button[style*="255, 255, 255"],
+a[style*="255, 255, 255"] {
+  border-color: #00e68e !important;
+  background-color: #00e68e !important;
+  color: #000000 !important;
+}
+
+[style*="240, 240, 240"] {
+  background-color: #1a1a1a !important;
+}
+
+button[style*="240, 240, 240"],
+a[style*="240, 240, 240"] {
+  background-color: #00e68e !important;
+  color: #000000 !important;
+}
+
+a:not([class*="bg-"]):hover {
+  color: #00e68e !important;
+}
+
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-[10px] bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90;

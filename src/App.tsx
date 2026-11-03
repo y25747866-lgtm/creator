@@ -57,13 +57,17 @@ const App = () => (
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/whop/success" element={<WhopSuccess />} />
                   <Route path="/dashboard" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
+                  <Route path="/dashboard/agents" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
                   <Route path="/dashboard/hybrid-ai-os" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
                   <Route path="/dashboard/connectors" element={<ViewableRoute><Connectors /></ViewableRoute>} />
+                  <Route path="/dashboard/generate" element={<ViewableRoute><EbookGenerator /></ViewableRoute>} />
                   <Route path="/dashboard/ebook-generator" element={<ViewableRoute><EbookGenerator /></ViewableRoute>} />
                   <Route path="/dashboard/downloads" element={<ViewableRoute><Downloads /></ViewableRoute>} />
                   <Route path="/dashboard/settings" element={<ViewableRoute><Settings /></ViewableRoute>} />
                   <Route path="/dashboard/products" element={<ViewableRoute><ProductsDashboard /></ViewableRoute>} />
+                  <Route path="/dashboard/marketing" element={<ViewableRoute><MarketingStudio /></ViewableRoute>} />
                   <Route path="/dashboard/marketing-studio" element={<ViewableRoute><MarketingStudio /></ViewableRoute>} />
+                  <Route path="/dashboard/sales" element={<ViewableRoute><SalesPageBuilder /></ViewableRoute>} />
                   <Route path="/dashboard/sales-page-builder" element={<ViewableRoute><SalesPageBuilder /></ViewableRoute>} />
                   <Route path="/dashboard/analytics" element={<ViewableRoute><AnalyticsDashboard /></ViewableRoute>} />
                   <Route path="*" element={<NotFound />} />
