@@ -1,469 +1,132 @@
-import { useRef, useEffect, useState, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
-import { m, useInView } from 'framer-motion';
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowUp, BarChart3, BookOpen, Compass, Layers3, Megaphone, Sparkles } from "lucide-react";
+import nexoraLogo from "@/assets/nexora-logo.webp";
 
-import { 
-  ArrowRight, Check, Sparkles, DollarSign,
-  TrendingUp, Rocket, BarChart2
-} from 'lucide-react';
-import nexoraLogo from '@/assets/nexora-logo.webp';
-import LandingSkeleton from '@/components/LandingSkeleton';
-import { useLandingLoading } from '@/hooks/useLandingLoading';
-import HeroBackground from '@/components/HeroBackground';
-
-/* ─── Section wrapper with fade-up ─── */
-const Section = ({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
-  return (
-    <m.section
-      ref={ref}
-      id={id}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: 'easeOut' }}
-      className={className}
-    >
-      {children}
-    </m.section>
-  );
-};
-
-// ─── Platform logo names mapped to logo-1.webp through logo-8.webp ───────────
-const PLATFORM_NAMES = [
-  'Gumroad',
-  'Whop',
-  'Shopify',
-  'Etsy',
-  'Payhip',
-  'Teachable',
-  'Kajabi',
-  'Sellfy',
+const capabilities = [
+  { label: "Digital products", icon: Layers3, to: "/dashboard/ebook-generator" },
+  { label: "Marketing", icon: Megaphone, to: "/dashboard/marketing-studio" },
+  { label: "Sales pages", icon: Sparkles, to: "/dashboard/sales-page-builder" },
+  { label: "Analytics", icon: BarChart3, to: "/dashboard/analytics" },
 ];
 
 const Landing = () => {
-  const heroWordsRef = useRef<HTMLDivElement>(null);
-  const { isLoading } = useLandingLoading(100);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [idea, setIdea] = useState("");
+  const [mode, setMode] = useState<"starter" | "pro" | "hybrid">("starter");
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (heroWordsRef.current && !isLoading) {
-      const words = heroWordsRef.current.querySelectorAll('.hero-word');
-      (words || []).forEach((word, index) => {
-        setTimeout(() => {
-          word.classList.add('opacity-100');
-        }, index * 150);
-      });
-    }
-  }, [isLoading]);
-
-  const faqs = [
-    { q: 'Do I need technical skills?', a: 'No. If you can type and click, you can use NexoraOS. The AI handles the technical stuff.' },
-    { q: 'How long does it take to create a product?', a: 'Most products are done in under 3 minutes. The AI handles everything from research to generation.' },
-    { q: 'Can I sell on my own platform?', a: 'Yes. NexoraOS integrates with Gumroad, Whop, Shopify, and more. Or use our built-in checkout.' },
-    { q: 'What if I don\'t like it?', a: 'Cancel anytime. No contracts, no commitments, no hard feelings.' },
-    { q: 'Is this another course or template library?', a: 'No. This is software that builds products for you. Not tutorials. Not inspiration. Actual products you can sell today.' },
-    { q: 'Is there a free plan?', a: 'Yes. Start free, no credit card needed. Upgrade when you\'re ready.' },
-  ];
-
-  if (isLoading) {
-    return <LandingSkeleton />;
-  }
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = new URLSearchParams();
+    if (idea.trim()) query.set("idea", idea.trim());
+    query.set("mode", mode);
+    navigate(`/auth?${query.toString()}`);
+  };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      
-      {/* ═══ NAVBAR ═══ */}
-      <m.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl"
-      >
-        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
-            <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
+    <main className="min-h-screen overflow-hidden bg-[#0A0A0A] text-[#F5F5F5] selection:bg-[#00E68E]/30 selection:text-white">
+      <header className="absolute inset-x-0 top-0 z-10">
+        <div className="mx-auto flex h-[76px] max-w-6xl items-center justify-between px-5 sm:px-8">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="NexoraOS home">
+            <img src={nexoraLogo} alt="" width="30" height="30" className="h-[30px] w-[30px] object-contain" />
+            <span className="text-[17px] font-semibold tracking-[-0.04em]">Nexora<span className="text-[#00E68E]">OS</span></span>
           </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#A1A1A1] absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/auth" className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all">
-              Get Started
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Link to="/pricing" className="text-sm text-[#8A8A8A] transition-colors hover:text-white">Pricing</Link>
+            <Link to="/auth" className="rounded-full border border-[#2A2A2A] px-4 py-2 text-sm font-medium transition-colors hover:border-[#00E68E]/60 hover:text-[#00E68E]">
+              Sign in <span aria-hidden="true">↗</span>
             </Link>
           </div>
         </div>
-      </m.nav>
+      </header>
 
-      {/* ═══ HERO ═══ */}
-      <section id="hero" className="pt-48 pb-24 hero-section relative overflow-hidden">
-        <HeroBackground />
-        <div className="relative z-10">
-          <div className="max-w-7xl mx-auto px-6">
-            <m.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="max-w-7xl mx-auto"
-            >
-              <div className="flex justify-start mb-8">
-                <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
-                  style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
-                  AI-POWERED BUSINESS OS
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div className="text-left">
-                  <div ref={heroWordsRef}>
-                    <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      <span className="sr-only">NexoraOS: </span>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">Your idea.</div>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">Your product.</div>
-                      <div className="hero-word transition-opacity duration-500">
-                        <span className="text-white/85">Your </span>
-                        <span className="text-white font-[900]">income.</span>
-                      </div>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">In one session.</div>
-                    </h1>
-                  </div>
-                  <p className="text-[#A1A1A1] mb-10 text-lg leading-relaxed max-w-lg">
-                    NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
-                  </p>
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <Link to="/auth" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
-                      Start Building Now <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  <p className="text-[#707070] text-xs">No credit card. No fluff.</p>
-                </div>
-
-                <div className="hidden lg:block">
-                  <m.div
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl max-w-md ml-auto"
-                  >
-                    <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1A1A1A]">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                    </div>
-                    <div className="p-8 space-y-5 font-mono text-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">Product Generated</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">Sales Page Live</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">First Sale: <span className="text-white font-bold">$49</span></span>
-                      </div>
-                      <div className="pt-4 border-t border-[#1A1A1A]">
-                        <span className="text-[#A1A1A1]">Time elapsed: </span>
-                        <span className="text-white">2 minutes</span>
-                      </div>
-                    </div>
-                  </m.div>
-                </div>
-              </div>
-            </m.div>
+      <section className="relative flex min-h-[min(850px,100svh)] flex-col items-center justify-center px-4 pb-12 pt-28 sm:px-6">
+        <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[36%] h-[360px] w-[min(700px,100vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00E68E]/[0.035] blur-[100px]" />
+        <div className="relative z-[1] mx-auto flex w-full max-w-[780px] flex-col items-center text-center">
+          <div className="mb-8 flex items-center gap-2 rounded-full border border-[#202520] bg-[#0D100E] px-3.5 py-1.5 text-[11px] font-medium tracking-[0.14em] text-[#9AADA1]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#00E68E] shadow-[0_0_10px_#00E68E66]" />
+            YOUR AI BUSINESS WORKSPACE
           </div>
-        </div>
-      </section>
 
-      {/* ═══ FEATURES SECTION ═══ */}
-      <Section id="features" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              WHAT YOU GET
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-left mb-16" style={{ fontFamily: "'Syne', sans-serif" }}>
-            What you can do
-          </h2>
+          <h1 className="max-w-[720px] text-balance text-[clamp(2.5rem,7vw,4.7rem)] font-semibold leading-[1.04] tracking-[-0.065em]">
+            What do you want to
+            <span className="mt-1 block text-[#00E68E]">build today?</span>
+          </h1>
+          <p className="mt-5 max-w-[480px] text-[14px] leading-7 text-[#777D79] sm:text-base">
+            Turn your idea into a digital product, then bring it to market — all in one workspace.
+          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-10 gap-4">
-            <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Generate</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">AI builds your digital product from scratch. digital products, courses, templates, software—whatever you can sell, we can generate.</p>
+          <form onSubmit={handleSubmit} className="mt-9 w-full rounded-[22px] border border-[#303530] bg-[#101210] p-2 shadow-[0_20px_80px_rgba(0,0,0,0.28)] transition-colors focus-within:border-[#00E68E]/55 sm:p-3">
+            <label htmlFor="nexora-idea" className="sr-only">Describe what you want to build</label>
+            <textarea
+              id="nexora-idea"
+              value={idea}
+              onChange={(event) => setIdea(event.target.value)}
+              placeholder="Describe your idea, product, or business..."
+              rows={2}
+              className="block max-h-36 min-h-[76px] w-full resize-y bg-transparent px-3 py-3 text-left text-[15px] leading-6 text-white outline-none placeholder:text-[#656B66] sm:px-4"
+            />
+            <div className="flex items-center justify-between gap-3 border-t border-[#252925] px-1 pt-2.5 sm:px-2">
+              <span className="hidden pl-1 text-xs text-[#656B66] sm:inline">Start with an idea. Refine as you go.</span>
+              <span className="pl-1 text-[11px] text-[#656B66] sm:hidden">Your next idea starts here</span>
+              <button type="submit" aria-label="Continue with your idea" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-[#00E68E] px-4 text-sm font-semibold text-[#06130C] transition-all hover:bg-[#38F5AA] focus:outline-none focus:ring-2 focus:ring-[#00E68E]/60 focus:ring-offset-2 focus:ring-offset-[#101210]">
+                Get started <ArrowUp className="h-4 w-4" />
+              </button>
             </div>
+          </form>
 
-            <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Rocket className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Launch</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Sales page, checkout, delivery—all automated. You just share the link.</p>
-            </div>
-
-            <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Sell</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Plug into any platform. Keep 100% of your earnings.</p>
-            </div>
-
-            <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BarChart2 className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Track</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Real-time analytics. Know what's working. Know what's making money. No guesswork.</p>
-            </div>
-
-            <div className="md:col-span-10 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
-                <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-                  <h3 className="text-2xl font-bold whitespace-nowrap" style={{ fontFamily: "'Syne', sans-serif" }}>Scale</h3>
-                  <p className="text-[#A1A1A1] leading-relaxed">One product works? Spin up 10 more. The system does the heavy lifting.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ═══ PLATFORM STRIP ═══ */}
-      <section className="relative overflow-hidden py-8 bg-[#080808] border-y border-[#1A1A1A]">
-        <p className="text-center text-[10px] font-semibold tracking-[0.12em] uppercase text-[#707070] mb-5 font-['DM_Sans']">
-          SELL ON ANY PLATFORM
-        </p>
-        <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-r from-[#080808] to-transparent" />
-        <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-l from-[#080808] to-transparent" />
-        <div className="overflow-hidden w-full">
-          <div className="platform-track flex flex-nowrap items-center gap-20 w-max animate-platform-scroll">
-            {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
-              <img
-                key={i}
-                src={`/logos/logo-${n}.webp`}
-                alt={`${PLATFORM_NAMES[n - 1]} Logo`}
-                width="120"
-                height="40"
-                loading="lazy"
-                className="h-10 w-auto shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-300"
-              />
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            {capabilities.map(({ label, icon: Icon, to }) => (
+              <Link key={label} to={to} className="group inline-flex items-center gap-2 rounded-full border border-[#242724] bg-[#0C0D0C] px-3.5 py-2.5 text-[12px] text-[#A1A6A2] transition-all hover:border-[#00E68E]/45 hover:bg-[#101612] hover:text-white sm:text-[13px]">
+                <Icon className="h-3.5 w-3.5 text-[#00A968] transition-colors group-hover:text-[#00E68E]" />
+                {label}
+              </Link>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ═══ FOUNDER ═══ */}
-      <Section className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              WHY I BUILT THIS
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="flex justify-center">
-              <div className="w-full max-w-sm rounded-3xl border border-[#1A1A1A]">
-                <img src="/yesh-founder.webp" alt="Yesh Malik - Founder of NexoraOS" width="400" height="500" loading="lazy" style={{ width: '100%', height: 'auto', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '8px' }} />
-              </div>
-            </div>
-            <div>
-              <p className="text-[#707070] text-7xl font-serif leading-none mb-6">"</p>
-              <p className="text-white text-xl md:text-2xl leading-relaxed mb-8 -mt-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                I built this because I was tired of watching talented people waste years learning 'the right way' while others were already cashing out.
-              </p>
-              <div className="h-px bg-[#1A1A1A] mb-6" />
-              <p className="text-white font-bold text-lg">Yesh Malik</p>
-              <p className="text-[#A1A1A1] text-sm">Founder, NexoraOS</p>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ═══ PRICING ═══ */}
-      <Section id="pricing" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              SIMPLE PRICING
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-left mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Simple pricing
-          </h2>
-          <p className="text-left text-[#A1A1A1] mb-16">Pick what works. Cancel anytime.</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white border border-white rounded-2xl p-8 flex flex-col md:order-2 relative">
-              <h3 className="text-lg font-bold mb-2 text-[#0A0A0A]">Creator</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-bold text-[#0A0A0A]">$19</span>
-                <span className="text-[#A1A1A1]">/mo</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">Cancel anytime. No questions.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['Unlimited AI Generations', 'Premium Sales Page Builder', 'Advanced Analytics', 'Full-length exports', 'Built-in Monetization'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#0A0A0A]/70">
-                    <Check className="w-4 h-4 text-[#0A0A0A] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/pricing" className="w-full py-3.5 rounded-lg bg-[#0A0A0A] text-white font-bold text-center text-sm hover:opacity-90 transition-all block">
-                Get Started
-              </Link>
-            </div>
-
-            <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-1">
-              <h3 className="text-lg font-bold mb-2">Free</h3>
-              <div className="flex items-baseline mb-2">
-                <span className="text-5xl font-bold">$0</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">Try it out. See if it clicks.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['1 AI generation/day', 'Basic Sales Page Builder', 'Standard Analytics', 'Short-form exports'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#999999]">
-                    <Check className="w-4 h-4 text-[#707070] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/auth" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
-                Start Free
-              </Link>
-            </div>
-
-            <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-3">
-              <h3 className="text-lg font-bold mb-2">Pro</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-bold">$39</span>
-                <span className="text-[#A1A1A1]">/mo</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">For those going all in.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['Everything in Creator', 'AI Business Assistant', 'Priority Processing', 'Custom Domain Support', 'Advanced Automation'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#999999]">
-                    <Check className="w-4 h-4 text-[#707070] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/pricing" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
-                Go Pro
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ═══ FAQ ═══ */}
-      <Section id="faq" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              QUESTIONS
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-4 mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Frequently Asked
-            </h2>
-            <h2 className="text-3xl md:text-5xl font-bold text-white/30" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Questions
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {faqs.map((faq, i) => (
-              <div key={i} className="rounded-2xl bg-[#111111] border border-[#1A1A1A] overflow-hidden">
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#5F655F]">Choose your workspace</span>
+            <div className="inline-flex rounded-full border border-[#242724] bg-[#0D0E0D] p-1">
+              {([
+                { id: "starter", label: "Starter" },
+                { id: "pro", label: "Pro" },
+                { id: "hybrid", label: "Hybrid AI OS" },
+              ] as const).map((item) => (
                 <button
+                  key={item.id}
                   type="button"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  aria-expanded={openFaq === i}
-                  className="w-full flex items-center justify-between gap-6 p-6 text-left"
+                  onClick={() => setMode(item.id)}
+                  aria-pressed={mode === item.id}
+                  className={`rounded-full px-3.5 py-2 text-[11px] transition-all sm:px-4 sm:text-xs ${mode === item.id ? "bg-[#17231B] text-[#00E68E] shadow-[inset_0_0_0_1px_#254632]" : "text-[#747A75] hover:text-white"}`}
                 >
-                  <h3 className="text-xl font-bold text-white">{faq.q}</h3>
-                  <svg
-                    aria-hidden="true"
-                    className={`w-5 h-5 shrink-0 text-[#A1A1A1] transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
+                  {item.label}
                 </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ${openFaq === i ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <p className="px-6 pb-6 text-[#A1A1A1] leading-relaxed">{faq.a}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </Section>
 
-      {/* ═══ FOOTER ═══ */}
-      <footer className="py-16 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-10">
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
-                <span className="font-bold text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
-              </div>
-              <p className="text-[#707070] text-sm">Built by a creator, for creators.</p>
-              <div className="flex items-center gap-4 mt-4">
-                <a href="https://www.instagram.com/nexoraos" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                  </svg>
-                </a>
-                <a href="https://www.tiktok.com/@nexoraos_" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.5 3c.2 1.8 1.2 3.2 3 3.8v2.8a7.4 7.4 0 0 1-3-.8v6.1a5.1 5.1 0 1 1-4.4-5v2.9a2.2 2.2 0 1 0 1.5 2.1V3h2.9Z" />
-                  </svg>
-                </a>
-                <a href="https://x.com/NexoraOS" target="_blank" rel="noopener noreferrer" aria-label="X" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.2 3H21l-6.1 7 7.2 11h-5.6l-4.4-6.7L6.2 21H3.4l6.5-7.4L3 3h5.7l4 6.1L18.2 3Zm-1 16.1h1.6L7.1 4.8H5.4l11.8 14.3Z" />
-                  </svg>
-                </a>
-              </div>
-              <p className="text-[#222222] text-xs mt-1">No VC money. No corporate BS.</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-8 text-sm text-[#707070]">
-                <a href="#features" className="hover:text-white transition-colors">Features</a>
-                <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-                <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-                <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
-                <span>© 2026 NexoraOS</span>
-              </div>
-              <div className="text-sm text-[#707070]">
-                <span>Support: </span>
-                <a href="mailto:support@nexoraos.digital" className="hover:text-white transition-colors">support@nexoraos.digital</a>
-              </div>
-            </div>
+        <div className="absolute bottom-5 left-0 right-0 hidden items-center justify-center gap-3 text-[10px] tracking-[0.12em] text-[#4E544F] sm:flex">
+          <span>IDEA</span><span className="h-px w-8 bg-[#252925]" /><span>BUILD</span><span className="h-px w-8 bg-[#252925]" /><span>LAUNCH</span><span className="h-px w-8 bg-[#252925]" /><span>GROW</span>
+        </div>
+      </section>
+
+      <section className="border-t border-[#1B1E1B] px-5 py-8 sm:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <div>
+            <p className="text-sm font-medium text-[#B9BEB9]">One idea. One workspace.</p>
+            <p className="mt-1 text-xs text-[#626862]">Research, create, launch, and improve at your own pace.</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-[#727872]">
+            <Link to="/dashboard/ebook-generator" className="transition-colors hover:text-[#00E68E]">Build</Link>
+            <Link to="/dashboard/marketing-studio" className="transition-colors hover:text-[#00E68E]">Market</Link>
+            <Link to="/dashboard/sales-page-builder" className="transition-colors hover:text-[#00E68E]">Launch</Link>
+            <Link to="/dashboard/analytics" className="transition-colors hover:text-[#00E68E]">Measure</Link>
+            <Link to="/contact" className="transition-colors hover:text-[#00E68E]">Contact</Link>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+    </main>
   );
 };
 
