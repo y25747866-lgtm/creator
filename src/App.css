@@ -8,9 +8,110 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+.nexora-home-frame {
+  min-height: calc(100dvh - 10px);
+}
+
+.nexora-workspace-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  width: min(100% - 32px, 576px);
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -47%);
+}
+
+.nexora-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 27px;
+}
+
+.nexora-wordmark {
+  color: #e8e8e8;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(21px, 6vw, 29px);
+  font-weight: 760;
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+
+.nexora-composer-wrap {
+  position: relative;
+  width: 100%;
+}
+
 .nexora-home-input::placeholder {
-  color: #888888;
+  color: #777777;
   opacity: 1;
+}
+
+.nexora-tool-row {
+  display: flex;
+  width: calc(100% + 8px);
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 23px;
+  overflow: hidden;
+}
+
+.nexora-tool-chip,
+.nexora-tool-more {
+  display: inline-flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #292929;
+  border-radius: 999px;
+  background: rgba(18, 18, 18, 0.72);
+  padding: 0 10px;
+  color: #a1a1a1;
+  font-size: 10.5px;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.nexora-tool-chip:hover,
+.nexora-tool-more:hover {
+  border-color: #414141;
+  background: #1d1d1d;
+  color: #e5e5e5;
+}
+
+.nexora-tool-more {
+  width: 29px;
+  min-width: 29px;
+  padding: 0;
+}
+
+.nexora-home-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 30px;
+  color: #5f5f5f;
+  font-size: 10px;
+  letter-spacing: 0.01em;
+}
+
+.nexora-plugin-menu {
+  animation: nexora-menu-in 130ms ease-out;
+  transform-origin: top left;
+}
+
+@keyframes nexora-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.nexora-upgrade,
+.nexora-inspiration {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .nexora-sidebar {
@@ -42,6 +143,33 @@
 .nexora-sidebar-nav::-webkit-scrollbar-thumb {
   background: #2a2a2a;
   border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+  .nexora-workspace-stage {
+    width: calc(100% - 36px);
+    transform: translate(-50%, -46%);
+  }
+
+  .nexora-brand-lockup {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .nexora-tool-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0 2px 5px;
+    scrollbar-width: none;
+  }
+
+  .nexora-tool-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nexora-home-hint {
+    margin-top: 25px;
+  }
 }
 
 @media (max-width: 767px) {
