@@ -50,7 +50,10 @@ describe("Ebook Generator baseline", () => {
 
     expect(screen.getByText("Drafting Your Script")).toBeInTheDocument();
     resolveUsage(true);
-    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith("generate-ebook", expect.any(Object)));
-    resolveDraft({ data: { title: "A better workflow", chapters: [] }, error: null });
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith(
+      "generate-ebook",
+      expect.objectContaining({ body: expect.objectContaining({ topic: "A better workflow", language: "English" }) }),
+    ));
+    resolveDraft({ data: { title: "A better workflow", chapters: [{ title: "Introduction", content: "A practical start." }] }, error: null });
   });
 });

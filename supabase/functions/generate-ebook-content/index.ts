@@ -342,15 +342,8 @@ serve(async (req) => {
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
-      console.log("No API key - generating fallback content");
-      return new Response(
-        JSON.stringify({
-          content: `# ${sanitizedTitle}\n\n## Introduction\n\nThis is a placeholder for the ebook content about ${sanitizedTopic}. To generate full content, please configure your GROQ_API_KEY.`,
-          title: sanitizedTitle,
-          topic: sanitizedTopic
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("Ebook generation is unavailable: GROQ_API_KEY is not configured");
+      return errorResponse("Ebook generation is not configured for this preview. Configure the server-side GROQ_API_KEY and try again.", 503);
     }
 
     console.log("Generating ebook content for:", sanitizedTitle.substring(0, 30) + "...");

@@ -146,7 +146,7 @@ describe("Chat-first product workspace", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Essential guide/ }));
     await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith(
-      "generate-ebook-content",
+      "generate-ebook",
       expect.objectContaining({ body: expect.objectContaining({ topic: "A calmer weekly planning system" }) }),
     ));
     expect(await screen.findByText("Your ebook is ready to export.", {}, { timeout: 5000 })).toBeInTheDocument();

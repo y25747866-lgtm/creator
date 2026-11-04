@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { useSidebarState } from "./DashboardLayout";
 import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
 import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
+import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
 
 type Template = {
   id: string;
@@ -192,7 +193,7 @@ const ProductGeneratorChat = () => {
 
   const submitTopic = (event?: FormEvent) => {
     event?.preventDefault();
-    if (generationLock.current || activeSystem !== "product-generator" || !activeProduct || !draft.trim()) return;
+    if (generationLock.current || !draft.trim()) return;
     const topic = draft.trim();
 
     if (topic.length > 500) {
@@ -214,6 +215,33 @@ const ProductGeneratorChat = () => {
     }
 
     clearPendingChatTopic();
+    if (activeSystem === "hybrid-agentic") {
+      const progressId = makeId();
+      setMessages((current) => [
+        ...current,
+        { id: makeId(), role: "user", kind: "text", text: topic },
+        { id: progressId, role: "assistant", kind: "progress", text: "Connecting to the Hybrid Agentic System…", complete: false },
+      ]);
+      setDraft("");
+      if (composerRef.current) composerRef.current.style.height = "auto";
+      generationLock.current = true;
+      setIsGenerating(true);
+      void (async () => {
+        try {
+          const { taskId } = await submitHybridTask(topic);
+          replaceMessage(progressId, { text: "NEXUS accepted the task. Recovering durable agent status…" });
+          const task = await waitForHybridTask(taskId);
+          if (task.status === "error") throw new Error("The Hybrid Agentic System reported an error while processing this task.");
+          replaceMessage(progressId, { text: "Hybrid task completed. Review the returned agent result in the service workspace.", complete: true });
+        } catch (error) {
+          replaceMessage(progressId, { kind: "error", text: error instanceof Error ? error.message : "Hybrid Agentic System is unavailable." });
+        } finally {
+          generationLock.current = false;
+          setIsGenerating(false);
+        }
+      })();
+      return;
+    }
     setMessages((current) => [
       ...current,
       { id: makeId(), role: "user", kind: "text", text: topic },
@@ -279,7 +307,7 @@ const ProductGeneratorChat = () => {
 
       replaceMessage(progressId, { text: "Sending the brief to the ebook generator…" });
       const title = `${template.name}: ${topic}`;
-      const { data, error } = await supabase.functions.invoke("generate-ebook-content", {
+      const { data, error } = await supabase.functions.invoke("generate-ebook", {
         body: {
           topic,
           title,
@@ -288,11 +316,18 @@ const ProductGeneratorChat = () => {
           category: "Digital product ebook",
           targetAudience: "Readers interested in the topic",
           tone: template.tone,
+          language: "English",
         },
       });
 
       if (error) throw new Error(error.message || "The ebook service could not complete the request.");
-      const content = typeof data?.content === "string" ? data.content.trim() : "";
+      const chapterContent = Array.isArray(data?.chapters)
+        ? data.chapters
+          .filter((chapter: unknown): chapter is { title?: unknown; content?: unknown } => typeof chapter === "object" && chapter !== null)
+          .map((chapter) => `## ${typeof chapter.title === "string" ? chapter.title : "Chapter"}\n\n${typeof chapter.content === "string" ? chapter.content : ""}`)
+          .join("\n\n")
+        : "";
+      const content = (typeof data?.content === "string" ? data.content : chapterContent).trim();
       if (!content) throw new Error("The ebook service returned no content. Please try again later.");
       if (/this is a placeholder for the ebook content|configure your groq_api_key/i.test(content)) {
         throw new Error("The connected Edge Function returned setup placeholder text rather than a generated ebook. No file was saved.");
@@ -616,9 +651,9 @@ const ProductGeneratorChat = () => {
                 <span className="hidden text-[11px] text-[#737373] sm:inline">Enter to send</span>
                 <button
                   type="submit"
-                  disabled={activeSystem !== "product-generator" || !activeProduct || !draft.trim() || isGenerating}
+                  disabled={!draft.trim() || isGenerating}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${activeSystem === "product-generator" && activeProduct && draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>

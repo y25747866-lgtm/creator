@@ -91,6 +91,30 @@ app.get('/stream/:taskId', requireAuth, async (req, res) => {
   req.on('close', unsubscribe)
 })
 
+// ---------- Task recovery (ownership-checked, durable state) ----------
+app.get('/tasks/:taskId', requireAuth, async (req, res) => {
+  const userId = (req as express.Request & { user: { id: string } }).user.id
+  const { data, error } = await getSupabaseClient()
+    .from('agent_tasks')
+    .select('id,user_id,goal,agent,status,input,output,parent_task_id,created_at,updated_at')
+    .eq('id', req.params.taskId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) { res.status(500).json({ error: 'Failed to load task status' }); return }
+  if (!data) { res.status(404).json({ error: 'Task not found' }); return }
+  res.json({
+    id: data.id,
+    goal: data.goal,
+    agent: data.agent,
+    status: data.status,
+    input: data.input ?? undefined,
+    output: data.output ?? undefined,
+    parentTaskId: data.parent_task_id ?? undefined,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  })
+})
+
 // ---------- Run ----------
 app.post('/run', requireAuth, async (req, res) => {
   const body = req.body as {

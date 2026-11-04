@@ -592,22 +592,25 @@ const EbookGenerator = () => {
           description: selectedNiche.description,
           category: selectedNiche.category,
           tone: "professional",
-          language
+          language,
         }
       });
       if (error) throw error;
       let parsedSections: { heading: string; body: string }[] = [];
-      if (data.chapters && Array.isArray(data.chapters)) {
-        parsedSections = data.chapters.map((ch: any) => ({
-          heading: ch.title.replace(/^Chapter\s*\d+\s*[:\-\.]\s*/i, "").trim(),
-          body: ch.content
-        }));
-      } else if (data.content) {
+      if (Array.isArray(data?.chapters)) {
+        parsedSections = data.chapters
+          .filter((chapter: unknown): chapter is { title?: unknown; content?: unknown } => typeof chapter === "object" && chapter !== null)
+          .map((chapter) => ({
+            heading: typeof chapter.title === "string" ? chapter.title.replace(/^Chapter\s*\d+\s*[:\-.\s]*/i, "").trim() : "Chapter",
+            body: typeof chapter.content === "string" ? chapter.content : "",
+          }));
+      } else if (typeof data?.content === "string" && data.content.trim()) {
         parsedSections = data.content.split("## ").filter(Boolean).map((s: string) => {
           const lines = s.split("\n");
           return { heading: lines[0].trim(), body: lines.slice(1).join("\n").trim() };
         });
       }
+      if (!parsedSections.length) throw new Error("The ebook service returned no usable content.");
       const sections: { heading: string; body: string }[] = [];
       for (let i = 0; i < parsedSections.length; i++) {
         await new Promise(r => setTimeout(r, 600));
