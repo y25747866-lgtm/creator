@@ -418,7 +418,7 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#151515", color: "#F5F5F5" }}>
+    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#0A0A0A", color: "#F5F5F5" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
@@ -550,7 +550,7 @@ const ProductGeneratorChat = () => {
                           <button
                             type="button"
                             onClick={() => void downloadEbook(message.ebook!)}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
+                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
                           >
                             <Download size={15} aria-hidden="true" />
                             Download PDF
@@ -575,7 +575,7 @@ const ProductGeneratorChat = () => {
         )}
       </div>
 
-      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#151515] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
+      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#0A0A0A] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-[800px]">
           <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#202020] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
@@ -685,7 +685,7 @@ const ProductGeneratorChat = () => {
                   setCapabilityMenuOpen(false);
                   composerRef.current?.focus();
                 }}
-                className={`min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${activeProduct === product.label ? "border-[#FFFFFF]/45 bg-[#FFFFFF] text-[#0A0A0A]" : product.enabled ? "border-[#3B3B3B] bg-[#1C1C1C] text-[#B6B6B6] hover:border-[#555] hover:text-white" : "cursor-not-allowed border-[#2D2D2D] bg-[#191919] text-[#5F5F5F]"}`}
+                className={`min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeProduct === product.label ? "border-white bg-white text-[#0A0A0A]" : product.enabled ? "border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white" : "cursor-not-allowed border-white/10 bg-transparent text-white/25"}`}
               >
                 {product.label}
               </button>
