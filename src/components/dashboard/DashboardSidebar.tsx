@@ -4,6 +4,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Plus,
+  Package,
+  Bot,
+  FlaskConical,
+  FileText,
+  Sheet,
+  Zap,
+  ArrowUpRight,
   LogOut,
   Settings,
   User as UserIcon,
@@ -41,39 +49,54 @@ const DashboardSidebar = () => {
           collapsed ? "md:w-20" : "md:w-[280px]"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4">
-          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]">
-            <img src={nexoraLogo} alt="" width="34" height="34" className="h-[34px] w-[34px] shrink-0 rounded-lg" />
-            {showLabels && (
-              <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-[#F2F2F2]">NexoraOS</span>
-            )}
-          </Link>
+        <div className={`flex h-16 shrink-0 items-center border-b border-[#292929] px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
           <button
             type="button"
-            onClick={closeMobile}
-            aria-label="Close navigation drawer"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] md:hidden"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#929292] transition hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:flex"
           >
+            {collapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
+          </button>
+          {showLabels && <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <img src={nexoraLogo} alt="" width="30" height="30" className="h-[30px] w-[30px] shrink-0 rounded-lg" />
+            <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-white">NexoraOS</span>
+          </Link>}
+          <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:hidden">
             <X size={17} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-6" aria-label="Main">
-          <p className={`mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#686868] ${showLabels ? "" : "sr-only"}`}>Workspace</p>
-          <Link
-            to="/dashboard/downloads"
-            onClick={closeMobile}
-            title={showLabels ? undefined : "Downloads"}
-            aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined}
-            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${
-              location.pathname === "/dashboard/downloads"
-                ? "bg-[#222] text-white"
-                : "text-[#A0A0A0] hover:bg-[#1D1D1D] hover:text-white"
-            } ${showLabels ? "" : "justify-center"}`}
-          >
-            <Download className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-            {showLabels && <span>Downloads</span>}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
+          <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 items-center gap-3 rounded-xl border border-white/15 px-3 text-sm text-white transition hover:bg-white/[0.06] ${showLabels ? "" : "justify-center"}`}>
+            <Plus size={17} className="shrink-0" aria-hidden="true" />
+            {showLabels && <><span className="flex-1">New chat</span><span className="text-[10px] text-white/35">Ctrl K</span></>}
           </Link>
+          <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "Product Studio"} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+            <Package size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Product Studio</span>}
+          </Link>
+          <button type="button" disabled title="Hybrid runtime is not connected in this preview" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}>
+            <Bot size={17} className="shrink-0" aria-hidden="true" />{showLabels && <><span className="flex-1 text-left">Hybrid Agents</span><span className="text-[9px] uppercase tracking-wide">Offline</span></>}
+          </button>
+          <button type="button" disabled title="Projects are not yet backed by a project store" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}>
+            <FileText size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Projects · coming soon</span>}
+          </button>
+          <Link to="/dashboard/downloads" onClick={closeMobile} title={showLabels ? undefined : "Downloads"} aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard/downloads" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+            <Download size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Downloads</span>}
+          </Link>
+          <div className={`my-4 border-t border-white/10 pt-4 ${showLabels ? "" : "sr-only"}`}>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">History</p>
+            <p className="px-3 py-2 text-xs leading-5 text-white/35">Your saved conversations will appear here when chat history is enabled.</p>
+          </div>
+          <p className={`mb-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Tools</p>
+          {[
+            { label: "Research", Icon: FlaskConical },
+            { label: "Docs", Icon: FileText },
+            { label: "Sheets", Icon: Sheet },
+            { label: "Automations", Icon: Zap },
+          ].map(({ label, Icon }) => <button key={label} type="button" disabled title={`${label} is not connected in this preview`} className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}><Icon size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>{label} · soon</span>}</button>)}
         </nav>
 
         <div className="shrink-0 border-t border-[#292929] p-3">
@@ -91,35 +114,13 @@ const DashboardSidebar = () => {
               </div>
             )}
           </div>
-          <div className={`mt-2 flex gap-1 ${showLabels ? "flex-col" : "flex-col"}`}>
-            <Link
-              to="/dashboard/settings"
-              onClick={closeMobile}
-              title={showLabels ? undefined : "Settings"}
-              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-xs text-[#8D8D8D] transition hover:bg-[#202020] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${showLabels ? "" : "justify-center"}`}
-            >
+          <div className={`mt-2 flex items-center gap-2 ${showLabels ? "" : "flex-col"}`}>
+            <Link to="/dashboard/settings" title="Account settings" className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-xs text-white/55 transition hover:bg-white/[0.06] hover:text-white">
               <Settings size={16} className="shrink-0" aria-hidden="true" />
-              {showLabels && <span>Settings</span>}
+              {showLabels && <span className="truncate">Settings</span>}
             </Link>
-            <button
-              type="button"
-              onClick={() => void handleSignOut()}
-              title={showLabels ? undefined : "Sign out"}
-              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-left text-xs text-[#8D8D8D] transition hover:bg-[#2A1E1E] hover:text-[#F0BABA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${showLabels ? "" : "justify-center"}`}
-            >
-              <LogOut size={16} className="shrink-0" aria-hidden="true" />
-              {showLabels && <span>Sign out</span>}
-            </button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setCollapsed(!collapsed)}
-              className={`mt-1 hidden min-h-9 rounded-lg text-[#777] hover:bg-[#202020] hover:text-white md:flex ${showLabels ? "justify-start px-3" : "justify-center px-2"}`}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span className="ml-2 text-xs">Collapse</span></>}
-            </Button>
+            {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-white/20 px-2 text-[11px] text-white hover:bg-white/[0.08]">Upgrade <ArrowUpRight size={12}/></Link>}
+            <button type="button" onClick={() => void handleSignOut()} title="Sign out" aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.06] hover:text-white"><LogOut size={16}/></button>
           </div>
         </div>
       </aside>
