@@ -11,9 +11,9 @@ import Blog from "./pages/Blog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Lazy load non-critical pages
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Downloads = lazy(() => import("./pages/Downloads"));
-const Settings = lazy(() => import("./pages/Settings"));
+import Dashboard from "./pages/Dashboard";
+import Downloads from "./pages/Downloads";
+import Settings from "./pages/Settings";
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Pricing = lazy(() => import("./pages/Pricing"));
@@ -25,13 +25,14 @@ const MarketingStudio = lazy(() => import("./pages/dashboard/MarketingStudio"));
 const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder"));
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
 
-const ViewableRoute = lazy(() => import("./components/ViewableRoute"));
+import ViewableRoute from "./components/ViewableRoute";
 
 const queryClient = new QueryClient();
 
 const PageLoader = () => (
-  <div className="flex min-h-[40vh] items-center justify-center bg-[#141414] text-[#929292]" role="status" aria-live="polite">
-    <span className="text-xs tracking-[0.12em]">NEXORAOS</span>
+  <div className="flex min-h-[24vh] items-center justify-center bg-[#0A0A0A] text-white" role="status" aria-live="polite">
+    <span className="sr-only">Loading page</span>
+    <span className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white" aria-hidden="true" />
   </div>
 );
 
