@@ -42,7 +42,7 @@ const DashboardSidebar = () => {
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4">
-          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]">
+          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]">
             <img src={nexoraLogo} alt="" width="34" height="34" className="h-[34px] w-[34px] shrink-0 rounded-lg" />
             {showLabels && (
               <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-[#F2F2F2]">NexoraOS</span>
@@ -52,7 +52,7 @@ const DashboardSidebar = () => {
             type="button"
             onClick={closeMobile}
             aria-label="Close navigation drawer"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#222] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] md:hidden"
           >
             <X size={17} />
           </button>
@@ -65,7 +65,7 @@ const DashboardSidebar = () => {
             onClick={closeMobile}
             title={showLabels ? undefined : "Downloads"}
             aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined}
-            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${
+            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${
               location.pathname === "/dashboard/downloads"
                 ? "bg-[#222] text-white"
                 : "text-[#A0A0A0] hover:bg-[#1D1D1D] hover:text-white"
@@ -96,7 +96,7 @@ const DashboardSidebar = () => {
               to="/dashboard/settings"
               onClick={closeMobile}
               title={showLabels ? undefined : "Settings"}
-              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-xs text-[#8D8D8D] transition hover:bg-[#202020] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
+              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-xs text-[#8D8D8D] transition hover:bg-[#202020] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${showLabels ? "" : "justify-center"}`}
             >
               <Settings size={16} className="shrink-0" aria-hidden="true" />
               {showLabels && <span>Settings</span>}
@@ -105,7 +105,7 @@ const DashboardSidebar = () => {
               type="button"
               onClick={() => void handleSignOut()}
               title={showLabels ? undefined : "Sign out"}
-              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-left text-xs text-[#8D8D8D] transition hover:bg-[#2A1E1E] hover:text-[#F0BABA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
+              className={`flex min-h-9 items-center gap-3 rounded-lg px-3 text-left text-xs text-[#8D8D8D] transition hover:bg-[#2A1E1E] hover:text-[#F0BABA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] ${showLabels ? "" : "justify-center"}`}
             >
               <LogOut size={16} className="shrink-0" aria-hidden="true" />
               {showLabels && <span>Sign out</span>}
