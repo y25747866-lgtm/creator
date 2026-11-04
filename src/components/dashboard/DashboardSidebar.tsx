@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -30,6 +30,28 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
+  const [historyTitles, setHistoryTitles] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) { setHistoryTitles([]); return; }
+    const readHistory = () => {
+      try {
+        const raw = window.localStorage.getItem(`nexoraos-chat-history-v1-${user.id}`);
+        const messages = raw ? JSON.parse(raw) : [];
+        const titles = Array.isArray(messages)
+          ? messages.filter((message) => message?.role === "user" && typeof message.text === "string").map((message) => message.text.trim()).filter(Boolean)
+          : [];
+        setHistoryTitles(Array.from(new Set(titles)).slice(-8).reverse());
+      } catch { setHistoryTitles([]); }
+    };
+    readHistory();
+    window.addEventListener("storage", readHistory);
+    window.addEventListener("nexoraos:history-updated", readHistory);
+    return () => {
+      window.removeEventListener("storage", readHistory);
+      window.removeEventListener("nexoraos:history-updated", readHistory);
+    };
+  }, [user?.id]);
   const showLabels = !collapsed || mobileOpen;
 
   const handleSignOut = async () => {
@@ -69,10 +91,10 @@ const DashboardSidebar = () => {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
-          <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 items-center gap-3 rounded-xl border border-white/15 px-3 text-sm text-white transition hover:bg-white/[0.06] ${showLabels ? "" : "justify-center"}`}>
+          <button type="button" onClick={() => { window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 w-full items-center gap-3 rounded-xl border border-white/15 px-3 text-sm text-white transition hover:bg-white/[0.06] ${showLabels ? "" : "justify-center"}`}>
             <Plus size={17} className="shrink-0" aria-hidden="true" />
-            {showLabels && <><span className="flex-1">New chat</span><span className="text-[10px] text-white/35">Ctrl K</span></>}
-          </Link>
+            {showLabels && <><span className="flex-1 text-left">New chat</span><span className="text-[10px] text-white/35">Ctrl K</span></>}
+          </button>
           <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "Product Studio"} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Package size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Product Studio</span>}
@@ -88,7 +110,9 @@ const DashboardSidebar = () => {
           </Link>
           <div className={`my-4 border-t border-white/10 pt-4 ${showLabels ? "" : "sr-only"}`}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">History</p>
-            <p className="px-3 py-2 text-xs leading-5 text-white/35">Your saved conversations will appear here when chat history is enabled.</p>
+            {historyTitles.length ? historyTitles.map((title, index) => (
+              <button key={`${title}-${index}`} type="button" onClick={() => { navigate("/dashboard"); closeMobile(); }} title={title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-white/50 transition hover:bg-white/[0.06] hover:text-white">{title.length > 27 ? `${title.slice(0, 27)}…` : title}</button>
+            )) : <p className="px-3 py-2 text-xs leading-5 text-white/35">Your recent prompts will appear here.</p>}
           </div>
           <p className={`mb-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Tools</p>
           {[
