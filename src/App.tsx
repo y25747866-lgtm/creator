@@ -30,8 +30,8 @@ const ViewableRoute = lazy(() => import("./components/ViewableRoute"));
 const queryClient = new QueryClient();
 
 const PageLoader = () => (
-  <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+  <div className="flex min-h-[40vh] items-center justify-center bg-[#141414] text-[#929292]" role="status" aria-live="polite">
+    <span className="text-xs tracking-[0.12em]">NEXORAOS</span>
   </div>
 );
 
