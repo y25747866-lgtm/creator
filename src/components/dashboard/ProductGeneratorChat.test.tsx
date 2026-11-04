@@ -82,6 +82,17 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
   });
 
+  it("shows truthful capability states from the Plus menu", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
+    const menu = screen.getByRole("menu", { name: "Workspace capabilities" });
+    expect(menu).toHaveTextContent("Attachments");
+    expect(menu).toHaveTextContent("secure upload is not enabled");
+    expect(menu).toHaveTextContent("Apps");
+    expect(menu).toHaveTextContent("MCP");
+    expect(menu).toHaveTextContent("no runtime connection is verified");
+  });
+
   it.each([375, 1365])("lets an unauthenticated visitor submit and preserves the topic at %i px", async (viewportWidth) => {
     setTestViewportWidth(viewportWidth);
     mocks.authUser = null;

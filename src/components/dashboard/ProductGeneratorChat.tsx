@@ -615,9 +615,20 @@ const ProductGeneratorChat = () => {
                   <Plus size={19} aria-hidden="true" />
                 </button>
                 {attachmentMenuOpen && (
-                  <div role="status" className="absolute bottom-12 left-0 z-20 w-[min(290px,calc(100vw-40px))] rounded-xl border border-[#393939] bg-[#262626] p-3.5 shadow-xl">
-                    <p className="text-sm font-medium text-[#EFEFEF]">Attachments aren’t available here yet</p>
-                    <p className="mt-1 text-xs leading-5 text-[#9A9A9A]">For this ebook flow, start with a topic and select a format. No file upload has been enabled.</p>
+                  <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 w-[min(310px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-2 shadow-xl">
+                    <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
+                    {[
+                      ["Attachments", "Unavailable · secure upload is not enabled in this preview."],
+                      ["Apps", "Not connected · Composio is present in the agent service but has no verified account here."],
+                      ["Plugins", "Unavailable · no plugin registry is configured."],
+                      ["MCP", "Unconfigured · Context7 client exists for SCOUT, but no runtime connection is verified."],
+                      ["Agent Tools", "Available in code · Hybrid Agentic System requires VITE_HYBRID_AGENT_URL and a reachable runtime."],
+                    ].map(([name, status]) => (
+                      <div key={name} role="menuitem" className="rounded-lg px-2 py-2 hover:bg-[#303030]">
+                        <p className="text-xs font-medium text-[#EDEDED]">{name}</p>
+                        <p className="mt-0.5 text-[10px] leading-4 text-[#929292]">{status}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <div className="hidden h-5 w-px bg-[#383838] sm:block" aria-hidden="true" />
