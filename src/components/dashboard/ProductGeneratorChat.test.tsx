@@ -75,7 +75,7 @@ describe("Chat-first product workspace", () => {
   it("starts with an uncluttered prompt and keeps non-ebook types visibly disabled", () => {
     renderWorkspace();
 
-    expect(screen.getByRole("heading", { name: "What are we creating today?" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();

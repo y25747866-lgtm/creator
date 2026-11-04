@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
+import { encryptCredential } from "../_shared/credentials.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -61,8 +62,7 @@ serve(async (req) => {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("❌ Whop API verification failed:", res.status, errText);
+        console.error("❌ Whop API verification failed:", res.status);
         throw new Error("Invalid Whop API key. Please check your API key and try again.");
       }
       console.log("✅ Whop API key verified");
@@ -71,8 +71,7 @@ serve(async (req) => {
         headers: { "payhip-api-key": apiKey },
       });
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("❌ Payhip API verification failed:", res.status, errText);
+        console.error("❌ Payhip API verification failed:", res.status);
         throw new Error("Invalid Payhip API key. Please check your API key and try again.");
       }
       console.log("✅ Payhip API key verified");
@@ -87,7 +86,7 @@ serve(async (req) => {
       .upsert({
         user_id: user.id,
         platform,
-        api_key_encrypted: apiKey,
+        api_key_encrypted: await encryptCredential(apiKey),
         status: "connected",
         connected_at: new Date().toISOString(),
       }, { onConflict: "user_id,platform" });

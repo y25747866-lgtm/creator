@@ -135,6 +135,7 @@ const ProductGeneratorChat = () => {
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const [activeProduct, setActiveProduct] = useState<string>("Ebook");
+  const [activeSystem, setActiveSystem] = useState<"product-generator" | "hybrid-agentic">("product-generator");
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -191,7 +192,7 @@ const ProductGeneratorChat = () => {
 
   const submitTopic = (event?: FormEvent) => {
     event?.preventDefault();
-    if (generationLock.current || !activeProduct || !draft.trim()) return;
+    if (generationLock.current || activeSystem !== "product-generator" || !activeProduct || !draft.trim()) return;
     const topic = draft.trim();
 
     if (topic.length > 500) {
@@ -242,7 +243,7 @@ const ProductGeneratorChat = () => {
   };
 
   const beginGeneration = async (template: Template, topic: string) => {
-    if (generationLock.current || isGenerating) return;
+    if (generationLock.current || isGenerating || activeSystem !== "product-generator") return;
     if (authLoading || !user) {
       if (savePendingChatTopic(topic)) setAuthPromptOpen(true);
       else toast({ title: "Sign-in required", description: "Your topic could not be saved locally. Please allow browser storage before continuing.", variant: "destructive" });
@@ -418,22 +419,7 @@ const ProductGeneratorChat = () => {
 
       <div ref={conversationRef} className="flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
-          <section className="mx-auto flex min-h-[calc(100dvh-240px)] w-full max-w-[800px] flex-col items-center justify-center px-5 pb-8 pt-10 text-center sm:px-8">
-            <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#343434] bg-[#1C1C1C] text-[#00E68E]">
-              <Sparkles size={21} strokeWidth={1.8} aria-hidden="true" />
-            </div>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8A8A8A]">Your next idea starts here</p>
-            <h1 className="max-w-[680px] text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.045em] text-[#F5F5F5] sm:text-5xl">
-              What are we creating today?
-            </h1>
-            <p className="mt-5 max-w-[490px] text-sm leading-6 text-[#929292] sm:text-base">
-              Choose a product type, describe what you have in mind, and shape it into something ready to share.
-            </p>
-            <div className="mt-10 flex items-center gap-2 rounded-full border border-[#2B2B2B] bg-[#1A1A1A] px-3 py-2 text-xs text-[#8E8E8E]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#00E68E]" aria-hidden="true" />
-              One workspace for thoughtful digital products
-            </div>
-          </section>
+          <section className="mx-auto flex min-h-[calc(100dvh-240px)] w-full max-w-[800px] items-center justify-center px-5 pb-8 pt-10 sm:px-8" aria-label="New conversation" />
         ) : (
           <section className="mx-auto flex w-full max-w-[800px] flex-col gap-7 px-4 py-8 sm:px-8 sm:py-10" aria-label="Conversation" aria-live="polite">
             {messages.map((message) => (
@@ -577,7 +563,7 @@ const ProductGeneratorChat = () => {
               }}
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating}
-              placeholder={activeProduct === "Ebook" ? "What topic do you want to create an ebook about?" : "Choose a product type to begin…"}
+              placeholder={activeSystem === "product-generator" ? "What topic do you want to create an ebook about?" : "Hybrid Agentic System is not connected in this preview…"}
               className="block max-h-40 min-h-[58px] w-full resize-none bg-transparent px-5 pb-2 pt-[18px] text-[15px] leading-6 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:px-6"
               aria-describedby="composer-hint"
             />
@@ -600,32 +586,39 @@ const ProductGeneratorChat = () => {
                   </div>
                 )}
                 <div className="hidden h-5 w-px bg-[#383838] sm:block" aria-hidden="true" />
-                <button
-                  type="button"
-                  onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); }}
-                  aria-haspopup="dialog"
-                  aria-expanded={capabilityMenuOpen}
-                  className="flex h-9 items-center gap-2 rounded-xl px-2.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
-                >
-                  <Sparkles size={14} className="text-[#00E68E]" aria-hidden="true" />
-                  Ebook generator
-                  <ChevronDown size={13} aria-hidden="true" />
-                </button>
-                {capabilityMenuOpen && (
-                  <div role="dialog" aria-label="Ebook generator details" className="absolute bottom-12 left-10 z-20 w-[min(300px,calc(100vw-48px))] rounded-xl border border-[#393939] bg-[#262626] p-4 shadow-xl sm:left-12">
-                    <p className="text-sm font-medium text-[#EFEFEF]">Ebook generator</p>
-                    <p className="mt-1.5 text-xs leading-5 text-[#A0A0A0]">This workspace uses the configured ebook generation service. Model selection is managed by the service; no unverified model choices are shown here.</p>
-                    <p className="mt-2 text-[10px] text-[#777]">Only the Ebook capability is enabled in this preview.</p>
-                  </div>
-                )}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); }}
+                    aria-haspopup="menu"
+                    aria-expanded={capabilityMenuOpen}
+                    className="flex h-9 max-w-[205px] items-center gap-2 rounded-xl px-2.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
+                  >
+                    <Sparkles size={14} className="shrink-0 text-[#00E68E]" aria-hidden="true" />
+                    <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
+                    <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
+                  </button>
+                  {capabilityMenuOpen && (
+                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 left-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-1.5 shadow-xl">
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#EDEDED] hover:bg-[#303030]">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00E68E]" />
+                        <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Creates ebooks with the verified product workflow.</span></span>
+                      </button>
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#BDBDBD] hover:bg-[#303030]">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#777]" />
+                        <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Not connected in this preview; no agent run will be simulated.</span></span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="hidden text-[11px] text-[#737373] sm:inline">Enter to send</span>
                 <button
                   type="submit"
-                  disabled={!activeProduct || !draft.trim() || isGenerating}
+                  disabled={activeSystem !== "product-generator" || !activeProduct || !draft.trim() || isGenerating}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${activeProduct && draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${activeSystem === "product-generator" && activeProduct && draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
@@ -644,7 +637,7 @@ const ProductGeneratorChat = () => {
               <button
                 key={product.label}
                 type="button"
-                disabled={!product.enabled || isGenerating}
+                disabled={!product.enabled || isGenerating || activeSystem !== "product-generator"}
                 aria-pressed={activeProduct === product.label}
                 title={product.enabled ? "Create an ebook" : `${product.label} creation is not enabled yet`}
                 onClick={() => {
