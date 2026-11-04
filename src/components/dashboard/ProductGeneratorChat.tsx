@@ -144,6 +144,7 @@ const ProductGeneratorChat = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
+  const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
@@ -461,7 +462,7 @@ const ProductGeneratorChat = () => {
                     {message.kind === "templates" && (
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#313131] bg-[#202020] text-[#FFFFFF]">
+                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#313131] bg-[#202020] text-white">
                             <Sparkles size={14} aria-hidden="true" />
                           </span>
                           <div className="pt-1">
@@ -478,7 +479,7 @@ const ProductGeneratorChat = () => {
                                 type="button"
                                 onClick={() => message.topic && beginGeneration(template, message.topic)}
                                 disabled={isGenerating || (selectedTemplate !== null && !selected)}
-                                className={`group rounded-xl border p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-65 ${selected ? "border-[#FFFFFF]/60 bg-[#1D2723]" : "border-[#303030] bg-[#1B1B1B] hover:border-[#545454] hover:bg-[#202020]"}`}
+                                className={`group rounded-xl border p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-65 ${selected ? "border-[#FFFFFF]/60 bg-[#202020]" : "border-[#303030] bg-[#1B1B1B] hover:border-[#545454] hover:bg-[#202020]"}`}
                                 aria-pressed={selected}
                               >
                                 <div className="mb-3 flex items-center justify-between">
@@ -610,16 +611,27 @@ const ProductGeneratorChat = () => {
                 {attachmentMenuOpen && (
                   <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 w-[min(310px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-2 shadow-xl">
                     <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
+                    <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Apps</div>
                     {[
-                      ["Attachments", "Unavailable · secure upload is not enabled in this preview."],
-                      ["Apps", "Not connected · Composio is present in the agent service but has no verified account here."],
+                      "Gmail", "Notion", "Slack", "GitHub", "Zapier", "Stripe", "Whop", "Supabase",
+                    ].map((name) => (
+                      <div key={name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#303030]">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-[10px] font-semibold text-white/80">{name.slice(0, 1)}</span>
+                        <span className="min-w-0 flex-1 text-xs text-white/80">{name}</span>
+                        <button type="button" onClick={() => setSelectedIntegration(name)} className="rounded-md border border-white/25 bg-[#0A0A0A] px-2 py-1 text-[10px] text-white hover:bg-white hover:text-black">Connect</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setSelectedIntegration("more apps")} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-white/60 hover:bg-white/[0.06] hover:text-white">+ Add more apps</button>
+                    <div className="my-2 border-t border-white/10" />
+                    {[
+                      ["Attachments", "Not configured · this Vite preview has no upload API/storage flow yet."],
                       ["Plugins", "Unavailable · no plugin registry is configured."],
-                      ["MCP", "Unconfigured · Context7 client exists for SCOUT, but no runtime connection is verified."],
-                      ["Agent Tools", "Available in code · Hybrid Agentic System requires VITE_HYBRID_AGENT_URL and a reachable runtime."],
+                      ["MCP", "Partially present · Context7 client exists for SCOUT; general MCP connections are not configured."],
+                      ["Agent Tools", "Requires VITE_HYBRID_AGENT_URL and a reachable authenticated runtime."],
                     ].map(([name, status]) => (
-                      <div key={name} role="menuitem" className="rounded-lg px-2 py-2 hover:bg-[#303030]">
-                        <p className="text-xs font-medium text-[#EDEDED]">{name}</p>
-                        <p className="mt-0.5 text-[10px] leading-4 text-[#929292]">{status}</p>
+                      <div key={name} className="rounded-lg px-2 py-2">
+                        <p className="text-xs font-medium text-white/80">{name}</p>
+                        <p className="mt-0.5 text-[10px] leading-4 text-white/40">{status}</p>
                       </div>
                     ))}
                   </div>
@@ -692,6 +704,20 @@ const ProductGeneratorChat = () => {
           <p className="mt-2 text-center text-[10px] leading-4 text-[#656565]">AI-generated content should be reviewed before publishing.</p>
         </div>
       </div>
+      {selectedIntegration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedIntegration(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="integration-dialog-title" className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#151515] p-5 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="integration-dialog-title" className="text-sm font-semibold text-white">{selectedIntegration === "more apps" ? "Add an app" : `Connect ${selectedIntegration}`}</h2>
+              <button type="button" onClick={() => setSelectedIntegration(null)} aria-label="Close dialog" className="rounded-md px-2 py-1 text-white/50 hover:bg-white/10 hover:text-white">×</button>
+            </div>
+            <p className="text-sm leading-6 text-white/60">The connection flow for {selectedIntegration === "more apps" ? "additional apps" : selectedIntegration} is not configured in this preview yet. No account has been connected, and no credentials were saved.</p>
+            <div className="mt-5 flex justify-end">
+              <button type="button" onClick={() => setSelectedIntegration(null)} className="rounded-lg bg-white px-4 py-2 text-xs font-medium text-black hover:bg-white/90">Got it</button>
+            </div>
+          </section>
+        </div>
+      )}
       <ChatAuthPrompt
         open={authPromptOpen}
         onOpenChange={setAuthPromptOpen}
