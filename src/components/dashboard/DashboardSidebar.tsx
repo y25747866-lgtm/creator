@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Bot,
   ChevronLeft,
   ChevronRight,
   Download,
-  ExternalLink,
   LogOut,
   Settings,
   User as UserIcon,
@@ -13,19 +11,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
-
-const agentRoster = [
-  { name: "NEXUS", role: "Orchestrator" },
-  { name: "SCOUT", role: "Research" },
-  { name: "FLUX", role: "Creative" },
-  { name: "APEX", role: "Strategy" },
-  { name: "FORGE", role: "Builder" },
-];
 
 const DashboardSidebar = () => {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
@@ -33,7 +22,6 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
-  const [agentsOpen, setAgentsOpen] = useState(false);
   const showLabels = !collapsed || mobileOpen;
 
   const handleSignOut = async () => {
@@ -86,16 +74,6 @@ const DashboardSidebar = () => {
             <Download className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
             {showLabels && <span>Downloads</span>}
           </Link>
-          <button
-            type="button"
-            onClick={() => { setAgentsOpen(true); closeMobile(); }}
-            title={showLabels ? undefined : "Hybrid Agents"}
-            className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-[#A0A0A0] transition hover:bg-[#1D1D1D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${showLabels ? "" : "justify-center"}`}
-          >
-            <Bot className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-            {showLabels && <span className="flex-1">Hybrid Agents</span>}
-            {showLabels && <span className="rounded-full border border-[#363636] px-2 py-0.5 text-[9px] uppercase tracking-wide text-[#777]">Service</span>}
-          </button>
         </nav>
 
         <div className="shrink-0 border-t border-[#292929] p-3">
@@ -146,31 +124,6 @@ const DashboardSidebar = () => {
         </div>
       </aside>
 
-      <Dialog open={agentsOpen} onOpenChange={setAgentsOpen}>
-        <DialogContent className="max-w-lg border-[#343434] bg-[#191919] text-[#F2F2F2]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Bot size={19} className="text-[#00E68E]" />
-              Hybrid Agents
-            </DialogTitle>
-            <DialogDescription className="text-[#9A9A9A]">
-              The repository contains a separate NexoraOS agent service. It is not connected to this dashboard yet, so agent runs aren’t available in this preview.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {agentRoster.map((agent) => (
-              <div key={agent.name} className="rounded-xl border border-[#303030] bg-[#202020] p-3">
-                <p className="text-sm font-semibold tracking-wide text-[#E8E8E8]">{agent.name}</p>
-                <p className="mt-1 text-xs text-[#929292]">{agent.role}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-start gap-2 rounded-lg border border-[#343434] bg-[#202020] p-3 text-xs leading-5 text-[#9A9A9A]">
-            <ExternalLink size={14} className="mt-0.5 shrink-0 text-[#777]" />
-            <p>Status: not connected. No agent actions are simulated or claimed as completed here.</p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
