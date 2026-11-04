@@ -307,7 +307,7 @@ const ProductGeneratorChat = () => {
 
       replaceMessage(progressId, { text: "Sending the brief to the ebook generator…" });
       const title = `${template.name}: ${topic}`;
-      const { data, error } = await supabase.functions.invoke("generate-ebook", {
+      const { data, error } = await supabase.functions.invoke("generate-ebook-content", {
         body: {
           topic,
           title,
@@ -316,18 +316,11 @@ const ProductGeneratorChat = () => {
           category: "Digital product ebook",
           targetAudience: "Readers interested in the topic",
           tone: template.tone,
-          language: "English",
         },
       });
 
       if (error) throw new Error(error.message || "The ebook service could not complete the request.");
-      const chapterContent = Array.isArray(data?.chapters)
-        ? data.chapters
-          .filter((chapter: unknown): chapter is { title?: unknown; content?: unknown } => typeof chapter === "object" && chapter !== null)
-          .map((chapter) => `## ${typeof chapter.title === "string" ? chapter.title : "Chapter"}\n\n${typeof chapter.content === "string" ? chapter.content : ""}`)
-          .join("\n\n")
-        : "";
-      const content = (typeof data?.content === "string" ? data.content : chapterContent).trim();
+      const content = typeof data?.content === "string" ? data.content.trim() : "";
       if (!content) throw new Error("The ebook service returned no content. Please try again later.");
       if (/this is a placeholder for the ebook content|configure your groq_api_key/i.test(content)) {
         throw new Error("The connected Edge Function returned setup placeholder text rather than a generated ebook. No file was saved.");
