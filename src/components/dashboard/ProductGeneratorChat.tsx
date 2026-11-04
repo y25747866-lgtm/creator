@@ -418,7 +418,7 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace flex min-h-[calc(100dvh-0px)] flex-col" style={{ background: "#151515", color: "#F5F5F5" }}>
+    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#151515", color: "#F5F5F5" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
@@ -445,9 +445,9 @@ const ProductGeneratorChat = () => {
         )}
       </header>
 
-      <div ref={conversationRef} className="flex-1 overflow-y-auto overscroll-contain">
+      <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
-          <section className="mx-auto flex min-h-[calc(100dvh-240px)] w-full max-w-[800px] items-center justify-center px-5 pb-8 pt-10 sm:px-8" aria-label="New conversation" />
+          <section className="mx-auto flex h-full min-h-[calc(100dvh-64px)] w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation" />
         ) : (
           <section className="mx-auto flex w-full max-w-[800px] flex-col gap-7 px-4 py-8 sm:px-8 sm:py-10" aria-label="Conversation" aria-live="polite">
             {messages.map((message) => (
@@ -575,7 +575,7 @@ const ProductGeneratorChat = () => {
         )}
       </div>
 
-      <div className="sticky bottom-0 z-10 w-full shrink-0 bg-gradient-to-t from-[#151515] via-[#151515] to-transparent px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-5 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]">
+      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#151515] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-[800px]">
           <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#202020] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
