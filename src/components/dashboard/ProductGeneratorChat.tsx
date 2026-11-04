@@ -148,7 +148,36 @@ const ProductGeneratorChat = () => {
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
+  const historyLoadedFor = useRef<string | null>(null);
+  const skipNextHistorySave = useRef(false);
   const hasConversation = messages.length > 0;
+
+  useEffect(() => {
+    if (!user?.id || historyLoadedFor.current === user.id) return;
+    const key = `nexoraos-chat-history-v1-${user.id}`;
+    try {
+      const saved = window.localStorage.getItem(key);
+      const parsed = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(parsed)) setMessages(parsed.filter((item) => item && typeof item.id === "string" && typeof item.text === "string"));
+    } catch {
+      // Ignore malformed local history; generation remains available.
+    }
+    historyLoadedFor.current = user.id;
+    skipNextHistorySave.current = true;
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || historyLoadedFor.current !== user.id) return;
+    if (skipNextHistorySave.current) {
+      skipNextHistorySave.current = false;
+      return;
+    }
+    try {
+      window.localStorage.setItem(`nexoraos-chat-history-v1-${user.id}`, JSON.stringify(messages));
+    } catch {
+      // Storage may be disabled or full; do not block chat generation.
+    }
+  }, [messages, user?.id]);
 
   useEffect(() => {
     const container = conversationRef.current;
