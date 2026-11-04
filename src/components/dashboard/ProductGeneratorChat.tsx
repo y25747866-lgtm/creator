@@ -624,7 +624,8 @@ const ProductGeneratorChat = () => {
                     ))}
                   </div>
                 )}
-                <div className="hidden h-5 w-px bg-[#383838] sm:block" aria-hidden="true" />
+              </div>
+              <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2">
                 <div className="relative">
                   <button
                     type="button"
@@ -638,7 +639,7 @@ const ProductGeneratorChat = () => {
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
                   {capabilityMenuOpen && (
-                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 left-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-1.5 shadow-xl">
+                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 right-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-1.5 shadow-xl">
                       <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#EDEDED] hover:bg-[#303030]">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFFFF]" />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Creates ebooks with the verified product workflow.</span></span>
@@ -650,9 +651,6 @@ const ProductGeneratorChat = () => {
                     </div>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                
                 <button
                   type="submit"
                   disabled={!draft.trim() || isGenerating}
