@@ -174,10 +174,25 @@ const ProductGeneratorChat = () => {
     }
     try {
       window.localStorage.setItem(`nexoraos-chat-history-v1-${user.id}`, JSON.stringify(messages));
+      window.dispatchEvent(new Event("nexoraos:history-updated"));
     } catch {
       // Storage may be disabled or full; do not block chat generation.
     }
   }, [messages, user?.id]);
+
+  useEffect(() => {
+    const handleNewChat = () => {
+      if (generationLock.current) return;
+      clearPendingChatTopic();
+      setMessages([]);
+      setDraft("");
+      setActiveProduct("Ebook");
+      setSelectedTemplate(null);
+      composerRef.current?.focus();
+    };
+    window.addEventListener("nexoraos:new-chat", handleNewChat);
+    return () => window.removeEventListener("nexoraos:new-chat", handleNewChat);
+  }, []);
 
   useEffect(() => {
     const container = conversationRef.current;
