@@ -480,14 +480,14 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#0A0A0A", color: "#F5F5F5" }}>
+    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#121212", color: "#F5F5F5" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
             type="button"
             aria-label="Open navigation drawer"
             onClick={() => setMobileOpen(true)}
-            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-[#B2B2B2] transition hover:bg-[#242424] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] md:hidden"
+            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-[#B2B2B2] transition hover:bg-[#1F1F1F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] md:hidden"
           >
             <Menu size={18} aria-hidden="true" />
           </button>
@@ -502,7 +502,7 @@ const ProductGeneratorChat = () => {
             type="button"
             onClick={startNewChat}
             disabled={isGenerating}
-            className="rounded-lg px-3 py-2 text-sm text-[#A0A0A0] transition hover:bg-[#202020] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg px-3 py-2 text-sm text-[#A0A0A0] transition hover:bg-[#1F1F1F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:cursor-not-allowed disabled:opacity-50"
           >
             New chat
           </button>
@@ -517,7 +517,7 @@ const ProductGeneratorChat = () => {
             {messages.map((message) => (
               <div key={message.id} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
                 {message.role === "user" ? (
-                  <div className="max-w-[88%] rounded-2xl rounded-br-md bg-[#242424] px-4 py-3 text-[15px] leading-6 text-[#F2F2F2] sm:max-w-[78%] sm:px-5">
+                  <div className="max-w-[88%] rounded-2xl rounded-br-md bg-[#1F1F1F] px-4 py-3 text-[15px] leading-6 text-[#F2F2F2] sm:max-w-[78%] sm:px-5">
                     {message.text}
                   </div>
                 ) : (
@@ -525,7 +525,7 @@ const ProductGeneratorChat = () => {
                     {message.kind === "templates" && (
                       <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#313131] bg-[#202020] text-white">
+                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[#313131] bg-[#1F1F1F] text-white">
                             <Sparkles size={14} aria-hidden="true" />
                           </span>
                           <div className="pt-1">
@@ -542,11 +542,11 @@ const ProductGeneratorChat = () => {
                                 type="button"
                                 onClick={() => message.topic && beginGeneration(template, message.topic)}
                                 disabled={isGenerating || (selectedTemplate !== null && !selected)}
-                                className={`group rounded-xl border p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] disabled:cursor-not-allowed disabled:opacity-65 ${selected ? "border-[#FFFFFF]/60 bg-[#202020]" : "border-[#303030] bg-[#1B1B1B] hover:border-[#545454] hover:bg-[#202020]"}`}
+                                className={`group rounded-xl border p-4 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:cursor-not-allowed disabled:opacity-65 ${selected ? "border-[#195A9F]/60 bg-[#131E2A]" : "border-[#1F1F1F] bg-[#1F1F1F] hover:border-[#545454] hover:bg-[#131E2A]"}`}
                                 aria-pressed={selected}
                               >
                                 <div className="mb-3 flex items-center justify-between">
-                                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#333] bg-[#222] text-[#B8B8B8] transition group-hover:text-[#FFFFFF]">
+                                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#333] bg-[#1F1F1F] text-[#B8B8B8] transition group-hover:text-[#195A9F]">
                                     {selected ? <Check size={15} /> : <FileText size={15} />}
                                   </span>
                                   <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-[#737373]">0{index + 1}</span>
@@ -561,9 +561,9 @@ const ProductGeneratorChat = () => {
                     )}
 
                     {message.kind === "progress" && (
-                      <div className="rounded-2xl border border-[#2D2D2D] bg-[#1A1A1A] p-4 sm:p-5">
+                      <div className="rounded-2xl border border-[#2D2D2D] bg-[#1F1F1F] p-4 sm:p-5">
                         <div className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#353535] bg-[#222] text-[#FFFFFF]">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#353535] bg-[#1F1F1F] text-[#195A9F]">
                             {message.complete ? <Check size={15} /> : <Loader2 size={15} className="animate-spin" />}
                           </span>
                           <div className="min-w-0 flex-1">
@@ -578,12 +578,12 @@ const ProductGeneratorChat = () => {
                         </div>
                         {message.totalChapters ? (
                           <div className="mt-4 h-1 overflow-hidden rounded-full bg-[#303030]" aria-hidden="true">
-                            <div className="h-full rounded-full bg-[#FFFFFF] transition-[width] duration-300" style={{ width: `${((message.chapters?.length ?? 0) / message.totalChapters) * 100}%` }} />
+                            <div className="h-full rounded-full bg-[#195A9F] transition-[width] duration-300" style={{ width: `${((message.chapters?.length ?? 0) / message.totalChapters) * 100}%` }} />
                           </div>
                         ) : null}
                         {(message.chapters ?? []).map((chapter, index) => (
                           <article key={`${message.id}-${index}`} className="mt-5 border-t border-[#2E2E2E] pt-4">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#FFFFFF]">Chapter {index + 1}</p>
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#D0D0D0]">Chapter {index + 1}</p>
                             <h3 className="text-base font-medium tracking-tight text-[#F2F2F2]">{chapter.heading}</h3>
                             {chapter.body && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#B0B0B0]">{chapter.body}</p>}
                           </article>
@@ -592,16 +592,16 @@ const ProductGeneratorChat = () => {
                     )}
 
                     {message.kind === "error" && (
-                      <div role="alert" className="rounded-xl border border-[#353535] bg-[#1A1A1A] p-4 text-sm leading-6 text-[#D0D0D0]">
+                      <div role="alert" className="rounded-xl border border-[#353535] bg-[#1F1F1F] p-4 text-sm leading-6 text-[#D0D0D0]">
                         <p className="font-medium text-[#F5F5F5]">The ebook wasn’t created</p>
                         <p className="mt-1 text-[#929292]">{message.text}</p>
                       </div>
                     )}
 
                     {message.kind === "ready" && message.ebook && (
-                      <div className="rounded-2xl border border-[#353535] bg-[#1A1A1A] p-4 sm:p-5">
+                      <div className="rounded-2xl border border-[#353535] bg-[#1F1F1F] p-4 sm:p-5">
                         <div className="flex items-start gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#353535] bg-[#242424] text-[#FFFFFF]">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#353535] bg-[#1F1F1F] text-[#195A9F]">
                             <BookOpen size={16} aria-hidden="true" />
                           </span>
                           <div className="min-w-0 flex-1">
@@ -614,14 +614,14 @@ const ProductGeneratorChat = () => {
                           <button
                             type="button"
                             onClick={() => void downloadEbook(message.ebook!)}
-                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#0A0A0A] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
+                            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#121212] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
                           >
                             <Download size={15} aria-hidden="true" />
                             Download PDF
                           </button>
                           <Link
                             to="/dashboard/downloads"
-                            className="inline-flex min-h-10 items-center rounded-lg border border-[#353535] px-4 text-sm text-[#D0D0D0] transition hover:bg-[#262626] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
+                            className="inline-flex min-h-10 items-center rounded-lg border border-[#353535] px-4 text-sm text-[#D0D0D0] transition hover:bg-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
                           >
                             Open Downloads
                           </Link>
@@ -639,9 +639,9 @@ const ProductGeneratorChat = () => {
         )}
       </div>
 
-      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#0A0A0A] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
+      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#121212] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-[800px]">
-          <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#202020] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
+          <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#1F1F1F] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <textarea
               id="nexora-topic-composer"
@@ -667,16 +667,16 @@ const ProductGeneratorChat = () => {
                   onClick={() => { setAttachmentMenuOpen((open) => !open); setCapabilityMenuOpen(false); }}
                   aria-label="Open attachment options"
                   aria-expanded={attachmentMenuOpen}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
                 >
                   <Plus size={19} aria-hidden="true" />
                 </button>
                 {attachmentMenuOpen && (
-                  <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 max-h-[min(40dvh,420px)] w-[min(310px,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-xl border border-[#393939] bg-[#262626] p-2 shadow-xl">
+                  <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 max-h-[min(40dvh,420px)] w-[min(310px,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-xl border border-[#393939] bg-[#1F1F1F] p-2 shadow-xl">
                     <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
                     <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Apps</div>
                     {INTEGRATION_APPS.map(({ name, logo }) => (
-                      <div key={name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#303030]">
+                      <div key={name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#1F1F1F]">
                         {logo ? (
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white p-0.5">
                             <img src={logo} alt={`${name} logo`} width="20" height="20" className="h-5 w-5 object-contain" />
@@ -685,10 +685,10 @@ const ProductGeneratorChat = () => {
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-[10px] font-semibold text-white/80">{name.slice(0, 1)}</span>
                         )}
                         <span className="min-w-0 flex-1 text-xs text-white/80">{name}</span>
-                        <button type="button" onClick={() => setSelectedIntegration(name)} className="rounded-md border border-white/25 bg-[#0A0A0A] px-2 py-1 text-[10px] text-white hover:bg-white hover:text-black">Connect</button>
+                        <button type="button" onClick={() => setSelectedIntegration(name)} className="rounded-md border border-white/25 bg-[#131E2A] px-2 py-1 text-[10px] text-white hover:bg-[#195A9F] hover:text-white">Connect</button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => setSelectedIntegration("more apps")} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-white/60 hover:bg-white/[0.06] hover:text-white">+ Add more apps</button>
+                    <button type="button" onClick={() => setSelectedIntegration("more apps")} className="mt-1 w-full rounded-lg px-2 py-2 text-left text-xs text-white/60 hover:bg-[#1F1F1F] hover:text-white">+ Add more apps</button>
                     <div className="my-2 border-t border-white/10" />
                     {[
                       ["Attachments", "Not configured · this Vite preview has no upload API/storage flow yet."],
@@ -711,19 +711,19 @@ const ProductGeneratorChat = () => {
                     onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); }}
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
-                    className="flex h-9 max-w-[205px] items-center gap-2 rounded-xl px-2.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF]"
+                    className="flex h-9 max-w-[205px] items-center gap-2 rounded-xl px-2.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
                   >
-                    <Sparkles size={14} className="shrink-0 text-[#FFFFFF]" aria-hidden="true" />
+                    <Sparkles size={14} className="shrink-0 text-[#195A9F]" aria-hidden="true" />
                     <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
                   {capabilityMenuOpen && (
-                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 right-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-1.5 shadow-xl">
-                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#EDEDED] hover:bg-[#303030]">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFFFF]" />
+                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 right-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#1F1F1F] p-1.5 shadow-xl">
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#EDEDED] hover:bg-[#1F1F1F]">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#195A9F]" />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Creates ebooks with the verified product workflow.</span></span>
                       </button>
-                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#BDBDBD] hover:bg-[#303030]">
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#BDBDBD] hover:bg-[#1F1F1F]">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#777]" />
                         <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Not connected in this preview; no agent run will be simulated.</span></span>
                       </button>
@@ -734,7 +734,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFFFFF] disabled:cursor-not-allowed ${draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:cursor-not-allowed ${draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
@@ -762,7 +762,7 @@ const ProductGeneratorChat = () => {
                   setCapabilityMenuOpen(false);
                   composerRef.current?.focus();
                 }}
-                className={`min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeProduct === product.label ? "border-white bg-white text-[#0A0A0A]" : product.enabled ? "border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white" : "cursor-not-allowed border-white/10 bg-transparent text-white/25"}`}
+                className={`min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeProduct === product.label ? "border-[#195A9F] bg-[#131E2A] text-white" : product.enabled ? "border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white" : "cursor-not-allowed border-white/10 bg-transparent text-white/25"}`}
               >
                 {product.label}
               </button>
@@ -773,7 +773,7 @@ const ProductGeneratorChat = () => {
       </div>
       {selectedIntegration && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedIntegration(null); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="integration-dialog-title" className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#151515] p-5 shadow-2xl">
+          <section role="dialog" aria-modal="true" aria-labelledby="integration-dialog-title" className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#1F1F1F] p-5 shadow-2xl">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="integration-dialog-title" className="text-sm font-semibold text-white">{selectedIntegration === "more apps" ? "Add an app" : `Connect ${selectedIntegration}`}</h2>
               <button type="button" onClick={() => setSelectedIntegration(null)} aria-label="Close dialog" className="rounded-md px-2 py-1 text-white/50 hover:bg-white/10 hover:text-white">×</button>

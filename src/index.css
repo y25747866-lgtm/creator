@@ -67,6 +67,35 @@
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 0 0% 100%;
   }
+
+  /* Supplied NexoraOS dashboard palette: #121212, #1F1F1F, #195A9F, #131E2A */
+  .nexora-dashboard {
+    --background: 0 0% 7.1%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 12.2%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 12.2%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 211 73% 36.1%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 211 38% 12%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 211 38% 12%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 211 38% 12%;
+    --accent-foreground: 0 0% 100%;
+    --border: 0 0% 12.2%;
+    --input: 0 0% 12.2%;
+    --ring: 211 73% 36.1%;
+    --sidebar-background: 0 0% 7.1%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 211 73% 36.1%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 211 38% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 12.2%;
+    --sidebar-ring: 211 73% 36.1%;
+  }
 }
 
 @layer base {
