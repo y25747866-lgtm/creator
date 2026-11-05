@@ -52,8 +52,8 @@ export async function listConnectedComposioApps(): Promise<ConnectedComposioApp[
 }
 
 export function startComposioConnection(connectorId: string): Promise<ConnectorConnectionResponse> {
-  return connectorRequest<ConnectorConnectionResponse>(`/connectors/${encodeURIComponent(connectorId)}/connect`, {
+  return connectorRequest<ConnectorConnectionResponse>("/connectors/connect", {
     method: "POST",
-    body: JSON.stringify({}),
+    body: JSON.stringify({ connectorId }),
   });
 }

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { COMPOSIO_CONNECTORS, createConnectorLink, getAuthenticatedUser } from "../../_lib/composio.js";
+import { COMPOSIO_CONNECTORS, createConnectorLink, getAuthenticatedUser } from "../_lib/composio.js";
 
 function getCallbackUrl(req: VercelRequest): string {
   const configured = process.env.CONNECTOR_CALLBACK_URL?.trim();
@@ -16,8 +16,10 @@ function getCallbackUrl(req: VercelRequest): string {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed." });
-  const connectorId = String(req.query.connectorId ?? "");
-  if (!Object.prototype.hasOwnProperty.call(COMPOSIO_CONNECTORS, connectorId)) return res.status(404).json({ error: "This app is not available in the curated catalog." });
+  const connectorId = typeof req.body?.connectorId === "string" ? req.body.connectorId : "";
+  if (!Object.prototype.hasOwnProperty.call(COMPOSIO_CONNECTORS, connectorId)) {
+    return res.status(404).json({ error: "This app is not available in the curated catalog." });
+  }
   try {
     const user = await getAuthenticatedUser(req);
     if (!user) return res.status(401).json({ error: "Sign in to manage connected apps." });
