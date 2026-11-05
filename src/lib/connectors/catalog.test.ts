@@ -16,4 +16,8 @@ describe("curated connector catalog", () => {
   it("marks only GitHub, Supabase, and Vercel as core workspace services", () => {
     expect([...CORE_WORKSPACE_CONNECTOR_IDS].sort()).toEqual(["github", "supabase", "vercel"]);
   });
+  it("allows a separate Composio account connection for the workspace Supabase and Vercel apps", () => {
+    expect(CONNECTORS.find((connector) => connector.id === "supabase")).toMatchObject({ workspaceDefault: true, supportsAccountConnection: true, authKind: "api_key" });
+    expect(CONNECTORS.find((connector) => connector.id === "vercel")).toMatchObject({ workspaceDefault: true, supportsAccountConnection: true, authKind: "api_key" });
+  });
 });

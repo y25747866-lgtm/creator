@@ -1,4 +1,4 @@
-import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUp,
   BookOpen,
@@ -6,18 +6,24 @@ import {
   ChevronDown,
   Download,
   FileText,
+  Image as ImageIcon,
   Loader2,
   Menu,
   Plus,
   Sparkles,
+  Video,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useToast } from "@/hooks/use-toast";
 import { Ebook, useEbookStore } from "@/hooks/useEbookStore";
 import { supabase } from "@/integrations/supabase/client";
+import { cacheLocalCreatorConversation, loadCreatorConversation, readLocalCreatorConversation, saveCreatorConversation } from "@/lib/chatPersistence";
+import { deleteCreatorMedia, refreshMediaLinks, saveGeneratedEbook, uploadCreatorMedia, type MediaAttachment } from "@/lib/ebookRepository";
 import { generatePDF } from "@/lib/pdfGenerator";
-import { Link } from "react-router-dom";
+import { recordMetric } from "@/lib/productTracking";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSidebarState } from "./DashboardLayout";
 import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
 import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
@@ -46,6 +52,7 @@ type ChatMessage = {
   totalChapters?: number;
   complete?: boolean;
   ebook?: Ebook;
+  attachments?: MediaAttachment[];
 };
 
 const PRODUCT_TEMPLATES: Template[] = [
@@ -95,6 +102,15 @@ const PRODUCT_TEMPLATES: Template[] = [
 
 const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 
+function isChatMessage(value: unknown): value is ChatMessage {
+  if (!value || typeof value !== "object") return false;
+  const message = value as Partial<ChatMessage>;
+  return typeof message.id === "string" &&
+    (message.role === "user" || message.role === "assistant") &&
+    typeof message.text === "string" &&
+    ["text", "templates", "progress", "error", "ready"].includes(String(message.kind));
+}
+
 function parseChapters(markdown: string, title: string): Chapter[] {
   const lines = markdown.replace(/\r/g, "").split("\n");
   const chapters: Chapter[] = [];
@@ -134,6 +150,8 @@ function estimatePages(content: string): number {
 
 const ProductGeneratorChat = () => {
   const { user, loading: authLoading, sendMagicLink } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { setMobileOpen } = useSidebarState();
   const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
   const { toast } = useToast();
@@ -152,46 +170,88 @@ const ProductGeneratorChat = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<MediaAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
-  const historyLoadedFor = useRef<string | null>(null);
-  const skipNextHistorySave = useRef(false);
+  const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
 
   useEffect(() => {
-    if (!user?.id || historyLoadedFor.current === user.id) return;
-    const key = `nexoraos-chat-history-v1-${user.id}`;
+    if (!user?.id || !messages.length) return;
+    const conversationId = activeConversationIdRef.current ?? makeId();
+    activeConversationIdRef.current = conversationId;
+    const title = messages.find((message) => message.role === "user")?.text?.trim().slice(0, 120) || "New chat";
+    const snapshot = messages;
     try {
-      const saved = window.localStorage.getItem(key);
-      const parsed = saved ? JSON.parse(saved) : [];
-      if (Array.isArray(parsed)) setMessages(parsed.filter((item) => item && typeof item.id === "string" && typeof item.text === "string"));
-    } catch {
-      // Ignore malformed local history; generation remains available.
-    }
-    historyLoadedFor.current = user.id;
-    skipNextHistorySave.current = true;
-  }, [user?.id]);
+      cacheLocalCreatorConversation(user.id, conversationId, title, snapshot);
+    } catch { /* local caching is only a backup */ }
+    const timer = window.setTimeout(() => {
+      void saveCreatorConversation(user.id, conversationId, title, snapshot).then(() => {
+        window.dispatchEvent(new Event("nexoraos:history-updated"));
+      }).catch((reason) => console.warn("Chat history remains in the local backup until Supabase is available:", reason));
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [messages, user?.id]);
 
   useEffect(() => {
-    if (!user?.id || historyLoadedFor.current !== user.id) return;
-    if (skipNextHistorySave.current) {
-      skipNextHistorySave.current = false;
-      return;
-    }
-    try {
-      window.localStorage.setItem(`nexoraos-chat-history-v1-${user.id}`, JSON.stringify(messages));
+    const requestedId = new URLSearchParams(location.search).get("conversation");
+    if (!requestedId || !user?.id) return;
+    let cancelled = false;
+    setHistoryLoading(true);
+    void (async () => {
+      let rawMessages: unknown[] = [];
+      try {
+        if (requestedId === "legacy") throw new Error("Load legacy browser history");
+        rawMessages = await loadCreatorConversation(user.id, requestedId);
+      } catch {
+        rawMessages = readLocalCreatorConversation(user.id, requestedId);
+      }
+      const validMessages = rawMessages.filter(isChatMessage);
+      const withFreshLinks = await Promise.all(validMessages.map(async (message) => ({
+        ...message,
+        attachments: message.attachments?.length ? await refreshMediaLinks(message.attachments) : message.attachments,
+      })));
+      if (!cancelled) {
+        activeConversationIdRef.current = requestedId === "legacy" ? null : requestedId;
+        setMessages(withFreshLinks);
+        setDraft("");
+        setSelectedTemplate(null);
+      }
+    })().catch((reason) => {
+      if (!cancelled) toast({ title: "Could not open chat", description: reason instanceof Error ? reason.message : "This conversation is unavailable.", variant: "destructive" });
+    }).finally(() => {
+      if (!cancelled) {
+        setHistoryLoading(false);
+        navigate("/dashboard", { replace: true });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [location.search, navigate, toast, user?.id]);
+
+  const persistCurrentConversation = useCallback(() => {
+    if (!user?.id || !messages.length) return;
+    const conversationId = activeConversationIdRef.current ?? makeId();
+    activeConversationIdRef.current = conversationId;
+    const title = messages.find((message) => message.role === "user")?.text?.trim().slice(0, 120) || "New chat";
+    try { cacheLocalCreatorConversation(user.id, conversationId, title, messages); } catch { /* cache is optional */ }
+    void saveCreatorConversation(user.id, conversationId, title, messages).then(() => {
       window.dispatchEvent(new Event("nexoraos:history-updated"));
-    } catch {
-      // Storage may be disabled or full; do not block chat generation.
-    }
+    }).catch((reason) => console.warn("Could not sync chat history yet:", reason));
   }, [messages, user?.id]);
 
   useEffect(() => {
     const handleNewChat = () => {
       if (generationLock.current) return;
+      persistCurrentConversation();
       clearPendingChatTopic();
+      for (const attachment of pendingAttachments) void deleteCreatorMedia(attachment.path).catch(() => undefined);
+      activeConversationIdRef.current = null;
       setMessages([]);
+      setPendingAttachments([]);
       setDraft("");
       setActiveProduct("Ebook");
       setSelectedTemplate(null);
@@ -199,7 +259,7 @@ const ProductGeneratorChat = () => {
     };
     window.addEventListener("nexoraos:new-chat", handleNewChat);
     return () => window.removeEventListener("nexoraos:new-chat", handleNewChat);
-  }, []);
+  }, [persistCurrentConversation, pendingAttachments]);
 
   useEffect(() => {
     const container = conversationRef.current;
@@ -243,6 +303,39 @@ const ProductGeneratorChat = () => {
     element.style.height = `${Math.min(element.scrollHeight, 160)}px`;
   };
 
+  const handleMediaSelection = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files ?? []);
+    event.currentTarget.value = "";
+    if (!files.length) return;
+    if (!user?.id) {
+      setAuthPromptOpen(true);
+      return;
+    }
+    const remainingSlots = Math.max(0, 5 - pendingAttachments.length);
+    if (remainingSlots === 0) {
+      toast({ title: "Attachment limit reached", description: "Add up to five images or videos to one prompt.", variant: "destructive" });
+      return;
+    }
+    const selectedFiles = files.slice(0, remainingSlots);
+    if (selectedFiles.length < files.length) toast({ title: "Some files were skipped", description: "You can attach up to five files to one prompt." });
+    setIsUploading(true);
+    setAttachmentMenuOpen(false);
+    for (const file of selectedFiles) {
+      try {
+        const uploaded = await uploadCreatorMedia(file, user.id);
+        setPendingAttachments((current) => [...current, uploaded]);
+      } catch (reason) {
+        toast({ title: "Upload failed", description: reason instanceof Error ? reason.message : "Check the file and try again.", variant: "destructive" });
+      }
+    }
+    setIsUploading(false);
+  };
+
+  const removePendingAttachment = async (attachment: MediaAttachment) => {
+    setPendingAttachments((current) => current.filter((item) => item.id !== attachment.id));
+    try { await deleteCreatorMedia(attachment.path); } catch { /* the chat does not depend on a cleanup retry */ }
+  };
+
   const submitTopic = (event?: FormEvent) => {
     event?.preventDefault();
     if (generationLock.current || !draft.trim()) return;
@@ -267,11 +360,14 @@ const ProductGeneratorChat = () => {
     }
 
     clearPendingChatTopic();
+    const attachments = pendingAttachments;
+    setPendingAttachments([]);
+    setAttachmentMenuOpen(false);
     if (activeSystem === "hybrid-agentic") {
       const progressId = makeId();
       setMessages((current) => [
         ...current,
-        { id: makeId(), role: "user", kind: "text", text: topic },
+        { id: makeId(), role: "user", kind: "text", text: topic, attachments },
         { id: progressId, role: "assistant", kind: "progress", text: "Connecting to the Hybrid Agentic System…", complete: false },
       ]);
       setDraft("");
@@ -296,7 +392,7 @@ const ProductGeneratorChat = () => {
     }
     setMessages((current) => [
       ...current,
-      { id: makeId(), role: "user", kind: "text", text: topic },
+      { id: makeId(), role: "user", kind: "text", text: topic, attachments },
       {
         id: makeId(),
         role: "assistant",
@@ -380,8 +476,7 @@ const ProductGeneratorChat = () => {
 
       const finalTitle = typeof data?.title === "string" && data.title.trim() ? data.title.trim() : title;
       const chapters = parseChapters(content, finalTitle);
-      const ebook: Ebook = {
-        id: makeId(),
+      const ebookDraft: Omit<Ebook, "id" | "dbProductId"> = {
         title: finalTitle,
         topic,
         description: template.description,
@@ -390,8 +485,9 @@ const ProductGeneratorChat = () => {
         pages: estimatePages(content),
         length: "medium",
         createdAt: new Date().toISOString(),
-        userId: user?.id,
+        userId: user.id,
       };
+      const ebook = await saveGeneratedEbook(ebookDraft, user.id);
       addEbook(ebook);
 
       replaceMessage(progressId, {
@@ -453,6 +549,7 @@ const ProductGeneratorChat = () => {
     }
     try {
       await generatePDF(ebook);
+      if (ebook.dbProductId) void recordMetric(ebook.dbProductId, "download");
       toast({ title: "PDF exported", description: "Your ebook download has started." });
     } catch {
       toast({ title: "Export failed", description: "We couldn’t create the PDF. Please try again.", variant: "destructive" });
@@ -461,8 +558,12 @@ const ProductGeneratorChat = () => {
 
   const startNewChat = () => {
     if (isGenerating) return;
+    persistCurrentConversation();
     clearPendingChatTopic();
+    for (const attachment of pendingAttachments) void deleteCreatorMedia(attachment.path).catch(() => undefined);
+    activeConversationIdRef.current = null;
     setMessages([]);
+    setPendingAttachments([]);
     setDraft("");
     setActiveProduct("Ebook");
     setSelectedTemplate(null);
@@ -501,7 +602,9 @@ const ProductGeneratorChat = () => {
 
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
-          <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation" />
+          <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation">
+            {historyLoading && <p role="status" className="text-xs text-[#8B8B8B]">Opening saved conversation…</p>}
+          </section>
         ) : (
           <section className="mx-auto flex w-full max-w-[800px] flex-col gap-7 px-4 py-8 sm:px-8 sm:py-10" aria-label="Conversation" aria-live="polite">
             {messages.map((message) => (
@@ -509,6 +612,17 @@ const ProductGeneratorChat = () => {
                 {message.role === "user" ? (
                   <div className="max-w-[88%] rounded-2xl rounded-br-md bg-[#1F1F1F] px-4 py-3 text-[15px] leading-6 text-[#F2F2F2] sm:max-w-[78%] sm:px-5">
                     {message.text}
+                    {message.attachments?.length ? (
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {message.attachments.map((attachment) => (
+                          <a key={attachment.id} href={attachment.signedUrl} target="_blank" rel="noreferrer" download={attachment.name} className="overflow-hidden rounded-lg border border-white/10 bg-black/20 text-xs text-[#D3D3D3]">
+                            {attachment.signedUrl && attachment.mimeType.startsWith("image/") ? <img src={attachment.signedUrl} alt={attachment.name} className="max-h-52 w-full object-cover" /> : null}
+                            {attachment.signedUrl && attachment.mimeType.startsWith("video/") ? <video src={attachment.signedUrl} controls preload="metadata" className="max-h-52 w-full bg-black" aria-label={attachment.name} /> : null}
+                            <span className="block truncate px-2.5 py-2">{attachment.name}</span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="w-full max-w-full sm:max-w-[92%]">
@@ -633,6 +747,18 @@ const ProductGeneratorChat = () => {
         <div className="mx-auto w-full max-w-[800px]">
           <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#1F1F1F] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
+            <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Upload images or videos" />
+            {pendingAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-2 px-4 pt-3 sm:px-5" aria-label="Pending attachments">
+                {pendingAttachments.map((attachment) => (
+                  <span key={attachment.id} className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-[#C8C8C8]">
+                    {attachment.mimeType.startsWith("video/") ? <Video size={13} /> : <ImageIcon size={13} />}
+                    <span className="max-w-36 truncate">{attachment.name}</span>
+                    <button type="button" aria-label={`Remove ${attachment.name}`} onClick={() => void removePendingAttachment(attachment)} className="ml-1 rounded p-0.5 text-[#8E8E8E] hover:bg-white/10 hover:text-white"><X size={12} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
             <textarea
               id="nexora-topic-composer"
               ref={composerRef}
@@ -644,7 +770,7 @@ const ProductGeneratorChat = () => {
                 resizeComposer();
               }}
               onKeyDown={handleComposerKeyDown}
-              disabled={isGenerating}
+              disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
               className="block max-h-40 min-h-[58px] w-full resize-none bg-transparent px-5 pb-2 pt-[18px] text-[15px] leading-6 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:px-6"
               aria-describedby="composer-hint"
@@ -673,8 +799,15 @@ const ProductGeneratorChat = () => {
                     <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
                     <ConnectorCatalog compact />
                     <div className="my-3 border-t border-white/10" />
+                    <div className="rounded-lg px-2 py-2">
+                      <p className="text-xs font-medium text-white/80">Images and videos</p>
+                      <p className="mt-0.5 text-[10px] leading-4 text-white/45">Private uploads, up to five files and 50 MB each. Files stay with this conversation; the ebook generator currently uses your text brief, not the media.</p>
+                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading || !user} className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-md border border-white/10 px-2.5 text-[11px] text-[#D5D5D5] hover:bg-white/5 disabled:opacity-50">
+                        {isUploading ? <Loader2 size={13} className="animate-spin" /> : <ImageIcon size={13} />}
+                        {isUploading ? "Uploading…" : user ? "Upload image or video" : "Sign in to upload"}
+                      </button>
+                    </div>
                     {[
-                      ["Attachments", "Not configured · this Vite preview has no upload API/storage flow yet."],
                       ["Plugins", "Unavailable · no plugin registry is configured."],
                       ["MCP", "Partially present · Context7 client exists for SCOUT; general MCP connections are not configured."],
                       ["Agent Tools", "Requires VITE_HYBRID_AGENT_URL and a reachable authenticated runtime."],
@@ -715,9 +848,9 @@ const ProductGeneratorChat = () => {
                 </div>
                 <button
                   type="submit"
-                  disabled={!draft.trim() || isGenerating}
+                  disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:cursor-not-allowed ${draft.trim() && !isGenerating ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303030] text-[#777]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>

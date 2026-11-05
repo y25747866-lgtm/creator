@@ -10,9 +10,10 @@ export type ConnectorConnectionResponse = {
 };
 
 const agentBaseUrl = String(import.meta.env.VITE_HYBRID_AGENT_URL ?? "").replace(/\/$/, "");
+const connectorApiBaseUrl = agentBaseUrl || "/api";
 
 export function isConnectorServiceConfigured(): boolean {
-  return Boolean(agentBaseUrl);
+  return Boolean(agentBaseUrl) || import.meta.env.PROD;
 }
 
 async function getAccessToken(): Promise<string> {
@@ -24,12 +25,12 @@ async function getAccessToken(): Promise<string> {
 }
 
 async function connectorRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
-  if (!agentBaseUrl) {
-    throw new Error("The authenticated agent service is not configured in this preview.");
+  if (!isConnectorServiceConfigured()) {
+    throw new Error("The local connector API is available in the Vercel preview. Start Vercel dev or configure the authenticated agent service.");
   }
 
   const token = await getAccessToken();
-  const response = await fetch(`${agentBaseUrl}${path}`, {
+  const response = await fetch(`${connectorApiBaseUrl}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",

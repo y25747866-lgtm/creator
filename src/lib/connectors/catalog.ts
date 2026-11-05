@@ -21,6 +21,7 @@ export type ConnectorDefinition = {
   authLabel: string;
   description: string;
   workspaceDefault?: boolean;
+  supportsAccountConnection?: boolean;
   localLogo?: string;
 };
 
@@ -64,8 +65,8 @@ export const CONNECTORS: ConnectorDefinition[] = [
   { id: "shopify", name: "Shopify", domain: "shopify.com", category: "Payments", toolkit: "shopify", icon: "shopify", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Shopify store and commerce workflows." },
 
   { id: "github", name: "GitHub", domain: "github.com", category: "Dev", toolkit: "github", icon: "github", authKind: "oauth", authLabel: "Workspace service", description: "GitHub is linked to the NexoraOS source workspace.", workspaceDefault: true },
-  { id: "supabase", name: "Supabase", domain: "supabase.com", category: "Dev", toolkit: "supabase", icon: "supabase", authKind: "api_key", authLabel: "Workspace service", description: "Supabase is configured as the NexoraOS application backend.", workspaceDefault: true },
-  { id: "vercel", name: "Vercel", domain: "vercel.com", category: "Dev", toolkit: "vercel", icon: "vercel", authKind: "oauth", authLabel: "Workspace service", description: "Vercel is linked to the NexoraOS preview deployment.", workspaceDefault: true },
+  { id: "supabase", name: "Supabase", domain: "supabase.com", category: "Dev", toolkit: "supabase", icon: "supabase", authKind: "api_key", authLabel: "Composio-hosted project token", description: "Link a Supabase project through Composio's hosted credential flow. NexoraOS also uses its own configured workspace backend.", workspaceDefault: true, supportsAccountConnection: true },
+  { id: "vercel", name: "Vercel", domain: "vercel.com", category: "Dev", toolkit: "vercel", icon: "vercel", authKind: "api_key", authLabel: "Composio-hosted access token", description: "Link a Vercel account through Composio's hosted credential flow. NexoraOS also uses its own preview deployment.", workspaceDefault: true, supportsAccountConnection: true },
   { id: "zapier", name: "Zapier", domain: "zapier.com", category: "Dev", toolkit: "zapier", icon: "zapier", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Zapier automation workflows." },
   { id: "make", name: "Make", domain: "make.com", category: "Dev", toolkit: "make", icon: "make", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Make scenarios and automation workflows." },
   { id: "n8n", name: "n8n", domain: "n8n.io", category: "Dev", toolkit: "n8n", icon: "n8n", authKind: "api_key", authLabel: "API key", description: "Connect an n8n instance using its configured credential flow." },

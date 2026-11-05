@@ -21,6 +21,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const WhopSuccess = lazy(() => import("./pages/WhopSuccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductsDashboard = lazy(() => import("./pages/dashboard/ProductsDashboard"));
+const ProjectsPage = lazy(() => import("./pages/dashboard/ProjectsPage"));
 const MarketingStudio = lazy(() => import("./pages/dashboard/MarketingStudio"));
 const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder"));
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
@@ -84,6 +85,14 @@ const App = () => (
                 />
                 <Route
                   path="/dashboard/products"
+                  element={
+                    <ViewableRoute>
+                      <ProjectsPage />
+                    </ViewableRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/analytics/products"
                   element={
                     <ViewableRoute>
                       <ProductsDashboard />

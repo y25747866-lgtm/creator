@@ -1,223 +1,124 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, Image, Eye, Trash2, BookOpen, FileText, Lock } from "lucide-react";
+import { BookOpen, Download, Eye, FileText, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
-import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
-import { recordMetric } from "@/lib/productTracking";
-import { format } from "date-fns";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useOwnedEbooks } from "@/hooks/useOwnedEbooks";
+import { useEbookStore, type Ebook } from "@/hooks/useEbookStore";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { UpgradeOverlay } from "@/components/UpgradeOverlay";
-import { useLocalPagination } from "@/hooks/useLocalPagination";
+import { deleteGeneratedEbook } from "@/lib/ebookRepository";
+import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
+import { recordMetric } from "@/lib/productTracking";
+import { Link } from "react-router-dom";
 
-const Downloads = () => {
-  const allEbooks = useEbookStore((s) => s.ebooks);
-  const removeEbook = useEbookStore((s) => s.removeEbook);
-  const [previewEbook, setPreviewEbook] = useState<Ebook | null>(null);
-  
-  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
+export default function Downloads() {
+  const { ebooks, loading, error, refresh, user } = useOwnedEbooks();
+  const removeEbook = useEbookStore((state) => state.removeEbook);
+  const { hasPaidSubscription, subscription } = useSubscription();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const [preview, setPreview] = useState<Ebook | null>(null);
+  const [deleting, setDeleting] = useState<Ebook | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const hasAccess = hasPaidSubscription && subscription?.status !== "expired";
 
-  const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
-
-  // Only show ebooks belonging to the current user
-  const ebooks = useMemo(() => {
-    if (!user) return [];
-    return allEbooks.filter((e) => e.userId === user.id || !e.userId);
-  }, [allEbooks, user]);
-  const { visibleItems: visibleEbooks, hasMore, loadMore } = useLocalPagination(ebooks, 20, user?.id);
-
-  const guardedDownload = (fn: () => void, ebook?: Ebook, metricType?: string) => {
+  const exportEbook = async (ebook: Ebook) => {
     if (!hasAccess) {
-      toast({ 
-        title: "Upgrade Required", 
-        description: isExpired ? "Your subscription has expired." : "Downloads are available on paid plans.", 
-        variant: "destructive" 
-      });
+      toast({ title: "Upgrade required", description: subscription?.status === "expired" ? "Renew your subscription to export PDFs." : "PDF export is available on paid plans.", variant: "destructive" });
       return;
     }
-    fn();
-    // Record download metric
-    if (ebook?.dbProductId && metricType) {
-      try {
-        recordMetric(ebook.dbProductId, metricType);
-      } catch (err) {
-        console.error("Failed to record metric:", err);
-      }
+    setDownloadingId(ebook.id);
+    try {
+      await generatePDF(ebook);
+      if (ebook.dbProductId) void recordMetric(ebook.dbProductId, "download");
+    } catch (reason) {
+      toast({ title: "Download failed", description: reason instanceof Error ? reason.message : "Try again.", variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting || !user?.id) return;
+    try {
+      await deleteGeneratedEbook(deleting.id, user.id);
+      removeEbook(deleting.id);
+      if (preview?.id === deleting.id) setPreview(null);
+      setDeleting(null);
+      toast({ title: "Product deleted", description: "The saved manuscript was removed from your account." });
+      await refresh();
+    } catch (reason) {
+      toast({ title: "Could not delete product", description: reason instanceof Error ? reason.message : "Try again.", variant: "destructive" });
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="relative" style={{ background: '#0A0A0A', padding: '40px', minHeight: 'auto' }}>
-        {/* HARD UI LOCK FOR EXPIRED/FREE USERS */}
-        {!hasAccess && !subLoading && (
-          <UpgradeOverlay message={isExpired ? "Your subscription has expired. Please renew to access your downloads." : "Downloads and exports are premium features. Upgrade to download your generated digital products."} />
-        )}
+      <main className="min-h-full bg-[#0A0A0A] px-4 py-7 text-white sm:px-8">
+        <div className="mx-auto max-w-6xl space-y-6">
+          <header className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs text-[#8B8B8B]">Your workspace</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight">Downloads</h1>
+              <p className="mt-2 text-sm text-[#969696]">Saved ebooks and exports linked to your account.</p>
+            </div>
+            <Button asChild variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5"><Link to="/dashboard/products">Go to Projects</Link></Button>
+          </header>
 
-        <div className={!hasAccess && !subLoading ? "opacity-50 pointer-events-none" : ""}>
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5 }}
-            style={{ marginBottom: '24px' }}
-          >
-            <h1 style={{ fontFamily: 'Syne', fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
-              Download History
-            </h1>
-            <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555' }}>
-              Access and manage all your generated digital products.
-            </p>
-          </motion.div>
+          {!hasAccess && <p className="rounded-xl border border-amber-800/40 bg-amber-950/20 px-4 py-3 text-xs leading-5 text-amber-100">Your products remain visible and deletable. PDF export requires an active paid plan. <Link to="/pricing" className="underline underline-offset-2">View plans</Link></p>}
+          {error && <p role="alert" className="rounded-lg border border-red-900/60 bg-red-950/30 px-4 py-3 text-sm text-red-200">Could not refresh your saved files: {error}</p>}
 
-          {ebooks.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 0.5, delay: 0.1 }}
-              style={{
-                background: '#111111',
-                border: '1px dashed #1A1A1A',
-                borderRadius: '10px',
-                padding: '80px 32px',
-                textAlign: 'center'
-              }}
-            >
-              <div style={{
-                width: '48px',
-                height: '48px',
-                background: '#1A1A1A',
-                border: '1px solid #222222',
-                borderRadius: '10px',
-                margin: '0 auto 20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <BookOpen size={20} color="#FFFFFF" style={{ opacity: 0.4 }} />
-              </div>
-              <h3 style={{ fontFamily: 'Syne', fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>
-                No digital products yet
-              </h3>
-              <p style={{ fontFamily: 'DM Sans', fontSize: '13px', color: '#555555', marginTop: '8px' }}>
-                Create your first digital product to see it here.
-              </p>
-              <button 
-                onClick={() => (window.location.href = "/dashboard/ebook-generator")}
-                style={{
-                  background: '#FFFFFF',
-                  color: '#0A0A0A',
-                  fontFamily: 'Syne',
-                  fontWeight: 700,
-                  fontSize: '14px',
-                  padding: '12px 24px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  marginTop: '24px',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
-              >
-                Create Digital Product
-              </button>
-            </motion.div>
+          {loading ? (
+            <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-[#121212] py-16 text-sm text-[#888]"><Loader2 size={17} className="mr-2 animate-spin" />Loading your saved products…</div>
+          ) : ebooks.length === 0 ? (
+            <section className="rounded-2xl border border-dashed border-white/15 bg-[#111] px-6 py-16 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><BookOpen size={21} className="text-[#8FA7C0]" /></div>
+              <h2 className="text-lg font-medium">No saved products yet</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8A8A8A]">Generate an ebook in Product Studio. Finished manuscripts will appear here and under Projects.</p>
+              <Button asChild className="mt-5 bg-[#195A9F] hover:bg-[#246BAF]"><Link to="/dashboard">Create an ebook</Link></Button>
+            </section>
           ) : (
-            <div className="flex flex-col">
-              {visibleEbooks.map((ebook, index) => (
-                <motion.div 
-                  key={ebook.id} 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  style={{
-                    background: '#111111',
-                    border: '1px solid #1A1A1A',
-                    borderRadius: '10px',
-                    padding: '16px 20px',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <FileText size={18} color="#FFFFFF" style={{ opacity: 0.4 }} />
-                    <div>
-                      <h3 style={{ fontFamily: 'Syne', fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>
-                        {ebook.title}
-                      </h3>
-                      <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#555555' }}>
-                        {ebook.pages} pages · PDF · Generated {format(new Date(ebook.createdAt), "MMM d yyyy")}
-                      </p>
+            <section aria-label="Saved downloads" className="space-y-2">
+              {ebooks.map((ebook, index) => (
+                <motion.article key={ebook.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.035, 0.25) }} className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#141414] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#1E1E1E]"><FileText size={17} className="text-[#9EB4C9]" /></div>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-sm font-medium text-white">{ebook.title}</h2>
+                      <p className="mt-1 truncate text-xs text-[#878787]">{ebook.topic}</p>
+                      <p className="mt-1.5 text-[11px] text-[#686868]">{ebook.pages} estimated pages · saved {format(new Date(ebook.createdAt), "MMM d, yyyy")}</p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button 
-                      onClick={() => guardedDownload(() => generatePDF(ebook), ebook, "download")}
-                      disabled={!hasAccess}
-                      style={{
-                        background: 'transparent',
-                        border: '1px solid #1A1A1A',
-                        color: '#FFFFFF',
-                        padding: '8px 14px',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        transition: 'border-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
-                    >
-                      Download
-                    </button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="text-destructive hover:text-destructive p-2 h-auto" 
-                      onClick={() => removeEbook(ebook.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                    <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5" onClick={() => setPreview(ebook)}><Eye size={14} className="mr-1.5" />Preview</Button>
+                    {ebook.coverImageUrl && <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5" onClick={() => void downloadCoverImage(ebook)}><ImageIcon size={14} className="mr-1.5" />Cover</Button>}
+                    <Button size="sm" disabled={!hasAccess || downloadingId === ebook.id} className="bg-[#195A9F] text-white hover:bg-[#246BAF]" onClick={() => void exportEbook(ebook)}>{downloadingId === ebook.id ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Download size={14} className="mr-1.5" />}Download PDF</Button>
+                    <Button size="icon" variant="ghost" aria-label={`Delete ${ebook.title}`} className="h-9 w-9 text-[#A0A0A0] hover:bg-red-950/30 hover:text-red-300" onClick={() => setDeleting(ebook)}><Trash2 size={15} /></Button>
                   </div>
-                </motion.div>
+                </motion.article>
               ))}
-              {hasMore && (
-                <Button variant="outline" className="mt-3 self-center" onClick={loadMore}>
-                  Load more downloads ({ebooks.length - visibleEbooks.length} remaining)
-                </Button>
-              )}
-            </div>
+            </section>
           )}
         </div>
 
-        <Dialog open={!!previewEbook} onOpenChange={() => setPreviewEbook(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-[#111111] border-[#1A1A1A] text-white">
-            <DialogHeader><DialogTitle className="text-white">{previewEbook?.title}</DialogTitle></DialogHeader>
-            {previewEbook?.coverImageUrl && (
-              <div className="mb-6"><img src={previewEbook.coverImageUrl} alt={previewEbook.title} width="192" height="256" loading="lazy" className="w-48 mx-auto rounded-lg shadow-lg" /></div>
-            )}
-            <div className="prose prose-sm dark:prose-invert max-w-none text-gray-300">
-              {previewEbook?.content.split("\n").map((line, i) => {
-                if (line.startsWith("# ")) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4 text-white">{line.replace("# ", "")}</h1>;
-                if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-semibold mt-4 mb-3 text-white">{line.replace("## ", "")}</h2>;
-                if (line.startsWith("### ")) return <h3 key={i} className="text-lg font-medium mt-3 mb-2 text-white">{line.replace("### ", "")}</h3>;
-                if (line.trim()) return <p key={i} className="mb-3">{line}</p>;
-                return null;
-              })}
-            </div>
+        <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}>
+          <DialogContent className="max-h-[85dvh] max-w-4xl overflow-y-auto border-white/10 bg-[#151515] text-white">
+            <DialogHeader><DialogTitle>{preview?.title}</DialogTitle></DialogHeader>
+            {preview?.coverImageUrl && <img src={preview.coverImageUrl} alt={`${preview.title} cover`} width="192" height="256" className="mx-auto mb-4 w-40 rounded-lg border border-white/10 object-cover" />}
+            <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-[#D1D1D1]">{preview?.content}</pre>
           </DialogContent>
         </Dialog>
-      </div>
+
+        <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
+          <AlertDialogContent className="border-white/10 bg-[#171717] text-white">
+            <AlertDialogHeader><AlertDialogTitle>Delete saved product?</AlertDialogTitle><AlertDialogDescription className="text-[#9A9A9A]">“{deleting?.title}” and its saved versions will be permanently removed from your account.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter><AlertDialogCancel className="border-white/15 bg-transparent text-white hover:bg-white/5">Cancel</AlertDialogCancel><AlertDialogAction className="bg-red-700 text-white hover:bg-red-600" onClick={(event) => { event.preventDefault(); void confirmDelete(); }}><Trash2 size={14} className="mr-2" />Delete</AlertDialogAction></AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </main>
     </DashboardLayout>
   );
-};
-
-export default Downloads;
+}

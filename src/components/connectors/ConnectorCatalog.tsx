@@ -44,7 +44,7 @@ export function ConnectorLogo({ connector, className = "" }: { connector: Connec
 }
 
 function ConnectedMark({ connector }: { connector: ConnectorDefinition }) {
-  const label = connector.workspaceDefault ? "Connected to workspace" : "Connected";
+  const label = connector.workspaceDefault && !connector.supportsAccountConnection ? "Connected to workspace" : "Connected";
   return (
     <span className="inline-flex items-center gap-2" title={label}>
       <button type="button" disabled className="relative inline-flex h-[18px] w-[32px] items-center rounded-full bg-[#195A9F] p-[2px] disabled:cursor-default" role="switch" aria-checked="true" aria-label={`${connector.name}: ${label}`}>
@@ -67,13 +67,13 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
     const needle = search.trim().toLocaleLowerCase();
     return CONNECTORS.filter((connector) => connector.category === category && (!needle || `${connector.name} ${connector.domain}`.toLocaleLowerCase().includes(needle)));
   }, [category, search]);
-  const connectorIsConnected = (connector: ConnectorDefinition) => Boolean(connector.workspaceDefault || connectedToolkitSlugs.has(connector.toolkit.toLowerCase()));
+  const connectorIsConnected = (connector: ConnectorDefinition) => Boolean((connector.workspaceDefault && !connector.supportsAccountConnection) || connectedToolkitSlugs.has(connector.toolkit.toLowerCase()));
 
   const handleConnect = async (connector: ConnectorDefinition) => {
     setActionError(null);
-    if (connector.workspaceDefault) return;
+    if (connector.workspaceDefault && !connector.supportsAccountConnection) return;
     if (!serviceConfigured) {
-      setActionError("The authenticated agent service is not configured for this preview. No account was connected.");
+      setActionError("The local connector API is not available in this session. No account was connected.");
       return;
     }
     setConnectingId(connector.id);
@@ -142,7 +142,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               <ConnectorLogo connector={connector} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-white">{connector.name}</p>
-                {!compact && <p className="mt-0.5 truncate text-[10px] text-[#747474]">{connector.authLabel}</p>}
+                {!compact && <p className="mt-0.5 truncate text-[10px] text-[#747474]">{connector.workspaceDefault && connector.supportsAccountConnection ? `Workspace ready · ${connector.authLabel}` : connector.authLabel}</p>}
               </div>
               {connected ? (
                 <ConnectedMark connector={connector} />
@@ -162,7 +162,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
 
       {!serviceConfigured && (
         <p className="rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-[10px] leading-4 text-[#858585]">
-          Composio account status and authorization require the authenticated agent service, which is not configured in this preview.
+          Composio account status and authorization need the server-side COMPOSIO_API_KEY configured for this preview.
         </p>
       )}
       {serviceConfigured && error && <p role="status" className="text-[10px] leading-4 text-[#C8A6A6]">{error}</p>}
@@ -196,7 +196,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
                 ))}
               </ul>
             </div>
-            {actionError && <p role="alert" className="mt-4 rounded-lg border border-[#6B3F3F] bg-[#281919] px-3 py-2 text-xs leading-5 text-[#E7BABA]">{actionError}</p>}
+              {actionError && <p role="alert" className="mt-4 rounded-lg border border-[#6B3F3F] bg-[#281919] px-3 py-2 text-xs leading-5 text-[#E7BABA]">{actionError}</p>}
             <div className="mt-5 flex items-center justify-between gap-3">
               <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-white/15 px-3 py-2 text-xs text-[#BDBDBD] hover:bg-white/[0.05]">Cancel</button>
               <button

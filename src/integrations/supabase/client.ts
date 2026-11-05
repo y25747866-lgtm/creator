@@ -19,14 +19,17 @@ const checkInactivity = () => {
   const lastActive = localStorage.getItem("last_active");
   const now = Date.now();
 
-  if (lastActive && now - parseInt(lastActive) > INACTIVITY_LIMIT) {
+  if (!lastActive || !Number.isFinite(Number(lastActive))) {
+    localStorage.setItem("last_active", now.toString());
+    return;
+  }
+
+  if (now - Number(lastActive) > INACTIVITY_LIMIT) {
     console.log("Session expired due to 24h inactivity. Signing out...");
     localStorage.removeItem("last_active");
     // Let protected route guards respond to the signed-out event. Public routes,
     // including the chat-first workspace, should remain viewable.
     void supabase.auth.signOut();
-  } else {
-    localStorage.setItem("last_active", now.toString());
   }
 };
 

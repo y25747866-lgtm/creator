@@ -8,6 +8,14 @@ const mocks = vi.hoisted(() => ({
   invoke: vi.fn(),
   recordUsage: vi.fn(),
   addEbook: vi.fn(),
+  saveGeneratedEbook: vi.fn(),
+  uploadCreatorMedia: vi.fn(),
+  deleteCreatorMedia: vi.fn(),
+  refreshMediaLinks: vi.fn(),
+  saveCreatorConversation: vi.fn(),
+  cacheLocalCreatorConversation: vi.fn(),
+  loadCreatorConversation: vi.fn(),
+  readLocalCreatorConversation: vi.fn(),
   generatePDF: vi.fn(),
   toast: vi.fn(),
   authUser: null as { id: string; email: string } | null,
@@ -37,6 +45,18 @@ vi.mock("@/hooks/useEbookStore", () => ({
   useEbookStore: (selector: (state: { addEbook: typeof mocks.addEbook }) => unknown) => selector({ addEbook: mocks.addEbook }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
+vi.mock("@/lib/ebookRepository", () => ({
+  saveGeneratedEbook: mocks.saveGeneratedEbook,
+  uploadCreatorMedia: mocks.uploadCreatorMedia,
+  deleteCreatorMedia: mocks.deleteCreatorMedia,
+  refreshMediaLinks: mocks.refreshMediaLinks,
+}));
+vi.mock("@/lib/chatPersistence", () => ({
+  cacheLocalCreatorConversation: mocks.cacheLocalCreatorConversation,
+  loadCreatorConversation: mocks.loadCreatorConversation,
+  readLocalCreatorConversation: mocks.readLocalCreatorConversation,
+  saveCreatorConversation: mocks.saveCreatorConversation,
+}));
 vi.mock("@/lib/pdfGenerator", () => ({ generatePDF: mocks.generatePDF }));
 vi.mock("@/lib/auth/login", () => ({ signInWithGoogle: mocks.signInWithGoogle }));
 
@@ -62,6 +82,14 @@ beforeEach(() => {
   mocks.signInWithGoogle.mockResolvedValue(undefined);
   mocks.recordUsage.mockResolvedValue(true);
   mocks.generatePDF.mockResolvedValue(undefined);
+  mocks.saveGeneratedEbook.mockImplementation(async (ebook, userId) => ({ ...ebook, id: "saved-ebook", dbProductId: "saved-ebook", userId }));
+  mocks.uploadCreatorMedia.mockImplementation(async (file) => ({ id: "uploaded-file", path: "test-user/uploaded-file", name: file.name, mimeType: file.type, size: file.size, signedUrl: "https://media.example/uploaded-file" }));
+  mocks.deleteCreatorMedia.mockResolvedValue(undefined);
+  mocks.refreshMediaLinks.mockImplementation(async (attachments) => attachments);
+  mocks.saveCreatorConversation.mockResolvedValue(undefined);
+  mocks.cacheLocalCreatorConversation.mockReturnValue(undefined);
+  mocks.loadCreatorConversation.mockResolvedValue([]);
+  mocks.readLocalCreatorConversation.mockReturnValue([]);
   mocks.invoke.mockResolvedValue({
     data: {
       title: "A Better Workflow",
@@ -86,8 +114,9 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
     const menu = screen.getByRole("region", { name: "Workspace capabilities" });
-    expect(menu).toHaveTextContent("Attachments");
-    expect(menu).toHaveTextContent("no upload API/storage flow yet");
+    expect(menu).toHaveTextContent("Images and videos");
+    expect(menu).toHaveTextContent("Private uploads");
+    expect(within(menu).getByRole("button", { name: "Upload image or video" })).toBeEnabled();
     expect(menu).toHaveTextContent("Apps");
     expect(menu).toHaveTextContent("MCP");
     expect(menu).toHaveTextContent("reachable authenticated runtime");
@@ -183,6 +212,21 @@ describe("Chat-first product workspace", () => {
     expect(await screen.findByText("Your ebook is ready to export.", {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download PDF" })).toBeEnabled();
     expect(mocks.addEbook).toHaveBeenCalledWith(expect.objectContaining({ topic: "A calmer weekly planning system" }));
+    expect(mocks.saveGeneratedEbook).toHaveBeenCalledWith(expect.objectContaining({ topic: "A calmer weekly planning system" }), "test-user");
+  });
+
+  it("uploads and keeps an image attached to the chat message", async () => {
+    renderWorkspace();
+    const file = new File(["image bytes"], "cover-reference.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Upload images or videos"), { target: { files: [file] } });
+
+    expect(await screen.findByText("cover-reference.png")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Describe the ebook topic" }), { target: { value: "Create an ebook inspired by this cover" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send topic" }));
+
+    expect(await screen.findByText("Six formats · choose one to begin")).toBeInTheDocument();
+    expect(screen.getAllByText("cover-reference.png").length).toBeGreaterThan(0);
+    expect(mocks.uploadCreatorMedia).toHaveBeenCalledWith(file, "test-user");
   });
 
   it.each([375, 1365])("does not export a saved ebook after sign-out at %i px", async (viewportWidth) => {

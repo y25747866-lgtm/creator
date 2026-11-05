@@ -63,6 +63,8 @@ export const COMPOSIO_CONNECTORS: Record<string, ConnectorConfig> = {
   n8n: { toolkit: 'n8n', name: 'n8n', authKind: 'api_key' },
   perplexity: { toolkit: 'perplexityai', name: 'Perplexity', authKind: 'api_key' },
   firecrawl: { toolkit: 'firecrawl', name: 'Firecrawl', authKind: 'api_key' },
+  supabase: { toolkit: 'supabase', name: 'Supabase', authKind: 'api_key' },
+  vercel: { toolkit: 'vercel', name: 'Vercel', authKind: 'api_key' },
 }
 
 const authConfigIdCache = new Map<string, Promise<string>>()

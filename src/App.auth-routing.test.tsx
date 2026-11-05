@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   loading: false,
 }));
 
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { auth: { getSession: vi.fn(), signOut: vi.fn() } },
+}));
+
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ user: mocks.user, loading: mocks.loading }),
 }));

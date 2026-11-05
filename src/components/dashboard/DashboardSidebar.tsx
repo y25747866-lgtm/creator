@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocalCreatorConversations, listCreatorConversations, type CreatorConversationSummary } from "@/lib/chatPersistence";
 import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
 
@@ -26,24 +27,28 @@ const DashboardSidebar = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
-  const [historyTitles, setHistoryTitles] = useState<string[]>([]);
+  const [historyItems, setHistoryItems] = useState<CreatorConversationSummary[]>([]);
 
   useEffect(() => {
-    if (!user?.id) { setHistoryTitles([]); return; }
-    const readHistory = () => {
+    if (!user?.id) { setHistoryItems([]); return; }
+    let cancelled = false;
+    const readHistory = async () => {
+      const localItems = getLocalCreatorConversations(user.id);
       try {
-        const raw = window.localStorage.getItem(`nexoraos-chat-history-v1-${user.id}`);
-        const messages = raw ? JSON.parse(raw) : [];
-        const titles = Array.isArray(messages)
-          ? messages.filter((message) => message?.role === "user" && typeof message.text === "string").map((message) => message.text.trim()).filter(Boolean)
-          : [];
-        setHistoryTitles(Array.from(new Set(titles)).slice(-8).reverse());
-      } catch { setHistoryTitles([]); }
+        const remoteItems = await listCreatorConversations(user.id);
+        if (cancelled) return;
+        const merged = new Map(remoteItems.map((item) => [item.id, item]));
+        for (const item of localItems) if (!merged.has(item.id)) merged.set(item.id, item);
+        setHistoryItems([...merged.values()].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8));
+      } catch {
+        if (!cancelled) setHistoryItems(localItems.slice(0, 8));
+      }
     };
-    readHistory();
+    void readHistory();
     window.addEventListener("storage", readHistory);
     window.addEventListener("nexoraos:history-updated", readHistory);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", readHistory);
       window.removeEventListener("nexoraos:history-updated", readHistory);
     };
@@ -103,8 +108,8 @@ const DashboardSidebar = () => {
           </Link>
           <div className={`my-4 border-t border-white/10 pt-4 ${showLabels ? "" : "sr-only"}`}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">History</p>
-            {historyTitles.length ? historyTitles.map((title, index) => (
-              <button key={`${title}-${index}`} type="button" onClick={() => { navigate("/dashboard"); closeMobile(); }} title={title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-white/50 transition hover:bg-[#1F1F1F] hover:text-white">{title.length > 27 ? `${title.slice(0, 27)}…` : title}</button>
+            {historyItems.length ? historyItems.map((item) => (
+              <button key={item.id} type="button" onClick={() => { navigate(`/dashboard?conversation=${encodeURIComponent(item.id)}`); closeMobile(); }} title={item.title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-white/50 transition hover:bg-[#1F1F1F] hover:text-white">{item.title.length > 27 ? `${item.title.slice(0, 27)}…` : item.title}</button>
             )) : <p className="px-3 py-2 text-xs leading-5 text-white/35">Your recent prompts will appear here.</p>}
           </div>
         </nav>
