@@ -16,9 +16,26 @@ import { subscribe } from './events/bus.js'
 import { verifyWhatsAppSignature, verifyTelegramSecret } from './security/webhooks.js'
 import { sweepQueuedTasks, startScheduler } from './scheduler.js'
 import { getAdapter, supportedPlatforms, verifyConnection, publishWithApproval, getAnalyticsFor, decideApproval, upsertConnection } from './platforms/index.js'
+import { COMPOSIO_CONNECTORS, createConnectorLink, listConnectedApps } from './tools/composio.js'
 import type { PlatformId } from './platforms/types.js'
 
 const app = express()
+const allowedOrigins = new Set((process.env.CORS_ALLOWED_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean))
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+    res.setHeader('Vary', 'Origin')
+  }
+  if (req.method === 'OPTIONS') {
+    if (origin && !allowedOrigins.has(origin)) { res.sendStatus(403); return }
+    res.sendStatus(204)
+    return
+  }
+  next()
+})
 app.use(express.json({
   limit: '1mb',
   verify: (req, _res, buf) => { (req as express.Request & { rawBody?: Buffer }).rawBody = buf },
@@ -150,6 +167,51 @@ app.post('/run', requireAuth, async (req, res) => {
 
   if (error || !task) { res.status(500).json({ error: 'Failed to create task' }); return }
   res.json({ taskId: task.id })
+})
+
+// ---------- Composio connectors ----------
+app.get('/connectors', requireAuth, async (req, res) => {
+  if (!process.env.COMPOSIO_API_KEY) {
+    res.status(503).json({ error: 'Composio is not configured on the agent service.' })
+    return
+  }
+  try {
+    const userId = (req as express.Request & { user: { id: string } }).user.id
+    res.json({ apps: await listConnectedApps(userId) })
+  } catch {
+    res.status(502).json({ error: 'Could not load connected apps from Composio.' })
+  }
+})
+
+app.post('/connectors/:connectorId/connect', requireAuth, async (req, res) => {
+  const connectorId = req.params.connectorId
+  if (!Object.hasOwn(COMPOSIO_CONNECTORS, connectorId)) {
+    res.status(404).json({ error: 'This connector is not available in the curated catalog.' })
+    return
+  }
+  if (!process.env.COMPOSIO_API_KEY) {
+    res.status(503).json({ error: 'Composio is not configured on the agent service.' })
+    return
+  }
+  const callbackUrl = process.env.CONNECTOR_CALLBACK_URL?.trim() ?? ''
+  try {
+    const parsedCallback = new URL(callbackUrl)
+    if (parsedCallback.protocol !== 'https:' && parsedCallback.hostname !== 'localhost') {
+      res.status(503).json({ error: 'CONNECTOR_CALLBACK_URL must use HTTPS.' })
+      return
+    }
+  } catch {
+    res.status(503).json({ error: 'CONNECTOR_CALLBACK_URL is not configured as a valid URL.' })
+    return
+  }
+  try {
+    const userId = (req as express.Request & { user: { id: string } }).user.id
+    const redirectUrl = await createConnectorLink(userId, connectorId, callbackUrl)
+    res.json({ redirectUrl })
+  } catch {
+    // Provider errors may contain request details. Keep them out of API responses and logs.
+    res.status(502).json({ error: 'Composio could not start this connection. Check the toolkit and auth configuration.' })
+  }
 })
 
 // ---------- Webhooks (verified senders only) ----------

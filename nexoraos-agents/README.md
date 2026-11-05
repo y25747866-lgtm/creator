@@ -29,7 +29,9 @@ For local development, use `npm run dev`. `npm start` runs the compiled `dist/se
 - `MODEL_PATH`: optional informational model-path setting for the deployment.
 - `BROWSER_CONTROL_URL`: optional browser-control base URL; default `http://localhost:3200`.
 - `WEB_SEARCH_URL`: optional web-search base URL; default `http://localhost:3100`.
-- `COMPOSIO_API_KEY`: optional APEX connected-app integration.
+- `COMPOSIO_API_KEY`: required to list or start Composio connector connections; also enables APEX's connected-app tool listing.
+- `CONNECTOR_CALLBACK_URL`: fixed HTTPS URL to the frontend callback, for example `https://your-preview.vercel.app/app/connectors`.
+- `CORS_ALLOWED_ORIGINS`: comma-separated exact frontend origins allowed to call the agent server, for example the preview deployment origin. Do not use `*`.
 - `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_VERIFY_TOKEN`: optional WhatsApp integration.
 - `TELEGRAM_BOT_TOKEN`: optional Telegram integration.
 - `FLUX_WORKSPACE`: output/read workspace for FLUX; default `/workspace/flux`.
@@ -49,5 +51,6 @@ No new skills were installed or added during this phase.
 - Social tokens are encrypted with AES-256-GCM before being stored in `platform_connections.credentials`. Existing plaintext connection rows are deliberately rejected; reconnect those accounts after configuring the key rather than silently trusting legacy secrets.
 - The current `/platforms/:platform/connect` endpoint accepts credentials supplied by an authenticated server API caller; it is **not** a complete OAuth authorization-code flow. Do not expose a public frontend form that sends provider tokens through an untrusted path. OAuth consent, callback/state handling, refresh-token rotation, and provider app review must be implemented/configured per provider before describing the integrations as turnkey.
 - Only X, Facebook Pages, and Instagram adapters are included. This is not a universal connector for every app. Each provider requires its own official API permissions and often app review. Media publishing and analytics vary by provider and account type.
+- `/connectors` and `/connectors/:connectorId/connect` use the signed-in Supabase user ID, a fixed server callback URL, and Composio-hosted authorization. The server creates/reuses the curated toolkit auth configuration and never receives provider credentials from the browser. API-key and bot-token forms are collected by Composio's hosted flow. Configure `COMPOSIO_API_KEY`, `CONNECTOR_CALLBACK_URL`, and `CORS_ALLOWED_ORIGINS` on the agent service, plus `VITE_HYBRID_AGENT_URL` on the frontend preview. These source changes do not deploy or configure that service.
 - Apply `supabase/migrations/0002_compatibility_and_security.sql` and `0003_recovery_and_realtime.sql` only after reviewing them against a database backup and your current schema. They are intended to be additive; pre-existing duplicate `(user_id, platform)` rows can prevent creation of the unique index and must be resolved deliberately. The migration adds `agent_events` to Realtime as well as `agent_tasks`. Do not change an existing credential column type until existing values have been safely migrated; this source uses a versioned encrypted JSON envelope in `platform_connections.credentials`.
 - Run `npm ci`, `npm run type-check`, `npm run build`, and `npm test` in an environment with npm dependencies available. This source bundle has not been live-tested against your Supabase project, real model endpoint, or social accounts.

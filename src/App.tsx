@@ -24,6 +24,7 @@ const ProductsDashboard = lazy(() => import("./pages/dashboard/ProductsDashboard
 const MarketingStudio = lazy(() => import("./pages/dashboard/MarketingStudio"));
 const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder"));
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
+const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 
 import ViewableRoute from "./components/ViewableRoute";
 
@@ -70,6 +71,14 @@ const App = () => (
                   element={
                     <ViewableRoute>
                       <Settings />
+                    </ViewableRoute>
+                  }
+                />
+                <Route
+                  path="/app/connectors"
+                  element={
+                    <ViewableRoute>
+                      <ConnectorsPage />
                     </ViewableRoute>
                   }
                 />

@@ -85,7 +85,7 @@ describe("Chat-first product workspace", () => {
   it("shows truthful capability states from the Plus menu", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
-    const menu = screen.getByRole("menu", { name: "Workspace capabilities" });
+    const menu = screen.getByRole("region", { name: "Workspace capabilities" });
     expect(menu).toHaveTextContent("Attachments");
     expect(menu).toHaveTextContent("no upload API/storage flow yet");
     expect(menu).toHaveTextContent("Apps");
@@ -98,7 +98,7 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
 
-    const menu = screen.getByRole("menu", { name: "Workspace capabilities" });
+    const menu = screen.getByRole("region", { name: "Workspace capabilities" });
     const apps = [
       ["Gmail", "/google-workspace/gmail.svg"],
       ["Google Calendar", "/google-workspace/google-calendar.svg"],
