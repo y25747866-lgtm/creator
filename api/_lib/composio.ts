@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { Composio } from "@composio/core";
 import type { VercelRequest } from "@vercel/node";
 
@@ -75,10 +74,13 @@ export async function getAuthenticatedUser(req: VercelRequest): Promise<{ id: st
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !anonKey) throw new Error("Supabase authentication is not configured for the connector API.");
-  const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data, error } = await client.auth.getUser(authorization.slice(7));
-  if (error || !data.user) return null;
-  return { id: data.user.id };
+  const response = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, {
+    headers: { apikey: anonKey, Authorization: authorization },
+  });
+  if (!response.ok) return null;
+  const user = await response.json() as { id?: unknown };
+  if (typeof user.id !== "string") return null;
+  return { id: user.id };
 }
 
 export async function getConnectedApps(userId: string) {
