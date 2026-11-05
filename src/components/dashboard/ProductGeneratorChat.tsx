@@ -491,9 +491,11 @@ const ProductGeneratorChat = () => {
           >
             <Menu size={18} aria-hidden="true" />
           </button>
-          <span className="hidden text-[11px] font-semibold uppercase tracking-[0.16em] text-[#777] sm:inline">Workspace</span>
-          <span className="hidden h-1 w-1 rounded-full bg-[#FFFFFF] sm:inline-block" aria-hidden="true" />
-          <span className="text-sm text-[#C9C9C9]">Product studio</span>
+          {hasConversation && messages[0]?.role === "user" && (
+            <span className="text-sm text-[#C9C9C9] truncate max-w-[200px] sm:max-w-[400px]">
+              {messages[0].text?.slice(0, 50)}{(messages[0].text?.length ?? 0) > 50 ? "…" : ""}
+            </span>
+          )}
         </div>
         {hasConversation && (
           <button

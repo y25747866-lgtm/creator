@@ -6,11 +6,7 @@ import {
   Download,
   Plus,
   Package,
-  Bot,
-  FlaskConical,
-  FileText,
-  Sheet,
-  Zap,
+  FolderOpen,
   ArrowUpRight,
   LogOut,
   Settings,
@@ -67,7 +63,7 @@ const DashboardSidebar = () => {
     <>
       <aside
         aria-label="Workspace navigation"
-        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-[#2B2B2B] bg-[#141414] transition-[width,transform] duration-200 md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-white/[0.08] bg-[#0a0a0a] transition-[width,transform] duration-200 md:translate-x-0 ${
           collapsed ? "md:w-20" : "md:w-[280px]"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -99,12 +95,9 @@ const DashboardSidebar = () => {
           <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "Product Studio"} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Package size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Product Studio</span>}
           </Link>
-          <button type="button" disabled title="Hybrid runtime is not connected in this preview" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}>
-            <Bot size={17} className="shrink-0" aria-hidden="true" />{showLabels && <><span className="flex-1 text-left">Hybrid Agents</span><span className="text-[9px] uppercase tracking-wide">Offline</span></>}
-          </button>
-          <button type="button" disabled title="Projects are not yet backed by a project store" className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}>
-            <FileText size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Projects · coming soon</span>}
-          </button>
+          <Link to="/dashboard/products" onClick={closeMobile} title={showLabels ? undefined : "Projects"} aria-current={location.pathname === "/dashboard/products" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard/products" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+            <FolderOpen size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Projects</span>}
+          </Link>
           <Link to="/dashboard/downloads" onClick={closeMobile} title={showLabels ? undefined : "Downloads"} aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname === "/dashboard/downloads" ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Download size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Downloads</span>}
           </Link>
@@ -114,13 +107,6 @@ const DashboardSidebar = () => {
               <button key={`${title}-${index}`} type="button" onClick={() => { navigate("/dashboard"); closeMobile(); }} title={title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-white/50 transition hover:bg-white/[0.06] hover:text-white">{title.length > 27 ? `${title.slice(0, 27)}…` : title}</button>
             )) : <p className="px-3 py-2 text-xs leading-5 text-white/35">Your recent prompts will appear here.</p>}
           </div>
-          <p className={`mb-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Tools</p>
-          {[
-            { label: "Research", Icon: FlaskConical },
-            { label: "Docs", Icon: FileText },
-            { label: "Sheets", Icon: Sheet },
-            { label: "Automations", Icon: Zap },
-          ].map(({ label, Icon }) => <button key={label} type="button" disabled title={`${label} is not connected in this preview`} className={`flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-white/35 ${showLabels ? "" : "justify-center"}`}><Icon size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>{label} · soon</span>}</button>)}
         </nav>
 
         <div className="shrink-0 border-t border-[#292929] p-3">

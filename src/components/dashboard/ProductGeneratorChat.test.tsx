@@ -157,7 +157,7 @@ describe("Chat-first product workspace", () => {
     );
 
     expect(await screen.findByText("Six formats · choose one to begin")).toBeInTheDocument();
-    expect(screen.getByText(topic)).toBeInTheDocument();
+    expect(screen.getAllByText(topic)).toHaveLength(2);
     expect(screen.queryByRole("dialog", { name: "Sign in to continue" })).not.toBeInTheDocument();
     expect(localStorage.getItem("nexoraos.pending-chat-topic.v1")).toBeNull();
     expect(mocks.invoke).not.toHaveBeenCalled();
