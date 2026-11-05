@@ -45,6 +45,23 @@ type ChatMessage = {
   ebook?: Ebook;
 };
 
+type IntegrationApp = { name: string; logo?: string };
+
+const INTEGRATION_APPS: IntegrationApp[] = [
+  { name: "Gmail", logo: "/google-workspace/gmail.svg" },
+  { name: "Google Calendar", logo: "/google-workspace/google-calendar.svg" },
+  { name: "Google Drive", logo: "/google-workspace/google-drive.svg" },
+  { name: "Google Docs", logo: "/google-workspace/google-docs.svg" },
+  { name: "Google Sheets", logo: "/google-workspace/google-sheets.svg" },
+  { name: "Notion" },
+  { name: "Slack" },
+  { name: "GitHub" },
+  { name: "Zapier" },
+  { name: "Stripe" },
+  { name: "Whop" },
+  { name: "Supabase" },
+];
+
 const PRODUCT_TEMPLATES: Template[] = [
   {
     id: "essential-guide",
@@ -653,14 +670,18 @@ const ProductGeneratorChat = () => {
                   <Plus size={19} aria-hidden="true" />
                 </button>
                 {attachmentMenuOpen && (
-                  <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 w-[min(310px,calc(100vw-32px))] rounded-xl border border-[#393939] bg-[#262626] p-2 shadow-xl">
+                  <div role="menu" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 max-h-[min(40dvh,420px)] w-[min(310px,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-xl border border-[#393939] bg-[#262626] p-2 shadow-xl">
                     <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
                     <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Apps</div>
-                    {[
-                      "Gmail", "Notion", "Slack", "GitHub", "Zapier", "Stripe", "Whop", "Supabase",
-                    ].map((name) => (
+                    {INTEGRATION_APPS.map(({ name, logo }) => (
                       <div key={name} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-[#303030]">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-[10px] font-semibold text-white/80">{name.slice(0, 1)}</span>
+                        {logo ? (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white p-0.5">
+                            <img src={logo} alt={`${name} logo`} width="20" height="20" className="h-5 w-5 object-contain" />
+                          </span>
+                        ) : (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-[10px] font-semibold text-white/80">{name.slice(0, 1)}</span>
+                        )}
                         <span className="min-w-0 flex-1 text-xs text-white/80">{name}</span>
                         <button type="button" onClick={() => setSelectedIntegration(name)} className="rounded-md border border-white/25 bg-[#0A0A0A] px-2 py-1 text-[10px] text-white hover:bg-white hover:text-black">Connect</button>
                       </div>

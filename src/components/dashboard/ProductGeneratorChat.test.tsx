@@ -87,10 +87,30 @@ describe("Chat-first product workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
     const menu = screen.getByRole("menu", { name: "Workspace capabilities" });
     expect(menu).toHaveTextContent("Attachments");
-    expect(menu).toHaveTextContent("secure upload is not enabled");
+    expect(menu).toHaveTextContent("no upload API/storage flow yet");
     expect(menu).toHaveTextContent("Apps");
     expect(menu).toHaveTextContent("MCP");
-    expect(menu).toHaveTextContent("no runtime connection is verified");
+    expect(menu).toHaveTextContent("reachable authenticated runtime");
+  });
+
+  it.each([375, 1365])("shows product-specific Google Workspace logos at %i px", (viewportWidth) => {
+    setTestViewportWidth(viewportWidth);
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
+
+    const menu = screen.getByRole("menu", { name: "Workspace capabilities" });
+    const apps = [
+      ["Gmail", "/google-workspace/gmail.svg"],
+      ["Google Calendar", "/google-workspace/google-calendar.svg"],
+      ["Google Drive", "/google-workspace/google-drive.svg"],
+      ["Google Docs", "/google-workspace/google-docs.svg"],
+      ["Google Sheets", "/google-workspace/google-sheets.svg"],
+    ];
+
+    for (const [name, logo] of apps) {
+      expect(within(menu).getByRole("img", { name: `${name} logo` })).toHaveAttribute("src", logo);
+      expect(within(menu).getByText(name)).toBeInTheDocument();
+    }
   });
 
   it.each([375, 1365])("lets an unauthenticated visitor submit and preserves the topic at %i px", async (viewportWidth) => {
