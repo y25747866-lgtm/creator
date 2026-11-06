@@ -826,7 +826,7 @@ const ProductGeneratorChat = () => {
             )}
             <p id="composer-hint" className="sr-only">Press Enter to send. Press Shift and Enter to add a new line.</p>
             <div className="flex items-end gap-1.5 sm:gap-2">
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 translate-y-1 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => { setAttachmentMenuOpen((open) => !open); setConnectorPanelOpen(false); setCapabilityMenuOpen(false); }}

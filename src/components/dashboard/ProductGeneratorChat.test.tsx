@@ -156,6 +156,12 @@ describe("Chat-first product workspace", () => {
     expect(sheet).toHaveTextContent("50 MB each");
   });
 
+  it("keeps the Plus and Plugin controls aligned slightly lower in the composer", () => {
+    renderWorkspace();
+    expect(screen.getByRole("button", { name: "Add to chat" }).parentElement).toHaveClass("translate-y-1");
+    expect(screen.getByRole("button", { name: "Open workspace capabilities" }).parentElement).toHaveClass("translate-y-1");
+  });
+
   it("opens the connector catalog from the separate plug button", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
