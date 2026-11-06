@@ -47,11 +47,28 @@ describe("curated connector catalog", () => {
     }
   });
 
-  it("uses the requested Clearbit logo host for every app", () => {
-    for (const connector of CONNECTORS) {
-      expect(getConnectorLogoUrl(connector)).toBe(`https://logo.clearbit.com/${connector.domain}`);
+  it("uses the supplied product-specific artwork and never calls the retired Clearbit endpoint", () => {
+    const explicitLogos: Record<string, string> = {
+      gmail: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
+      "google-calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+      "google-drive": "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg",
+      "google-docs": "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg",
+      "google-sheets": "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg",
+      outlook: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg",
+      notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+      slack: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
+      github: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      stripe: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg",
+      telegram: "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+      whatsapp: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
+    };
+    for (const [id, url] of Object.entries(explicitLogos)) {
+      expect(getConnectorLogoUrl(CONNECTORS.find((connector) => connector.id === id)!)).toBe(url);
     }
-    expect(getConnectorLogoUrl(CONNECTORS.find((connector) => connector.id === "fal-ai")!)).toBe("https://logo.clearbit.com/fal.ai");
+    for (const connector of CONNECTORS) {
+      expect(getConnectorLogoUrl(connector)).not.toContain("logo.clearbit.com");
+    }
+    expect(getConnectorLogoUrl(CONNECTORS.find((connector) => connector.id === "fal-ai")!)).toBe("https://cdn.simpleicons.org/fal");
   });
 
   it("marks GitHub, Supabase, and Vercel as core workspace services that allow a separate account link", () => {

@@ -180,10 +180,26 @@ const ProductGeneratorChat = () => {
   const pictureInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const capabilitySelectorRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
   const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
+
+  useEffect(() => {
+    if (!capabilityMenuOpen) return;
+    const closeOnOutsideInteraction = (event: Event) => {
+      if (capabilitySelectorRef.current && !capabilitySelectorRef.current.contains(event.target as Node)) {
+        setCapabilityMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeOnOutsideInteraction);
+    document.addEventListener("touchstart", closeOnOutsideInteraction, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideInteraction);
+      document.removeEventListener("touchstart", closeOnOutsideInteraction);
+    };
+  }, [capabilityMenuOpen]);
 
   useEffect(() => {
     if (!user?.id || !messages.length) return;
@@ -830,11 +846,11 @@ const ProductGeneratorChat = () => {
                 onKeyDown={handleComposerKeyDown}
                 disabled={isGenerating || isUploading}
                 placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-                className="block max-h-40 min-h-[38px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] leading-5 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:min-h-[40px] sm:px-2.5 sm:text-[15px]"
+                className="block max-h-40 min-h-[56px] min-w-0 flex-1 resize-none bg-transparent px-5 py-4 text-[14px] leading-5 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:text-[15px]"
                 aria-describedby="composer-hint"
               />
               <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
-                <div className="relative">
+                <div ref={capabilitySelectorRef} className="relative">
                   <button
                     type="button"
                     onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); setConnectorPanelOpen(false); }}
@@ -930,7 +946,7 @@ const ProductGeneratorChat = () => {
           </Sheet>
 
           <Sheet open={connectorPanelOpen} onOpenChange={setConnectorPanelOpen}>
-            <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-2xl border-[#303030] bg-[#171717] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">
+            <SheetContent side="bottom" className="!bottom-20 !left-1/2 !right-auto !top-auto !w-[min(680px,calc(100vw-32px))] !max-w-none -translate-x-1/2 max-h-[70dvh] overflow-y-auto rounded-2xl border border-white/10 bg-[#1F1F1F] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">
               <SheetHeader className="pr-9 text-left">
                 <SheetTitle className="text-base text-white">Workspace capabilities</SheetTitle>
                 <SheetDescription className="text-xs leading-5 text-[#898989]">Browse and connect the apps available to your workspace.</SheetDescription>

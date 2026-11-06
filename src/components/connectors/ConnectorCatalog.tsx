@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ArrowUpRight, Check, Loader2, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Loader2, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   CONNECTOR_CATEGORIES,
@@ -13,12 +13,19 @@ import { startComposioConnection } from "@/lib/connectors/api";
 import { useConnectorConnections } from "@/hooks/useConnectorConnections";
 
 type ConnectorCatalogProps = { compact?: boolean };
+type ConnectorFilter = ConnectorCategory | "All";
+const CONNECTOR_FILTERS: ConnectorFilter[] = ["All", ...CONNECTOR_CATEGORIES];
 
 export function ConnectorLogo({ connector, className = "" }: { connector: ConnectorDefinition; className?: string }) {
   const [failed, setFailed] = useState(false);
   const [fallbackFailed, setFallbackFailed] = useState(false);
   const initial = connector.name.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase();
   const fallbackUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(connector.domain)}&sz=64`;
+
+  useEffect(() => {
+    setFailed(false);
+    setFallbackFailed(false);
+  }, [connector.id]);
 
   return (
     <span className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/5 bg-white p-1.5 ${className}`}>
@@ -54,7 +61,7 @@ function ConnectedMark({ connector }: { connector: ConnectorDefinition }) {
 }
 
 export default function ConnectorCatalog({ compact = false }: ConnectorCatalogProps) {
-  const [category, setCategory] = useState<ConnectorCategory>(CONNECTOR_CATEGORIES[0]);
+  const [category, setCategory] = useState<ConnectorFilter>("All");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ConnectorDefinition | null>(null);
   const [connectingId, setConnectingId] = useState<string | null>(null);
@@ -64,7 +71,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
   const visibleConnectors = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase();
     return CONNECTORS.filter((connector) =>
-      (needle.length > 0 || connector.category === category) &&
+      (category === "All" || connector.category === category) &&
       (!needle || `${connector.name} ${connector.domain}`.toLocaleLowerCase().includes(needle)),
     );
   }, [category, search]);
@@ -114,7 +121,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       </label>
 
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Connector categories">
-        {CONNECTOR_CATEGORIES.map((item) => (
+        {CONNECTOR_FILTERS.map((item) => (
           <button
             key={item}
             id={`connector-tab-${item.replace(/\W/g, "-").toLowerCase()}`}
@@ -169,10 +176,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       )}
       {serviceConfigured && error && <p role="status" className="text-[10px] leading-4 text-[#C8A6A6]">{error}</p>}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
-        <a href="https://composio.dev/toolkits" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-[#A7A7A7] hover:text-white">
-          + Browse all 1,000+ apps <ArrowUpRight size={12} aria-hidden="true" />
-        </a>
+      <div className="flex items-center justify-end gap-2 border-t border-white/10 pt-3">
         <Link to="/app/connectors" className="text-[10px] text-[#A7A7A7] hover:text-white">Manage connectors</Link>
       </div>
 

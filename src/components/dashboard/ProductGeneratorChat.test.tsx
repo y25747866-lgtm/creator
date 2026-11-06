@@ -111,6 +111,7 @@ describe("Chat-first product workspace", () => {
 
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("textbox", { name: "Describe the ebook topic" })).toHaveClass("min-h-[56px]", "px-5", "py-4");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
@@ -135,6 +136,28 @@ describe("Chat-first product workspace", () => {
     expect(panel).toHaveTextContent("Productivity");
     expect(panel).toHaveTextContent("AI Tools");
     expect(panel).toHaveTextContent("Research & Web");
+    expect(within(panel).getByRole("tab", { name: "All" })).toHaveAttribute("aria-selected", "true");
+    expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(60);
+    expect(within(panel).queryByText(/Browse all 1,000\+ apps/)).not.toBeInTheDocument();
+    expect(panel).toHaveClass("!bottom-20", "!left-1/2", "max-h-[70dvh]");
+    fireEvent.click(within(panel).getByRole("tab", { name: "Productivity" }));
+    expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(13);
+  });
+
+  it("closes the system selector on outside interaction without resetting the selected mode", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
+    const menu = screen.getByRole("menu", { name: "NexoraOS system selector" });
+    fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ }));
+
+    expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" }));
+    expect(screen.getByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
   });
 
   it("opens an app details modal when a connector row is clicked", () => {
@@ -155,11 +178,11 @@ describe("Chat-first product workspace", () => {
 
     const menu = screen.getByRole("dialog", { name: "Workspace capabilities" });
     const apps = [
-      ["Gmail", "https://logo.clearbit.com/gmail.com"],
-      ["Google Calendar", "https://logo.clearbit.com/calendar.google.com"],
-      ["Google Drive", "https://logo.clearbit.com/drive.google.com"],
-      ["Google Docs", "https://logo.clearbit.com/docs.google.com"],
-      ["Google Sheets", "https://logo.clearbit.com/sheets.google.com"],
+      ["Gmail", "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"],
+      ["Google Calendar", "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"],
+      ["Google Drive", "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"],
+      ["Google Docs", "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"],
+      ["Google Sheets", "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg"],
     ];
 
     for (const [name, logo] of apps) {

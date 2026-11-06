@@ -125,8 +125,40 @@ export const CORE_WORKSPACE_CONNECTOR_IDS = new Set(
   CONNECTORS.filter((connector) => connector.workspaceDefault).map((connector) => connector.id),
 );
 
+const DIRECT_LOGO_URLS: Record<string, string> = {
+  gmail: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
+  "google-calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+  "google-drive": "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg",
+  "google-docs": "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg",
+  "google-sheets": "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg",
+  "google-slides": "https://upload.wikimedia.org/wikipedia/commons/1/16/Google_Slides_2019_Logo.svg",
+  outlook: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg",
+  notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+  slack: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
+  github: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+  stripe: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg",
+  telegram: "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+  whatsapp: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
+};
+
+const SIMPLE_ICON_SLUGS: Record<string, string> = {
+  "microsoft-teams": "microsoftteams",
+  "meta-ads": "meta",
+  "lemon-squeezy": "lemonsqueezy",
+  "fal-ai": "fal",
+  "stability-ai": "stabilityai",
+  "brave-search": "brave",
+  "google-calendar": "googlecalendar",
+  "google-drive": "googledrive",
+  "google-docs": "googledocs",
+  "google-sheets": "googlesheets",
+};
+
 export function getConnectorLogoUrl(connector: ConnectorDefinition): string {
-  return `https://logo.clearbit.com/${encodeURIComponent(connector.domain)}`;
+  const directLogo = DIRECT_LOGO_URLS[connector.id];
+  if (directLogo) return directLogo;
+  const iconSlug = SIMPLE_ICON_SLUGS[connector.id] ?? connector.toolkit.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  return `https://cdn.simpleicons.org/${encodeURIComponent(iconSlug)}`;
 }
 
 export function getConnectorExamples(connector: ConnectorDefinition): string[] {
