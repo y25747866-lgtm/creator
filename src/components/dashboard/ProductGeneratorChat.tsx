@@ -808,7 +808,7 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-4">
-          <form onSubmit={submitTopic} className="relative min-h-[120px] rounded-[24px] border border-[#303640] bg-[#111318] px-6 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#59616D]">
+          <form onSubmit={submitTopic} className="relative flex min-h-[148px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-4 py-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#59616D] sm:px-5 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -825,8 +825,24 @@ const ProductGeneratorChat = () => {
               </div>
             )}
             <p id="composer-hint" className="sr-only">Press Enter to send. Press Shift and Enter to add a new line.</p>
-            <div className="flex items-end gap-1.5 sm:gap-2">
-              <div className="flex shrink-0 translate-y-1 items-center gap-1">
+            <textarea
+              id="nexora-topic-composer"
+              ref={composerRef}
+              rows={1}
+              maxLength={500}
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                resizeComposer();
+              }}
+              onKeyDown={handleComposerKeyDown}
+              disabled={isGenerating || isUploading}
+              placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
+              className="block min-h-[72px] w-full flex-1 resize-none bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#6B7280] disabled:opacity-60"
+              aria-describedby="composer-hint"
+            />
+            <div className="mt-3 flex min-h-10 items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+              <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#1A1D24]/70 p-1">
                 <button
                   type="button"
                   onClick={() => { setAttachmentMenuOpen((open) => !open); setConnectorPanelOpen(false); setCapabilityMenuOpen(false); }}
@@ -848,23 +864,7 @@ const ProductGeneratorChat = () => {
                   <Plug size={17} aria-hidden="true" />
                 </button>
               </div>
-              <textarea
-                id="nexora-topic-composer"
-                ref={composerRef}
-                rows={1}
-                maxLength={500}
-                value={draft}
-                onChange={(event) => {
-                  setDraft(event.target.value);
-                  resizeComposer();
-                }}
-                onKeyDown={handleComposerKeyDown}
-                disabled={isGenerating || isUploading}
-                placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-                className="block max-h-40 min-h-[60px] min-w-0 flex-1 resize-none bg-transparent text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#6B7280] disabled:opacity-60"
-                aria-describedby="composer-hint"
-              />
-              <div className="ml-auto flex shrink-0 items-center justify-end gap-1 sm:gap-2">
+              <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2">
                 <div ref={capabilitySelectorRef} className="relative">
                   <button
                     type="button"
@@ -872,7 +872,7 @@ const ProductGeneratorChat = () => {
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
                     aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
-                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-xl px-1.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#1A1D24] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
+                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#1A1D24] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
                   >
                     <Sparkles size={14} className="shrink-0 text-[#8C96A3]" aria-hidden="true" />
                     <span className="hidden truncate sm:inline">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
@@ -895,7 +895,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303640] text-[#6B7280]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303640] text-[#6B7280]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>

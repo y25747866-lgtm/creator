@@ -112,8 +112,8 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("min-h-[60px]", "text-[16px]", "leading-[1.6]");
-    expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-6", "py-5", "rounded-[24px]");
+    expect(composer).toHaveClass("min-h-[72px]", "w-full", "text-[16px]", "leading-[1.6]");
+    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
@@ -156,10 +156,14 @@ describe("Chat-first product workspace", () => {
     expect(sheet).toHaveTextContent("50 MB each");
   });
 
-  it("keeps the Plus and Plugin controls aligned slightly lower in the composer", () => {
+  it("keeps the Plus and Plugin controls together on the lower-left rail", () => {
     renderWorkspace();
-    expect(screen.getByRole("button", { name: "Add to chat" }).parentElement).toHaveClass("translate-y-1");
-    expect(screen.getByRole("button", { name: "Open workspace capabilities" }).parentElement).toHaveClass("translate-y-1");
+    const plus = screen.getByRole("button", { name: "Add to chat" });
+    const plugin = screen.getByRole("button", { name: "Open workspace capabilities" });
+    expect(plus.parentElement).toBe(plugin.parentElement);
+    expect(plus.parentElement).toHaveClass("bg-[#1A1D24]/70", "p-1");
+    expect(plus.parentElement?.parentElement).toHaveClass("border-t", "justify-between");
+    expect(screen.getByRole("button", { name: "Send topic" }).parentElement).toHaveClass("ml-auto", "min-w-0");
   });
 
   it("opens the connector catalog from the separate plug button", () => {
