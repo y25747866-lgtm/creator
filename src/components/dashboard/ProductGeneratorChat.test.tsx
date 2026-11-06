@@ -111,7 +111,9 @@ describe("Chat-first product workspace", () => {
 
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("textbox", { name: "Describe the ebook topic" })).toHaveClass("min-h-[56px]", "px-5", "py-4");
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+    expect(composer).toHaveClass("min-h-[60px]", "text-[16px]", "leading-[1.6]");
+    expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-6", "py-5", "rounded-[24px]");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
@@ -148,6 +150,8 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
     const menu = screen.getByRole("menu", { name: "NexoraOS system selector" });
+    expect(menu).toHaveTextContent("Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.");
+    expect(menu).not.toHaveTextContent("Not connected in this preview; no agent run will be simulated.");
     fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ }));
 
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();

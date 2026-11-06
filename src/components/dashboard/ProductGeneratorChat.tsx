@@ -793,7 +793,7 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#121212] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-[800px]">
-          <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#1F1F1F] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
+          <form onSubmit={submitTopic} className="relative min-h-[120px] rounded-[24px] border border-[#353535] bg-[#1F1F1F] px-6 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -810,7 +810,7 @@ const ProductGeneratorChat = () => {
               </div>
             )}
             <p id="composer-hint" className="sr-only">Press Enter to send. Press Shift and Enter to add a new line.</p>
-            <div className="flex items-end gap-1.5 px-2.5 pb-2.5 pt-2 sm:gap-2 sm:px-3 sm:pb-3">
+            <div className="flex items-end gap-1.5 sm:gap-2">
               <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
@@ -846,7 +846,7 @@ const ProductGeneratorChat = () => {
                 onKeyDown={handleComposerKeyDown}
                 disabled={isGenerating || isUploading}
                 placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-                className="block max-h-40 min-h-[56px] min-w-0 flex-1 resize-none bg-transparent px-5 py-4 text-[14px] leading-5 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:text-[15px]"
+                className="block max-h-40 min-h-[60px] min-w-0 flex-1 resize-none bg-transparent text-[16px] leading-[1.6] text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60"
                 aria-describedby="composer-hint"
               />
               <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
@@ -871,7 +871,7 @@ const ProductGeneratorChat = () => {
                       </button>
                       <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#BDBDBD] hover:bg-[#1F1F1F]">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#777]" />
-                        <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Not connected in this preview; no agent run will be simulated.</span></span>
+                        <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#929292]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>
                       </button>
                     </div>
                   )}
