@@ -119,6 +119,32 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
   });
 
+  it("toggles the desktop sidebar from the main header and flips the expanded icon", () => {
+    renderWorkspace();
+    const toggle = screen.getByRole("button", { name: "Toggle sidebar" });
+    const icon = toggle.querySelector("svg");
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(icon?.style.transform).toBe("scaleX(-1)");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(icon?.style.transform).toBe("");
+    expect(screen.getByRole("main")).toHaveClass("md:ml-20");
+    expect(localStorage.getItem("nexora_sidebar_collapsed")).toBe("true");
+  });
+
+  it("uses the same main-header toggle to open the sidebar drawer on mobile", () => {
+    setTestViewportWidth(375);
+    renderWorkspace();
+    const toggle = screen.getByRole("button", { name: "Toggle sidebar" });
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle.querySelector("svg")?.style.transform).toBe("scaleX(-1)");
+    expect(localStorage.getItem("nexora_sidebar_collapsed")).toBeNull();
+  });
+
   it("opens the add-to-chat sheet with working media and workspace destinations", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));

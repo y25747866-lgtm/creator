@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ChevronLeft,
-  ChevronRight,
   Download,
   Plus,
   Package,
@@ -22,7 +20,7 @@ import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
-  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
+  const { collapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -73,15 +71,6 @@ const DashboardSidebar = () => {
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className={`flex h-16 shrink-0 items-center border-b border-[#1F1F1F] px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#929292] transition hover:bg-[#1F1F1F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] md:flex"
-          >
-            {collapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
-          </button>
           {showLabels && <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
             <img src={nexoraLogo} alt="" width="30" height="30" className="h-[30px] w-[30px] shrink-0 rounded-lg" />
             <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-white">NexoraOS</span>

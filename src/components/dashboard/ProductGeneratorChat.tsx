@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
   BookOpen,
@@ -11,7 +11,6 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Loader2,
-  Menu,
   Plus,
   Plug,
   Puzzle,
@@ -35,6 +34,14 @@ import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } fro
 import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
 import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
+function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
+  return (
+    <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <path fill="currentColor" d="M5 5h8v14H5zm14 14h-4V5h4zM4 3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm7 9L7 8.5v7z" />
+    </svg>
+  );
+}
 
 type Template = {
   id: string;
@@ -156,7 +163,9 @@ const ProductGeneratorChat = () => {
   const { user, loading: authLoading, sendMagicLink } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { setMobileOpen } = useSidebarState();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
+  const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 768;
+  const sidebarExpanded = isDesktopViewport ? !collapsed : mobileOpen;
   const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
@@ -617,17 +626,23 @@ const ProductGeneratorChat = () => {
     composerRef.current?.focus();
   };
 
+  const toggleSidebar = () => {
+    if (window.innerWidth >= 768) setCollapsed(!collapsed);
+    else setMobileOpen(!mobileOpen);
+  };
+
   return (
     <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#121212", color: "#F5F5F5" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#292929] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label="Open navigation drawer"
-            onClick={() => setMobileOpen(true)}
-            className="-ml-2 flex h-10 w-10 items-center justify-center rounded-lg text-[#B2B2B2] transition hover:bg-[#1F1F1F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] md:hidden"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+            aria-expanded={sidebarExpanded}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.06] hover:text-white transition"
           >
-            <Menu size={18} aria-hidden="true" />
+            <SidebarUnfoldLineIcon size={20} style={sidebarExpanded ? { transform: "scaleX(-1)" } : undefined} aria-hidden="true" />
           </button>
           {hasConversation && messages[0]?.role === "user" && (
             <span className="text-sm text-[#C9C9C9] truncate max-w-[200px] sm:max-w-[400px]">
