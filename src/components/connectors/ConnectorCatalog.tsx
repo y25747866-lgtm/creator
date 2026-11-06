@@ -46,11 +46,9 @@ export function ConnectorLogo({ connector, className = "" }: { connector: Connec
 function ConnectedMark({ connector }: { connector: ConnectorDefinition }) {
   const label = connector.workspaceDefault && !connector.supportsAccountConnection ? "Connected to workspace" : "Connected";
   return (
-    <span className="inline-flex items-center gap-2" title={label}>
-      <button type="button" disabled className="relative inline-flex h-[18px] w-[32px] items-center rounded-full bg-[#195A9F] p-[2px] disabled:cursor-default" role="switch" aria-checked="true" aria-label={`${connector.name}: ${label}`}>
-        <span className="ml-auto h-[14px] w-[14px] rounded-full bg-white" />
-      </button>
-      <span className="text-[11px] text-[#AEBBD0]">{connector.workspaceDefault ? "Workspace" : "Connected"}</span>
+    <span className="inline-flex items-center gap-1.5 text-[11px] text-[#AEBBD0]" title={label}>
+      <Check size={13} aria-hidden="true" />
+      <span>{connector.workspaceDefault && !connector.supportsAccountConnection ? "Workspace" : "Connected"}</span>
     </span>
   );
 }
@@ -65,7 +63,10 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
   const connectedToolkitSlugs = useMemo(() => new Set(apps.filter((app) => app.connected).map((app) => app.slug.toLowerCase())), [apps]);
   const visibleConnectors = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase();
-    return CONNECTORS.filter((connector) => connector.category === category && (!needle || `${connector.name} ${connector.domain}`.toLocaleLowerCase().includes(needle)));
+    return CONNECTORS.filter((connector) =>
+      (needle.length > 0 || connector.category === category) &&
+      (!needle || `${connector.name} ${connector.domain}`.toLocaleLowerCase().includes(needle)),
+    );
   }, [category, search]);
   const connectorIsConnected = (connector: ConnectorDefinition) => Boolean((connector.workspaceDefault && !connector.supportsAccountConnection) || connectedToolkitSlugs.has(connector.toolkit.toLowerCase()));
 
@@ -95,7 +96,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-medium text-[#C7C7C7]">Apps</p>
-          <p className="mt-1 text-[10px] text-[#737373]">{CONNECTORS.length} curated apps · six categories</p>
+          <p className="mt-1 text-[10px] text-[#737373]">{CONNECTORS.length} curated apps · seven categories</p>
         </div>
         {loading && <Loader2 size={14} className="mt-0.5 animate-spin text-[#8B8B8B]" aria-label="Checking connections" />}
       </div>
@@ -131,14 +132,21 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       <div
         role="tabpanel"
         aria-labelledby={`connector-tab-${category.replace(/\W/g, "-").toLowerCase()}`}
-        className={`grid gap-1.5 ${compact ? "max-h-[min(34dvh,340px)] grid-cols-1 overflow-y-auto pr-1" : "grid-cols-1 sm:grid-cols-2"}`}
+        className={`grid gap-1.5 ${compact ? "max-h-[min(55dvh,500px)] grid-cols-1 overflow-y-auto pr-1" : "grid-cols-1 sm:grid-cols-2"}`}
       >
         {visibleConnectors.length === 0 ? (
           <p className="col-span-full rounded-lg border border-white/10 px-3 py-5 text-center text-xs text-[#7C7C7C]">No apps match this search</p>
         ) : visibleConnectors.map((connector) => {
           const connected = connectorIsConnected(connector);
           return (
-            <div key={connector.id} className="flex min-h-[48px] items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.015] px-2 py-1.5">
+            <button
+              key={connector.id}
+              type="button"
+              onClick={() => { setSelected(connector); setActionError(null); }}
+              aria-haspopup="dialog"
+              aria-label={`${connector.name} connector details`}
+              className="flex min-h-[48px] w-full items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.015] px-2 py-1.5 text-left transition hover:border-white/15 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
+            >
               <ConnectorLogo connector={connector} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-white">{connector.name}</p>
@@ -147,15 +155,9 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               {connected ? (
                 <ConnectedMark connector={connector} />
               ) : (
-                <button
-                  type="button"
-                  onClick={() => { setSelected(connector); setActionError(null); }}
-                  className="rounded-md border border-[#315277] bg-[#131E2A] px-2.5 py-1.5 text-[10px] font-medium text-[#D5E4F5] transition hover:border-[#195A9F] hover:bg-[#195A9F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
-                >
-                  Connect
-                </button>
+                <span className="rounded-md border border-[#315277] bg-[#131E2A] px-2.5 py-1.5 text-[10px] font-medium text-[#D5E4F5]">Connect</span>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -176,9 +178,9 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
 
       {selected && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="connector-detail-title" className="w-full max-w-md rounded-2xl border border-white/15 bg-[#1F1F1F] p-5 shadow-2xl">
+          <section role="dialog" aria-modal="true" aria-labelledby="connector-detail-title" className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1F1F1F] p-5 shadow-2xl">
             <div className="flex items-start gap-3">
-              <ConnectorLogo connector={selected} className="h-10 w-10 rounded-[10px] p-2" />
+              <ConnectorLogo connector={selected} className="h-12 w-12 rounded-xl p-2.5" />
               <div className="min-w-0 flex-1">
                 <h2 id="connector-detail-title" className="text-base font-medium text-white">{selected.name}</h2>
                 <p className="mt-1 text-xs text-[#8F8F8F]">{selected.authLabel}</p>
@@ -202,11 +204,11 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               <button
                 type="button"
                 onClick={() => void handleConnect(selected)}
-                disabled={Boolean(connectingId)}
+                disabled={Boolean(connectingId) || connectorIsConnected(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
                 className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#195A9F] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#246BAF] disabled:cursor-wait disabled:opacity-60"
               >
                 {connectingId === selected.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
-                {connectingId === selected.id ? "Starting connection" : "Connect"}
+                {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : "Connect"}
               </button>
             </div>
           </section>

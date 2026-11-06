@@ -29,7 +29,7 @@ VALUES (
   'nexora-user-media',
   false,
   52428800,
-  ARRAY['image/jpeg','image/png','image/webp','image/gif','image/avif','video/mp4','video/webm','video/quicktime','video/ogg']::text[]
+  ARRAY['image/jpeg','image/png','image/webp','image/gif','image/avif','video/mp4','video/webm','video/quicktime','video/ogg','application/pdf']::text[]
 )
 ON CONFLICT (id) DO NOTHING;
 

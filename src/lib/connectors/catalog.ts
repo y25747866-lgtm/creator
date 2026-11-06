@@ -2,9 +2,10 @@ export const CONNECTOR_CATEGORIES = [
   "Productivity",
   "Communication",
   "Sales & Marketing",
-  "Payments",
-  "Dev",
-  "Research",
+  "Payments & Commerce",
+  "Dev & Infrastructure",
+  "AI Tools",
+  "Research & Web",
 ] as const;
 
 export type ConnectorCategory = (typeof CONNECTOR_CATEGORIES)[number];
@@ -22,57 +23,102 @@ export type ConnectorDefinition = {
   description: string;
   workspaceDefault?: boolean;
   supportsAccountConnection?: boolean;
-  localLogo?: string;
 };
 
-// The supplied list contains 41 apps (not 40). All listed apps are retained.
+type ConnectorOptions = {
+  authLabel?: string;
+  workspaceDefault?: boolean;
+  supportsAccountConnection?: boolean;
+};
+
+function defineConnector(
+  id: string,
+  name: string,
+  domain: string,
+  category: ConnectorCategory,
+  toolkit: string,
+  authKind: ConnectorAuthKind,
+  description: string,
+  options: ConnectorOptions = {},
+): ConnectorDefinition {
+  const authLabel = options.authLabel ?? (authKind === "oauth" ? "OAuth 2.0" : authKind === "bot_token" ? "Bot token" : "API key");
+  return { id, name, domain, category, toolkit, icon: id, authKind, authLabel, description, ...options };
+}
+
 export const CONNECTORS: ConnectorDefinition[] = [
-  { id: "gmail", name: "Gmail", domain: "gmail.com", category: "Productivity", toolkit: "gmail", icon: "gmail", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Gmail to work with messages and email workflows.", localLogo: "/google-workspace/gmail.svg" },
-  { id: "google-calendar", name: "Google Calendar", domain: "calendar.google.com", category: "Productivity", toolkit: "googlecalendar", icon: "googlecalendar", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect calendars to review schedules and manage events.", localLogo: "/google-workspace/google-calendar.svg" },
-  { id: "google-drive", name: "Google Drive", domain: "drive.google.com", category: "Productivity", toolkit: "googledrive", icon: "googledrive", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Drive to find and organize workspace files.", localLogo: "/google-workspace/google-drive.svg" },
-  { id: "google-docs", name: "Google Docs", domain: "docs.google.com", category: "Productivity", toolkit: "googledocs", icon: "googledocs", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Docs to find and work with documents.", localLogo: "/google-workspace/google-docs.svg" },
-  { id: "google-sheets", name: "Google Sheets", domain: "sheets.google.com", category: "Productivity", toolkit: "googlesheets", icon: "googlesheets", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Sheets to work with spreadsheet data.", localLogo: "/google-workspace/google-sheets.svg" },
-  { id: "outlook", name: "Outlook", domain: "outlook.com", category: "Productivity", toolkit: "outlook", icon: "microsoftoutlook", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Outlook email and calendar workflows." },
-  { id: "notion", name: "Notion", domain: "notion.so", category: "Productivity", toolkit: "notion", icon: "notion", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Notion pages and team knowledge." },
-  { id: "airtable", name: "Airtable", domain: "airtable.com", category: "Productivity", toolkit: "airtable", icon: "airtable", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Airtable bases and records." },
-  { id: "trello", name: "Trello", domain: "trello.com", category: "Productivity", toolkit: "trello", icon: "trello", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Trello boards, cards, and workflows." },
-  { id: "asana", name: "Asana", domain: "asana.com", category: "Productivity", toolkit: "asana", icon: "asana", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Asana projects and tasks." },
-  { id: "clickup", name: "ClickUp", domain: "clickup.com", category: "Productivity", toolkit: "clickup", icon: "clickup", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect ClickUp spaces and task workflows." },
-  { id: "linear", name: "Linear", domain: "linear.app", category: "Productivity", toolkit: "linear", icon: "linear", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Linear issues and project workflows." },
-  { id: "todoist", name: "Todoist", domain: "todoist.com", category: "Productivity", toolkit: "todoist", icon: "todoist", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Todoist tasks and project lists." },
+  // Productivity (13)
+  defineConnector("gmail", "Gmail", "gmail.com", "Productivity", "gmail", "oauth", "Connect Gmail to work with messages and email workflows."),
+  defineConnector("google-calendar", "Google Calendar", "calendar.google.com", "Productivity", "googlecalendar", "oauth", "Connect calendars to review schedules and manage events."),
+  defineConnector("google-drive", "Google Drive", "drive.google.com", "Productivity", "googledrive", "oauth", "Connect Drive to find and organize workspace files."),
+  defineConnector("google-docs", "Google Docs", "docs.google.com", "Productivity", "googledocs", "oauth", "Connect Docs to find and work with documents."),
+  defineConnector("google-sheets", "Google Sheets", "sheets.google.com", "Productivity", "googlesheets", "oauth", "Connect Sheets to work with spreadsheet data."),
+  defineConnector("outlook", "Outlook", "outlook.com", "Productivity", "outlook", "oauth", "Connect Outlook email and calendar workflows."),
+  defineConnector("notion", "Notion", "notion.so", "Productivity", "notion", "oauth", "Connect Notion pages and team knowledge."),
+  defineConnector("airtable", "Airtable", "airtable.com", "Productivity", "airtable", "oauth", "Connect Airtable bases and records."),
+  defineConnector("trello", "Trello", "trello.com", "Productivity", "trello", "oauth", "Connect Trello boards, cards, and workflows."),
+  defineConnector("asana", "Asana", "asana.com", "Productivity", "asana", "oauth", "Connect Asana projects and tasks."),
+  defineConnector("clickup", "ClickUp", "clickup.com", "Productivity", "clickup", "oauth", "Connect ClickUp spaces and task workflows."),
+  defineConnector("linear", "Linear", "linear.app", "Productivity", "linear", "oauth", "Connect Linear issues and project workflows."),
+  defineConnector("todoist", "Todoist", "todoist.com", "Productivity", "todoist", "oauth", "Connect Todoist tasks and project lists."),
 
-  { id: "slack", name: "Slack", domain: "slack.com", category: "Communication", toolkit: "slack", icon: "slack", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Slack workspaces, messages, and channels." },
-  { id: "discord", name: "Discord", domain: "discord.com", category: "Communication", toolkit: "discord", icon: "discord", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Discord servers and communication workflows." },
-  { id: "telegram", name: "Telegram", domain: "telegram.org", category: "Communication", toolkit: "telegrambotapi", icon: "telegram", authKind: "bot_token", authLabel: "Bot token", description: "Connect a Telegram bot through Composio's hosted credential flow." },
-  { id: "whatsapp", name: "WhatsApp", domain: "whatsapp.com", category: "Communication", toolkit: "whatsapp", icon: "whatsapp", authKind: "bot_token", authLabel: "Token and phone ID", description: "Connect WhatsApp Business credentials through Composio's hosted flow." },
-  { id: "zoom", name: "Zoom", domain: "zoom.us", category: "Communication", toolkit: "zoom", icon: "zoom", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Zoom meetings and scheduling workflows." },
+  // Communication (6)
+  defineConnector("slack", "Slack", "slack.com", "Communication", "slack", "oauth", "Connect Slack workspaces, messages, and channels."),
+  defineConnector("discord", "Discord", "discord.com", "Communication", "discord", "oauth", "Connect Discord servers and communication workflows."),
+  defineConnector("telegram", "Telegram", "telegram.org", "Communication", "telegrambotapi", "bot_token", "Connect a Telegram bot through Composio's hosted credential flow."),
+  defineConnector("whatsapp", "WhatsApp", "whatsapp.com", "Communication", "whatsapp", "bot_token", "Connect WhatsApp Business credentials through Composio's hosted flow.", { authLabel: "Token and phone ID" }),
+  defineConnector("zoom", "Zoom", "zoom.us", "Communication", "zoom", "oauth", "Connect Zoom meetings and scheduling workflows."),
+  defineConnector("microsoft-teams", "Microsoft Teams", "teams.microsoft.com", "Communication", "microsoftteams", "oauth", "Connect Teams messages, channels, and meeting workflows."),
 
-  { id: "hubspot", name: "HubSpot", domain: "hubspot.com", category: "Sales & Marketing", toolkit: "hubspot", icon: "hubspot", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect HubSpot CRM and marketing workflows." },
-  { id: "salesforce", name: "Salesforce", domain: "salesforce.com", category: "Sales & Marketing", toolkit: "salesforce", icon: "salesforce", authKind: "oauth", authLabel: "OAuth 2.0", description: "Connect Salesforce records and CRM workflows." },
-  { id: "mailchimp", name: "Mailchimp", domain: "mailchimp.com", category: "Sales & Marketing", toolkit: "mailchimp", icon: "mailchimp", authKind: "api_key", authLabel: "API key", description: "Connect Mailchimp audiences and campaign workflows." },
-  { id: "convertkit", name: "ConvertKit", domain: "convertkit.com", category: "Sales & Marketing", toolkit: "kit", icon: "kit", authKind: "api_key", authLabel: "API key", description: "Connect ConvertKit (Kit) subscribers and creator email workflows." },
-  { id: "beehiiv", name: "Beehiiv", domain: "beehiiv.com", category: "Sales & Marketing", toolkit: "beehiiv", icon: "beehiiv", authKind: "api_key", authLabel: "API key", description: "Connect Beehiiv publications and newsletter workflows." },
-  { id: "omnisend", name: "Omnisend", domain: "omnisend.com", category: "Sales & Marketing", toolkit: "omnisend", icon: "omnisend", authKind: "api_key", authLabel: "API key", description: "Connect Omnisend marketing and customer workflows." },
-  { id: "linkedin", name: "LinkedIn", domain: "linkedin.com", category: "Sales & Marketing", toolkit: "linkedin", icon: "linkedin", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect LinkedIn account workflows." },
-  { id: "twitter", name: "Twitter/X", domain: "x.com", category: "Sales & Marketing", toolkit: "twitter", icon: "x", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Twitter/X account workflows." },
-  { id: "instagram", name: "Instagram", domain: "instagram.com", category: "Sales & Marketing", toolkit: "instagram", icon: "instagram", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Instagram account workflows." },
-  { id: "meta-ads", name: "Meta Ads", domain: "facebook.com", category: "Sales & Marketing", toolkit: "facebookads", icon: "meta", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Meta advertising account workflows." },
+  // Sales & Marketing (11)
+  defineConnector("hubspot", "HubSpot", "hubspot.com", "Sales & Marketing", "hubspot", "oauth", "Connect HubSpot CRM and marketing workflows."),
+  defineConnector("salesforce", "Salesforce", "salesforce.com", "Sales & Marketing", "salesforce", "oauth", "Connect Salesforce records and CRM workflows."),
+  defineConnector("mailchimp", "Mailchimp", "mailchimp.com", "Sales & Marketing", "mailchimp", "api_key", "Connect Mailchimp audiences and campaign workflows."),
+  defineConnector("convertkit", "ConvertKit", "convertkit.com", "Sales & Marketing", "kit", "api_key", "Connect ConvertKit subscribers and creator email workflows."),
+  defineConnector("beehiiv", "Beehiiv", "beehiiv.com", "Sales & Marketing", "beehiiv", "api_key", "Connect Beehiiv publications and newsletter workflows."),
+  defineConnector("omnisend", "Omnisend", "omnisend.com", "Sales & Marketing", "omnisend", "api_key", "Connect Omnisend marketing and customer workflows."),
+  defineConnector("linkedin", "LinkedIn", "linkedin.com", "Sales & Marketing", "linkedin", "oauth", "Connect LinkedIn account workflows."),
+  defineConnector("twitter", "Twitter/X", "x.com", "Sales & Marketing", "twitter", "oauth", "Connect Twitter/X account workflows."),
+  defineConnector("instagram", "Instagram", "instagram.com", "Sales & Marketing", "instagram", "oauth", "Connect Instagram account workflows."),
+  defineConnector("meta-ads", "Meta Ads Manager", "facebook.com", "Sales & Marketing", "facebookads", "oauth", "Connect Meta advertising account workflows."),
+  defineConnector("typefully", "Typefully", "typefully.com", "Sales & Marketing", "typefully", "api_key", "Connect Typefully drafts and social publishing workflows."),
 
-  { id: "stripe", name: "Stripe", domain: "stripe.com", category: "Payments", toolkit: "stripe", icon: "stripe", authKind: "api_key", authLabel: "API key", description: "Connect Stripe payment and billing workflows." },
-  { id: "whop", name: "Whop", domain: "whop.com", category: "Payments", toolkit: "whop", icon: "whop", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Whop products and commerce workflows." },
-  { id: "gumroad", name: "Gumroad", domain: "gumroad.com", category: "Payments", toolkit: "gumroad", icon: "gumroad", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Gumroad products and sales workflows." },
-  { id: "lemon-squeezy", name: "Lemon Squeezy", domain: "lemonsqueezy.com", category: "Payments", toolkit: "lemonsqueezy", icon: "lemonsqueezy", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Lemon Squeezy store and order workflows." },
-  { id: "shopify", name: "Shopify", domain: "shopify.com", category: "Payments", toolkit: "shopify", icon: "shopify", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Shopify store and commerce workflows." },
+  // Payments & Commerce (6)
+  defineConnector("stripe", "Stripe", "stripe.com", "Payments & Commerce", "stripe", "api_key", "Connect Stripe payment and billing workflows."),
+  defineConnector("whop", "Whop", "whop.com", "Payments & Commerce", "whop", "oauth", "Connect Whop products and commerce workflows."),
+  defineConnector("gumroad", "Gumroad", "gumroad.com", "Payments & Commerce", "gumroad", "oauth", "Connect Gumroad products and sales workflows."),
+  defineConnector("lemon-squeezy", "Lemon Squeezy", "lemonsqueezy.com", "Payments & Commerce", "lemonsqueezy", "oauth", "Connect Lemon Squeezy store and order workflows."),
+  defineConnector("shopify", "Shopify", "shopify.com", "Payments & Commerce", "shopify", "oauth", "Connect Shopify store and commerce workflows."),
+  defineConnector("paypal", "PayPal", "paypal.com", "Payments & Commerce", "paypal", "oauth", "Connect PayPal payments and transaction workflows."),
 
-  { id: "github", name: "GitHub", domain: "github.com", category: "Dev", toolkit: "github", icon: "github", authKind: "oauth", authLabel: "Workspace service", description: "GitHub is linked to the NexoraOS source workspace.", workspaceDefault: true },
-  { id: "supabase", name: "Supabase", domain: "supabase.com", category: "Dev", toolkit: "supabase", icon: "supabase", authKind: "api_key", authLabel: "Composio-hosted project token", description: "Link a Supabase project through Composio's hosted credential flow. NexoraOS also uses its own configured workspace backend.", workspaceDefault: true, supportsAccountConnection: true },
-  { id: "vercel", name: "Vercel", domain: "vercel.com", category: "Dev", toolkit: "vercel", icon: "vercel", authKind: "api_key", authLabel: "Composio-hosted access token", description: "Link a Vercel account through Composio's hosted credential flow. NexoraOS also uses its own preview deployment.", workspaceDefault: true, supportsAccountConnection: true },
-  { id: "zapier", name: "Zapier", domain: "zapier.com", category: "Dev", toolkit: "zapier", icon: "zapier", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Zapier automation workflows." },
-  { id: "make", name: "Make", domain: "make.com", category: "Dev", toolkit: "make", icon: "make", authKind: "oauth", authLabel: "Composio-hosted auth", description: "Connect Make scenarios and automation workflows." },
-  { id: "n8n", name: "n8n", domain: "n8n.io", category: "Dev", toolkit: "n8n", icon: "n8n", authKind: "api_key", authLabel: "API key", description: "Connect an n8n instance using its configured credential flow." },
+  // Dev & Infrastructure (8)
+  defineConnector("github", "GitHub", "github.com", "Dev & Infrastructure", "github", "oauth", "Connect GitHub repositories and developer workflows.", { workspaceDefault: true, supportsAccountConnection: true }),
+  defineConnector("supabase", "Supabase", "supabase.com", "Dev & Infrastructure", "supabase", "api_key", "Link a Supabase project through Composio's hosted credential flow. NexoraOS also uses its configured workspace backend.", { workspaceDefault: true, supportsAccountConnection: true, authLabel: "Composio-hosted project token" }),
+  defineConnector("vercel", "Vercel", "vercel.com", "Dev & Infrastructure", "vercel", "api_key", "Link a Vercel account through Composio's hosted credential flow. NexoraOS also uses its preview deployment.", { workspaceDefault: true, supportsAccountConnection: true, authLabel: "Composio-hosted access token" }),
+  defineConnector("zapier", "Zapier", "zapier.com", "Dev & Infrastructure", "zapier", "oauth", "Connect Zapier automation workflows."),
+  defineConnector("make", "Make", "make.com", "Dev & Infrastructure", "make", "oauth", "Connect Make scenarios and automation workflows."),
+  defineConnector("n8n", "n8n", "n8n.io", "Dev & Infrastructure", "n8n", "api_key", "Connect an n8n instance using its configured credential flow."),
+  defineConnector("jira", "Jira", "atlassian.com", "Dev & Infrastructure", "jira", "oauth", "Connect Jira projects, issues, and workflows."),
+  defineConnector("bitbucket", "Bitbucket", "bitbucket.org", "Dev & Infrastructure", "bitbucket", "oauth", "Connect Bitbucket repositories and pull requests."),
 
-  { id: "perplexity", name: "Perplexity", domain: "perplexity.ai", category: "Research", toolkit: "perplexityai", icon: "perplexity", authKind: "api_key", authLabel: "API key", description: "Connect Perplexity research workflows." },
-  { id: "firecrawl", name: "Firecrawl", domain: "firecrawl.dev", category: "Research", toolkit: "firecrawl", icon: "firecrawl", authKind: "api_key", authLabel: "API key", description: "Connect Firecrawl web extraction workflows." },
+  // AI Tools (10)
+  defineConnector("perplexity", "Perplexity", "perplexity.ai", "AI Tools", "perplexityai", "api_key", "Connect Perplexity research workflows."),
+  defineConnector("elevenlabs", "ElevenLabs", "elevenlabs.io", "AI Tools", "elevenlabs", "api_key", "Connect ElevenLabs speech and audio generation."),
+  defineConnector("heygen", "HeyGen", "heygen.com", "AI Tools", "heygen", "api_key", "Connect HeyGen video creation workflows."),
+  defineConnector("fal-ai", "Fal.ai", "fal.ai", "AI Tools", "fal", "api_key", "Connect Fal model and media generation workflows."),
+  defineConnector("midjourney", "Midjourney", "midjourney.com", "AI Tools", "midjourney", "api_key", "Connect Midjourney image creation workflows."),
+  defineConnector("stability-ai", "Stability AI", "stability.ai", "AI Tools", "stability_ai", "api_key", "Connect Stability AI image and media workflows."),
+  defineConnector("runwayml", "RunwayML", "runwayml.com", "AI Tools", "runwayml", "api_key", "Connect Runway media generation workflows."),
+  defineConnector("canva", "Canva", "canva.com", "AI Tools", "canva", "oauth", "Connect Canva designs and collaboration workflows."),
+  defineConnector("gamma", "Gamma", "gamma.app", "AI Tools", "gamma", "api_key", "Connect Gamma presentation and document workflows."),
+  defineConnector("jasper", "Jasper", "jasper.ai", "AI Tools", "jasper", "api_key", "Connect Jasper content workflows."),
+
+  // Research & Web (6)
+  defineConnector("firecrawl", "Firecrawl", "firecrawl.dev", "Research & Web", "firecrawl", "api_key", "Connect Firecrawl web extraction workflows."),
+  defineConnector("brave-search", "Brave Search", "search.brave.com", "Research & Web", "brave_search", "api_key", "Connect Brave Search for web research."),
+  defineConnector("wikipedia", "Wikipedia", "wikipedia.org", "Research & Web", "wikipedia", "api_key", "Connect Wikipedia for encyclopedia research.", { authLabel: "No key required" }),
+  defineConnector("youtube", "YouTube", "youtube.com", "Research & Web", "youtube", "oauth", "Connect YouTube channels and video research."),
+  defineConnector("typeform", "Typeform", "typeform.com", "Research & Web", "typeform", "oauth", "Connect Typeform responses and form workflows."),
+  defineConnector("calendly", "Calendly", "calendly.com", "Research & Web", "calendly", "oauth", "Connect Calendly events and scheduling workflows."),
 ];
 
 export const CORE_WORKSPACE_CONNECTOR_IDS = new Set(
@@ -80,8 +126,7 @@ export const CORE_WORKSPACE_CONNECTOR_IDS = new Set(
 );
 
 export function getConnectorLogoUrl(connector: ConnectorDefinition): string {
-  if (connector.localLogo) return connector.localLogo;
-  return `https://cdn.simpleicons.org/${encodeURIComponent(connector.icon)}`;
+  return `https://logo.clearbit.com/${encodeURIComponent(connector.domain)}`;
 }
 
 export function getConnectorExamples(connector: ConnectorDefinition): string[] {
@@ -93,11 +138,13 @@ export function getConnectorExamples(connector: ConnectorDefinition): string[] {
       return [`Summarize the latest activity in ${name}`, `Draft a reply for my ${name} conversations`];
     case "Sales & Marketing":
       return [`Review recent activity in ${name}`, `Summarize the latest campaign or lead updates in ${name}`];
-    case "Payments":
+    case "Payments & Commerce":
       return [`Summarize recent activity in ${name}`, `Find the latest order or payment updates in ${name}`];
-    case "Dev":
+    case "Dev & Infrastructure":
       return [`Review recent updates in ${name}`, `Find the latest project activity in ${name}`];
-    case "Research":
+    case "AI Tools":
+      return [`Create a first draft with ${name}`, `Review recent ${name} projects or generations`];
+    case "Research & Web":
       return [`Use ${name} to research a question and summarize the sources`, `Find recent information about a topic with ${name}`];
   }
 }

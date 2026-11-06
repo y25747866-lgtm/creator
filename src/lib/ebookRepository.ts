@@ -15,6 +15,7 @@ export const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = new Set([
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/avif",
   "video/mp4", "video/webm", "video/quicktime", "video/ogg",
+  "application/pdf",
 ]);
 
 export async function saveGeneratedEbook(ebook: Omit<Ebook, "id" | "dbProductId">, userId: string): Promise<Ebook> {
@@ -119,8 +120,8 @@ export async function deleteGeneratedEbook(id: string, userId: string): Promise<
 }
 
 export async function uploadCreatorMedia(file: File, userId: string): Promise<MediaAttachment> {
-  if (!ALLOWED_MEDIA_TYPES.has(file.type)) throw new Error("Choose an image or video file in a supported format.");
-  if (file.size <= 0 || file.size > MAX_MEDIA_BYTES) throw new Error("Each image or video must be smaller than 50 MB.");
+  if (!ALLOWED_MEDIA_TYPES.has(file.type)) throw new Error("Choose a supported image, video, or PDF file.");
+  if (file.size <= 0 || file.size > MAX_MEDIA_BYTES) throw new Error("Each uploaded file must be smaller than 50 MB.");
 
   const safeName = file.name.replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/^-+|-+$/g, "").slice(-100) || "upload";
   const path = `${userId}/${crypto.randomUUID()}-${safeName}`;

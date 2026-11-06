@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   uploadCreatorMedia: vi.fn(),
   deleteCreatorMedia: vi.fn(),
   refreshMediaLinks: vi.fn(),
+  getLocalCreatorConversations: vi.fn(),
+  listCreatorConversations: vi.fn(),
   saveCreatorConversation: vi.fn(),
   cacheLocalCreatorConversation: vi.fn(),
   loadCreatorConversation: vi.fn(),
@@ -53,6 +55,8 @@ vi.mock("@/lib/ebookRepository", () => ({
 }));
 vi.mock("@/lib/chatPersistence", () => ({
   cacheLocalCreatorConversation: mocks.cacheLocalCreatorConversation,
+  getLocalCreatorConversations: mocks.getLocalCreatorConversations,
+  listCreatorConversations: mocks.listCreatorConversations,
   loadCreatorConversation: mocks.loadCreatorConversation,
   readLocalCreatorConversation: mocks.readLocalCreatorConversation,
   saveCreatorConversation: mocks.saveCreatorConversation,
@@ -83,9 +87,11 @@ beforeEach(() => {
   mocks.recordUsage.mockResolvedValue(true);
   mocks.generatePDF.mockResolvedValue(undefined);
   mocks.saveGeneratedEbook.mockImplementation(async (ebook, userId) => ({ ...ebook, id: "saved-ebook", dbProductId: "saved-ebook", userId }));
-  mocks.uploadCreatorMedia.mockImplementation(async (file) => ({ id: "uploaded-file", path: "test-user/uploaded-file", name: file.name, mimeType: file.type, size: file.size, signedUrl: "https://media.example/uploaded-file" }));
+  mocks.uploadCreatorMedia.mockImplementation(async (file: File, userId: string) => ({ id: `${userId}/${file.name}`, path: `${userId}/${file.name}`, name: file.name, mimeType: file.type, size: file.size, signedUrl: "https://media.example/uploaded-file" }));
   mocks.deleteCreatorMedia.mockResolvedValue(undefined);
   mocks.refreshMediaLinks.mockImplementation(async (attachments) => attachments);
+  mocks.getLocalCreatorConversations.mockReturnValue([]);
+  mocks.listCreatorConversations.mockResolvedValue([]);
   mocks.saveCreatorConversation.mockResolvedValue(undefined);
   mocks.cacheLocalCreatorConversation.mockReturnValue(undefined);
   mocks.loadCreatorConversation.mockResolvedValue([]);
@@ -110,30 +116,50 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
   });
 
-  it("shows truthful capability states from the Plus menu", () => {
+  it("opens the add-to-chat sheet with working media and workspace destinations", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
-    const menu = screen.getByRole("region", { name: "Workspace capabilities" });
-    expect(menu).toHaveTextContent("Images and videos");
-    expect(menu).toHaveTextContent("Private uploads");
-    expect(within(menu).getByRole("button", { name: "Upload image or video" })).toBeEnabled();
-    expect(menu).toHaveTextContent("Apps");
-    expect(menu).toHaveTextContent("MCP");
-    expect(menu).toHaveTextContent("reachable authenticated runtime");
+    fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
+    const sheet = screen.getByRole("dialog", { name: "Add to chat" });
+    for (const action of ["Camera", "Picture", "File", "Library", "Creations", "Recent tasks", "Skills"]) {
+      expect(within(sheet).getByText(action)).toBeInTheDocument();
+    }
+    expect(sheet).toHaveTextContent("five files per conversation");
+    expect(sheet).toHaveTextContent("50 MB each");
+  });
+
+  it("opens the connector catalog from the separate plug button", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
+    const panel = screen.getByRole("dialog", { name: "Workspace capabilities" });
+    expect(panel).toHaveTextContent("60 curated apps · seven categories");
+    expect(panel).toHaveTextContent("Productivity");
+    expect(panel).toHaveTextContent("AI Tools");
+    expect(panel).toHaveTextContent("Research & Web");
+  });
+
+  it("opens an app details modal when a connector row is clicked", () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gmail connector details" }));
+
+    const details = screen.getByRole("dialog", { name: "Gmail" });
+    expect(details).toHaveTextContent("OAuth 2.0");
+    expect(details).toHaveTextContent("Example prompts");
+    expect(within(details).getByRole("button", { name: "Connect" })).toBeEnabled();
   });
 
   it.each([375, 1365])("shows product-specific Google Workspace logos at %i px", (viewportWidth) => {
     setTestViewportWidth(viewportWidth);
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: "Open attachment options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
 
-    const menu = screen.getByRole("region", { name: "Workspace capabilities" });
+    const menu = screen.getByRole("dialog", { name: "Workspace capabilities" });
     const apps = [
-      ["Gmail", "/google-workspace/gmail.svg"],
-      ["Google Calendar", "/google-workspace/google-calendar.svg"],
-      ["Google Drive", "/google-workspace/google-drive.svg"],
-      ["Google Docs", "/google-workspace/google-docs.svg"],
-      ["Google Sheets", "/google-workspace/google-sheets.svg"],
+      ["Gmail", "https://logo.clearbit.com/gmail.com"],
+      ["Google Calendar", "https://logo.clearbit.com/calendar.google.com"],
+      ["Google Drive", "https://logo.clearbit.com/drive.google.com"],
+      ["Google Docs", "https://logo.clearbit.com/docs.google.com"],
+      ["Google Sheets", "https://logo.clearbit.com/sheets.google.com"],
     ];
 
     for (const [name, logo] of apps) {
@@ -218,7 +244,7 @@ describe("Chat-first product workspace", () => {
   it("uploads and keeps an image attached to the chat message", async () => {
     renderWorkspace();
     const file = new File(["image bytes"], "cover-reference.png", { type: "image/png" });
-    fireEvent.change(screen.getByLabelText("Upload images or videos"), { target: { files: [file] } });
+    fireEvent.change(screen.getByLabelText("Choose pictures or videos"), { target: { files: [file] } });
 
     expect(await screen.findByText("cover-reference.png")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Describe the ebook topic" }), { target: { value: "Create an ebook inspired by this cover" } });
@@ -227,6 +253,38 @@ describe("Chat-first product workspace", () => {
     expect(await screen.findByText("Six formats · choose one to begin")).toBeInTheDocument();
     expect(screen.getAllByText("cover-reference.png").length).toBeGreaterThan(0);
     expect(mocks.uploadCreatorMedia).toHaveBeenCalledWith(file, "test-user");
+  });
+
+  it("opens the File picker and accepts private PDF attachments", async () => {
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
+    const fileInput = screen.getByLabelText("Upload image, video, or PDF files");
+    const clickFilePicker = vi.spyOn(fileInput, "click");
+    fireEvent.click(within(screen.getByRole("dialog", { name: "Add to chat" })).getByRole("button", { name: "File" }));
+    expect(clickFilePicker).toHaveBeenCalled();
+    expect(fileInput.getAttribute("accept")).toContain("application/pdf");
+
+    const pdf = new File(["private pdf"], "project-brief.pdf", { type: "application/pdf" });
+    fireEvent.change(fileInput, { target: { files: [pdf] } });
+    expect(await screen.findByText("project-brief.pdf")).toBeInTheDocument();
+    expect(mocks.uploadCreatorMedia).toHaveBeenCalledWith(pdf, "test-user");
+  });
+
+  it("enforces five uploaded files across the whole conversation", async () => {
+    renderWorkspace();
+    const fileInput = screen.getByLabelText("Upload image, video, or PDF files");
+    const firstFile = new File(["one"], "first.png", { type: "image/png" });
+    fireEvent.change(fileInput, { target: { files: [firstFile] } });
+    expect(await screen.findByText("first.png")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Describe the ebook topic" }), { target: { value: "A useful project guide" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send topic" }));
+    expect(await screen.findByText("Six formats · choose one to begin")).toBeInTheDocument();
+
+    const remainingFiles = Array.from({ length: 5 }, (_, index) => new File([`file-${index}`], `extra-${index}.png`, { type: "image/png" }));
+    fireEvent.change(fileInput, { target: { files: remainingFiles } });
+    await waitFor(() => expect(mocks.uploadCreatorMedia).toHaveBeenCalledTimes(5));
+    expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "Some files were skipped" }));
   });
 
   it.each([375, 1365])("does not export a saved ebook after sign-out at %i px", async (viewportWidth) => {

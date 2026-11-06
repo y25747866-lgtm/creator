@@ -1,5 +1,6 @@
 import { Composio } from "@composio/core";
 import type { VercelRequest } from "@vercel/node";
+import { CONNECTORS } from "../../src/lib/connectors/catalog.js";
 
 export type ConnectorConfig = { toolkit: string; name: string; authKind: "oauth" | "api_key" | "bot_token" };
 export type AuthConfigRecord = { id: string; name?: string; toolkit?: { slug?: string }; isComposioManaged?: boolean };
@@ -15,48 +16,9 @@ type ComposioConnectorApi = {
   };
 };
 
-export const COMPOSIO_CONNECTORS: Record<string, ConnectorConfig> = {
-  gmail: { toolkit: "gmail", name: "Gmail", authKind: "oauth" },
-  "google-calendar": { toolkit: "googlecalendar", name: "Google Calendar", authKind: "oauth" },
-  "google-drive": { toolkit: "googledrive", name: "Google Drive", authKind: "oauth" },
-  "google-docs": { toolkit: "googledocs", name: "Google Docs", authKind: "oauth" },
-  "google-sheets": { toolkit: "googlesheets", name: "Google Sheets", authKind: "oauth" },
-  outlook: { toolkit: "outlook", name: "Outlook", authKind: "oauth" },
-  notion: { toolkit: "notion", name: "Notion", authKind: "oauth" },
-  airtable: { toolkit: "airtable", name: "Airtable", authKind: "oauth" },
-  trello: { toolkit: "trello", name: "Trello", authKind: "oauth" },
-  asana: { toolkit: "asana", name: "Asana", authKind: "oauth" },
-  clickup: { toolkit: "clickup", name: "ClickUp", authKind: "oauth" },
-  linear: { toolkit: "linear", name: "Linear", authKind: "oauth" },
-  todoist: { toolkit: "todoist", name: "Todoist", authKind: "oauth" },
-  slack: { toolkit: "slack", name: "Slack", authKind: "oauth" },
-  discord: { toolkit: "discord", name: "Discord", authKind: "oauth" },
-  telegram: { toolkit: "telegrambotapi", name: "Telegram", authKind: "bot_token" },
-  whatsapp: { toolkit: "whatsapp", name: "WhatsApp", authKind: "bot_token" },
-  zoom: { toolkit: "zoom", name: "Zoom", authKind: "oauth" },
-  hubspot: { toolkit: "hubspot", name: "HubSpot", authKind: "oauth" },
-  salesforce: { toolkit: "salesforce", name: "Salesforce", authKind: "oauth" },
-  mailchimp: { toolkit: "mailchimp", name: "Mailchimp", authKind: "api_key" },
-  convertkit: { toolkit: "kit", name: "ConvertKit", authKind: "api_key" },
-  beehiiv: { toolkit: "beehiiv", name: "Beehiiv", authKind: "api_key" },
-  omnisend: { toolkit: "omnisend", name: "Omnisend", authKind: "api_key" },
-  linkedin: { toolkit: "linkedin", name: "LinkedIn", authKind: "oauth" },
-  twitter: { toolkit: "twitter", name: "Twitter/X", authKind: "oauth" },
-  instagram: { toolkit: "instagram", name: "Instagram", authKind: "oauth" },
-  "meta-ads": { toolkit: "facebookads", name: "Meta Ads", authKind: "oauth" },
-  stripe: { toolkit: "stripe", name: "Stripe", authKind: "api_key" },
-  whop: { toolkit: "whop", name: "Whop", authKind: "oauth" },
-  gumroad: { toolkit: "gumroad", name: "Gumroad", authKind: "oauth" },
-  "lemon-squeezy": { toolkit: "lemonsqueezy", name: "Lemon Squeezy", authKind: "oauth" },
-  shopify: { toolkit: "shopify", name: "Shopify", authKind: "oauth" },
-  zapier: { toolkit: "zapier", name: "Zapier", authKind: "oauth" },
-  make: { toolkit: "make", name: "Make", authKind: "oauth" },
-  n8n: { toolkit: "n8n", name: "n8n", authKind: "api_key" },
-  perplexity: { toolkit: "perplexityai", name: "Perplexity", authKind: "api_key" },
-  firecrawl: { toolkit: "firecrawl", name: "Firecrawl", authKind: "api_key" },
-  supabase: { toolkit: "supabase", name: "Supabase", authKind: "api_key" },
-  vercel: { toolkit: "vercel", name: "Vercel", authKind: "api_key" },
-};
+export const COMPOSIO_CONNECTORS: Record<string, ConnectorConfig> = Object.fromEntries(
+  CONNECTORS.map(({ id, toolkit, name, authKind }) => [id, { toolkit, name, authKind }]),
+);
 
 let composioClient: Composio | undefined;
 const authConfigCache = new Map<string, Promise<string>>();

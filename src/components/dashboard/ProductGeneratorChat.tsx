@@ -1,15 +1,20 @@
-import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
   BookOpen,
+  Camera,
   Check,
   ChevronDown,
+  Clock,
   Download,
   FileText,
+  FolderOpen,
   Image as ImageIcon,
   Loader2,
   Menu,
   Plus,
+  Plug,
+  Puzzle,
   Sparkles,
   Video,
   X,
@@ -19,7 +24,7 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useToast } from "@/hooks/use-toast";
 import { Ebook, useEbookStore } from "@/hooks/useEbookStore";
 import { supabase } from "@/integrations/supabase/client";
-import { cacheLocalCreatorConversation, loadCreatorConversation, readLocalCreatorConversation, saveCreatorConversation } from "@/lib/chatPersistence";
+import { cacheLocalCreatorConversation, getLocalCreatorConversations, listCreatorConversations, loadCreatorConversation, readLocalCreatorConversation, saveCreatorConversation, type CreatorConversationSummary } from "@/lib/chatPersistence";
 import { deleteCreatorMedia, refreshMediaLinks, saveGeneratedEbook, uploadCreatorMedia, type MediaAttachment } from "@/lib/ebookRepository";
 import { generatePDF } from "@/lib/pdfGenerator";
 import { recordMetric } from "@/lib/productTracking";
@@ -28,9 +33,8 @@ import { useSidebarState } from "./DashboardLayout";
 import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
 import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
 import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
-import ConnectorCatalog, { ConnectorLogo } from "@/components/connectors/ConnectorCatalog";
-import { CONNECTORS } from "@/lib/connectors/catalog";
-import { useConnectorConnections } from "@/hooks/useConnectorConnections";
+import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type Template = {
   id: string;
@@ -155,11 +159,6 @@ const ProductGeneratorChat = () => {
   const { setMobileOpen } = useSidebarState();
   const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
   const { toast } = useToast();
-  const { apps: connectedComposioApps } = useConnectorConnections();
-  const activeConnectors = useMemo(() => {
-    const connectedToolkits = new Set(connectedComposioApps.filter((app) => app.connected).map((app) => app.slug.toLowerCase()));
-    return CONNECTORS.filter((connector) => connector.workspaceDefault || connectedToolkits.has(connector.toolkit.toLowerCase()));
-  }, [connectedComposioApps]);
   const addEbook = useEbookStore((state) => state.addEbook);
   const [activeProduct, setActiveProduct] = useState<string>("Ebook");
   const [activeSystem, setActiveSystem] = useState<"product-generator" | "hybrid-agentic">("product-generator");
@@ -169,10 +168,16 @@ const ProductGeneratorChat = () => {
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [connectorPanelOpen, setConnectorPanelOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<MediaAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [recentTasks, setRecentTasks] = useState<CreatorConversationSummary[]>([]);
+  const [showRecentTasks, setShowRecentTasks] = useState(false);
+  const [showSkillsStatus, setShowSkillsStatus] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const pictureInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
@@ -196,6 +201,31 @@ const ProductGeneratorChat = () => {
     }, 450);
     return () => window.clearTimeout(timer);
   }, [messages, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) { setRecentTasks([]); return; }
+    let cancelled = false;
+    const readRecentTasks = async () => {
+      const localItems = getLocalCreatorConversations(user.id);
+      try {
+        const remoteItems = await listCreatorConversations(user.id);
+        if (cancelled) return;
+        const merged = new Map(remoteItems.map((item) => [item.id, item]));
+        for (const item of localItems) if (!merged.has(item.id)) merged.set(item.id, item);
+        setRecentTasks([...merged.values()].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 5));
+      } catch {
+        if (!cancelled) setRecentTasks(localItems.slice(0, 5));
+      }
+    };
+    void readRecentTasks();
+    window.addEventListener("storage", readRecentTasks);
+    window.addEventListener("nexoraos:history-updated", readRecentTasks);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", readRecentTasks);
+      window.removeEventListener("nexoraos:history-updated", readRecentTasks);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     const requestedId = new URLSearchParams(location.search).get("conversation");
@@ -307,19 +337,20 @@ const ProductGeneratorChat = () => {
     const files = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = "";
     if (!files.length) return;
+    setAttachmentMenuOpen(false);
     if (!user?.id) {
       setAuthPromptOpen(true);
       return;
     }
-    const remainingSlots = Math.max(0, 5 - pendingAttachments.length);
+    const attachedInConversation = messages.reduce((total, message) => total + (message.attachments?.length ?? 0), 0);
+    const remainingSlots = Math.max(0, 5 - attachedInConversation - pendingAttachments.length);
     if (remainingSlots === 0) {
-      toast({ title: "Attachment limit reached", description: "Add up to five images or videos to one prompt.", variant: "destructive" });
+      toast({ title: "Attachment limit reached", description: "A conversation can contain up to five uploaded files.", variant: "destructive" });
       return;
     }
     const selectedFiles = files.slice(0, remainingSlots);
-    if (selectedFiles.length < files.length) toast({ title: "Some files were skipped", description: "You can attach up to five files to one prompt." });
+    if (selectedFiles.length < files.length) toast({ title: "Some files were skipped", description: "A conversation can contain up to five uploaded files." });
     setIsUploading(true);
-    setAttachmentMenuOpen(false);
     for (const file of selectedFiles) {
       try {
         const uploaded = await uploadCreatorMedia(file, user.id);
@@ -618,6 +649,7 @@ const ProductGeneratorChat = () => {
                           <a key={attachment.id} href={attachment.signedUrl} target="_blank" rel="noreferrer" download={attachment.name} className="overflow-hidden rounded-lg border border-white/10 bg-black/20 text-xs text-[#D3D3D3]">
                             {attachment.signedUrl && attachment.mimeType.startsWith("image/") ? <img src={attachment.signedUrl} alt={attachment.name} className="max-h-52 w-full object-cover" /> : null}
                             {attachment.signedUrl && attachment.mimeType.startsWith("video/") ? <video src={attachment.signedUrl} controls preload="metadata" className="max-h-52 w-full bg-black" aria-label={attachment.name} /> : null}
+                            {attachment.mimeType === "application/pdf" ? <span className="flex items-center gap-2 px-3 py-3 text-[#D9D9D9]"><FileText size={15} className="shrink-0 text-[#8BB8E8]" aria-hidden="true" />PDF document</span> : null}
                             <span className="block truncate px-2.5 py-2">{attachment.name}</span>
                           </a>
                         ))}
@@ -747,90 +779,72 @@ const ProductGeneratorChat = () => {
         <div className="mx-auto w-full max-w-[800px]">
           <form onSubmit={submitTopic} className="relative rounded-[20px] border border-[#353535] bg-[#1F1F1F] shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
-            <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Upload images or videos" />
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
+            <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
+            <input ref={fileInputRef} type="file" multiple accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Upload image, video, or PDF files" />
             {pendingAttachments.length > 0 && (
               <div className="flex flex-wrap gap-2 px-4 pt-3 sm:px-5" aria-label="Pending attachments">
                 {pendingAttachments.map((attachment) => (
                   <span key={attachment.id} className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-[#C8C8C8]">
-                    {attachment.mimeType.startsWith("video/") ? <Video size={13} /> : <ImageIcon size={13} />}
+                    {attachment.mimeType.startsWith("video/") ? <Video size={13} /> : attachment.mimeType === "application/pdf" ? <FileText size={13} /> : <ImageIcon size={13} />}
                     <span className="max-w-36 truncate">{attachment.name}</span>
                     <button type="button" aria-label={`Remove ${attachment.name}`} onClick={() => void removePendingAttachment(attachment)} className="ml-1 rounded p-0.5 text-[#8E8E8E] hover:bg-white/10 hover:text-white"><X size={12} /></button>
                   </span>
                 ))}
               </div>
             )}
-            <textarea
-              id="nexora-topic-composer"
-              ref={composerRef}
-              rows={1}
-              maxLength={500}
-              value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                resizeComposer();
-              }}
-              onKeyDown={handleComposerKeyDown}
-              disabled={isGenerating || isUploading}
-              placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="block max-h-40 min-h-[58px] w-full resize-none bg-transparent px-5 pb-2 pt-[18px] text-[15px] leading-6 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:px-6"
-              aria-describedby="composer-hint"
-            />
             <p id="composer-hint" className="sr-only">Press Enter to send. Press Shift and Enter to add a new line.</p>
-            <div className="flex items-center justify-between gap-2 px-3 pb-3 sm:px-4">
-              <div className="relative flex min-w-0 items-center gap-1.5">
+            <div className="flex items-end gap-1.5 px-2.5 pb-2.5 pt-2 sm:gap-2 sm:px-3 sm:pb-3">
+              <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => { setAttachmentMenuOpen((open) => !open); setCapabilityMenuOpen(false); }}
-                  aria-label="Open attachment options"
+                  onClick={() => { setAttachmentMenuOpen((open) => !open); setConnectorPanelOpen(false); setCapabilityMenuOpen(false); }}
+                  aria-label="Add to chat"
                   aria-expanded={attachmentMenuOpen}
                   aria-haspopup="dialog"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
                 >
                   <Plus size={19} aria-hidden="true" />
                 </button>
-                <div className="flex min-w-0 items-center gap-1" aria-label="Active connectors">
-                  {activeConnectors.slice(0, 4).map((connector) => (
-                    <ConnectorLogo key={connector.id} connector={connector} className="!h-6 !w-6 !rounded-md !p-1" />
-                  ))}
-                  {activeConnectors.length > 4 && <span className="text-[10px] text-[#8A8A8A]">+{activeConnectors.length - 4}</span>}
-                </div>
-                {attachmentMenuOpen && (
-                  <div role="region" aria-label="Workspace capabilities" className="absolute bottom-12 left-0 z-20 max-h-[min(70dvh,600px)] w-[min(470px,calc(100vw-32px))] overflow-y-auto overscroll-contain rounded-xl border border-[#393939] bg-[#1F1F1F] p-3 shadow-xl">
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#777]">Workspace capabilities</p>
-                    <ConnectorCatalog compact />
-                    <div className="my-3 border-t border-white/10" />
-                    <div className="rounded-lg px-2 py-2">
-                      <p className="text-xs font-medium text-white/80">Images and videos</p>
-                      <p className="mt-0.5 text-[10px] leading-4 text-white/45">Private uploads, up to five files and 50 MB each. Files stay with this conversation; the ebook generator currently uses your text brief, not the media.</p>
-                      <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading || !user} className="mt-2 inline-flex min-h-8 items-center gap-2 rounded-md border border-white/10 px-2.5 text-[11px] text-[#D5D5D5] hover:bg-white/5 disabled:opacity-50">
-                        {isUploading ? <Loader2 size={13} className="animate-spin" /> : <ImageIcon size={13} />}
-                        {isUploading ? "Uploading…" : user ? "Upload image or video" : "Sign in to upload"}
-                      </button>
-                    </div>
-                    {[
-                      ["Plugins", "Unavailable · no plugin registry is configured."],
-                      ["MCP", "Partially present · Context7 client exists for SCOUT; general MCP connections are not configured."],
-                      ["Agent Tools", "Requires VITE_HYBRID_AGENT_URL and a reachable authenticated runtime."],
-                    ].map(([name, status]) => (
-                      <div key={name} className="rounded-lg px-2 py-2">
-                        <p className="text-xs font-medium text-white/80">{name}</p>
-                        <p className="mt-0.5 text-[10px] leading-4 text-white/40">{status}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => { setConnectorPanelOpen((open) => !open); setAttachmentMenuOpen(false); setCapabilityMenuOpen(false); }}
+                  aria-label="Open workspace capabilities"
+                  aria-expanded={connectorPanelOpen}
+                  aria-haspopup="dialog"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
+                >
+                  <Plug size={17} aria-hidden="true" />
+                </button>
               </div>
-              <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2">
+              <textarea
+                id="nexora-topic-composer"
+                ref={composerRef}
+                rows={1}
+                maxLength={500}
+                value={draft}
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                  resizeComposer();
+                }}
+                onKeyDown={handleComposerKeyDown}
+                disabled={isGenerating || isUploading}
+                placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
+                className="block max-h-40 min-h-[38px] min-w-0 flex-1 resize-none bg-transparent px-2 py-2 text-[14px] leading-5 text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60 sm:min-h-[40px] sm:px-2.5 sm:text-[15px]"
+                aria-describedby="composer-hint"
+              />
+              <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); }}
+                    onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); setConnectorPanelOpen(false); }}
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
-                    className="flex h-9 max-w-[205px] items-center gap-2 rounded-xl px-2.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]"
+                    aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
+                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-xl px-1.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#2B2B2B] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
                   >
                     <Sparkles size={14} className="shrink-0 text-[#195A9F]" aria-hidden="true" />
-                    <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
+                    <span className="hidden truncate sm:inline">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
                   {capabilityMenuOpen && (
@@ -857,6 +871,75 @@ const ProductGeneratorChat = () => {
               </div>
             </div>
           </form>
+
+          <Sheet open={attachmentMenuOpen} onOpenChange={setAttachmentMenuOpen}>
+            <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-2xl border-[#303030] bg-[#171717] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">
+              <SheetHeader className="pr-9 text-left">
+                <SheetTitle className="text-base text-white">Add to chat</SheetTitle>
+                <SheetDescription className="text-xs leading-5 text-[#898989]">Private uploads: up to five files per conversation, 50 MB each. Pictures, videos, and PDF files are supported. The ebook generator currently uses your text brief, not uploaded media.</SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-4 grid grid-cols-3 gap-2.5 sm:gap-3">
+                <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1D1D1D] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:opacity-50">
+                  <Camera size={20} aria-hidden="true" />
+                  <span className="text-xs font-medium">Camera</span>
+                </button>
+                <button type="button" onClick={() => pictureInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1D1D1D] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:opacity-50">
+                  <ImageIcon size={20} aria-hidden="true" />
+                  <span className="text-xs font-medium">Picture</span>
+                </button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1D1D1D] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#222] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] disabled:opacity-50">
+                  <FileText size={20} aria-hidden="true" />
+                  <span className="text-xs font-medium">File</span>
+                </button>
+              </div>
+
+              {isUploading && <p role="status" className="mt-3 text-center text-xs text-[#999]">Uploading privately…</p>}
+              <div className="my-4 border-t border-white/10" />
+              <div className="space-y-1">
+                <Link to="/dashboard/downloads" onClick={() => setAttachmentMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-[#D0D0D0] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+                  <BookOpen size={17} className="text-[#949494]" aria-hidden="true" />
+                  <span className="flex-1">Library</span>
+                  <span className="text-[10px] text-[#777]">Downloads</span>
+                </Link>
+                <Link to="/dashboard/products" onClick={() => setAttachmentMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-[#D0D0D0] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+                  <FolderOpen size={17} className="text-[#949494]" aria-hidden="true" />
+                  <span className="flex-1">Creations</span>
+                  <span className="text-[10px] text-[#777]">Projects</span>
+                </Link>
+                <button type="button" onClick={() => { setShowRecentTasks((open) => !open); setShowSkillsStatus(false); }} aria-expanded={showRecentTasks} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[#D0D0D0] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+                  <Clock size={17} className="text-[#949494]" aria-hidden="true" />
+                  <span className="flex-1">Recent tasks</span>
+                  <span className="text-[10px] text-[#777]">{recentTasks.length ? recentTasks.length : "History"}</span>
+                </button>
+                {showRecentTasks && (
+                  <div className="ml-9 space-y-1 border-l border-white/10 py-1 pl-2">
+                    {recentTasks.length ? recentTasks.map((task) => (
+                      <button key={task.id} type="button" title={task.title} onClick={() => { setAttachmentMenuOpen(false); navigate(`/dashboard?conversation=${encodeURIComponent(task.id)}`); }} className="block min-h-9 w-full truncate rounded-md px-2 text-left text-xs text-[#A8A8A8] transition hover:bg-white/[0.05] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">{task.title}</button>
+                    )) : <p className="px-2 py-2 text-xs leading-5 text-[#777]">{user ? "No saved chats yet." : "Sign in to see recent chats."}</p>}
+                  </div>
+                )}
+                <button type="button" onClick={() => { setShowSkillsStatus((open) => !open); setShowRecentTasks(false); }} aria-expanded={showSkillsStatus} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[#D0D0D0] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+                  <Puzzle size={17} className="text-[#949494]" aria-hidden="true" />
+                  <span className="flex-1">Skills</span>
+                  <span className="text-[10px] text-[#777]">Workspace</span>
+                </button>
+                {showSkillsStatus && <p className="ml-9 rounded-md border-l border-white/10 py-2 pl-4 text-xs leading-5 text-[#777]">No workspace skills are configured in this preview yet.</p>}
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Sheet open={connectorPanelOpen} onOpenChange={setConnectorPanelOpen}>
+            <SheetContent side="bottom" className="max-h-[90dvh] overflow-y-auto rounded-t-2xl border-[#303030] bg-[#171717] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">
+              <SheetHeader className="pr-9 text-left">
+                <SheetTitle className="text-base text-white">Workspace capabilities</SheetTitle>
+                <SheetDescription className="text-xs leading-5 text-[#898989]">Browse and connect the apps available to your workspace.</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4">
+                <ConnectorCatalog compact />
+              </div>
+            </SheetContent>
+          </Sheet>
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2" aria-label="Product type">
             {[

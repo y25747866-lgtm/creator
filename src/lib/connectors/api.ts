@@ -10,7 +10,7 @@ export type ConnectorConnectionResponse = {
 };
 
 const agentBaseUrl = String(import.meta.env.VITE_HYBRID_AGENT_URL ?? "").replace(/\/$/, "");
-const connectorApiBaseUrl = agentBaseUrl || "/api";
+const connectorApiBaseUrl = import.meta.env.PROD ? "/api" : agentBaseUrl || "/api";
 
 export function isConnectorServiceConfigured(): boolean {
   return Boolean(agentBaseUrl) || import.meta.env.PROD;
