@@ -807,7 +807,7 @@ const ProductGeneratorChat = () => {
       </div>
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#121212] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
-        <div className="mx-auto w-full max-w-[800px]">
+        <div className="mx-auto w-full max-w-3xl px-4">
           <form onSubmit={submitTopic} className="relative min-h-[120px] rounded-[24px] border border-[#353535] bg-[#1F1F1F] px-6 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#4A4A4A]">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />

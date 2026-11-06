@@ -129,7 +129,7 @@ describe("Chat-first product workspace", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(icon?.style.transform).toBe("");
-    expect(screen.getByRole("main")).toHaveClass("md:ml-20");
+    expect(screen.getByRole("main")).toHaveClass("md:pl-20");
     expect(localStorage.getItem("nexora_sidebar_collapsed")).toBe("true");
   });
 

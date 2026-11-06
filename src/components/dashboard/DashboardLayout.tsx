@@ -57,7 +57,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           />
         )}
         <DashboardSidebar />
-        <main className={`relative z-10 min-h-screen transition-[margin] duration-300 ${collapsed ? "md:ml-20" : "md:ml-[280px]"}`}>
+        <main className={`relative z-10 flex min-h-screen w-full flex-col transition-[padding] duration-200 ${collapsed ? "md:pl-20" : "md:pl-[280px]"}`}>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
