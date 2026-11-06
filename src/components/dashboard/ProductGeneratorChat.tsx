@@ -864,7 +864,7 @@ const ProductGeneratorChat = () => {
                 className="block max-h-40 min-h-[60px] min-w-0 flex-1 resize-none bg-transparent text-[16px] leading-[1.6] text-[#F5F5F5] outline-none placeholder:text-[#777] disabled:opacity-60"
                 aria-describedby="composer-hint"
               />
-              <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
+              <div className="ml-auto flex shrink-0 items-center justify-end gap-1 sm:gap-2">
                 <div ref={capabilitySelectorRef} className="relative">
                   <button
                     type="button"

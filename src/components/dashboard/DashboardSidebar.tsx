@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  ChevronLeft,
   Download,
   Plus,
   Package,
@@ -21,7 +22,7 @@ import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
 
 const DashboardSidebar = () => {
-  const { collapsed, mobileOpen, setMobileOpen } = useSidebarState();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -72,10 +73,11 @@ const DashboardSidebar = () => {
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className={`flex h-16 shrink-0 items-center border-b border-[#1F1F1F] px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
-          {showLabels && <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
-            <img src={nexoraLogo} alt="" width="30" height="30" className="h-[30px] w-[30px] shrink-0 rounded-lg" />
-            <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-white">NexoraOS</span>
-          </Link>}
+          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+            <img src={nexoraLogo} alt="NexoraOS" width="28" height="28" className="h-7 w-7 shrink-0 rounded-lg" />
+            {showLabels && <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-white">NexoraOS</span>}
+          </Link>
+          {showLabels && <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="hidden h-9 w-9 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] md:flex"><ChevronLeft size={17} /></button>}
           <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#929292] hover:bg-[#1F1F1F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F] md:hidden">
             <X size={17} />
           </button>
