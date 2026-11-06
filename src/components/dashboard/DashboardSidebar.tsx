@@ -5,6 +5,7 @@ import {
   Plus,
   Package,
   FolderOpen,
+  Puzzle,
   ArrowUpRight,
   LogOut,
   Settings,
@@ -94,6 +95,10 @@ const DashboardSidebar = () => {
           </Link>
           <Link to="/dashboard/downloads" onClick={closeMobile} title={showLabels ? undefined : "Downloads"} aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#1F1F1F] ${location.pathname === "/dashboard/downloads" ? "bg-[#131E2A] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Download size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Downloads</span>}
+          </Link>
+          <Link to="/dashboard/skills" onClick={closeMobile} title={showLabels ? undefined : "Skills"} aria-current={location.pathname.startsWith("/dashboard/skills") ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname.startsWith("/dashboard/skills") ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+            <Puzzle size={17} className="shrink-0" aria-hidden="true" />
+            {showLabels && <span>Skills</span>}
           </Link>
           <div className={`my-4 border-t border-white/10 pt-4 ${showLabels ? "" : "sr-only"}`}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">History</p>
