@@ -47,7 +47,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed, mobileOpen, setMobileOpen }}>
-      <div className="nexora-dashboard min-h-screen bg-[#121212] text-[#F5F5F5]">
+      <div className="nexora-dashboard min-h-screen bg-[#080A0C] text-[#F0F2F5]">
         {mobileOpen && (
           <button
             type="button"

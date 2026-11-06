@@ -68,33 +68,33 @@
     --sidebar-ring: 0 0% 100%;
   }
 
-  /* Supplied NexoraOS dashboard palette: #121212, #1F1F1F, #195A9F, #131E2A */
+  /* Approved NexoraOS charcoal palette: #080A0C, #111318, #1A1D24 */
   .nexora-dashboard {
-    --background: 0 0% 7.1%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 12.2%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 12.2%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 211 73% 36.1%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 211 38% 12%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 211 38% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 211 38% 12%;
-    --accent-foreground: 0 0% 100%;
-    --border: 0 0% 12.2%;
-    --input: 0 0% 12.2%;
-    --ring: 211 73% 36.1%;
-    --sidebar-background: 0 0% 7.1%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 211 73% 36.1%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 211 38% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 12.2%;
-    --sidebar-ring: 211 73% 36.1%;
+    --background: 216 20% 3%;
+    --foreground: 210 20% 95%;
+    --card: 220 17% 8%;
+    --card-foreground: 210 20% 95%;
+    --popover: 220 17% 11%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 210 20% 95%;
+    --primary-foreground: 216 20% 3%;
+    --secondary: 220 17% 11%;
+    --secondary-foreground: 210 20% 95%;
+    --muted: 220 17% 11%;
+    --muted-foreground: 217 11% 53%;
+    --accent: 220 17% 11%;
+    --accent-foreground: 210 20% 95%;
+    --border: 220 14% 17%;
+    --input: 220 14% 17%;
+    --ring: 217 11% 60%;
+    --sidebar-background: 220 17% 7%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 210 20% 95%;
+    --sidebar-primary-foreground: 216 20% 3%;
+    --sidebar-accent: 220 17% 11%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 14% 17%;
+    --sidebar-ring: 217 11% 60%;
   }
 }
 
