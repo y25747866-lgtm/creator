@@ -1,0 +1,23 @@
+{
+  "routes": [
+    { "path": "/", "title": "Home" },
+    { "path": "/blog", "title": "Blog" },
+    { "path": "/blog/", "title": "Blog" },
+    { "path": "/auth", "title": "Sign in" },
+    { "path": "/auth/callback", "title": "Authentication callback" },
+    { "path": "/pricing", "title": "Pricing" },
+    { "path": "/contact", "title": "Contact" },
+    { "path": "/whop/success", "title": "Payment success" },
+    { "path": "/dashboard", "title": "Product Studio" },
+    { "path": "/dashboard/ebook-generator", "title": "Ebook generator" },
+    { "path": "/dashboard/downloads", "title": "Downloads" },
+    { "path": "/dashboard/settings", "title": "Settings" },
+    { "path": "/dashboard/skills", "title": "Skills" },
+    { "path": "/app/connectors", "title": "Connectors" },
+    { "path": "/dashboard/products", "title": "Projects" },
+    { "path": "/dashboard/analytics/products", "title": "Product analytics" },
+    { "path": "/dashboard/marketing-studio", "title": "Marketing Studio" },
+    { "path": "/dashboard/sales-page-builder", "title": "Sales page builder" },
+    { "path": "/dashboard/analytics", "title": "Analytics" }
+  ]
+}
