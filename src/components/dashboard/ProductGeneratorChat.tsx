@@ -869,7 +869,7 @@ const ProductGeneratorChat = () => {
       </div>
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
-        <div className="mx-auto w-full max-w-3xl px-4">
+        <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
           <form onSubmit={submitTopic} className="relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#8C96A3] sm:px-6 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
@@ -903,7 +903,7 @@ const ProductGeneratorChat = () => {
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="nexora-composer-input block min-h-[60px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60"
+              className="nexora-composer-input block min-h-[48px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
               aria-describedby="composer-hint"
             />
             <div className="mt-2 flex min-h-9 items-center justify-between gap-2 border-t border-white/[0.06] pt-2 sm:mt-3 sm:min-h-10 sm:gap-3 sm:pt-3">
@@ -940,7 +940,7 @@ const ProductGeneratorChat = () => {
                     aria-expanded={capabilityMenuOpen}
                     aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
                     title={activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}
-                    className="flex h-9 max-w-[160px] min-w-0 items-center gap-0.5 rounded-lg px-1 text-[11px] font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5 sm:text-xs"
+                    className="flex h-9 max-w-[180px] min-w-0 items-center gap-1 rounded-lg px-1.5 text-[11px] font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5 sm:text-xs"
                   >
                     <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#00E68E]" : "text-[#7928CA]"}`} aria-hidden="true" />
                     <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>

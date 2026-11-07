@@ -274,22 +274,24 @@
 /* Keep interaction chrome neutral app-wide; brand colors remain explicit and intentional. */
 :focus-visible {
   --tw-ring-color: hsl(var(--ring));
-  outline-color: hsl(var(--ring));
 }
 
-:where(input, textarea, select, [contenteditable="true"]):focus {
+:where(input, textarea, select, [contenteditable="true"]):focus:not(:disabled) {
   outline: none;
+  box-shadow: none !important;
 }
 
-:where(input, textarea, select, [contenteditable="true"]):focus-visible {
-  outline: 2px solid hsl(var(--ring) / 0.65);
-  outline-offset: 1px;
-  box-shadow: none;
+:where(input, textarea, select, [contenteditable="true"]):focus-visible:not(:disabled) {
+  outline: 2px solid hsl(var(--ring) / 0.65) !important;
+  outline-offset: 1px !important;
+  box-shadow: none !important;
 }
 
+.nexora-composer-input:focus,
 .nexora-composer-input:focus-visible {
-  outline: none;
-  outline-offset: 0;
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
 
 :is(input, textarea, select, [contenteditable="true"]) {

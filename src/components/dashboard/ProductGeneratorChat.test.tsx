@@ -119,8 +119,9 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("nexora-composer-input", "min-h-[60px]", "w-full", "text-[16px]", "leading-[1.6]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
+    expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
     expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#8C96A3]");
+    expect(composer.closest("form")?.parentElement?.parentElement).toHaveClass("px-0", "sm:px-4");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-strength", "0.45");
@@ -223,9 +224,14 @@ describe("Chat-first product workspace", () => {
   });
 
   it("closes the system selector on outside interaction without resetting the selected mode", async () => {
+    setTestViewportWidth(360);
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
+    const productModeButton = screen.getByRole("button", { name: "Product mode: AI Product Generator" });
+    expect(productModeButton).toHaveClass("max-w-[180px]");
+    expect(within(productModeButton).getByText("AI Product Generator")).toBeVisible();
+    fireEvent.click(productModeButton);
     const menu = await screen.findByRole("menu", { name: "NexoraOS system selector" });
+    expect(menu).toHaveClass("fixed", "z-[100]", "overflow-y-auto");
     expect(menu).toHaveTextContent("Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.");
     expect(menu).not.toHaveTextContent("Not connected in this preview; no agent run will be simulated.");
     fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ }));
