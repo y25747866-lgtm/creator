@@ -284,6 +284,12 @@
 :where(input, textarea, select, [contenteditable="true"]):focus-visible {
   outline: 2px solid hsl(var(--ring) / 0.65);
   outline-offset: 1px;
+  box-shadow: none;
+}
+
+.nexora-composer-input:focus-visible {
+  outline: none;
+  outline-offset: 0;
 }
 
 :is(input, textarea, select, [contenteditable="true"]) {

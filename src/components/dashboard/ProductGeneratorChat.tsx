@@ -871,7 +871,7 @@ const ProductGeneratorChat = () => {
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
-          <form onSubmit={submitTopic} className="relative flex min-h-[118px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#8C96A3] sm:min-h-[148px] sm:px-5 sm:py-5">
+          <form onSubmit={submitTopic} className="relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#8C96A3] sm:px-6 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -903,7 +903,7 @@ const ProductGeneratorChat = () => {
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="block min-h-[52px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.45] text-[#F0F2F5] outline-none ring-0 placeholder:text-[#8B929E] focus:border-0 focus:outline-none focus:ring-0 sm:min-h-[72px] sm:leading-[1.6] disabled:opacity-60"
+              className="nexora-composer-input block min-h-[60px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60"
               aria-describedby="composer-hint"
             />
             <div className="mt-2 flex min-h-9 items-center justify-between gap-2 border-t border-white/[0.06] pt-2 sm:mt-3 sm:min-h-10 sm:gap-3 sm:pt-3">
