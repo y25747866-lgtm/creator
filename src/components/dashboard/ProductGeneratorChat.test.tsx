@@ -219,7 +219,7 @@ describe("Chat-first product workspace", () => {
     const details = screen.getByRole("dialog", { name: "Gmail" });
     expect(details).toHaveTextContent("OAuth 2.0");
     expect(details).toHaveTextContent("Example prompts");
-    expect(within(details).getByRole("button", { name: "Connect" })).toBeEnabled();
+    expect(within(details).getByRole("button", { name: "Status unavailable" })).toBeDisabled();
   });
 
   it.each([375, 1365])("shows product-specific Google Workspace logos at %i px", (viewportWidth) => {

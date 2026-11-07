@@ -1,3 +1,5 @@
+import type { ConnectedComposioApp } from "@/lib/connectors/api";
+
 export const CONNECTOR_CATEGORIES = [
   "Productivity",
   "Communication",
@@ -120,6 +122,23 @@ export const CONNECTORS: ConnectorDefinition[] = [
   defineConnector("typeform", "Typeform", "typeform.com", "Research & Web", "typeform", "oauth", "Connect Typeform responses and form workflows."),
   defineConnector("calendly", "Calendly", "calendly.com", "Research & Web", "calendly", "oauth", "Connect Calendly events and scheduling workflows."),
 ];
+
+export function getConnectedConnectorDefinitions(apps: readonly ConnectedComposioApp[]): ConnectorDefinition[] {
+  const activeToolkits = new Set(
+    apps
+      .filter((app) => app.connected)
+      .map((app) => app.slug.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const matchedToolkits = new Set<string>();
+
+  return CONNECTORS.filter((connector) => {
+    const toolkit = connector.toolkit.toLowerCase();
+    if (!activeToolkits.has(toolkit) || matchedToolkits.has(toolkit)) return false;
+    matchedToolkits.add(toolkit);
+    return true;
+  });
+}
 
 export const CORE_WORKSPACE_CONNECTOR_IDS = new Set(
   CONNECTORS.filter((connector) => connector.workspaceDefault).map((connector) => connector.id),

@@ -32,6 +32,7 @@ import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
 import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
 import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
 import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
+import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
@@ -875,6 +876,7 @@ const ProductGeneratorChat = () => {
                 >
                   <PlugSocketIcon size={17} aria-hidden="true" />
                 </button>
+                <ConnectedAppIndicators />
               </div>
               <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2">
                 <div ref={capabilitySelectorRef} className="relative">

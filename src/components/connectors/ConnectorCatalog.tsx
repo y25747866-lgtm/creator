@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import {
   CONNECTOR_CATEGORIES,
   CONNECTORS,
+  getConnectedConnectorDefinitions,
   getConnectorExamples,
   getConnectorLogoUrl,
   type ConnectorDefinition,
@@ -67,7 +68,9 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const { apps, loading, error, refresh, serviceConfigured } = useConnectorConnections();
-  const connectedToolkitSlugs = useMemo(() => new Set(apps.filter((app) => app.connected).map((app) => app.slug.toLowerCase())), [apps]);
+  const connectedToolkitSlugs = useMemo(() => new Set(apps.filter((app) => app.connected).map((app) => app.slug.trim().toLowerCase())), [apps]);
+  const connectedConnectors = useMemo(() => getConnectedConnectorDefinitions(apps), [apps]);
+  const connectionStatusKnown = serviceConfigured && !loading && !error;
   const visibleConnectors = useMemo(() => {
     const needle = search.trim().toLocaleLowerCase();
     return CONNECTORS.filter((connector) =>
@@ -75,7 +78,12 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       (!needle || `${connector.name} ${connector.domain}`.toLocaleLowerCase().includes(needle)),
     );
   }, [category, search]);
-  const connectorIsConnected = (connector: ConnectorDefinition) => Boolean((connector.workspaceDefault && !connector.supportsAccountConnection) || connectedToolkitSlugs.has(connector.toolkit.toLowerCase()));
+  const connectorIsConnected = (connector: ConnectorDefinition) => Boolean(
+    (connector.workspaceDefault && !connector.supportsAccountConnection) ||
+    (connectionStatusKnown && connectedToolkitSlugs.has(connector.toolkit.toLowerCase())),
+  );
+  const connectorStatusUnknown = (connector: ConnectorDefinition) =>
+    !(connector.workspaceDefault && !connector.supportsAccountConnection) && !connectionStatusKnown;
 
   const handleConnect = async (connector: ConnectorDefinition) => {
     setActionError(null);
@@ -107,6 +115,38 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
         </div>
         {loading && <Loader2 size={14} className="mt-0.5 animate-spin text-[#8B929E]" aria-label="Checking connections" />}
       </div>
+
+      {!compact && (
+        <section aria-label="Connected applications" className="space-y-3 rounded-xl border border-[#303640] bg-[#111318] p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-medium text-[#F0F2F5]">Connected apps</h2>
+            {serviceConfigured && !loading && !error && (
+              <span className="rounded-full border border-[#00E68E]/25 bg-[#00E68E]/[0.07] px-2 py-1 text-[10px] tabular-nums text-[#00E68E]">
+                {connectedConnectors.length} connected
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <p role="status" className="text-xs text-[#8B929E]">Checking your connected apps…</p>
+          ) : !serviceConfigured ? (
+            <p role="status" className="text-xs leading-5 text-[#8B929E]">Connected apps cannot be verified until the Composio service is configured.</p>
+          ) : error ? (
+            <p role="status" className="text-xs leading-5 text-[#8B929E]">Could not verify connected apps. Try refreshing this page before relying on the displayed status.</p>
+          ) : connectedConnectors.length === 0 ? (
+            <p role="status" className="text-xs leading-5 text-[#8B929E]">No connected apps were returned for this account. Choose an app below to connect it.</p>
+          ) : (
+            <div role="list" aria-label="Verified connected apps" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {connectedConnectors.map((connector) => (
+                <div key={connector.id} role="listitem" className="flex min-h-14 items-center gap-3 rounded-lg border border-[#303640]/70 bg-[#080A0C] px-3 py-2">
+                  <ConnectorLogo connector={connector} />
+                  <span className="min-w-0 flex-1 truncate text-sm text-[#F0F2F5]">{connector.name}</span>
+                  <ConnectedMark connector={connector} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <label className="flex h-9 items-center gap-2 rounded-lg border border-[#303640] bg-[#111318] px-2.5 text-[#8B929E]">
         <Search size={14} aria-hidden="true" />
@@ -159,7 +199,9 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
                 <p className="truncate text-sm text-[#F0F2F5]">{connector.name}</p>
                 {!compact && <p className="mt-0.5 truncate text-[10px] text-[#8B929E]">{connector.workspaceDefault && connector.supportsAccountConnection ? `Workspace ready · ${connector.authLabel}` : connector.authLabel}</p>}
               </div>
-              {connected ? (
+              {connectorStatusUnknown(connector) ? (
+                <span className="shrink-0 text-[10px] text-[#8B929E]">{loading ? "Checking…" : "Status unavailable"}</span>
+              ) : connected ? (
                 <ConnectedMark connector={connector} />
               ) : (
                 <span className="rounded-md border border-[#303640] bg-[#F0F2F5] px-2.5 py-1.5 text-[10px] font-medium text-[#080A0C]">Connect</span>
@@ -177,7 +219,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       {serviceConfigured && error && <p role="status" className="text-[10px] leading-4 text-[#C8A6A6]">{error}</p>}
 
       <div className="flex items-center justify-end gap-2 border-t border-[#303640] pt-3">
-        <Link to="/app/connectors" className="text-[10px] text-[#8B929E] hover:text-[#F0F2F5]">Manage connectors</Link>
+        <Link to="/app/connectors" className="text-[10px] text-[#8B929E] hover:text-[#F0F2F5]">Manage plugins</Link>
       </div>
 
       {selected && (
@@ -208,11 +250,11 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               <button
                 type="button"
                 onClick={() => void handleConnect(selected)}
-                disabled={Boolean(connectingId) || connectorIsConnected(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
+                disabled={Boolean(connectingId) || connectorIsConnected(selected) || connectorStatusUnknown(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
                 className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#F0F2F5] px-4 py-2 text-xs font-medium text-[#080A0C] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-wait disabled:opacity-60"
               >
                 {connectingId === selected.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
-                {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : "Connect"}
+                {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : connectorStatusUnknown(selected) ? (loading ? "Checking status" : "Status unavailable") : "Connect"}
               </button>
             </div>
           </section>

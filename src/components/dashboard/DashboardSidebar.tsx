@@ -6,6 +6,7 @@ import {
   Plus,
   Package,
   FolderOpen,
+  Plug,
   Puzzle,
   ArrowUpRight,
   LogOut,
@@ -97,6 +98,10 @@ const DashboardSidebar = () => {
           </Link>
           <Link to="/dashboard/downloads" onClick={closeMobile} title={showLabels ? undefined : "Downloads"} aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/dashboard/downloads" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Download size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Downloads</span>}
+          </Link>
+          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+            <Plug size={17} className={`shrink-0 ${location.pathname === "/app/connectors" ? "text-[#00E68E]" : ""}`} aria-hidden="true" />
+            {showLabels && <span>Plugins</span>}
           </Link>
           <Link to="/dashboard/skills" onClick={closeMobile} title={showLabels ? undefined : "Skills"} aria-current={location.pathname.startsWith("/dashboard/skills") ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname.startsWith("/dashboard/skills") ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Puzzle size={17} className="shrink-0" aria-hidden="true" />

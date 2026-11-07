@@ -29,18 +29,18 @@ export default function ConnectorsPage() {
 
   return (
     <DashboardLayout>
-      <main className="min-h-full bg-[#121212] px-4 py-8 text-white sm:px-8">
+      <main className="min-h-full bg-[#080A0C] px-4 py-8 text-[#F0F2F5] sm:px-8">
         <div className="mx-auto max-w-5xl space-y-6">
           <header>
-            <p className="text-xs text-[#8A8A8A]">Workspace settings</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Connectors</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#979797]">Manage apps available to NexoraOS. Provider credentials are collected by Composio-hosted authorization after you choose Connect; do not paste provider keys into the chat.</p>
+            <p className="text-xs text-[#8B929E]">Workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Plugins</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8B929E]">Review the apps connected to your account or connect another supported app. Authorization is handled by Composio; do not paste provider credentials into chat.</p>
           </header>
 
-          {notice && <p role="status" className="rounded-lg border border-[#315277] bg-[#131E2A] px-4 py-3 text-sm text-[#D5E4F5]">{notice}</p>}
-          {!serviceConfigured && <p className="rounded-lg border border-white/10 bg-[#1A1A1A] px-4 py-3 text-xs leading-5 text-[#A0A0A0]">Live authorization is unavailable in this local session. The Vercel preview uses a same-origin server route and needs COMPOSIO_API_KEY set as a server-side Preview environment variable.</p>}
+          {notice && <p role="status" className="rounded-lg border border-[#303640] bg-[#111318] px-4 py-3 text-sm text-[#F0F2F5]">{notice}</p>}
+          {!serviceConfigured && <p className="rounded-lg border border-[#303640] bg-[#111318] px-4 py-3 text-xs leading-5 text-[#8B929E]">Live authorization is unavailable in this local session. The Vercel preview uses a same-origin server route and needs COMPOSIO_API_KEY set as a server-side Preview environment variable.</p>}
 
-          <section className="rounded-2xl border border-white/10 bg-[#1F1F1F] p-4 sm:p-6" aria-label="Connector catalog">
+          <section className="rounded-2xl border border-[#303640] bg-[#111318] p-4 sm:p-6" aria-label="Plugins and available apps">
             <ConnectorCatalog />
           </section>
         </div>

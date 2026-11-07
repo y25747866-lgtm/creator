@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONNECTOR_CATEGORIES, CONNECTORS, CORE_WORKSPACE_CONNECTOR_IDS, getConnectorLogoUrl } from "./catalog";
+import { CONNECTOR_CATEGORIES, CONNECTORS, CORE_WORKSPACE_CONNECTOR_IDS, getConnectedConnectorDefinitions, getConnectorLogoUrl } from "./catalog";
 
 describe("curated connector catalog", () => {
   it("contains the 60 requested apps in seven categories", () => {
@@ -78,5 +78,18 @@ describe("curated connector catalog", () => {
     }
     expect(CONNECTORS.find((connector) => connector.id === "supabase")).toMatchObject({ authKind: "api_key" });
     expect(CONNECTORS.find((connector) => connector.id === "vercel")).toMatchObject({ authKind: "api_key" });
+  });
+
+  it("maps only unique active Composio toolkit slugs to known connector definitions", () => {
+    expect(getConnectedConnectorDefinitions([])).toEqual([]);
+    expect(getConnectedConnectorDefinitions([{ slug: "gmail", connected: true }]).map((item) => item.name)).toEqual(["Gmail"]);
+    expect(getConnectedConnectorDefinitions([
+      { slug: "gmail", connected: true },
+      { slug: "slack", connected: true },
+      { slug: "github", connected: true },
+      { slug: "gmail", connected: true },
+      { slug: "notion", connected: false },
+      { slug: "not-in-catalog", connected: true },
+    ]).map((item) => item.name)).toEqual(["Gmail", "Slack", "GitHub"]);
   });
 });
