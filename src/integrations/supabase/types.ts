@@ -492,12 +492,31 @@ export type Database = {
           },
         ]
       }
+      user_credits: {
+        Row: {
+          balance: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          plan_type: string | null
           updated_at: string
           user_id: string
         }
@@ -506,6 +525,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          plan_type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -514,6 +534,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          plan_type?: string | null
           updated_at?: string
           user_id?: string
         }

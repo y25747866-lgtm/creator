@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getLocalCreatorConversations, listCreatorConversations, type CreatorConversationSummary } from "@/lib/chatPersistence";
 import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useSidebarState } from "./DashboardLayout";
+import CreditBalance from "./CreditBalance";
 
 const DashboardSidebar = () => {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
@@ -116,6 +117,7 @@ const DashboardSidebar = () => {
         </nav>
 
         <div className="shrink-0 border-t border-[#111318] p-3">
+          <CreditBalance showLabels={showLabels} />
           <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
             <Avatar className="h-8 w-8 shrink-0 border border-[#303640]">
               <AvatarImage src={user?.user_metadata?.avatar_url} alt="" />

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   toast: vi.fn(),
   listCreatorConversations: vi.fn(),
+  supabaseFrom: vi.fn(),
 }));
 
 vi.mock("./DashboardLayout", () => ({
@@ -28,6 +29,9 @@ vi.mock("@/hooks/useAuth", () => ({
 }));
 
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { from: mocks.supabaseFrom },
+}));
 vi.mock("@/lib/chatPersistence", () => ({
   getLocalCreatorConversations: () => [],
   listCreatorConversations: mocks.listCreatorConversations,
@@ -37,6 +41,13 @@ describe("DashboardSidebar Plugins navigation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.listCreatorConversations.mockResolvedValue([]);
+    mocks.supabaseFrom.mockImplementation(() => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        }),
+      }),
+    }));
   });
 
   it("routes to the existing Plugins management page and closes the mobile drawer", () => {

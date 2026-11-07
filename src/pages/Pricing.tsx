@@ -11,8 +11,9 @@ import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subsc
 import nexoraLogo from '@/assets/nexora-logo.webp';
 
 const PAYMENT_LINKS = {
-  creator: "https://whop.com/nexora-b5b0/creator-d2/?ref=related_products&funnelId=product_f1bf7e78-2e66-48fc-89fd-90cd24354d47",
-  pro: "https://whop.com/nexora-b5b0/pro-24-ca4a/?ref=related_products&funnelId=product_cdcea7cf-32f3-489e-b11e-1b3014193cac",
+  creator: "https://whop.com/checkout/plan_P7Ank0qdHtHHF",
+  pro: "https://whop.com/checkout/plan_YvUfetosyziGZ",
+  hybrid: "https://whop.com/checkout/plan_o0WkvL4RKGBw6/?session=chs_3XG1bMPMla6fNj",
 };
 
 type PlanDef = {
@@ -68,7 +69,7 @@ const PLANS: PlanDef[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "$39",
+    price: "$49",
     period: "/month",
     description: "Advanced tools for power users and scaling creators.",
     features: [
@@ -82,6 +83,24 @@ const PLANS: PlanDef[] = [
     badge: "Best for Power Users",
     cta: "Go Pro",
     link: PAYMENT_LINKS.pro,
+  },
+  {
+    id: "hybrid",
+    name: "Hybrid AI OS",
+    price: "$249",
+    period: "/month",
+    description: "An autonomous AI business system for founders and operators.",
+    features: [
+      { text: "Everything in Pro", included: true },
+      { text: "Full NEXUS, SCOUT, FLUX, FORGE and APEX agent system", included: true },
+      { text: "Multi-agent parallel execution", included: true },
+      { text: "WhatsApp + Telegram agent delivery", included: true },
+      { text: "Priority support", included: true },
+    ],
+    popular: false,
+    badge: "Full AI Operating System",
+    cta: "Start Hybrid AI OS",
+    link: PAYMENT_LINKS.hybrid,
   },
 ];
 
