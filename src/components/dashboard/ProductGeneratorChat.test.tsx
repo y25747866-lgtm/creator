@@ -107,13 +107,14 @@ beforeEach(() => {
 
 describe("Chat-first product workspace", () => {
   it("starts with an uncluttered prompt and keeps non-ebook types visibly disabled", () => {
-    renderWorkspace();
+    const { container } = renderWorkspace();
 
+    expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "#080A0C", color: "#F0F2F5" });
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("min-h-[72px]", "w-full", "text-[16px]", "leading-[1.6]");
-    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]");
+    expect(composer).toHaveClass("min-h-[72px]", "w-full", "text-[16px]", "leading-[1.6]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
+    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#00E68E]");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
@@ -168,7 +169,14 @@ describe("Chat-first product workspace", () => {
 
   it("opens the connector catalog from the separate plug button", () => {
     renderWorkspace();
-    fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
+    const plugButton = screen.getByRole("button", { name: "Open workspace capabilities" });
+    const icon = plugButton.querySelector("svg");
+    expect(plugButton).toHaveClass("text-[#8B929E]");
+    expect(icon).toHaveAttribute("viewBox", "0 0 24 24");
+    expect(icon?.querySelector("g")).toHaveAttribute("stroke-width", "2");
+    expect(icon?.querySelectorAll("path")).toHaveLength(4);
+    fireEvent.click(plugButton);
+    expect(plugButton).toHaveClass("bg-[#1A1D24]", "text-[#00E68E]");
     const panel = screen.getByRole("dialog", { name: "Workspace capabilities" });
     expect(panel).toHaveTextContent("60 curated apps · seven categories");
     expect(panel).toHaveTextContent("Productivity");
@@ -177,6 +185,7 @@ describe("Chat-first product workspace", () => {
     expect(within(panel).getByRole("tab", { name: "All" })).toHaveAttribute("aria-selected", "true");
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(60);
     expect(within(panel).queryByText(/Browse all 1,000\+ apps/)).not.toBeInTheDocument();
+    expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[#00E68E]", "bg-[#1A1D24]");
     expect(panel).toHaveClass("!bottom-20", "!left-1/2", "max-h-[70dvh]");
     fireEvent.click(within(panel).getByRole("tab", { name: "Productivity" }));
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(13);
@@ -191,7 +200,9 @@ describe("Chat-first product workspace", () => {
     fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ }));
 
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
+    const hybridModeButton = screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" });
+    expect(hybridModeButton).toBeInTheDocument();
+    expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[#7928CA]");
 
     fireEvent.click(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" }));
     expect(screen.getByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();

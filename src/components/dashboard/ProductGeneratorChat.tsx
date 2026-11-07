@@ -12,7 +12,6 @@ import {
   Image as ImageIcon,
   Loader2,
   Plus,
-  Plug,
   Puzzle,
   Sparkles,
   Video,
@@ -39,6 +38,19 @@ function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> 
   return (
     <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
       <path fill="currentColor" d="M5 5h8v14H5zm14 14h-4V5h4zM4 3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm7 9L7 8.5v7z" />
+    </svg>
+  );
+}
+
+function PlugSocketIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
+  return (
+    <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...props}>
+      <g fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M17.854 12.16c-.383.45-1.09.454-1.537.007l-4.484-4.483c-.447-.447-.444-1.155.007-1.538l1.231-1.047a6.5 6.5 0 0 1 3.133-1.448l.725-.122c.685-.116 1.405.123 1.919.637l.986.987c.514.513.753 1.233.637 1.918l-.122.725a6.5 6.5 0 0 1-1.448 3.133z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 4.5l2-2m-19 19l2-2" />
+        <path d="M6.146 11.84c.383-.45 1.09-.454 1.538-.007l4.483 4.484c.447.446.444 1.154-.007 1.537l-1.231 1.047a6.5 6.5 0 0 1-3.133 1.448l-.725.122c-.685.116-1.405-.123-1.918-.637l-.987-.986c-.514-.514-.753-1.234-.637-1.919l.122-.725a6.5 6.5 0 0 1 1.448-3.133z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m8.5 12.5l2-2m1 5l2-2" />
+      </g>
     </svg>
   );
 }
@@ -808,7 +820,7 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-4">
-          <form onSubmit={submitTopic} className="relative flex min-h-[148px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-4 py-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition focus-within:border-[#59616D] sm:px-5 sm:py-5">
+          <form onSubmit={submitTopic} className="relative flex min-h-[148px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-4 py-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#00E68E] sm:px-5 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -838,7 +850,7 @@ const ProductGeneratorChat = () => {
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="block min-h-[72px] w-full flex-1 resize-none bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#6B7280] disabled:opacity-60"
+              className="block min-h-[72px] w-full flex-1 resize-none bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60"
               aria-describedby="composer-hint"
             />
             <div className="mt-3 flex min-h-10 items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
@@ -849,7 +861,7 @@ const ProductGeneratorChat = () => {
                   aria-label="Add to chat"
                   aria-expanded={attachmentMenuOpen}
                   aria-haspopup="dialog"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#1A1D24] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
                 >
                   <Plus size={19} aria-hidden="true" />
                 </button>
@@ -859,9 +871,9 @@ const ProductGeneratorChat = () => {
                   aria-label="Open workspace capabilities"
                   aria-expanded={connectorPanelOpen}
                   aria-haspopup="dialog"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#9B9B9B] transition hover:bg-[#1A1D24] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${connectorPanelOpen ? "bg-[#1A1D24] text-[#00E68E]" : "text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
                 >
-                  <Plug size={17} aria-hidden="true" />
+                  <PlugSocketIcon size={17} aria-hidden="true" />
                 </button>
               </div>
               <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-2">
@@ -872,20 +884,20 @@ const ProductGeneratorChat = () => {
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
                     aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
-                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#B7B7B7] transition hover:bg-[#1A1D24] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
+                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
                   >
-                    <Sparkles size={14} className="shrink-0 text-[#8C96A3]" aria-hidden="true" />
+                    <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#00E68E]" : "text-[#7928CA]"}`} aria-hidden="true" />
                     <span className="hidden truncate sm:inline">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
                   {capabilityMenuOpen && (
                     <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 right-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#303640] bg-[#111318] p-1.5 shadow-xl">
-                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#EDEDED] hover:bg-[#111318]">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#8C96A3]" />
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#F0F2F5] hover:bg-[#1A1D24]">
+                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "product-generator" ? "bg-[#00E68E]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Creates ebooks with the verified product workflow.</span></span>
                       </button>
-                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#BDBDBD] hover:bg-[#111318]">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6B7280]" />
+                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#8B929E] hover:bg-[#1A1D24]">
+                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "hybrid-agentic" ? "bg-[#7928CA]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>
                       </button>
                     </div>
@@ -895,7 +907,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-white text-[#111] hover:bg-[#E8E8E8]" : "bg-[#303640] text-[#6B7280]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
@@ -961,10 +973,10 @@ const ProductGeneratorChat = () => {
           </Sheet>
 
           <Sheet open={connectorPanelOpen} onOpenChange={setConnectorPanelOpen}>
-            <SheetContent side="bottom" className="!bottom-20 !left-1/2 !right-auto !top-auto !w-[min(680px,calc(100vw-32px))] !max-w-none -translate-x-1/2 max-h-[70dvh] overflow-y-auto rounded-2xl border border-white/10 bg-[#111318] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">
+            <SheetContent side="bottom" className="!bottom-20 !left-1/2 !right-auto !top-auto !w-[min(680px,calc(100vw-32px))] !max-w-none -translate-x-1/2 max-h-[70dvh] overflow-y-auto rounded-2xl border border-[#303640] bg-[#111318] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-[#F0F2F5] sm:px-6">
               <SheetHeader className="pr-9 text-left">
-                <SheetTitle className="text-base text-white">Workspace capabilities</SheetTitle>
-                <SheetDescription className="text-xs leading-5 text-[#6B7280]">Browse and connect the apps available to your workspace.</SheetDescription>
+                <SheetTitle className="text-base text-[#F0F2F5]">Workspace capabilities</SheetTitle>
+                <SheetDescription className="text-xs leading-5 text-[#8B929E]">Browse and connect the apps available to your workspace.</SheetDescription>
               </SheetHeader>
               <div className="mt-4">
                 <ConnectorCatalog compact />
