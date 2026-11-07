@@ -282,10 +282,6 @@
   caret-color: hsl(var(--foreground));
 }
 
-:is(input, textarea, select, [contenteditable="true"]):focus {
-  border-color: hsl(var(--ring));
-}
-
 ::selection {
   color: hsl(var(--primary-foreground));
   background: hsl(var(--primary));
