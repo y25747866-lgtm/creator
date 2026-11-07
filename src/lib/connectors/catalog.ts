@@ -145,12 +145,12 @@ export const CORE_WORKSPACE_CONNECTOR_IDS = new Set(
 );
 
 const DIRECT_LOGO_URLS: Record<string, string> = {
-  gmail: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
-  "google-calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
-  "google-drive": "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg",
-  "google-docs": "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg",
-  "google-sheets": "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg",
-  "google-slides": "https://upload.wikimedia.org/wikipedia/commons/1/16/Google_Slides_2019_Logo.svg",
+  gmail: "/connector-logos/gmail.svg",
+  "google-calendar": "/connector-logos/google-calendar.svg",
+  "google-drive": "/connector-logos/google-drive.svg",
+  "google-docs": "/connector-logos/google-docs.svg",
+  "google-sheets": "/connector-logos/google-sheets.svg",
+  "google-slides": "/connector-logos/google-slides.svg",
   outlook: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg",
   notion: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
   slack: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",

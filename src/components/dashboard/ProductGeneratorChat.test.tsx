@@ -119,8 +119,8 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("min-h-[72px]", "w-full", "text-[16px]", "leading-[1.6]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
-    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#8C96A3]");
+    expect(composer).toHaveClass("min-h-[52px]", "w-full", "text-[16px]", "leading-[1.45]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
+    expect(composer.closest("form")).toHaveClass("min-h-[118px]", "px-3", "py-3", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#8C96A3]");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-strength", "0.45");
@@ -253,18 +253,18 @@ describe("Chat-first product workspace", () => {
     expect(within(details).getByRole("button", { name: "Status unavailable" })).toBeDisabled();
   });
 
-  it.each([375, 1365])("shows product-specific Google Workspace logos at %i px", (viewportWidth) => {
+  it.each([360, 1365])("shows product-specific Google Workspace logos at %i px", (viewportWidth) => {
     setTestViewportWidth(viewportWidth);
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Open workspace capabilities" }));
 
     const menu = screen.getByRole("dialog", { name: "Workspace capabilities" });
     const apps = [
-      ["Gmail", "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg"],
-      ["Google Calendar", "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg"],
-      ["Google Drive", "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"],
-      ["Google Docs", "https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"],
-      ["Google Sheets", "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg"],
+      ["Gmail", "/connector-logos/gmail.svg"],
+      ["Google Calendar", "/connector-logos/google-calendar.svg"],
+      ["Google Drive", "/connector-logos/google-drive.svg"],
+      ["Google Docs", "/connector-logos/google-docs.svg"],
+      ["Google Sheets", "/connector-logos/google-sheets.svg"],
     ];
 
     for (const [name, logo] of apps) {

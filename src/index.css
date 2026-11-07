@@ -277,6 +277,15 @@
   outline-color: hsl(var(--ring));
 }
 
+:where(input, textarea, select, [contenteditable="true"]):focus {
+  outline: none;
+}
+
+:where(input, textarea, select, [contenteditable="true"]):focus-visible {
+  outline: 2px solid hsl(var(--ring) / 0.65);
+  outline-offset: 1px;
+}
+
 :is(input, textarea, select, [contenteditable="true"]) {
   accent-color: hsl(var(--primary));
   caret-color: hsl(var(--foreground));
