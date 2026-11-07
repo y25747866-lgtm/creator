@@ -15,7 +15,7 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 245 72% 57%;
+    --primary: 0 0% 16%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 96%;
     --secondary-foreground: 222 47% 11%;
@@ -27,15 +27,15 @@
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 245 72% 57%;
+    --ring: 0 0% 48%;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 245 72% 57%;
+    --sidebar-primary: 0 0% 16%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 245 72% 57%;
+    --sidebar-ring: 0 0% 48%;
   }
 
   .dark {
@@ -270,3 +270,23 @@
       height: 28px !important;
     }
   }
+
+/* Keep interaction chrome neutral app-wide; brand colors remain explicit and intentional. */
+:focus-visible {
+  --tw-ring-color: hsl(var(--ring));
+  outline-color: hsl(var(--ring));
+}
+
+:is(input, textarea, select, [contenteditable="true"]) {
+  accent-color: hsl(var(--primary));
+  caret-color: hsl(var(--foreground));
+}
+
+:is(input, textarea, select, [contenteditable="true"]):focus {
+  border-color: hsl(var(--ring));
+}
+
+::selection {
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+}

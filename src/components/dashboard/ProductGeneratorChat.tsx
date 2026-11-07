@@ -34,6 +34,7 @@ import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
 import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { BorderBeam } from "border-beam";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
@@ -192,6 +193,7 @@ const ProductGeneratorChat = () => {
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [connectorPanelOpen, setConnectorPanelOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
+  const [composerInteracted, setComposerInteracted] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<MediaAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -821,7 +823,8 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-4">
-          <form onSubmit={submitTopic} className="relative flex min-h-[148px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-4 py-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#00E68E] sm:px-5 sm:py-5">
+          <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
+          <form onSubmit={submitTopic} className="relative flex min-h-[148px] flex-col rounded-[24px] border border-[#303640] bg-[#111318] px-4 py-4 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#8C96A3] sm:px-5 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -843,6 +846,8 @@ const ProductGeneratorChat = () => {
               ref={composerRef}
               rows={1}
               maxLength={500}
+              onPointerDown={() => setComposerInteracted(true)}
+              onFocus={() => setComposerInteracted(true)}
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value);
@@ -862,7 +867,7 @@ const ProductGeneratorChat = () => {
                   aria-label="Add to chat"
                   aria-expanded={attachmentMenuOpen}
                   aria-haspopup="dialog"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Plus size={19} aria-hidden="true" />
                 </button>
@@ -872,7 +877,7 @@ const ProductGeneratorChat = () => {
                   aria-label="Open workspace capabilities"
                   aria-expanded={connectorPanelOpen}
                   aria-haspopup="dialog"
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] ${connectorPanelOpen ? "bg-[#1A1D24] text-[#00E68E]" : "text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${connectorPanelOpen ? "bg-[#1A1D24] text-[#F0F2F5]" : "text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
                 >
                   <PlugSocketIcon size={17} aria-hidden="true" />
                 </button>
@@ -886,7 +891,7 @@ const ProductGeneratorChat = () => {
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
                     aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
-                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] sm:max-w-[205px] sm:gap-2 sm:px-2.5"
+                    className="flex h-9 max-w-[47px] items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5"
                   >
                     <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#00E68E]" : "text-[#7928CA]"}`} aria-hidden="true" />
                     <span className="hidden truncate sm:inline">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
@@ -909,13 +914,14 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
               </div>
             </div>
           </form>
+          </BorderBeam>
 
           <Sheet open={attachmentMenuOpen} onOpenChange={setAttachmentMenuOpen}>
             <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-2xl border-[#303640] bg-[#111318] px-4 pb-[calc(env(safe-area-inset-bottom)+20px)] pt-5 text-white sm:px-6">

@@ -81,7 +81,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
             <button
               type="button"
               onClick={() => setEmailSent(false)}
-              className="mt-3 text-xs font-medium text-[#A8DCC0] underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
+              className="mt-3 text-xs font-medium text-[#B7BEC8] underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Use a different email
             </button>
@@ -99,13 +99,13 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
-                className="h-11 w-full rounded-lg border border-[#3A3A3A] bg-[#111] px-3.5 text-sm text-white outline-none placeholder:text-[#696969] focus:border-[#00C67B] focus:ring-2 focus:ring-[#00C67B]/20"
+                className="h-11 w-full rounded-lg border border-[#3A3A3A] bg-[#111] px-3.5 text-sm text-white caret-white outline-none placeholder:text-[#696969] focus:border-[#8C96A3] focus:ring-2 focus:ring-[#8C96A3]/20"
               />
             </div>
             <button
               type="submit"
               disabled={isSendingEmail || isSendingGoogle}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-wait disabled:opacity-60"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               {isSendingEmail ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
               {isSendingEmail ? "Sending sign-in link…" : "Continue with email"}
@@ -123,7 +123,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
           type="button"
           onClick={() => void handleGoogleSignIn()}
           disabled={isSendingEmail || isSendingGoogle}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3A3A] bg-[#222] px-4 text-sm font-medium text-[#E0E0E0] transition hover:bg-[#292929] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-wait disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3A3A] bg-[#222] px-4 text-sm font-medium text-[#E0E0E0] transition hover:bg-[#292929] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
         >
           {isSendingGoogle ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
           {isSendingGoogle ? "Opening Google sign-in…" : "Continue with Google"}

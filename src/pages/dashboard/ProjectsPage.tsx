@@ -62,7 +62,7 @@ export default function ProjectsPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5"><Link to="/dashboard/analytics/products">Product analytics</Link></Button>
-              <Button asChild className="bg-[#195A9F] text-white hover:bg-[#246BAF]"><Link to="/dashboard"><Plus size={15} className="mr-2" />New project</Link></Button>
+              <Button asChild className="bg-[#F0F2F5] text-[#080A0C] hover:bg-white"><Link to="/dashboard"><Plus size={15} className="mr-2" />New project</Link></Button>
             </div>
           </header>
 
@@ -74,7 +74,7 @@ export default function ProjectsPage() {
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><BookOpen size={21} className="text-[#8FA7C0]" /></div>
               <h2 className="text-lg font-medium">No projects yet</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8A8A8A]">Create an ebook in Product Studio. It will be saved here under your account, ready for review and export.</p>
-              <Button asChild className="mt-5 bg-[#195A9F] hover:bg-[#246BAF]"><Link to="/dashboard">Create your first ebook</Link></Button>
+              <Button asChild className="mt-5 bg-[#F0F2F5] text-[#080A0C] hover:bg-white"><Link to="/dashboard">Create your first ebook</Link></Button>
             </section>
           ) : (
             <section aria-label="Your digital product projects" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -102,7 +102,7 @@ export default function ProjectsPage() {
                     <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                       <Button variant="outline" size="sm" className="border-white/15 bg-transparent text-white hover:bg-white/5" onClick={() => setReviewing(ebook)}>Review</Button>
                       <div className="flex items-center gap-1">
-                        <Button size="sm" className="bg-[#195A9F] text-white hover:bg-[#246BAF]" onClick={() => void exportEbook(ebook)}><Download size={14} className="mr-1.5" />Export</Button>
+                        <Button size="sm" className="bg-[#F0F2F5] text-[#080A0C] hover:bg-white" onClick={() => void exportEbook(ebook)}><Download size={14} className="mr-1.5" />Export</Button>
                         <Button size="icon" variant="ghost" aria-label={`Delete ${ebook.title}`} className="h-8 w-8 text-[#A0A0A0] hover:bg-red-950/30 hover:text-red-300" onClick={() => setDeleting(ebook)}><Trash2 size={15} /></Button>
                       </div>
                     </div>
@@ -136,7 +136,7 @@ export default function ProjectsPage() {
                 </section>
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button variant="outline" className="border-white/15 bg-transparent text-white" onClick={() => setReviewing(null)}>Close review</Button>
-                  <Button className="bg-[#195A9F] hover:bg-[#246BAF]" onClick={() => void exportEbook(reviewing)}><Download size={14} className="mr-2" />Download PDF</Button>
+                  <Button className="bg-[#F0F2F5] text-[#080A0C] hover:bg-white" onClick={() => void exportEbook(reviewing)}><Download size={14} className="mr-2" />Download PDF</Button>
                 </div>
               </div>
             )}

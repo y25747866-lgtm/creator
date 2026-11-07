@@ -148,14 +148,14 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
         </section>
       )}
 
-      <label className="flex h-9 items-center gap-2 rounded-lg border border-[#303640] bg-[#111318] px-2.5 text-[#8B929E]">
+      <label className="flex h-9 items-center gap-2 rounded-lg border border-[#303640] bg-[#111318] px-2.5 text-[#8B929E] transition-colors focus-within:border-[#8C96A3]">
         <Search size={14} aria-hidden="true" />
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search apps"
           aria-label="Search connectors"
-          className="min-w-0 flex-1 bg-transparent text-xs text-[#F0F2F5] outline-none placeholder:text-[#8B929E]"
+          className="min-w-0 flex-1 bg-transparent text-xs text-[#F0F2F5] caret-white outline-none placeholder:text-[#8B929E]"
         />
         {search && <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className="text-[#8B929E] hover:text-[#F0F2F5]"><X size={13} /></button>}
       </label>
@@ -169,7 +169,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
             role="tab"
             aria-selected={category === item}
             onClick={() => setCategory(item)}
-            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[10px] transition ${category === item ? "border-[#00E68E] bg-[#1A1D24] text-[#F0F2F5]" : "border-[#303640] text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
+            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${category === item ? "border-[#F0F2F5] bg-[#F0F2F5] text-[#080A0C]" : "border-[#303640] text-[#8B929E] hover:border-[#8C96A3] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
           >
             {item}
           </button>
@@ -192,7 +192,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               onClick={() => { setSelected(connector); setActionError(null); }}
               aria-haspopup="dialog"
               aria-label={`${connector.name} connector details`}
-              className="flex min-h-[48px] w-full items-center gap-2 rounded-lg border border-[#303640]/70 bg-[#111318] px-2 py-1.5 text-left transition hover:border-[#303640] hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E]"
+              className="flex min-h-[48px] w-full items-center gap-2 rounded-lg border border-[#303640]/70 bg-[#111318] px-2 py-1.5 text-left transition hover:border-[#8C96A3] hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ConnectorLogo connector={connector} />
               <div className="min-w-0 flex-1">
@@ -251,7 +251,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
                 type="button"
                 onClick={() => void handleConnect(selected)}
                 disabled={Boolean(connectingId) || connectorIsConnected(selected) || connectorStatusUnknown(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
-                className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#F0F2F5] px-4 py-2 text-xs font-medium text-[#080A0C] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00E68E] disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#F0F2F5] px-4 py-2 text-xs font-medium text-[#080A0C] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
               >
                 {connectingId === selected.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
                 {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : connectorStatusUnknown(selected) ? (loading ? "Checking status" : "Status unavailable") : "Connect"}

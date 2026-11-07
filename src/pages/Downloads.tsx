@@ -78,7 +78,7 @@ export default function Downloads() {
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><BookOpen size={21} className="text-[#8FA7C0]" /></div>
               <h2 className="text-lg font-medium">No saved products yet</h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#8A8A8A]">Generate an ebook in Product Studio. Finished manuscripts will appear here and under Projects.</p>
-              <Button asChild className="mt-5 bg-[#195A9F] hover:bg-[#246BAF]"><Link to="/dashboard">Create an ebook</Link></Button>
+              <Button asChild className="mt-5 bg-[#F0F2F5] text-[#080A0C] hover:bg-white"><Link to="/dashboard">Create an ebook</Link></Button>
             </section>
           ) : (
             <section aria-label="Saved downloads" className="space-y-2">
@@ -95,7 +95,7 @@ export default function Downloads() {
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5" onClick={() => setPreview(ebook)}><Eye size={14} className="mr-1.5" />Preview</Button>
                     {ebook.coverImageUrl && <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/5" onClick={() => void downloadCoverImage(ebook)}><ImageIcon size={14} className="mr-1.5" />Cover</Button>}
-                    <Button size="sm" disabled={!hasAccess || downloadingId === ebook.id} className="bg-[#195A9F] text-white hover:bg-[#246BAF]" onClick={() => void exportEbook(ebook)}>{downloadingId === ebook.id ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Download size={14} className="mr-1.5" />}Download PDF</Button>
+                    <Button size="sm" disabled={!hasAccess || downloadingId === ebook.id} className="bg-[#F0F2F5] text-[#080A0C] hover:bg-white" onClick={() => void exportEbook(ebook)}>{downloadingId === ebook.id ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Download size={14} className="mr-1.5" />}Download PDF</Button>
                     <Button size="icon" variant="ghost" aria-label={`Delete ${ebook.title}`} className="h-9 w-9 text-[#A0A0A0] hover:bg-red-950/30 hover:text-red-300" onClick={() => setDeleting(ebook)}><Trash2 size={15} /></Button>
                   </div>
                 </motion.article>

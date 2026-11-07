@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import DashboardLayout from "./DashboardLayout";
 import ProductGeneratorChat from "./ProductGeneratorChat";
@@ -27,6 +28,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/dashboard/DashboardSidebar", () => ({ default: () => null }));
+vi.mock("border-beam", () => ({
+  BorderBeam: ({ children, active, colorVariant, size, strength }: { children: ReactNode; active?: boolean; colorVariant?: string; size?: string; strength?: number }) => (
+    <div data-testid="composer-border-beam" data-active={String(active)} data-color-variant={colorVariant} data-size={size} data-strength={strength}>{children}</div>
+  ),
+}));
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     user: mocks.authUser,
@@ -114,10 +120,34 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
     expect(composer).toHaveClass("min-h-[72px]", "w-full", "text-[16px]", "leading-[1.6]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
-    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#00E68E]");
+    expect(composer.closest("form")).toHaveClass("min-h-[148px]", "px-4", "py-4", "rounded-[24px]", "border-[#303640]", "bg-[#111318]", "focus-within:border-[#8C96A3]");
+    expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
+    expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");
+    expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-strength", "0.45");
+    expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-active", "true");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
+  });
+
+  it("stops the monochrome beam on first focus and does not restart after blur", () => {
+    renderWorkspace();
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+    const beam = screen.getByTestId("composer-border-beam");
+
+    fireEvent.focus(composer);
+    expect(beam).toHaveAttribute("data-active", "false");
+    fireEvent.blur(composer);
+    expect(beam).toHaveAttribute("data-active", "false");
+  });
+
+  it("stops the monochrome beam on the first pointer interaction", () => {
+    renderWorkspace();
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+    const beam = screen.getByTestId("composer-border-beam");
+
+    fireEvent.pointerDown(composer);
+    expect(beam).toHaveAttribute("data-active", "false");
   });
 
   it("toggles the desktop sidebar from the main header and flips the expanded icon", () => {
@@ -176,7 +206,7 @@ describe("Chat-first product workspace", () => {
     expect(icon?.querySelector("g")).toHaveAttribute("stroke-width", "2");
     expect(icon?.querySelectorAll("path")).toHaveLength(4);
     fireEvent.click(plugButton);
-    expect(plugButton).toHaveClass("bg-[#1A1D24]", "text-[#00E68E]");
+    expect(plugButton).toHaveClass("bg-[#1A1D24]", "text-[#F0F2F5]");
     const panel = screen.getByRole("dialog", { name: "Workspace capabilities" });
     expect(panel).toHaveTextContent("60 curated apps · seven categories");
     expect(panel).toHaveTextContent("Productivity");
@@ -185,10 +215,11 @@ describe("Chat-first product workspace", () => {
     expect(within(panel).getByRole("tab", { name: "All" })).toHaveAttribute("aria-selected", "true");
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(60);
     expect(within(panel).queryByText(/Browse all 1,000\+ apps/)).not.toBeInTheDocument();
-    expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[#00E68E]", "bg-[#1A1D24]");
+    expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[#F0F2F5]", "bg-[#F0F2F5]", "text-[#080A0C]");
     expect(panel).toHaveClass("!bottom-20", "!left-1/2", "max-h-[70dvh]");
     fireEvent.click(within(panel).getByRole("tab", { name: "Productivity" }));
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(13);
+    expect(within(panel).getByRole("tab", { name: "Productivity" })).toHaveClass("bg-[#F0F2F5]", "text-[#080A0C]");
   });
 
   it("closes the system selector on outside interaction without resetting the selected mode", () => {

@@ -88,6 +88,20 @@ describe("Plugins management catalog", () => {
     expect(screen.getByRole("button", { name: "Gmail connector details" })).toHaveTextContent("Checking…");
   });
 
+  it("uses neutral selected filters and a charcoal search field", () => {
+    renderCatalog();
+    const allFilter = screen.getByRole("tab", { name: "All" });
+    const search = screen.getByRole("textbox", { name: "Search connectors" });
+
+    expect(allFilter).toHaveClass("border-[#F0F2F5]", "bg-[#F0F2F5]", "text-[#080A0C]");
+    expect(search).toHaveClass("caret-white");
+    expect(search.closest("label")).toHaveClass("bg-[#111318]", "border-[#303640]", "focus-within:border-[#8C96A3]");
+
+    const productivity = screen.getByRole("tab", { name: "Productivity" });
+    fireEvent.click(productivity);
+    expect(productivity).toHaveClass("bg-[#F0F2F5]", "text-[#080A0C]");
+  });
+
   it("reports status errors and does not render stale apps as connected", () => {
     mocks.apps = [{ slug: "gmail", connected: true }];
     mocks.error = "Composio unavailable";

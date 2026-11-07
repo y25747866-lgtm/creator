@@ -693,7 +693,7 @@ const EbookGenerator = () => {
               setSelectedNiche(null);
               setTopicError(false);
             }}
-            className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 transition-colors hover:border-[#00e68e] hover:text-white"
+            className="rounded-full border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
           >
             {topic || "No topic selected"}
           </button>

@@ -14,6 +14,10 @@ vi.mock("@/hooks/useConnectorConnections", () => ({
   useConnectorConnections: () => mockConnectionState,
 }));
 
+vi.mock("@/lib/connectors/api", () => ({
+  startComposioConnection: vi.fn(),
+}));
+
 describe("ConnectedAppIndicators", () => {
   beforeEach(() => {
     mockConnectionState.apps = [];

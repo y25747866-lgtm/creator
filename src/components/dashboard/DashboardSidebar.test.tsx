@@ -49,6 +49,8 @@ describe("DashboardSidebar Plugins navigation", () => {
     const link = screen.getByRole("link", { name: "Plugins" });
     expect(link).toHaveAttribute("href", "/app/connectors");
     expect(link).toHaveAttribute("aria-current", "page");
+    expect(link).toHaveClass("bg-[#111318]", "text-white");
+    expect(link.querySelector("svg")).not.toHaveClass("text-[#00E68E]");
 
     fireEvent.click(link);
     expect(mocks.setMobileOpen).toHaveBeenCalledWith(false);

@@ -309,7 +309,7 @@ export default function SkillsPage() {
         <div className="mx-auto max-w-4xl">
           <header className="mb-7 flex min-h-10 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
-              <Link to="/dashboard" aria-label="Back to Product Studio" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+              <Link to="/dashboard" aria-label="Back to Product Studio" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <ArrowLeft size={18} aria-hidden="true" />
               </Link>
               <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">Skills</h1>
@@ -322,10 +322,10 @@ export default function SkillsPage() {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search skills"
                 aria-label="Search skills"
-                className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-[#1A1A1A] px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-[#195A9F]"
+                className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-[#1A1A1A] px-3 text-sm text-white caret-white outline-none placeholder:text-white/35 focus:border-[#8C96A3]"
               />
             ) : (
-              <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search skills" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+              <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search skills" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <Search size={18} aria-hidden="true" />
               </button>
             )}
@@ -349,10 +349,10 @@ export default function SkillsPage() {
                 role="tab"
                 aria-selected={selectedTab === tab}
                 onClick={() => setSelectedTab(tab)}
-                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm transition ${selectedTab === tab ? "bg-[#131E2A] text-white" : "text-white/50 hover:bg-white/[0.04] hover:text-white"}`}
+                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm transition ${selectedTab === tab ? "bg-[#F0F2F5] text-[#080A0C]" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
               >
                 {tab}
-                <span className={`text-xs ${selectedTab === tab ? "text-[#9CC7F0]" : "text-white/35"}`}>{activeTabCount(tab)}</span>
+                <span className={`text-xs ${selectedTab === tab ? "text-[#303640]" : "text-white/35"}`}>{activeTabCount(tab)}</span>
               </button>
             ))}
           </div>
@@ -389,7 +389,7 @@ export default function SkillsPage() {
                         onCheckedChange={(checked) => void changeSkillActive(skill, checked)}
                         disabled={pending || Boolean(loadError)}
                         aria-label={`${active ? "Disable" : "Enable"} ${skill.name}`}
-                        className="mt-0.5 data-[state=checked]:bg-[#195A9F] data-[state=unchecked]:bg-[#3A3A3A]"
+                        className="mt-0.5 data-[state=checked]:bg-[#F0F2F5] data-[state=unchecked]:bg-[#3A3A3A]"
                       />
                     </div>
                     <div className="my-3 border-t border-white/[0.08]" />
@@ -402,7 +402,7 @@ export default function SkillsPage() {
                       <span>{normalizeVersion(skill.version)}</span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button type="button" aria-label={`${skill.name} options`} className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#195A9F]">
+                          <button type="button" aria-label={`${skill.name} options`} className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <MoreHorizontal size={18} aria-hidden="true" />
                           </button>
                         </DropdownMenuTrigger>
@@ -429,7 +429,7 @@ export default function SkillsPage() {
       </main>
 
       <input ref={fileInputRef} type="file" accept="application/json,.json" className="sr-only" aria-label="Upload a skill manifest" onChange={(event) => void handleSkillFile(event)} />
-      <button type="button" onClick={() => { setActionView("actions"); setImportError(null); setActionsOpen(true); }} aria-label="Create or import a skill" className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#195A9F] text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition hover:bg-[#246BAF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+      <button type="button" onClick={() => { setActionView("actions"); setImportError(null); setActionsOpen(true); }} aria-label="Create or import a skill" className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#F0F2F5] text-[#080A0C] shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Plus size={24} aria-hidden="true" />
       </button>
 
@@ -470,9 +470,9 @@ export default function SkillsPage() {
               </SheetHeader>
               <form onSubmit={(event) => void handleGithubImport(event)} className="mx-auto max-w-xl space-y-3">
                 <label htmlFor="github-skill-url" className="text-xs font-medium text-white/65">GitHub repository URL</label>
-                <input id="github-skill-url" type="url" value={githubUrl} onChange={(event) => setGithubUrl(event.target.value)} placeholder="https://github.com/owner/repository" className="h-11 w-full rounded-lg border border-white/10 bg-[#101010] px-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-[#195A9F]" />
+                <input id="github-skill-url" type="url" value={githubUrl} onChange={(event) => setGithubUrl(event.target.value)} placeholder="https://github.com/owner/repository" className="h-11 w-full rounded-lg border border-white/10 bg-[#101010] px-3 text-sm text-white caret-white outline-none placeholder:text-white/30 focus:border-[#8C96A3]" />
                 {importError && <p role="alert" className="rounded-lg border border-[#6A3E3E] bg-[#241717] px-3 py-2 text-xs leading-5 text-[#EABABA]">{importError}</p>}
-                <button type="submit" disabled={isImporting || !githubUrl.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#195A9F] px-4 text-sm font-medium text-white transition hover:bg-[#246BAF] disabled:cursor-not-allowed disabled:opacity-50">
+                <button type="submit" disabled={isImporting || !githubUrl.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#F0F2F5] px-4 text-sm font-medium text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
                   {isImporting ? <Loader2 size={15} className="animate-spin" /> : <Github size={15} />}
                   {isImporting ? "Importing…" : "Fetch skill.json"}
                 </button>
