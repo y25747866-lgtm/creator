@@ -940,7 +940,7 @@ const ProductGeneratorChat = () => {
                     aria-expanded={capabilityMenuOpen}
                     aria-label={`Product mode: ${activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}`}
                     title={activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}
-                    className="flex h-9 max-w-[160px] min-w-0 items-center gap-1 rounded-lg px-1.5 text-xs font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5"
+                    className="flex h-9 max-w-[160px] min-w-0 items-center gap-0.5 rounded-lg px-1 text-[11px] font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5 sm:text-xs"
                   >
                     <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#00E68E]" : "text-[#7928CA]"}`} aria-hidden="true" />
                     <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
