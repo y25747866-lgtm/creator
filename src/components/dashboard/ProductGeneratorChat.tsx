@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowUp,
   BookOpen,
@@ -79,6 +80,8 @@ type ChatMessage = {
   ebook?: Ebook;
   attachments?: MediaAttachment[];
 };
+
+type SelectorPopupPosition = { top: number; left: number; width: number; maxHeight: number };
 
 const PRODUCT_TEMPLATES: Template[] = [
   {
@@ -200,28 +203,72 @@ const ProductGeneratorChat = () => {
   const [recentTasks, setRecentTasks] = useState<CreatorConversationSummary[]>([]);
   const [showRecentTasks, setShowRecentTasks] = useState(false);
   const [showSkillsStatus, setShowSkillsStatus] = useState(false);
+  const [selectorPopupPosition, setSelectorPopupPosition] = useState<SelectorPopupPosition | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pictureInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const capabilitySelectorRef = useRef<HTMLDivElement>(null);
+  const selectorTriggerRef = useRef<HTMLButtonElement>(null);
+  const selectorPopupRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
   const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
 
   useEffect(() => {
-    if (!capabilityMenuOpen) return;
+    if (!capabilityMenuOpen) {
+      setSelectorPopupPosition(null);
+      return;
+    }
+    let frame = 0;
+    const margin = 12;
+    const gap = 8;
+    const updatePosition = () => {
+      const trigger = selectorTriggerRef.current;
+      const popup = selectorPopupRef.current;
+      if (!trigger || !popup) return;
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const width = Math.min(290, Math.max(220, viewportWidth - margin * 2));
+      const measuredHeight = popup.scrollHeight;
+      const spaceAbove = triggerRect.top - margin - gap;
+      const spaceBelow = viewportHeight - triggerRect.bottom - margin - gap;
+      const opensAbove = spaceAbove >= Math.min(measuredHeight, 220) || spaceAbove > spaceBelow;
+      const maxHeight = Math.min(measuredHeight || 240, Math.max(80, viewportHeight - margin * 2));
+      const top = opensAbove
+        ? Math.max(margin, triggerRect.top - gap - maxHeight)
+        : Math.min(viewportHeight - margin - maxHeight, triggerRect.bottom + gap);
+      const left = Math.min(Math.max(margin, triggerRect.right - width), viewportWidth - margin - width);
+      setSelectorPopupPosition({ top, left, width, maxHeight });
+    };
+    frame = window.requestAnimationFrame(updatePosition);
+    const handleViewportChange = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(updatePosition);
+    };
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
     const closeOnOutsideInteraction = (event: Event) => {
-      if (capabilitySelectorRef.current && !capabilitySelectorRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (capabilitySelectorRef.current && !capabilitySelectorRef.current.contains(target) && !selectorPopupRef.current?.contains(target)) {
         setCapabilityMenuOpen(false);
       }
     };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setCapabilityMenuOpen(false);
+    };
     document.addEventListener("mousedown", closeOnOutsideInteraction);
     document.addEventListener("touchstart", closeOnOutsideInteraction, { passive: true });
+    document.addEventListener("keydown", closeOnEscape);
     return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
       document.removeEventListener("mousedown", closeOnOutsideInteraction);
       document.removeEventListener("touchstart", closeOnOutsideInteraction);
+      document.removeEventListener("keydown", closeOnEscape);
     };
   }, [capabilityMenuOpen]);
 
@@ -856,7 +903,7 @@ const ProductGeneratorChat = () => {
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="block min-h-[72px] w-full flex-1 resize-none bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60"
+              className="block min-h-[72px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.6] text-[#F0F2F5] outline-none ring-0 placeholder:text-[#8B929E] focus:border-0 focus:outline-none focus:ring-0 disabled:opacity-60"
               aria-describedby="composer-hint"
             />
             <div className="mt-3 flex min-h-10 items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
@@ -887,6 +934,7 @@ const ProductGeneratorChat = () => {
                 <div ref={capabilitySelectorRef} className="relative">
                   <button
                     type="button"
+                    ref={selectorTriggerRef}
                     onClick={() => { setCapabilityMenuOpen((open) => !open); setAttachmentMenuOpen(false); setConnectorPanelOpen(false); }}
                     aria-haspopup="menu"
                     aria-expanded={capabilityMenuOpen}
@@ -897,8 +945,20 @@ const ProductGeneratorChat = () => {
                     <span className="hidden truncate sm:inline">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
-                  {capabilityMenuOpen && (
-                    <div role="menu" aria-label="NexoraOS system selector" className="absolute bottom-12 right-0 z-20 w-[min(290px,calc(100vw-32px))] rounded-xl border border-[#303640] bg-[#111318] p-1.5 shadow-xl">
+                  {capabilityMenuOpen && createPortal(
+                    <div
+                      ref={selectorPopupRef}
+                      role="menu"
+                      aria-label="NexoraOS system selector"
+                      className="fixed z-[100] max-w-[calc(100vw-24px)] overflow-y-auto overscroll-contain rounded-xl border border-[#303640] bg-[#111318] p-1.5 shadow-2xl"
+                      style={{
+                        top: selectorPopupPosition?.top ?? 0,
+                        left: selectorPopupPosition?.left ?? 0,
+                        width: selectorPopupPosition?.width ?? "min(290px, calc(100vw - 24px))",
+                        maxHeight: selectorPopupPosition?.maxHeight ?? "calc(100dvh - 24px)",
+                        visibility: selectorPopupPosition ? "visible" : "hidden",
+                      }}
+                    >
                       <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#F0F2F5] hover:bg-[#1A1D24]">
                         <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "product-generator" ? "bg-[#00E68E]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Creates ebooks with the verified product workflow.</span></span>
@@ -907,7 +967,8 @@ const ProductGeneratorChat = () => {
                         <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "hybrid-agentic" ? "bg-[#7928CA]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>
                       </button>
-                    </div>
+                    </div>,
+                    document.body,
                   )}
                 </div>
                 <button

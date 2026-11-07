@@ -222,10 +222,10 @@ describe("Chat-first product workspace", () => {
     expect(within(panel).getByRole("tab", { name: "Productivity" })).toHaveClass("bg-[#F0F2F5]", "text-[#080A0C]");
   });
 
-  it("closes the system selector on outside interaction without resetting the selected mode", () => {
+  it("closes the system selector on outside interaction without resetting the selected mode", async () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
-    const menu = screen.getByRole("menu", { name: "NexoraOS system selector" });
+    const menu = await screen.findByRole("menu", { name: "NexoraOS system selector" });
     expect(menu).toHaveTextContent("Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.");
     expect(menu).not.toHaveTextContent("Not connected in this preview; no agent run will be simulated.");
     fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ }));
@@ -236,7 +236,7 @@ describe("Chat-first product workspace", () => {
     expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[#7928CA]");
 
     fireEvent.click(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" }));
-    expect(screen.getByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();
+    expect(await screen.findByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
