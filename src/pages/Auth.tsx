@@ -16,13 +16,13 @@ const ParticleField = () => {
     if (!canvas || !context) return;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const particles = Array.from({ length: 80 }, () => ({
+    const particles = Array.from({ length: 48 }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       radius: 1 + Math.random() * 0.5,
-      opacity: 0.3 + Math.random() * 0.3,
-      vx: (Math.random() - 0.5) * 0.2,
-      vy: (Math.random() - 0.5) * 0.2,
+      opacity: 0.16 + Math.random() * 0.18,
+      vx: (Math.random() - 0.5) * 0.12,
+      vy: (Math.random() - 0.5) * 0.12,
     }));
     let animationFrame = 0;
     let width = window.innerWidth;
@@ -70,10 +70,10 @@ const ParticleField = () => {
 
 const GoogleMark = () => (
   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
-    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
-    <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
-    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" />
+    <path fill="#111318" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+    <path fill="#111318" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+    <path fill="#111318" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
+    <path fill="#111318" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" />
   </svg>
 );
 
@@ -169,7 +169,7 @@ const NexoraOSSignIn = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080A0C]">
+      <div className="flex min-h-screen items-center justify-center bg-[#121212]">
         <Loader2 className="h-6 w-6 animate-spin text-[#6B7280]" />
       </div>
     );
@@ -178,9 +178,9 @@ const NexoraOSSignIn = () => {
   const isSocialLoading = isGoogleLoading || isDiscordLoading;
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080A0C] px-4 py-8 text-[#F0F2F5]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#121212] px-4 py-8 text-[#F0F2F5]">
       <ParticleField />
-      <section className="relative z-10 w-full max-w-[400px] rounded-xl border border-[#1E2028] bg-[#0D0F12] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-8" aria-labelledby="sign-in-heading">
+      <section className="relative z-10 w-full max-w-[400px] rounded-xl border border-[#2A2D34] bg-[#1F1F1F] p-8 shadow-[0_16px_48px_rgba(0,0,0,0.24)]" aria-labelledby="sign-in-heading">
         <div className="text-center">
           <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11 brightness-0 invert" />
           <h1 id="sign-in-heading" className="mt-6 text-xl font-bold tracking-tight text-white">Sign in to NexoraOS</h1>
@@ -189,7 +189,7 @@ const NexoraOSSignIn = () => {
 
         <form onSubmit={handleContinue} className="mt-8 space-y-5">
           <div>
-            <label htmlFor="email" className="mb-2 block text-xs font-medium text-[#A6ADB8]">EMAIL</label>
+            <label htmlFor="email" className="mb-2 block text-xs font-medium text-[#A6ADB8]">Email</label>
             <input
               id="email"
               type="email"
@@ -197,11 +197,11 @@ const NexoraOSSignIn = () => {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className={`h-11 w-full rounded-md border bg-[#111318] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white ${error ? "border-[#F0F2F5]" : "border-[#2A2D34]"}`}
+              className={`h-11 w-full rounded-md border bg-[#1F1F1F] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white ${error ? "border-[#F0F2F5]" : "border-[#2A2D34]"}`}
             />
           </div>
           <div>
-            <label htmlFor="password" className="mb-2 block text-xs font-medium text-[#A6ADB8]">PASSWORD</label>
+            <label htmlFor="password" className="mb-2 block text-xs font-medium text-[#A6ADB8]">Password</label>
             <input
               id="password"
               type="password"
@@ -209,7 +209,7 @@ const NexoraOSSignIn = () => {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
               autoComplete="current-password"
-              className="h-11 w-full rounded-md border border-[#2A2D34] bg-[#111318] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white"
+              className="h-11 w-full rounded-md border border-[#2A2D34] bg-[#1F1F1F] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white"
             />
           </div>
           {error && <p role="alert" className="text-xs text-[#F0F2F5]">{error}</p>}
