@@ -1,20 +1,95 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-import { signInWithGoogle } from "@/lib/auth/login";
+import { signIn, signInWithGoogle } from "@/lib/auth/login";
+import { supabase } from "@/integrations/supabase/client";
 import nexoraLogo from "@/assets/nexora-logo.webp";
 
-const emailSchema = z.string().email("Please enter a valid email address");
+const ParticleField = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const particles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      radius: 1 + Math.random() * 0.5,
+      opacity: 0.3 + Math.random() * 0.3,
+      vx: (Math.random() - 0.5) * 0.2,
+      vy: (Math.random() - 0.5) * 0.2,
+    }));
+    let animationFrame = 0;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    const resize = () => {
+      const devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * devicePixelRatio;
+      canvas.height = height * devicePixelRatio;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    };
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = "rgba(255,255,255,0.4)";
+      particles.forEach((particle) => {
+        if (!reducedMotion) {
+          particle.x = (particle.x + particle.vx + width) % width;
+          particle.y = (particle.y + particle.vy + height) % height;
+        }
+        context.globalAlpha = particle.opacity;
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        context.fill();
+      });
+      context.globalAlpha = 1;
+      if (!reducedMotion) animationFrame = window.requestAnimationFrame(draw);
+    };
+
+    resize();
+    draw();
+    window.addEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 z-0 pointer-events-none" />;
+};
+
+const GoogleMark = () => (
+  <svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] fill-none">
+    <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.68-3.88 2.68-6.62Z" fill="#fff" />
+    <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18Z" fill="#fff" />
+    <path d="M3.96 10.71A5.42 5.42 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33Z" fill="#fff" />
+    <path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58Z" fill="#fff" />
+  </svg>
+);
+
+const DiscordMark = () => (
+  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-[#5865F2]">
+    <path d="M19.54 5.14A16.5 16.5 0 0 0 15.47 4l-.5 1.03a15.2 15.2 0 0 0-5.94 0L8.53 4a16.5 16.5 0 0 0-4.07 1.14C1.88 8.97 1.18 12.71 1.53 16.4a16.6 16.6 0 0 0 5 2.57l1.21-1.64c-.66-.24-1.29-.55-1.88-.91l.46-.35a11.8 11.8 0 0 0 10.36 0l.46.35c-.59.36-1.22.67-1.88.91l1.21 1.64a16.6 16.6 0 0 0 5-2.57c.42-4.28-.72-7.98-1.93-11.26ZM8.46 14.28c-1.01 0-1.84-.93-1.84-2.08s.81-2.08 1.84-2.08 1.85.93 1.84 2.08c0 1.15-.81 2.08-1.84 2.08Zm7.08 0c-1.01 0-1.84-.93-1.84-2.08s.81-2.08 1.84-2.08 1.85.93 1.84 2.08c0 1.15-.81 2.08-1.84 2.08Z" />
+  </svg>
+);
 
 const NexoraOSSignIn = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [error, setError] = useState('');
-
+  const [isDiscordLoading, setIsDiscordLoading] = useState(false);
+  const [error, setError] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,37 +101,39 @@ const NexoraOSSignIn = () => {
   }, [location.search]);
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate(redirectTo, { replace: true });
-    }
+    if (!loading && user) navigate(redirectTo, { replace: true });
   }, [user, loading, navigate, redirectTo]);
 
-  const handleContinue = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
+  const handleContinue = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
     if (!email) {
-      setError('Email is required');
+      setError("Email is required");
       return;
     }
-    
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address');
+      setError("Please enter a valid email address");
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      const { error: authError } = await sendMagicLink(email);
-      if (authError) {
-        setError(authError.message || 'Failed to send magic link');
-        toast({ title: "Error", description: authError.message, variant: "destructive" });
-        return;
+      if (password) {
+        await signIn(email, password);
+        toast({ title: "Signed in", description: "Welcome back to NexoraOS." });
+      } else {
+        const { error: authError } = await sendMagicLink(email);
+        if (authError) {
+          setError(authError.message || "Failed to send magic link");
+          toast({ title: "Error", description: authError.message, variant: "destructive" });
+          return;
+        }
+        toast({ title: "Success", description: "Check your email for the sign-in link" });
       }
-      toast({ title: "Success", description: "Check your email for the sign-in link" });
-    } catch (err: any) {
-      setError('Something went wrong. Please try again.');
-      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } catch (authError: unknown) {
+      const message = authError instanceof Error ? authError.message : "Something went wrong. Please try again.";
+      setError(message);
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -66,339 +143,101 @@ const NexoraOSSignIn = () => {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-    } catch (err: any) {
-      console.error("Google sign-in error:", err);
-      toast({
-        title: "Error",
-        description: err.message || "Google sign-in failed. Please try again.",
-        variant: "destructive",
-      });
+    } catch (authError: unknown) {
+      const message = authError instanceof Error ? authError.message : "Google sign-in failed. Please try again.";
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setIsGoogleLoading(false);
     }
   };
 
+  const handleDiscordSignIn = async () => {
+    setIsDiscordLoading(true);
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "discord",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (authError) throw authError;
+    } catch (authError: unknown) {
+      const message = authError instanceof Error ? authError.message : "Discord sign-in failed. Please try again.";
+      toast({ title: "Error", description: message, variant: "destructive" });
+    } finally {
+      setIsDiscordLoading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
-        <Loader2 className="w-6 h-6 animate-spin text-[#666666]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#080A0C]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#6B7280]" />
       </div>
     );
   }
 
+  const isSocialLoading = isGoogleLoading || isDiscordLoading;
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      <style>{`
-        ::selection {
-          background: #FFFFFF;
-          color: #0A0A0A;
-        }
-        
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus {
-          -webkit-box-shadow: 0 0 0 100px #111111 inset;
-          -webkit-text-fill-color: #FFFFFF;
-        }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.3s ease forwards;
-        }
-        
-        .animate-fade-in {
-          animation: fadeIn 0.3s ease forwards;
-        }
-        
-        .stagger-1 {
-          animation-delay: 0.1s;
-          opacity: 0;
-        }
-        
-        .stagger-2 {
-          animation-delay: 0.2s;
-          opacity: 0;
-        }
-        
-        .stagger-3 {
-          animation-delay: 0.3s;
-          opacity: 0;
-        }
-        
-        .stagger-4 {
-          animation-delay: 0.4s;
-          opacity: 0;
-        }
-        
-        .stagger-5 {
-          animation-delay: 0.5s;
-          opacity: 0;
-        }
-        
-        .stagger-6 {
-          animation-delay: 0.6s;
-          opacity: 0;
-        }
-        
-        .stagger-7 {
-          animation-delay: 0.7s;
-          opacity: 0;
-        }
-      `}</style>
-
-      {/* Left Panel */}
-      <div 
-        className="md:w-[55%] bg-[#0A0A0A] relative overflow-hidden h-14 md:h-screen flex flex-col"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }}
-      >
-        {/* Subtle glow effect */}
-        <div 
-          className="absolute bottom-0 left-0 w-[600px] h-[600px] pointer-events-none hidden md:block"
-          style={{
-            background: 'radial-gradient(circle, rgba(255,255,255,0.02) 0%, transparent 70%)',
-          }}
-        />
-        
-        {/* Logo - Always visible */}
-        <div className="absolute top-0 left-0 p-6 md:p-8 flex items-center gap-2 animate-fade-in stagger-1 z-20">
-          <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" loading="lazy" className="w-8 h-8" />
-          <span className="text-white font-semibold text-base">NexoraOS</span>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#080A0C] px-4 py-8 text-[#F0F2F5]">
+      <ParticleField />
+      <section className="relative z-10 w-full max-w-[400px] rounded-xl border border-[#1E2028] bg-[#0D0F12] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-8" aria-labelledby="sign-in-heading">
+        <div className="text-center">
+          <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11" />
+          <h1 id="sign-in-heading" className="mt-6 text-xl font-bold tracking-tight text-white">Sign in to NexoraOS</h1>
+          <p className="mt-2 text-sm text-[#6B7280]">Create AI-powered digital businesses instantly.</p>
         </div>
 
-        {/* Center Content - Hidden on mobile */}
-        <div className="hidden md:flex flex-col justify-center items-start h-full px-12 relative z-10">
-          <div className="max-w-lg">
-            {/* Badge */}
-            <div className="mb-6 animate-fade-in stagger-2">
-              <span 
-                className="inline-block px-3 py-1.5 text-[10px] font-semibold tracking-wider"
-                style={{
-                  background: '#111111',
-                  border: '1px solid #1A1A1A',
-                  color: '#FFFFFF',
-                  opacity: 0.5,
-                }}
-              >
-                AI-POWERED BUSINESS OS
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h1 
-              className="text-white mb-4 animate-fade-in stagger-3"
-              style={{
-                fontFamily: 'Syne, sans-serif',
-                fontSize: '40px',
-                fontWeight: 900,
-                lineHeight: 1.2,
-              }}
-            >
-              Turn your idea into income.
-            </h1>
-
-            {/* Subheadline */}
-            <p 
-              className="text-[#666666] mb-6 animate-fade-in stagger-4"
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: '14px',
-                lineHeight: 1.6,
-              }}
-            >
-              Everything you need to build, launch, and sell digital products — in one place.
-            </p>
-
-            {/* Features */}
-            <div className="space-y-3 mt-6">
-              {[
-                'Generate a full digital product in under 60 seconds',
-                'Launch a sales page without touching code',
-                'Sell on Whop, Gumroad, Payhip and more'
-              ].map((feature, index) => (
-                <div 
-                  key={index} 
-                  className={`flex items-center gap-3 animate-fade-in stagger-${index + 5}`}
-                >
-                  <Check className="w-4 h-4 text-white flex-shrink-0" />
-                  <span 
-                    className="text-[#999999]"
-                    style={{
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize: '14px',
-                    }}
-                  >
-                    {feature}
-                  </span>
-                </div>
-              ))}
-            </div>
+        <form onSubmit={handleContinue} className="mt-8 space-y-5">
+          <div>
+            <label htmlFor="email" className="mb-2 block text-xs font-medium text-[#A6ADB8]">EMAIL</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              className={`h-11 w-full rounded-md border bg-[#111318] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white ${error ? "border-[#F0F2F5]" : "border-[#2A2D34]"}`}
+            />
           </div>
-        </div>
-
-        {/* Copyright - Hidden on mobile */}
-        <div className="hidden md:block absolute bottom-0 left-0 p-8 z-20">
-          <p className="text-[#333333] text-[11px]">© 2026 NexoraOS</p>
-        </div>
-      </div>
-
-      {/* Right Panel */}
-      <div className="flex-1 md:w-[45%] bg-[#080808] flex flex-col justify-center items-center h-screen p-12">
-        <div className="w-full max-w-[340px] animate-fade-in-up">
-          {/* Header */}
-          <div className="mb-8">
-            <h2 
-              className="text-white mb-2"
-              style={{
-                fontFamily: 'Syne, sans-serif',
-                fontSize: '24px',
-                fontWeight: 700,
-              }}
-            >
-              Sign in to NexoraOS
-            </h2>
-            <p 
-              className="text-[#666666]"
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: '13px',
-              }}
-            >
-              Create AI-powered digital businesses instantly.
-            </p>
+          <div>
+            <label htmlFor="password" className="mb-2 block text-xs font-medium text-[#A6ADB8]">PASSWORD</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              className="h-11 w-full rounded-md border border-[#2A2D34] bg-[#111318] px-3.5 text-sm text-white outline-none transition placeholder:text-[#6B7280] focus:border-white"
+            />
           </div>
+          {error && <p role="alert" className="text-xs text-[#F0F2F5]">{error}</p>}
+          <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-bold text-black transition hover:bg-[#F0F2F5] disabled:cursor-not-allowed disabled:opacity-50">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Continue →"}
+          </button>
+        </form>
 
-          {/* Form */}
-          <form onSubmit={handleContinue} className="space-y-4">
-            {/* Email Input */}
-            <div>
-              <label 
-                htmlFor="email"
-                className="text-[#444444] text-[10px] font-semibold tracking-wider mb-2 block"
-              >
-                EMAIL
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className={`w-full h-11 bg-[#111111] border rounded-md px-3.5 text-white placeholder:text-[#333333] focus:outline-none transition-all ${
-                  error 
-                    ? 'border-[#FF4444]' 
-                    : 'border-[#1A1A1A] focus:border-[rgba(255,255,255,0.3)] focus:shadow-[0_0_0_3px_rgba(255,255,255,0.05)]'
-                }`}
-                style={{
-                  fontFamily: 'DM Sans, sans-serif',
-                  fontSize: '14px',
-                }}
-              />
-              {error && (
-                <p className="text-[#FF4444] text-xs mt-1.5">{error}</p>
-              )}
-            </div>
-
-            {/* Continue Button */}
-            <button
-              type="submit"
-              disabled={isLoading || isGoogleLoading}
-              className="w-full bg-white text-[#0A0A0A] font-bold rounded-md hover:bg-[#F0F0F0] transition-all disabled:opacity-50 disabled:cursor-not-allowed border-none flex items-center justify-center gap-2"
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: '14px',
-                height: '44px',
-                fontWeight: 700,
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                'Continue →'
-              )}
-            </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-[#1A1A1A]" />
-              <span className="text-[#333333] text-xs">OR</span>
-              <div className="flex-1 h-px bg-[#1A1A1A]" />
-            </div>
-
-            {/* Google Button */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading || isGoogleLoading}
-              className="w-full h-11 bg-[#111111] border border-[#1A1A1A] rounded-md flex items-center justify-center gap-3 text-[#999999] hover:border-[rgba(255,255,255,0.15)] hover:bg-[#161616] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <path d="M17.64 9.20443C17.64 8.56625 17.5827 7.95262 17.4764 7.36353H9V10.8449H13.8436C13.635 11.9699 13.0009 12.9231 12.0477 13.5613V15.8194H14.9564C16.6582 14.2526 17.64 11.9453 17.64 9.20443Z" fill="#4285F4"/>
-                    <path d="M8.99976 18C11.4298 18 13.467 17.1941 14.9561 15.8195L12.0475 13.5613C11.2416 14.1013 10.2107 14.4204 8.99976 14.4204C6.65567 14.4204 4.67158 12.8372 3.96385 10.71H0.957031V13.0418C2.43794 15.9831 5.48158 18 8.99976 18Z" fill="#34A853"/>
-                    <path d="M3.96409 10.7098C3.78409 10.1698 3.68182 9.59301 3.68182 8.99983C3.68182 8.40665 3.78409 7.82983 3.96409 7.28983V4.95801H0.957273C0.347727 6.17301 0 7.54755 0 8.99983C0 10.4521 0.347727 11.8266 0.957273 13.0416L3.96409 10.7098Z" fill="#FBBC05"/>
-                    <path d="M8.99976 3.57955C10.3211 3.57955 11.5075 4.03364 12.4402 4.92545L15.0216 2.34409C13.4629 0.891818 11.4257 0 8.99976 0C5.48158 0 2.43794 2.01682 0.957031 4.95818L3.96385 7.29C4.67158 5.16273 6.65567 3.57955 8.99976 3.57955Z" fill="#EA4335"/>
-                  </svg>
-                  Continue with Google
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Terms */}
-          <p 
-            className="text-[#333333] text-center mt-6"
-            style={{
-              fontFamily: 'DM Sans, sans-serif',
-              fontSize: '11px',
-              lineHeight: 1.5,
-            }}
-          >
-            By signing in, you agree to our{' '}
-            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="#" className="text-[#555555] underline hover:text-[#777777]">
-              Privacy Policy
-            </a>
-            .
-          </p>
+        <div className="my-7 flex items-center gap-3" aria-hidden="true">
+          <div className="h-px flex-1 bg-[#1E2028]" />
+          <span className="text-[11px] font-medium text-[#6B7280]">OR</span>
+          <div className="h-px flex-1 bg-[#1E2028]" />
         </div>
-      </div>
-    </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" onClick={handleGoogleSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Google" className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md border border-[#2A2D34] bg-transparent px-2 text-xs font-medium text-white transition hover:bg-[#111318] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
+            {isGoogleLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><GoogleMark /><span>Continue with Google</span></>}
+          </button>
+          <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md border border-[#2A2D34] bg-transparent px-2 text-xs font-medium text-white transition hover:bg-[#111318] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
+            {isDiscordLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><DiscordMark /><span>Continue with Discord</span></>}
+          </button>
+        </div>
+
+        <p className="mt-7 text-center text-xs leading-5 text-[#6B7280]">
+          By signing in, you agree to our <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Terms of Service</a> and <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Privacy Policy</a>
+        </p>
+      </section>
+    </main>
   );
 };
 
