@@ -69,17 +69,17 @@ const ParticleField = () => {
 };
 
 const GoogleMark = () => (
-  <svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] fill-none">
-    <path d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.68-3.88 2.68-6.62Z" fill="#fff" />
-    <path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18Z" fill="#fff" />
-    <path d="M3.96 10.71A5.42 5.42 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33Z" fill="#fff" />
-    <path d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58Z" fill="#fff" />
+  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+    <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
+    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" />
   </svg>
 );
 
 const DiscordMark = () => (
-  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px] fill-[#5865F2]">
-    <path d="M19.54 5.14A16.5 16.5 0 0 0 15.47 4l-.5 1.03a15.2 15.2 0 0 0-5.94 0L8.53 4a16.5 16.5 0 0 0-4.07 1.14C1.88 8.97 1.18 12.71 1.53 16.4a16.6 16.6 0 0 0 5 2.57l1.21-1.64c-.66-.24-1.29-.55-1.88-.91l.46-.35a11.8 11.8 0 0 0 10.36 0l.46.35c-.59.36-1.22.67-1.88.91l1.21 1.64a16.6 16.6 0 0 0 5-2.57c.42-4.28-.72-7.98-1.93-11.26ZM8.46 14.28c-1.01 0-1.84-.93-1.84-2.08s.81-2.08 1.84-2.08 1.85.93 1.84 2.08c0 1.15-.81 2.08-1.84 2.08Zm7.08 0c-1.01 0-1.84-.93-1.84-2.08s.81-2.08 1.84-2.08 1.85.93 1.84 2.08c0 1.15-.81 2.08-1.84 2.08Z" />
+  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
   </svg>
 );
 
@@ -182,7 +182,7 @@ const NexoraOSSignIn = () => {
       <ParticleField />
       <section className="relative z-10 w-full max-w-[400px] rounded-xl border border-[#1E2028] bg-[#0D0F12] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-8" aria-labelledby="sign-in-heading">
         <div className="text-center">
-          <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11" />
+          <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11 brightness-0 invert" />
           <h1 id="sign-in-heading" className="mt-6 text-xl font-bold tracking-tight text-white">Sign in to NexoraOS</h1>
           <p className="mt-2 text-sm text-[#6B7280]">Create AI-powered digital businesses instantly.</p>
         </div>
@@ -224,11 +224,11 @@ const NexoraOSSignIn = () => {
           <div className="h-px flex-1 bg-[#1E2028]" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" onClick={handleGoogleSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Google" className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md border border-[#2A2D34] bg-transparent px-2 text-xs font-medium text-white transition hover:bg-[#111318] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
+        <div className="flex flex-col gap-3">
+          <button type="button" onClick={handleGoogleSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Google" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md border border-[#E0E0E0] bg-white px-4 text-sm font-medium text-black transition hover:bg-[#F0F0F0] disabled:cursor-not-allowed disabled:opacity-50">
             {isGoogleLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><GoogleMark /><span>Continue with Google</span></>}
           </button>
-          <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-md border border-[#2A2D34] bg-transparent px-2 text-xs font-medium text-white transition hover:bg-[#111318] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm">
+          <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md bg-[#5865F2] px-4 text-sm font-medium text-white transition hover:bg-[#4F5BDE] disabled:cursor-not-allowed disabled:opacity-50">
             {isDiscordLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><DiscordMark /><span>Continue with Discord</span></>}
           </button>
         </div>
