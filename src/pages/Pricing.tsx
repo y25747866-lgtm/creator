@@ -169,7 +169,7 @@ const Pricing = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#080A0C] text-[#F0F2F5] selection:bg-[#00E68E] selection:text-[#080A0C]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen overflow-x-hidden bg-[#080A0C] text-[#F0F2F5] selection:bg-white selection:text-[#080A0C]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       <header className="border-b border-white/[0.07] bg-[#080A0C]/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link to="/" className="flex items-center gap-2.5" aria-label="NexoraOS home">
@@ -210,12 +210,12 @@ const Pricing = () => {
           </div>
         )}
 
-        <section className="mx-auto mt-12 grid max-w-6xl items-stretch gap-4 lg:grid-cols-3" aria-label="Pricing plans">
+        <section className="mx-auto mt-12 grid max-w-6xl grid-cols-1 items-stretch gap-4 md:grid-cols-3" aria-label="Pricing plans">
           {PLANS.map((plan) => (
-            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[#111318] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-[#00E68E] shadow-[0_0_0_1px_rgba(0,230,142,0.2),0_20px_70px_rgba(0,230,142,0.08)]" : "border-white/[0.08]"}`}>
+            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[#111318] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-white shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_70px_rgba(0,0,0,0.24)]" : "border-white/[0.08]"}`}>
               {plan.badge && (
                 <div className="absolute -top-3 left-6">
-                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-[#00E68E] bg-[#111318] text-[#00E68E]" : "border-white/20 bg-[#1A1D24] text-[#A6ADB8]"}`}>{plan.badge}</span>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-white bg-[#111318] text-white" : "border-white/20 bg-[#1A1D24] text-[#A6ADB8]"}`}>{plan.badge}</span>
                 </div>
               )}
               <div className="border-b border-white/[0.08] pb-7">
@@ -224,18 +224,18 @@ const Pricing = () => {
                   <span className="text-5xl font-bold tracking-[-0.06em] text-[#F0F2F5]">{plan.price}</span>
                   <span className="text-sm text-[#6B7280]">/month</span>
                 </div>
-                <p className={`mt-5 text-sm font-semibold ${plan.popular ? "text-[#00E68E]" : "text-[#A6ADB8]"}`}>{plan.credits}</p>
+                <p className={`mt-5 text-sm font-semibold ${plan.popular ? "text-white" : "text-[#A6ADB8]"}`}>{plan.credits}</p>
                 <p className="mt-3 min-h-12 text-sm leading-6 text-[#6B7280]">{plan.description}</p>
               </div>
               <ul className="flex-1 space-y-4 py-7">
                 {plan.features.map((feature) => (
                   <li key={feature.text} className="flex items-start gap-3 text-sm leading-5">
-                    {feature.included ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00E68E]" aria-hidden="true" /> : <X className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden="true" />}
+                    {feature.included ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-white" aria-hidden="true" /> : <X className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden="true" />}
                     <span className={feature.included ? "text-[#D6DAE0]" : "text-[#6B7280]"}>{feature.text}</span>
                   </li>
                 ))}
               </ul>
-              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-[#00E68E] text-[#080A0C] hover:bg-[#2AF0A7]" : "border border-white/15 bg-[#1A1D24] text-[#F0F2F5] hover:bg-[#242832]"}`}>{plan.cta}</Button>
+              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-white text-black hover:bg-[#F0F2F5]" : "border border-white/15 bg-[#1A1D24] text-[#F0F2F5] hover:bg-[#242832]"}`}>{plan.cta}</Button>
             </Card>
           ))}
         </section>
@@ -252,7 +252,7 @@ const Pricing = () => {
               <thead>
                 <tr className="border-b border-white/[0.08] text-[#A6ADB8]">
                   <th className="px-5 py-4 font-medium">Feature</th>
-                  {PLANS.map((plan) => <th key={plan.id} className={`px-5 py-4 font-semibold ${plan.popular ? "text-[#00E68E]" : "text-[#F0F2F5]"}`}>{plan.name}</th>)}
+                  {PLANS.map((plan) => <th key={plan.id} className={`px-5 py-4 font-semibold ${plan.popular ? "text-white" : "text-[#F0F2F5]"}`}>{plan.name}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -260,7 +260,7 @@ const Pricing = () => {
                   <tr key={row.feature} className="border-b border-white/[0.06] last:border-0">
                     <th scope="row" className="px-5 py-4 font-medium text-[#A6ADB8]">{row.feature}</th>
                     {row.values.map((value, index) => (
-                      <td key={`${row.feature}-${index}`} className="px-5 py-4 text-[#D6DAE0]">{typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-[#00E68E]" aria-label="Included" /> : <X className="h-4 w-4 text-[#6B7280]" aria-label="Not included" />) : value}</td>
+                      <td key={`${row.feature}-${index}`} className="px-5 py-4 text-[#D6DAE0]">{typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-white" aria-label="Included" /> : <X className="h-4 w-4 text-[#6B7280]" aria-label="Not included" />) : value}</td>
                     ))}
                   </tr>
                 ))}
