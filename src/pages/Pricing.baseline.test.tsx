@@ -25,7 +25,7 @@ describe("Pricing page", () => {
     expect(screen.getByRole("heading", { name: "Hybrid AI OS" })).toBeInTheDocument();
     expect(screen.getByText("1,000 credits / month")).toBeInTheDocument();
     expect(screen.getByText("4,000 credits / month")).toBeInTheDocument();
-    expect(screen.getByText("10,000 credits / month")).toBeInTheDocument();
+    expect(screen.getByText("Unlimited (no credit limit)")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Creating" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Go Pro" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Hybrid AI OS" })).toBeInTheDocument();

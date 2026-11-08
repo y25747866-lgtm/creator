@@ -71,7 +71,7 @@ const PLANS: PlanDef[] = [
     name: "Hybrid AI OS",
     price: "$249",
     description: "The full AI operating system for teams running ambitious workflows.",
-    credits: "10,000 credits / month",
+    credits: "Unlimited (no credit limit)",
     features: [
       { text: "Everything in Pro", included: true },
       { text: "Full NEXUS, SCOUT, FLUX, FORGE, APEX agent system", included: true },
@@ -88,7 +88,7 @@ const PLANS: PlanDef[] = [
 ];
 
 const COMPARISON_ROWS = [
-  { feature: "Monthly credits", values: ["1,000", "4,000", "10,000"] },
+  { feature: "Monthly credits", values: ["1,000", "4,000", "Unlimited"] },
   { feature: "Product Generator", values: [true, true, true] },
   { feature: "Marketing Studio", values: [true, true, true] },
   { feature: "Sales Page Builder", values: [true, true, true] },
