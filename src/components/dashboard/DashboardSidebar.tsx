@@ -6,13 +6,16 @@ import {
   Plus,
   Package,
   FolderOpen,
+  BarChart3,
   Plug,
   Puzzle,
   ArrowUpRight,
+  LockKeyhole,
   LogOut,
   Settings,
   User as UserIcon,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,7 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { getLocalCreatorConversations, listCreatorConversations, type CreatorConversationSummary } from "@/lib/chatPersistence";
 import nexoraLogo from "@/assets/nexora-logo.webp";
-import { useSidebarState } from "./DashboardLayout";
+import { useDashboardAccess, useSidebarState } from "./DashboardLayout";
 import CreditBalance from "./CreditBalance";
 
 const DashboardSidebar = () => {
@@ -28,6 +31,7 @@ const DashboardSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const access = useDashboardAccess();
   const { toast } = useToast();
   const [historyItems, setHistoryItems] = useState<CreatorConversationSummary[]>([]);
 
@@ -56,6 +60,26 @@ const DashboardSidebar = () => {
     };
   }, [user?.id]);
   const showLabels = !collapsed || mobileOpen;
+  const workspaceLocked = !access.loading && !access.hasPaidSubscription;
+
+  const renderWorkspaceLink = (path: string, label: string, Icon: LucideIcon, isCurrent: boolean, allowed = true) => {
+    const locked = !access.loading && !allowed;
+    const active = isCurrent && !locked;
+    return (
+      <Link
+        to={locked ? "/pricing" : path}
+        onClick={closeMobile}
+        title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
+        aria-current={active ? "page" : undefined}
+        aria-disabled={locked || undefined}
+        className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "bg-[#111318] text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
+      >
+        <Icon size={17} className="shrink-0" aria-hidden="true" />
+        {showLabels && <span className="min-w-0 flex-1 truncate">{label}</span>}
+        {showLabels && locked && <LockKeyhole size={13} className="shrink-0 text-white/45" aria-hidden="true" />}
+      </Link>
+    );
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,27 +110,19 @@ const DashboardSidebar = () => {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
-          <button type="button" onClick={() => { window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 w-full items-center gap-3 rounded-xl border border-white/15 px-3 text-sm text-white transition hover:bg-[#111318] ${showLabels ? "" : "justify-center"}`}>
+          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 w-full items-center gap-3 rounded-xl border border-white/15 px-3 text-sm transition-colors hover:bg-[#111318] ${workspaceLocked ? "text-white/40" : "text-white"} ${showLabels ? "" : "justify-center"}`}>
             <Plus size={17} className="shrink-0" aria-hidden="true" />
-            {showLabels && <><span className="flex-1 text-left">New chat</span><span className="text-[10px] text-white/35">Ctrl K</span></>}
+            {showLabels && <><span className="flex-1 text-left">New chat</span>{workspaceLocked ? <LockKeyhole size={13} className="text-white/45" aria-hidden="true" /> : <span className="text-[10px] text-white/35">Ctrl K</span>}</>}
           </button>
           <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Workspace</p>
-          <Link to="/dashboard" onClick={closeMobile} title={showLabels ? undefined : "Product Studio"} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/dashboard" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
-            <Package size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Product Studio</span>}
-          </Link>
-          <Link to="/dashboard/products" onClick={closeMobile} title={showLabels ? undefined : "Projects"} aria-current={location.pathname === "/dashboard/products" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/dashboard/products" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
-            <FolderOpen size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Projects</span>}
-          </Link>
-          <Link to="/dashboard/downloads" onClick={closeMobile} title={showLabels ? undefined : "Downloads"} aria-current={location.pathname === "/dashboard/downloads" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/dashboard/downloads" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
-            <Download size={17} className="shrink-0" aria-hidden="true" />{showLabels && <span>Downloads</span>}
-          </Link>
+          {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
           <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Plug size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <span>Plugins</span>}
-          </Link>
-          <Link to="/dashboard/skills" onClick={closeMobile} title={showLabels ? undefined : "Skills"} aria-current={location.pathname.startsWith("/dashboard/skills") ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-white/[0.06] ${location.pathname.startsWith("/dashboard/skills") ? "bg-white/[0.08] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
-            <Puzzle size={17} className="shrink-0" aria-hidden="true" />
-            {showLabels && <span>Skills</span>}
           </Link>
           <div className={`my-4 border-t border-white/10 pt-4 ${showLabels ? "" : "sr-only"}`}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">History</p>

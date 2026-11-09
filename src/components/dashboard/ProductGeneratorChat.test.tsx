@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import DashboardLayout from "./DashboardLayout";
 import ProductGeneratorChat from "./ProductGeneratorChat";
 
@@ -25,6 +26,8 @@ const mocks = vi.hoisted(() => ({
   authLoading: false,
   sendMagicLink: vi.fn(),
   signInWithGoogle: vi.fn(),
+  supabaseFrom: vi.fn(),
+  subscriptionRow: null as null | { plan: string; plan_type: string; status: string; end_date: string | null; expires_at: string | null },
 }));
 
 vi.mock("@/components/dashboard/DashboardSidebar", () => ({ default: () => null }));
@@ -52,7 +55,7 @@ vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }
 vi.mock("@/hooks/useEbookStore", () => ({
   useEbookStore: (selector: (state: { addEbook: typeof mocks.addEbook }) => unknown) => selector({ addEbook: mocks.addEbook }),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: mocks.invoke } } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.supabaseFrom, functions: { invoke: mocks.invoke } } }));
 vi.mock("@/lib/ebookRepository", () => ({
   saveGeneratedEbook: mocks.saveGeneratedEbook,
   uploadCreatorMedia: mocks.uploadCreatorMedia,
@@ -70,13 +73,19 @@ vi.mock("@/lib/chatPersistence", () => ({
 vi.mock("@/lib/pdfGenerator", () => ({ generatePDF: mocks.generatePDF }));
 vi.mock("@/lib/auth/login", () => ({ signInWithGoogle: mocks.signInWithGoogle }));
 
-const renderWorkspace = () => render(
-  <MemoryRouter>
-    <DashboardLayout>
-      <ProductGeneratorChat />
-    </DashboardLayout>
-  </MemoryRouter>,
-);
+const renderWorkspace = () => {
+  return render(
+    <QueryClientProvider client={testQueryClient}>
+      <MemoryRouter>
+        <DashboardLayout>
+          <ProductGeneratorChat />
+        </DashboardLayout>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+};
+
+let testQueryClient: QueryClient;
 
 const setTestViewportWidth = (width: number) => {
   Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
@@ -84,9 +93,27 @@ const setTestViewportWidth = (width: number) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   localStorage.clear();
   mocks.authUser = { id: "test-user", email: "creator@example.com" };
   mocks.authLoading = false;
+  mocks.subscriptionRow = { plan: "pro", plan_type: "pro", status: "active", end_date: null, expires_at: null };
+  mocks.supabaseFrom.mockImplementation(() => {
+    type SubscriptionQuery = {
+      select: () => SubscriptionQuery;
+      eq: () => SubscriptionQuery;
+      order: () => SubscriptionQuery;
+      limit: () => SubscriptionQuery;
+      maybeSingle: () => Promise<{ data: typeof mocks.subscriptionRow; error: null }>;
+    };
+    const builder = {} as SubscriptionQuery;
+    builder.select = () => builder;
+    builder.eq = () => builder;
+    builder.order = () => builder;
+    builder.limit = () => builder;
+    builder.maybeSingle = () => Promise.resolve({ data: mocks.subscriptionRow, error: null });
+    return builder;
+  });
   setTestViewportWidth(1024);
   mocks.sendMagicLink.mockResolvedValue({ error: null });
   mocks.signInWithGoogle.mockResolvedValue(undefined);
@@ -112,7 +139,7 @@ beforeEach(() => {
 });
 
 describe("Chat-first product workspace", () => {
-  it("starts with an uncluttered prompt and keeps non-ebook types visibly disabled", () => {
+  it("starts with an uncluttered prompt and hides product types that are not enabled", () => {
     const { container } = renderWorkspace();
 
     expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "#080A0C", color: "#F0F2F5" });
@@ -127,8 +154,8 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-strength", "0.45");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-active", "true");
     expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Course" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Workbook" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Course" })).toHaveClass("hidden");
+    expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
   });
 
   it("stops the monochrome beam on first focus and does not restart after blur", () => {
@@ -181,9 +208,12 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
     const sheet = screen.getByRole("dialog", { name: "Add to chat" });
-    for (const action of ["Camera", "Picture", "File", "Library", "Creations", "Recent tasks", "Skills"]) {
+    for (const action of ["Camera", "Picture", "File", "Downloads", "Skills"]) {
       expect(within(sheet).getByText(action)).toBeInTheDocument();
     }
+    expect(within(sheet).queryByText("Library")).not.toBeInTheDocument();
+    expect(within(sheet).getByText("Creations").closest("a")).toHaveClass("hidden");
+    expect(within(sheet).getByText("Recent tasks").closest("button")).toHaveClass("hidden");
     expect(sheet).toHaveTextContent("five files per conversation");
     expect(sheet).toHaveTextContent("50 MB each");
   });
@@ -239,13 +269,21 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
     const hybridModeButton = screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" });
     expect(hybridModeButton).toBeInTheDocument();
-    expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[#7928CA]");
+    expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[#B7BEC8]");
 
     fireEvent.click(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" }));
     expect(await screen.findByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();
     fireEvent.mouseDown(document.body);
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
+  });
+
+  it("hides the Hybrid Agentic System option when the account has no agent access", async () => {
+    mocks.subscriptionRow = { plan: "free", plan_type: "free", status: "active", end_date: null, expires_at: null };
+    renderWorkspace();
+    fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
+    const menu = await screen.findByRole("menu", { name: "NexoraOS system selector" });
+    expect(within(menu).queryByRole("menuitemradio", { name: /Hybrid Agentic System/ })).not.toBeInTheDocument();
   });
 
   it("opens an app details modal when a connector row is clicked", () => {
@@ -315,11 +353,13 @@ describe("Chat-first product workspace", () => {
 
     mocks.authUser = { id: "new-user", email: "new-creator@example.com" };
     workspace.rerender(
-      <MemoryRouter>
-        <DashboardLayout>
-          <ProductGeneratorChat />
-        </DashboardLayout>
-      </MemoryRouter>,
+      <QueryClientProvider client={testQueryClient}>
+        <MemoryRouter>
+          <DashboardLayout>
+            <ProductGeneratorChat />
+          </DashboardLayout>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     expect(await screen.findByText("Six formats · choose one to begin")).toBeInTheDocument();
@@ -411,11 +451,13 @@ describe("Chat-first product workspace", () => {
 
     mocks.authUser = null;
     workspace.rerender(
-      <MemoryRouter>
-        <DashboardLayout>
-          <ProductGeneratorChat />
-        </DashboardLayout>
-      </MemoryRouter>,
+      <QueryClientProvider client={testQueryClient}>
+        <MemoryRouter>
+          <DashboardLayout>
+            <ProductGeneratorChat />
+          </DashboardLayout>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Download PDF" }));
 

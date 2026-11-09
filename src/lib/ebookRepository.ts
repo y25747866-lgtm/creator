@@ -66,28 +66,61 @@ export async function saveGeneratedEbook(ebook: Omit<Ebook, "id" | "dbProductId"
   return { ...ebook, id: product.id, dbProductId: product.id, userId };
 }
 
+const READ_PAGE_SIZE = 100;
+
 export async function listGeneratedEbooks(userId: string): Promise<Ebook[]> {
-  const { data: products, error: productError } = await supabase
-    .from("ebook_products")
-    .select("id,user_id,title,topic,description,length,status,created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const products: Array<{
+    id: string;
+    user_id: string;
+    title: string;
+    topic: string;
+    description: string | null;
+    length: string;
+    created_at: string;
+  }> = [];
 
-  if (productError) throw new Error(productError.message || "Could not load Projects.");
-  if (!products?.length) return [];
+  for (let offset = 0; ; offset += READ_PAGE_SIZE) {
+    const { data: page, error } = await supabase
+      .from("ebook_products")
+      .select("id,user_id,title,topic,description,length,created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + READ_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message || "Could not load Projects.");
+    products.push(...(page ?? []));
+    if ((page ?? []).length < READ_PAGE_SIZE) break;
+  }
 
-  const ids = products.map((product) => product.id);
-  const { data: versions, error: versionError } = await supabase
-    .from("product_versions")
-    .select("id,product_id,version_number,content,cover_image_url,pages,created_at")
-    .in("product_id", ids)
-    .order("version_number", { ascending: false })
-    .order("created_at", { ascending: false });
+  if (!products.length) return [];
 
-  if (versionError) throw new Error(versionError.message || "Could not load saved product content.");
-  const newestVersion = new Map<string, NonNullable<typeof versions>[number]>();
-  for (const version of versions ?? []) {
+  const versions: Array<{
+    id: string;
+    product_id: string;
+    version_number: number;
+    content: string;
+    cover_image_url: string | null;
+    pages: number;
+    created_at: string;
+  }> = [];
+  for (let index = 0; index < products.length; index += READ_PAGE_SIZE) {
+    const productIds = products.slice(index, index + READ_PAGE_SIZE).map((product) => product.id);
+    for (let offset = 0; ; offset += READ_PAGE_SIZE) {
+      const { data: page, error } = await supabase
+        .from("product_versions")
+        .select("id,product_id,version_number,content,cover_image_url,pages,created_at")
+        .in("product_id", productIds)
+        .order("product_id", { ascending: true })
+        .order("version_number", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + READ_PAGE_SIZE - 1);
+      if (error) throw new Error(error.message || "Could not load saved product content.");
+      versions.push(...(page ?? []));
+      if ((page ?? []).length < READ_PAGE_SIZE) break;
+    }
+  }
+
+  const newestVersion = new Map<string, (typeof versions)[number]>();
+  for (const version of versions) {
     if (!newestVersion.has(version.product_id)) newestVersion.set(version.product_id, version);
   }
 
@@ -108,6 +141,20 @@ export async function listGeneratedEbooks(userId: string): Promise<Ebook[]> {
       createdAt: product.created_at,
     }];
   });
+}
+
+export async function renameGeneratedEbook(id: string, userId: string, title: string): Promise<void> {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) throw new Error("Enter a product name.");
+  const { data, error } = await supabase
+    .from("ebook_products")
+    .update({ title: trimmedTitle })
+    .eq("id", id)
+    .eq("user_id", userId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message || "Could not rename this product.");
+  if (!data) throw new Error("This product could not be found in your account.");
 }
 
 export async function deleteGeneratedEbook(id: string, userId: string): Promise<void> {

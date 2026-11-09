@@ -28,7 +28,7 @@ import { deleteCreatorMedia, refreshMediaLinks, saveGeneratedEbook, uploadCreato
 import { generatePDF } from "@/lib/pdfGenerator";
 import { recordMetric } from "@/lib/productTracking";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useSidebarState } from "./DashboardLayout";
+import { useDashboardAccess, useSidebarState } from "./DashboardLayout";
 import ChatAuthPrompt from "@/components/auth/ChatAuthPrompt";
 import { clearPendingChatTopic, readPendingChatTopic, savePendingChatTopic } from "@/lib/auth/pendingChat";
 import { submitHybridTask, waitForHybridTask } from "@/lib/hybridAgent";
@@ -181,6 +181,7 @@ const ProductGeneratorChat = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
+  const { agentAccess } = useDashboardAccess();
   const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 768;
   const sidebarExpanded = isDesktopViewport ? !collapsed : mobileOpen;
   const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
@@ -188,6 +189,9 @@ const ProductGeneratorChat = () => {
   const addEbook = useEbookStore((state) => state.addEbook);
   const [activeProduct, setActiveProduct] = useState<string>("Ebook");
   const [activeSystem, setActiveSystem] = useState<"product-generator" | "hybrid-agentic">("product-generator");
+  useEffect(() => {
+    if (!agentAccess && activeSystem === "hybrid-agentic") setActiveSystem("product-generator");
+  }, [activeSystem, agentAccess]);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -942,7 +946,7 @@ const ProductGeneratorChat = () => {
                     title={activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}
                     className="flex h-9 max-w-[180px] min-w-0 items-center gap-1 rounded-lg px-1.5 text-[11px] font-medium text-[#8B929E] transition-colors hover:bg-[#1A1D24] hover:text-[#F0F2F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[205px] sm:gap-2 sm:px-2.5 sm:text-xs"
                   >
-                    <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#00E68E]" : "text-[#7928CA]"}`} aria-hidden="true" />
+                    <Sparkles size={14} className={`shrink-0 ${activeSystem === "product-generator" ? "text-[#F0F2F5]" : "text-[#B7BEC8]"}`} aria-hidden="true" />
                     <span className="truncate">{activeSystem === "product-generator" ? "AI Product Generator" : "Hybrid Agentic System"}</span>
                     <ChevronDown size={13} className="shrink-0" aria-hidden="true" />
                   </button>
@@ -961,13 +965,15 @@ const ProductGeneratorChat = () => {
                       }}
                     >
                       <button type="button" role="menuitemradio" aria-checked={activeSystem === "product-generator"} onClick={() => { setActiveSystem("product-generator"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#F0F2F5] hover:bg-[#1A1D24]">
-                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "product-generator" ? "bg-[#00E68E]" : "bg-[#8B929E]"}`} />
+                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "product-generator" ? "bg-[#F0F2F5]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Creates ebooks with the verified product workflow.</span></span>
                       </button>
-                      <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#8B929E] hover:bg-[#1A1D24]">
-                        <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "hybrid-agentic" ? "bg-[#7928CA]" : "bg-[#8B929E]"}`} />
-                        <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>
-                      </button>
+                      {agentAccess && (
+                        <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#8B929E] hover:bg-[#1A1D24]">
+                          <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "hybrid-agentic" ? "bg-[#F0F2F5]" : "bg-[#8B929E]"}`} />
+                          <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>
+                        </button>
+                      )}
                     </div>,
                     document.body,
                   )}
@@ -1012,21 +1018,21 @@ const ProductGeneratorChat = () => {
               <div className="space-y-1">
                 <Link to="/dashboard/downloads" onClick={() => setAttachmentMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-[#B7BEC8] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
                   <BookOpen size={17} className="text-[#949494]" aria-hidden="true" />
-                  <span className="flex-1">Library</span>
-                  <span className="text-[10px] text-[#6B7280]">Downloads</span>
+                  <span className="flex-1">Downloads</span>
+                  <span className="text-[10px] text-[#6B7280]">Saved files</span>
                 </Link>
-                <Link to="/dashboard/products" onClick={() => setAttachmentMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-[#B7BEC8] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
+                <Link to="/dashboard/products" onClick={() => setAttachmentMenuOpen(false)} className="hidden">
                   <FolderOpen size={17} className="text-[#949494]" aria-hidden="true" />
                   <span className="flex-1">Creations</span>
                   <span className="text-[10px] text-[#6B7280]">Projects</span>
                 </Link>
-                <button type="button" onClick={() => { setShowRecentTasks((open) => !open); setShowSkillsStatus(false); }} aria-expanded={showRecentTasks} className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[#B7BEC8] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
+                <button type="button" onClick={() => { setShowRecentTasks((open) => !open); setShowSkillsStatus(false); }} aria-expanded={showRecentTasks} className="hidden">
                   <Clock size={17} className="text-[#949494]" aria-hidden="true" />
                   <span className="flex-1">Recent tasks</span>
                   <span className="text-[10px] text-[#6B7280]">{recentTasks.length ? recentTasks.length : "History"}</span>
                 </button>
                 {showRecentTasks && (
-                  <div className="ml-9 space-y-1 border-l border-white/10 py-1 pl-2">
+                  <div className="hidden">
                     {recentTasks.length ? recentTasks.map((task) => (
                       <button key={task.id} type="button" title={task.title} onClick={() => { setAttachmentMenuOpen(false); navigate(`/dashboard?conversation=${encodeURIComponent(task.id)}`); }} className="block min-h-9 w-full truncate rounded-md px-2 text-left text-xs text-[#A8A8A8] transition hover:bg-white/[0.05] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">{task.title}</button>
                     )) : <p className="px-2 py-2 text-xs leading-5 text-[#6B7280]">{user ? "No saved chats yet." : "Sign in to see recent chats."}</p>}
@@ -1074,7 +1080,7 @@ const ProductGeneratorChat = () => {
                   setCapabilityMenuOpen(false);
                   composerRef.current?.focus();
                 }}
-                className={`min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeProduct === product.label ? "border-[#8C96A3] bg-[#111318] text-white" : product.enabled ? "border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white" : "cursor-not-allowed border-white/10 bg-transparent text-white/25"}`}
+                className={!product.enabled ? "hidden" : `min-h-8 rounded-full border px-3 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeProduct === product.label ? "border-[#8C96A3] bg-[#111318] text-white" : "border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white"}`}
               >
                 {product.label}
               </button>

@@ -10,9 +10,11 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   listCreatorConversations: vi.fn(),
   supabaseFrom: vi.fn(),
+  access: { loading: false, hasPaidSubscription: true, analyticsAccess: true, agentAccess: true, renewalRequired: false, isExpired: false, error: false },
 }));
 
 vi.mock("./DashboardLayout", () => ({
+  useDashboardAccess: () => mocks.access,
   useSidebarState: () => ({
     collapsed: false,
     setCollapsed: mocks.setCollapsed,
@@ -65,5 +67,21 @@ describe("DashboardSidebar Plugins navigation", () => {
 
     fireEvent.click(link);
     expect(mocks.setMobileOpen).toHaveBeenCalledWith(false);
+  });
+
+  it("routes locked workspace pages and Analytics to pricing when there is no paid plan", () => {
+    mocks.access = { loading: false, hasPaidSubscription: false, analyticsAccess: false, agentAccess: false, renewalRequired: true, isExpired: true, error: false };
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <DashboardSidebar />
+      </MemoryRouter>,
+    );
+
+    for (const label of ["Product Studio", "Downloads", "Projects", "Skills", "Analytics"]) {
+      const link = screen.getByRole("link", { name: new RegExp(label) });
+      expect(link).toHaveAttribute("href", "/pricing");
+      expect(link).toHaveAttribute("aria-disabled", "true");
+      expect(link).toHaveAttribute("title", "Upgrade to Pro");
+    }
   });
 });
