@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   recordUsage: vi.fn(),
   addEbook: vi.fn(),
   saveGeneratedEbook: vi.fn(),
+  submitHybridTask: vi.fn(),
+  waitForHybridTask: vi.fn(),
   uploadCreatorMedia: vi.fn(),
   deleteCreatorMedia: vi.fn(),
   refreshMediaLinks: vi.fn(),
@@ -72,6 +74,7 @@ vi.mock("@/lib/chatPersistence", () => ({
   saveCreatorConversation: mocks.saveCreatorConversation,
 }));
 vi.mock("@/lib/pdfGenerator", () => ({ generatePDF: mocks.generatePDF }));
+vi.mock("@/lib/hybridAgent", () => ({ submitHybridTask: mocks.submitHybridTask, waitForHybridTask: mocks.waitForHybridTask }));
 vi.mock("@/lib/auth/login", () => ({ signInWithGoogle: mocks.signInWithGoogle }));
 
 const renderWorkspace = () => {
@@ -286,6 +289,27 @@ describe("Chat-first product workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
     const menu = await screen.findByRole("menu", { name: "NexoraOS system selector" });
     expect(within(menu).queryByRole("menuitemradio", { name: /Hybrid Agentic System/ })).not.toBeInTheDocument();
+  });
+
+  it("shows Hybrid mode to guests but requires sign-in before dispatching an agent task", async () => {
+    setTestViewportWidth(375);
+    mocks.authUser = null;
+    renderWorkspace();
+
+    fireEvent.click(screen.getByRole("button", { name: "Product mode: AI Product Generator" }));
+    const menu = await screen.findByRole("menu", { name: "NexoraOS system selector" });
+    const hybridOption = within(menu).getByRole("menuitemradio", { name: /Hybrid Agentic System/ });
+    expect(hybridOption).toHaveTextContent("Preview the system; sign in to check access and run agents.");
+    fireEvent.click(hybridOption);
+
+    expect(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Describe the ebook topic" }), { target: { value: "Coordinate agents to plan a launch" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send topic" }));
+
+    expect(await screen.findByRole("dialog", { name: "Sign in to continue" })).toBeInTheDocument();
+    expect(mocks.submitHybridTask).not.toHaveBeenCalled();
+    expect(mocks.waitForHybridTask).not.toHaveBeenCalled();
+    expect(mocks.invoke).not.toHaveBeenCalled();
   });
 
   it("opens an app details modal when a connector row is clicked", () => {
