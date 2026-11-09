@@ -77,11 +77,14 @@ describe("DashboardSidebar Plugins navigation", () => {
       </MemoryRouter>,
     );
 
-    for (const label of ["Product Studio", "Downloads", "Projects", "Skills", "Analytics"]) {
+    for (const label of ["Product Studio", "Analytics"]) {
       const link = screen.getByRole("link", { name: new RegExp(label) });
       expect(link).toHaveAttribute("href", "/pricing");
       expect(link).toHaveAttribute("aria-disabled", "true");
       expect(link).toHaveAttribute("title", "Upgrade to Pro");
     }
+    expect(screen.getByRole("link", { name: "Downloads" })).not.toHaveAttribute("aria-disabled");
+    expect(screen.getByText("Projects").closest("a")).toHaveClass("hidden");
+    expect(screen.getByText("Skills").closest("a")).toHaveClass("hidden");
   });
 });
