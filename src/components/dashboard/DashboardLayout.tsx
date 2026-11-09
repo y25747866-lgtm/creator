@@ -98,7 +98,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     hasPaidSubscription,
     analyticsAccess: Boolean(subscriptionQuery.data?.analyticsAccess) && hasPaidSubscription,
     agentAccess: Boolean(subscriptionQuery.data?.agentAccess) && hasPaidSubscription,
-    renewalRequired: !accessLoading && !subscriptionQuery.isError && !hasPaidSubscription,
+    renewalRequired: Boolean(user?.id) && !accessLoading && !subscriptionQuery.isError && !hasPaidSubscription,
     isExpired,
     error: Boolean(subscriptionQuery.isError),
   };

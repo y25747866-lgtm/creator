@@ -33,14 +33,13 @@ beforeEach(() => {
 });
 
 describe("dashboard authentication routing", () => {
-  it("redirects an unauthenticated dashboard visitor to sign-in with the original destination", async () => {
+  it("lets an unauthenticated visitor browse the agent dashboard without opening sign-in", async () => {
     window.history.replaceState({}, "", "/dashboard");
     render(<App />);
 
-    expect(await screen.findByText("Sign-in route")).toBeInTheDocument();
-    expect(window.location.pathname).toBe("/auth/signin");
-    expect(window.location.search).toBe("?redirect=%2Fdashboard");
-    expect(screen.queryByText("Public chat workspace route")).not.toBeInTheDocument();
+    expect(await screen.findByText("Public chat workspace route")).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(screen.queryByText("Sign-in route")).not.toBeInTheDocument();
   });
 
   it("continues to protect private Downloads behind sign-in", async () => {

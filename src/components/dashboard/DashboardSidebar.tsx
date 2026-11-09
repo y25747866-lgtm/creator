@@ -60,10 +60,10 @@ const DashboardSidebar = () => {
     };
   }, [user?.id]);
   const showLabels = !collapsed || mobileOpen;
-  const workspaceLocked = !access.loading && !access.hasPaidSubscription;
+  const workspaceLocked = Boolean(user?.id) && !access.loading && !access.hasPaidSubscription;
 
   const renderWorkspaceLink = (path: string, label: string, Icon: LucideIcon, isCurrent: boolean, allowed = true, hidden = false) => {
-    const locked = !access.loading && !allowed;
+    const locked = Boolean(user?.id) && !access.loading && !allowed;
     const active = isCurrent && !locked;
     return (
       <Link
@@ -133,29 +133,42 @@ const DashboardSidebar = () => {
         </nav>
 
         <div className="shrink-0 border-t border-[#111318] p-3">
-          <CreditBalance showLabels={showLabels} />
-          <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
-            <Avatar className="h-8 w-8 shrink-0 border border-[#303640]">
-              <AvatarImage src={user?.user_metadata?.avatar_url} alt="" />
-              <AvatarFallback className="bg-[#111318] text-xs text-[#B7BEC8]">
-                {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || <UserIcon size={15} />}
-              </AvatarFallback>
-            </Avatar>
-            {showLabels && (
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-[#DADADA]">{user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Account"}</p>
-                <p className="truncate text-[10px] text-[#6B7280]">{user?.email || "Workspace account"}</p>
+          {user?.id ? (
+            <>
+              <CreditBalance showLabels={showLabels} />
+              <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
+                <Avatar className="h-8 w-8 shrink-0 border border-[#303640]">
+                  <AvatarImage src={user.user_metadata?.avatar_url} alt="" />
+                  <AvatarFallback className="bg-[#111318] text-xs text-[#B7BEC8]">
+                    {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || <UserIcon size={15} />}
+                  </AvatarFallback>
+                </Avatar>
+                {showLabels && (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-[#DADADA]">{user.user_metadata?.full_name || user.email?.split("@")[0] || "Account"}</p>
+                    <p className="truncate text-[10px] text-[#6B7280]">{user.email || "Workspace account"}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className={`mt-2 flex items-center gap-2 ${showLabels ? "" : "flex-col"}`}>
-            <Link to="/dashboard/settings" title="Account settings" className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-xs text-white/55 transition hover:bg-[#111318] hover:text-white">
-              <Settings size={16} className="shrink-0" aria-hidden="true" />
-              {showLabels && <span className="truncate">Settings</span>}
-            </Link>
-            {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-white/20 px-2 text-[11px] text-white hover:bg-[#111318]">Upgrade <ArrowUpRight size={12}/></Link>}
-            <button type="button" onClick={() => void handleSignOut()} title="Sign out" aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-[#111318] hover:text-white"><LogOut size={16}/></button>
-          </div>
+              <div className={`mt-2 flex items-center gap-2 ${showLabels ? "" : "flex-col"}`}>
+                <Link to="/dashboard/settings" title="Account settings" className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-xs text-white/55 transition hover:bg-[#111318] hover:text-white">
+                  <Settings size={16} className="shrink-0" aria-hidden="true" />
+                  {showLabels && <span className="truncate">Settings</span>}
+                </Link>
+                {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-white/20 px-2 text-[11px] text-white hover:bg-[#111318]">Upgrade <ArrowUpRight size={12}/></Link>}
+                <button type="button" onClick={() => void handleSignOut()} title="Sign out" aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-[#111318] hover:text-white"><LogOut size={16}/></button>
+              </div>
+            </>
+          ) : (
+            <div className={`rounded-xl px-2.5 py-2 ${showLabels ? "" : "flex justify-center"}`} title={showLabels ? undefined : "Guest preview"}>
+              {showLabels ? (
+                <>
+                  <p className="text-xs font-medium text-[#DADADA]">Guest preview</p>
+                  <p className="mt-1 text-[10px] leading-4 text-[#6B7280]">Read-only workspace preview</p>
+                </>
+              ) : <UserIcon size={16} aria-hidden="true" />}
+            </div>
+          )}
         </div>
       </aside>
 

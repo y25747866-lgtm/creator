@@ -326,6 +326,7 @@ describe("Chat-first product workspace", () => {
 
     const topic = "A practical guide to starting a home garden";
     expect(screen.getByRole("textbox", { name: "Describe the ebook topic" })).toBeVisible();
+    expect(screen.queryByRole("dialog", { name: "Sign in to continue" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.change(screen.getByRole("textbox", { name: "Describe the ebook topic" }), { target: { value: topic } });
     fireEvent.click(screen.getByRole("button", { name: "Send topic" }));
