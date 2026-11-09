@@ -34,9 +34,16 @@ import { AuthProvider } from "./hooks/useAuth";
 const queryClient = new QueryClient();
 
 const PageLoader = () => (
-  <div className="flex min-h-[24vh] items-center justify-center bg-[#0A0A0A] text-white" role="status" aria-live="polite">
+  <div className="min-h-screen bg-[#080A0C] p-6" role="status" aria-live="polite">
     <span className="sr-only">Loading page</span>
-    <span className="h-4 w-4 animate-spin rounded-full border border-white/20 border-t-white" aria-hidden="true" />
+    <div className="mx-auto max-w-6xl animate-pulse space-y-4">
+      <div className="h-8 w-48 rounded-lg bg-white/[0.06]" />
+      <div className="h-24 rounded-2xl bg-white/[0.04]" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="h-40 rounded-2xl bg-white/[0.04]" />
+        <div className="h-40 rounded-2xl bg-white/[0.04]" />
+      </div>
+    </div>
   </div>
 );
 
