@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import App from "./App";
 
 const mocks = vi.hoisted(() => ({
@@ -12,6 +13,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
+  AuthProvider: ({ children }: { children: ReactNode }) => children,
   useAuth: () => ({ user: mocks.user, loading: mocks.loading }),
 }));
 vi.mock("./pages/Landing", () => ({ default: () => <main>Landing route</main> }));
@@ -31,13 +33,14 @@ beforeEach(() => {
 });
 
 describe("dashboard authentication routing", () => {
-  it("renders the chat workspace at /dashboard for an unauthenticated visitor", async () => {
+  it("redirects an unauthenticated dashboard visitor to sign-in with the original destination", async () => {
     window.history.replaceState({}, "", "/dashboard");
     render(<App />);
 
-    expect(await screen.findByText("Public chat workspace route")).toBeInTheDocument();
-    expect(window.location.pathname).toBe("/dashboard");
-    expect(screen.queryByText("Sign-in route")).not.toBeInTheDocument();
+    expect(await screen.findByText("Sign-in route")).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/auth/signin");
+    expect(window.location.search).toBe("?redirect=%2Fdashboard");
+    expect(screen.queryByText("Public chat workspace route")).not.toBeInTheDocument();
   });
 
   it("continues to protect private Downloads behind sign-in", async () => {
@@ -45,7 +48,7 @@ describe("dashboard authentication routing", () => {
     render(<App />);
 
     expect(await screen.findByText("Sign-in route")).toBeInTheDocument();
-    expect(window.location.pathname).toBe("/auth");
+    expect(window.location.pathname).toBe("/auth/signin");
     expect(screen.queryByText("Private downloads route")).not.toBeInTheDocument();
   });
 });

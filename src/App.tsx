@@ -29,6 +29,7 @@ const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 const SkillsPage = lazy(() => import("./pages/dashboard/SkillsPage"));
 
 import ViewableRoute from "./components/ViewableRoute";
+import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
@@ -46,20 +47,22 @@ const App = () => (
         <LazyMotion features={domAnimation}>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <ErrorBoundary>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
+          <AuthProvider>
+            <BrowserRouter>
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/" element={<Blog />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/signin" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/whop/success" element={<WhopSuccess />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/ebook-generator" element={<Dashboard />} />
+                <Route path="/dashboard" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
+                <Route path="/dashboard/ebook-generator" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
                 <Route
                   path="/dashboard/downloads"
                   element={
@@ -134,10 +137,11 @@ const App = () => (
                 />
                 {import.meta.env.DEV && <Route path="/__preview/chat-first-ebook" element={<Dashboard />} />}
                 <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
-          </BrowserRouter>
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
+            </BrowserRouter>
+          </AuthProvider>
         </LazyMotion>
       </TooltipProvider>
     </QueryClientProvider>

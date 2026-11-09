@@ -91,7 +91,7 @@ const Landing = () => {
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/auth" className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all">
+            <Link to="/dashboard" className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all">
               Get Started
             </Link>
           </div>
@@ -134,7 +134,7 @@ const Landing = () => {
                     NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
                   </p>
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <Link to="/auth" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
+                    <Link to="/dashboard" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
                       Start Building Now <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -338,7 +338,7 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-              <Link to="/auth" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
+              <Link to="/auth/signin" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
                 Start Free
               </Link>
             </div>

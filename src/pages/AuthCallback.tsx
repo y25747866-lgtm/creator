@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client"; // adjust path
 import { Loader2 } from "lucide-react";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = new URLSearchParams(location.search).get("redirect") || "/dashboard";
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -21,19 +23,19 @@ export default function AuthCallback() {
 
         if (getError) {
           console.error("Get session error:", getError.message);
-          navigate("/auth?error=session_error");
+          navigate("/auth/signin?error=session_error");
           return;
         }
 
         if (currentSession) {
-          navigate("/dashboard");
+          navigate(redirectTo, { replace: true });
           return;
         }
 
         // Listen for state change (PKCE exchange may be async)
         const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
           if (event === "SIGNED_IN" && newSession) {
-            navigate("/dashboard");
+            navigate(redirectTo, { replace: true });
           }
         });
 
@@ -42,12 +44,12 @@ export default function AuthCallback() {
         };
       } catch (err) {
         console.error("Callback handling error:", err instanceof Error ? err.message : "Unknown sign-in callback error");
-        navigate("/auth?error=callback_failed");
+        navigate("/auth/signin?error=callback_failed");
       }
     };
 
     handleCallback();
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background">

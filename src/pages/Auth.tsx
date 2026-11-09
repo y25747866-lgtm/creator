@@ -122,7 +122,7 @@ const NexoraOSSignIn = () => {
         await signIn(email, password);
         toast({ title: "Signed in", description: "Welcome back to NexoraOS." });
       } else {
-        const { error: authError } = await sendMagicLink(email);
+        const { error: authError } = await sendMagicLink(email, redirectTo);
         if (authError) {
           setError(authError.message || "Failed to send magic link");
           toast({ title: "Error", description: authError.message, variant: "destructive" });
@@ -142,7 +142,7 @@ const NexoraOSSignIn = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(redirectTo);
     } catch (authError: unknown) {
       const message = authError instanceof Error ? authError.message : "Google sign-in failed. Please try again.";
       toast({ title: "Error", description: message, variant: "destructive" });
@@ -156,7 +156,7 @@ const NexoraOSSignIn = () => {
     try {
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "discord",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}` },
       });
       if (authError) throw authError;
     } catch (authError: unknown) {

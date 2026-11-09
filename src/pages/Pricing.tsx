@@ -119,7 +119,7 @@ const Pricing = () => {
 
   const checkAccessNow = useCallback(async () => {
     if (!user) {
-      navigate("/auth");
+      navigate("/auth/signin?redirect=/pricing");
       return;
     }
     setCheckingAccess(true);
@@ -157,7 +157,7 @@ const Pricing = () => {
 
   const handlePurchase = (plan: PlanDef) => {
     if (!user) {
-      navigate("/auth");
+      navigate("/auth/signin?redirect=/pricing");
       return;
     }
     if (!plan.link) {
@@ -178,7 +178,7 @@ const Pricing = () => {
           </Link>
           <div className="flex items-center gap-3">
             {!user && (
-              <button type="button" onClick={() => navigate("/auth")} className="text-sm text-[#A6ADB8] transition hover:text-white">
+              <button type="button" onClick={() => navigate("/auth/signin?redirect=/pricing")} className="text-sm text-[#A6ADB8] transition hover:text-white">
                 Already have an account? <span className="font-semibold text-[#F0F2F5] underline underline-offset-4">Sign in</span>
               </button>
             )}

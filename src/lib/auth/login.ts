@@ -21,9 +21,9 @@ export async function signIn(email: string, password: string) {
 /**
  * Google Sign In
  */
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectPath = "/dashboard") {
   // Dynamic redirect – works on localhost, preview, production
-  const redirectTo = `${window.location.origin}/auth/callback`;
+  const redirectTo = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`;
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
