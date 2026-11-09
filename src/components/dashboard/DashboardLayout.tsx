@@ -58,19 +58,27 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     staleTime: 60_000,
     retry: false,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select("plan,plan_type,status,end_date,expires_at")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
+      const [subscriptionResult, analyticsResult, agentResult] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("plan,plan_type,status,end_date,expires_at")
+          .eq("user_id", user!.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase.rpc("check_user_access", { user_uuid: user!.id, feature: "analytics" }),
+        supabase.rpc("check_user_access", { user_uuid: user!.id, feature: "agent_system" }),
+      ]);
+      if (subscriptionResult.error) throw subscriptionResult.error;
+      return {
+        subscription: subscriptionResult.data,
+        analyticsAccess: analyticsResult.error ? false : analyticsResult.data === true,
+        agentAccess: agentResult.error ? false : agentResult.data === true,
+      };
     },
   });
   const accessLoading = authLoading || (Boolean(user?.id) && subscriptionQuery.isLoading);
-  const subscription = subscriptionQuery.data;
+  const subscription = subscriptionQuery.data?.subscription;
   const hasActivePlan = Boolean(subscription && isSubscriptionActive(subscription));
   const hasPaidSubscription = Boolean(
     hasActivePlan && isPaidPlan(normalizePlanType(subscription?.plan || subscription?.plan_type)),
@@ -88,9 +96,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const dashboardAccess: DashboardAccessState = {
     loading: accessLoading,
     hasPaidSubscription,
-    // Keep these gates aligned with the existing paid-plan feature matrix.
-    analyticsAccess: hasPaidSubscription,
-    agentAccess: hasPaidSubscription,
+    analyticsAccess: Boolean(subscriptionQuery.data?.analyticsAccess) && hasPaidSubscription,
+    agentAccess: Boolean(subscriptionQuery.data?.agentAccess) && hasPaidSubscription,
     renewalRequired: !accessLoading && !subscriptionQuery.isError && !hasPaidSubscription,
     isExpired,
     error: Boolean(subscriptionQuery.isError),

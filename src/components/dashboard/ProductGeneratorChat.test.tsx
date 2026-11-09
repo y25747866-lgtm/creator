@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   sendMagicLink: vi.fn(),
   signInWithGoogle: vi.fn(),
   supabaseFrom: vi.fn(),
+  supabaseRpc: vi.fn(),
   subscriptionRow: null as null | { plan: string; plan_type: string; status: string; end_date: string | null; expires_at: string | null },
 }));
 
@@ -55,7 +56,7 @@ vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }
 vi.mock("@/hooks/useEbookStore", () => ({
   useEbookStore: (selector: (state: { addEbook: typeof mocks.addEbook }) => unknown) => selector({ addEbook: mocks.addEbook }),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.supabaseFrom, functions: { invoke: mocks.invoke } } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.supabaseFrom, rpc: mocks.supabaseRpc, functions: { invoke: mocks.invoke } } }));
 vi.mock("@/lib/ebookRepository", () => ({
   saveGeneratedEbook: mocks.saveGeneratedEbook,
   uploadCreatorMedia: mocks.uploadCreatorMedia,
@@ -114,6 +115,7 @@ beforeEach(() => {
     builder.maybeSingle = () => Promise.resolve({ data: mocks.subscriptionRow, error: null });
     return builder;
   });
+  mocks.supabaseRpc.mockResolvedValue({ data: true, error: null });
   setTestViewportWidth(1024);
   mocks.sendMagicLink.mockResolvedValue({ error: null });
   mocks.signInWithGoogle.mockResolvedValue(undefined);

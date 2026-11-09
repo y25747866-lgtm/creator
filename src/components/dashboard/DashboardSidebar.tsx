@@ -116,9 +116,9 @@ const DashboardSidebar = () => {
           </button>
           <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
-          {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", true)}
-          {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription, true)}
-          {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription, true)}
+          {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
           <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Plug size={17} className="shrink-0" aria-hidden="true" />
