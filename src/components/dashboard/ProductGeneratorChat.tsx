@@ -184,7 +184,8 @@ const ProductGeneratorChat = () => {
   const { agentAccess } = useDashboardAccess();
   const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 768;
   const sidebarExpanded = isDesktopViewport ? !collapsed : mobileOpen;
-  const { recordUsage, hasPaidSubscription, isExpired } = useFeatureAccess();
+  const { recordUsage, hasPaidSubscription, isExpired, canUseFeature } = useFeatureAccess();
+  const canUseAgentSystem = typeof canUseFeature === "function" ? canUseFeature("agent_system") : true;
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const [activeProduct, setActiveProduct] = useState<string>("Ebook");
@@ -486,6 +487,11 @@ const ProductGeneratorChat = () => {
     setPendingAttachments([]);
     setAttachmentMenuOpen(false);
     if (activeSystem === "hybrid-agentic") {
+      if (!canUseAgentSystem) {
+        toast({ title: "Hybrid AI OS required", description: "The agent system is available on the Hybrid AI OS plan.", variant: "destructive" });
+        setActiveSystem("product-generator");
+        return;
+      }
       const progressId = makeId();
       setMessages((current) => [
         ...current,
@@ -968,7 +974,7 @@ const ProductGeneratorChat = () => {
                         <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "product-generator" ? "bg-[#F0F2F5]" : "bg-[#8B929E]"}`} />
                         <span><span className="block font-medium">AI Product Generator</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Creates ebooks with the verified product workflow.</span></span>
                       </button>
-                      {agentAccess && (
+{agentAccess && (
                         <button type="button" role="menuitemradio" aria-checked={activeSystem === "hybrid-agentic"} onClick={() => { setActiveSystem("hybrid-agentic"); setCapabilityMenuOpen(false); }} className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-[#8B929E] hover:bg-[#1A1D24]">
                           <span className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${activeSystem === "hybrid-agentic" ? "bg-[#F0F2F5]" : "bg-[#8B929E]"}`} />
                           <span><span className="block font-medium">Hybrid Agentic System</span><span className="mt-0.5 block text-[10px] leading-4 text-[#6B7280]">Activate your NEXUS, SCOUT, FLUX, FORGE and APEX agents.</span></span>

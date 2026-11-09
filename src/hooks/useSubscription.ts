@@ -112,6 +112,7 @@ export function useSubscription() {
     isFreePlan: planType === "free",
     isCreatorPlan: planType === "creator",
     isProPlan: planType === "pro",
+    isHybridPlan: planType === "hybrid",
     loading,
     error,
     expirationDate,

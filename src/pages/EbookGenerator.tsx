@@ -507,7 +507,7 @@ const EbookGenerator = () => {
   const { addEbook } = useEbookStore();
   const { recordUsage, isFreePlan } = useFeatureAccess();
   const { planType, hasPaidSubscription } = useSubscription();
-  const isCreatorOrAbove = planType === "creator" || planType === "pro";
+  const isCreatorOrAbove = planType === "creator" || planType === "pro" || planType === "hybrid";
 
   const [step, setStep] = useState(1);
   const [topic, setTopic] = useState("");

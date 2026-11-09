@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 
-type Feature = "ebook_generator" | "marketing_studio" | "sales_page_builder" | "downloads" | "ai_assistant" | "analytics";
+type Feature = "ebook_generator" | "marketing_studio" | "sales_page_builder" | "downloads" | "ai_assistant" | "analytics" | "agent_system";
 
 const FREE_DAILY_LIMITS: Record<string, number> = {
   ebook_generator: 1,
@@ -81,13 +81,18 @@ export function useFeatureAccess() {
   const canUseFeature = useCallback((feature: Feature): boolean => {
     if (subLoading) return false;
     
-    // Paid active users always allowed
-    if (hasPaidSubscription && !isExpired) return true;
+    // Paid active users share the Starter/Pro baseline, with plan-specific premium features below.
+    if (hasPaidSubscription && !isExpired) {
+      if (feature === "analytics" || feature === "ai_assistant") return planType === "pro" || planType === "hybrid";
+      if (feature === "agent_system") return planType === "hybrid";
+      return true;
+    }
 
     // Free/Expired plan restrictions
     if (feature === "downloads") return false;
     if (feature === "ai_assistant") return false;
-    if (feature === "analytics") return false; // Analytics is premium
+    if (feature === "agent_system") return false;
+    if (feature === "analytics") return false;
 
     if (FREE_DAILY_LIMITS[feature]) {
       const currentCount = dailyUsage[feature] || 0;
@@ -95,7 +100,7 @@ export function useFeatureAccess() {
     }
 
     return false; // Default to blocked for premium features
-  }, [subLoading, hasPaidSubscription, isExpired, dailyUsage]);
+  }, [subLoading, hasPaidSubscription, isExpired, planType, dailyUsage]);
 
   const getRemainingUses = useCallback((feature: Feature): number | null => {
     if ((hasPaidSubscription && !isExpired) || !FREE_DAILY_LIMITS[feature]) return null;

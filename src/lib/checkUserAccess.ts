@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface UserAccessResult {
   hasAccess: boolean;
-  planType: "free" | "creator" | "pro";
+  planType: "free" | "creator" | "pro" | "hybrid";
   subscription?: {
     id: string;
     user_id: string;
@@ -113,13 +113,14 @@ export async function checkUserAccess(): Promise<UserAccessResult> {
  */
 function normalizePlanType(
   plan?: string | null
-): "free" | "creator" | "pro" {
+): "free" | "creator" | "pro" | "hybrid" {
   if (!plan) return "free";
 
   const normalized = plan.trim().toLowerCase();
 
   // Handle both old plan_type values and new plan values
   if (normalized === "pro") return "pro";
+  if (normalized === "hybrid" || normalized === "hybrid-ai-os") return "hybrid";
   if (normalized === "creator") return "creator";
   if (normalized === "monthly") return "creator";
   if (normalized === "annual") return "creator";
@@ -149,7 +150,6 @@ export async function checkFeatureAccess(
       "basic_ebook_generation",
       "basic_marketing",
       "advanced_ebook_generation",
-      "analytics",
       "sales_page_builder",
     ],
     pro: [
@@ -161,6 +161,17 @@ export async function checkFeatureAccess(
       "pro_analytics",
       "api_access",
       "custom_branding",
+    ],
+    hybrid: [
+      "basic_ebook_generation",
+      "basic_marketing",
+      "advanced_ebook_generation",
+      "analytics",
+      "sales_page_builder",
+      "pro_analytics",
+      "api_access",
+      "custom_branding",
+      "agent_system",
     ],
   };
 

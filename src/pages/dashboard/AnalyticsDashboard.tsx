@@ -63,10 +63,10 @@ const PLATFORMS = [
 const AnalyticsDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
+  const { planType, hasPaidSubscription, subscription, loading: subLoading } = useSubscription();
 
   const isExpired = subscription?.status === "expired";
-  const hasAccess = hasPaidSubscription && !isExpired;
+  const hasAccess = (planType ? planType === "pro" || planType === "hybrid" : hasPaidSubscription) && !isExpired;
 
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
