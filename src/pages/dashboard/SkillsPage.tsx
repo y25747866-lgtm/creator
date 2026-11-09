@@ -88,9 +88,9 @@ const skillsDatabase = supabase as unknown as SkillsDatabase;
 const tabs: SkillTab[] = ["All", "Official", "Personal", "Third-party"];
 const uploadLimit = 1024 * 1024;
 const BUILT_IN_SKILLS = [
-  { id: "builtin-deep-research-engine", name: "Deep Research Engine", description: "Conduct thorough research with verified sources and citations.", instructions: "", updatedAt: "2026-11-09" },
-  { id: "builtin-ebook-creation", name: "Ebook Creation", description: "Transform your expertise into a polished, structured ebook.", instructions: "", updatedAt: "2026-11-09" },
-  { id: "builtin-marketing-strategy", name: "Marketing Strategy", description: "Create actionable marketing strategies for your digital products.", instructions: "", updatedAt: "2026-11-09" },
+  { id: "builtin-deep-research-engine", name: "Deep Research Engine", description: "Enhance any research task with deep web search, source verification and structured output.", instructions: "", updatedAt: "2026-11-09" },
+  { id: "builtin-sales-page-writer", name: "Sales Page Writer", description: "Generate high-converting sales pages optimized for Whop, Gumroad and Payhip.", instructions: "", updatedAt: "2026-11-09" },
+  { id: "builtin-marketing-copy-studio", name: "Marketing Copy Studio", description: "Write ad copy, email sequences and social captions for any digital product.", instructions: "", updatedAt: "2026-11-09" },
 ] as const;
 const EMPTY_LOCAL_SKILLS: LocalSkillsData = { customSkills: [], officialActive: {}, hiddenIds: [], overrides: {} };
 
@@ -537,19 +537,19 @@ export default function SkillsPage() {
             )}
           </header>
 
-          <section aria-label="Skill actions" className="mb-6 flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:overflow-visible">
-            <button type="button" onClick={() => setSelectedTab("All")} className="flex min-h-[88px] min-w-[210px] items-center gap-3 rounded-xl border border-white/10 bg-[#111318] p-4 text-left transition-colors hover:border-white/20 hover:bg-[#151820] sm:min-w-0">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/65"><Compass size={17} aria-hidden="true" /></span>
-              <span className="min-w-0"><span className="block text-sm font-medium">Explore more skills</span><span className="mt-1 block text-xs leading-4 text-white/45">Browse the catalogue</span></span>
+          <section aria-label="Explore more skills" className="mb-6 overflow-hidden rounded-2xl border border-[#1E2028] bg-[#111318]">
+            <button type="button" onClick={() => setSelectedTab("All")} className="flex w-full items-center justify-between gap-3 px-4 pt-4 text-left">
+              <span className="text-sm font-medium text-white">Explore more skills <ChevronRight size={15} className="ml-1 inline-block align-[-2px] text-white/55" aria-hidden="true" /></span>
+              <span className="text-xs text-white/40">Official collection</span>
             </button>
-            <button type="button" onClick={openCreateSkill} className="flex min-h-[88px] min-w-[210px] items-center gap-3 rounded-xl border border-white/10 bg-[#111318] p-4 text-left transition-colors hover:border-white/20 hover:bg-[#151820] sm:min-w-0">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/65"><Plus size={17} aria-hidden="true" /></span>
-              <span className="min-w-0"><span className="block text-sm font-medium">Create your first skill</span><span className="mt-1 block text-xs leading-4 text-white/45">Save reusable instructions</span></span>
-            </button>
-            <button type="button" onClick={() => { setActionView("github"); setImportError(null); setActionsOpen(true); }} className="flex min-h-[88px] min-w-[210px] items-center gap-3 rounded-xl border border-white/10 bg-[#111318] p-4 text-left transition-colors hover:border-white/20 hover:bg-[#151820] sm:min-w-0">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/65"><Github size={17} aria-hidden="true" /></span>
-              <span className="min-w-0"><span className="block text-sm font-medium">Import from GitHub</span><span className="mt-1 block text-xs leading-4 text-white/45">Fetch a public skill manifest</span></span>
-            </button>
+            <div className="flex gap-2.5 overflow-x-auto p-4 pt-3">
+              {BUILT_IN_SKILLS.map((skill) => (
+                <button key={skill.id} type="button" onClick={() => { setSelectedTab("Official"); setSearchQuery(skill.name); }} className="flex min-w-[190px] items-center gap-2.5 rounded-xl border border-[#1E2028] bg-[#080A0C] p-3 text-left transition hover:border-white/25">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/65"><ShieldCheck size={15} aria-hidden="true" /></span>
+                  <span className="min-w-0"><span className="block truncate text-xs font-medium text-white">{skill.name}</span><span className="mt-1 block truncate text-[10px] text-white/40">Official skill</span></span>
+                </button>
+              ))}
+            </div>
           </section>
 
           <div role="tablist" aria-label="Filter skills" className="mb-5 flex gap-2 overflow-x-auto border-b border-white/[0.08] pb-3">
@@ -589,7 +589,7 @@ export default function SkillsPage() {
                 const active = skill.active;
                 const pending = pendingSkillIds.has(skill.id);
                 return (
-                  <article key={skill.id} className="flex min-h-[210px] min-w-0 flex-col rounded-xl border border-white/10 bg-[#111318] p-3 transition-colors hover:border-white/20 sm:min-h-[220px] sm:rounded-2xl sm:p-4">
+                  <article key={skill.id} className="flex min-h-[210px] min-w-0 flex-col rounded-xl border border-[#1E2028] bg-[#111318] p-3 transition-colors hover:border-white/20 sm:min-h-[220px] sm:rounded-2xl sm:p-4">
                     <div className="flex min-w-0 items-start gap-2.5">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/65"><Puzzle size={16} aria-hidden="true" /></div>
                       <div className="min-w-0 flex-1">

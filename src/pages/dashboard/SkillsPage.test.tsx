@@ -39,8 +39,8 @@ describe("Skills catalogue", () => {
   it("shows the three official starter skills and filters by category", async () => {
     renderSkills();
     expect(await screen.findByRole("heading", { name: "Deep Research Engine" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Ebook Creation" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Marketing Strategy" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sales Page Writer" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Marketing Copy Studio" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Official/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: /Personal/ }));
     expect(await screen.findByText("No skills in this category")).toBeInTheDocument();
