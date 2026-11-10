@@ -147,12 +147,12 @@ describe("Chat-first product workspace", () => {
   it("starts with an uncluttered prompt and hides product types that are not enabled", () => {
     const { container } = renderWorkspace();
 
-    expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "#080A0C", color: "#F0F2F5" });
+    expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "var(--gradient-mesh)", color: "#F0F2F5" });
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
     expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
-    expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[#303640]", "bg-[#010102]", "focus-within:border-[#7022FC]");
+    expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[rgba(112,34,252,0.3)]", "bg-[#010102]", "focus-within:border-[#7022FC]");
     expect(composer.closest("form")?.parentElement?.parentElement).toHaveClass("px-0", "sm:px-4");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");

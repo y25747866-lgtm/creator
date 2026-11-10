@@ -748,7 +748,7 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "#080A0C", color: "#F0F2F5" }}>
+    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--gradient-mesh)", color: "#F0F2F5" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
@@ -925,7 +925,7 @@ const ProductGeneratorChat = () => {
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
-          <form onSubmit={submitTopic} className="relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] bg-[#010102] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#7022FC] sm:px-6 sm:py-5">
+          <form onSubmit={submitTopic} className="relative flex min-h-[120px] flex-col rounded-[24px] border border-[rgba(112,34,252,0.3)] bg-[#010102] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#7022FC] sm:px-6 sm:py-5">
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />

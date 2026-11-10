@@ -62,8 +62,12 @@ describe("DashboardSidebar Plugins navigation", () => {
     const link = screen.getByRole("link", { name: "Plugins" });
     expect(link).toHaveAttribute("href", "/app/connectors");
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveClass("bg-[#111318]", "text-white");
-    expect(link).toHaveStyle({ backgroundImage: "var(--gradient-cta-subtle)" });
+    expect(link).not.toHaveClass("bg-[#111318]");
+    expect(link).toHaveClass("text-white", "border-l-2", "border-transparent");
+    expect(link).toHaveStyle({
+      background: "linear-gradient(135deg, rgba(112,34,252,0.2), rgba(240,159,51,0.08))",
+      borderLeft: "2px solid #7022FC",
+    });
     expect(link.querySelector("svg")).toBeTruthy();
 
     fireEvent.click(link);
@@ -79,7 +83,11 @@ describe("DashboardSidebar Plugins navigation", () => {
 
     const link = screen.getByRole("link", { name: "Product Studio" });
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveStyle({ backgroundImage: "var(--gradient-cta-subtle)" });
+    expect(link).not.toHaveClass("bg-[#111318]");
+    expect(link).toHaveStyle({
+      background: "linear-gradient(135deg, rgba(112,34,252,0.2), rgba(240,159,51,0.08))",
+      borderLeft: "2px solid #7022FC",
+    });
   });
 
   it("routes locked workspace pages and Analytics to pricing when there is no paid plan", () => {
