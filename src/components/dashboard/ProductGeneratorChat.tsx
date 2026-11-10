@@ -426,9 +426,8 @@ const ProductGeneratorChat = () => {
     setAuthPromptOpen(true);
   }, [authLoading, user?.id]);
 
-  const resizeComposer = () => {
-    const element = composerRef.current;
-    if (!element) return;
+  const resizeComposer = (event: FormEvent<HTMLTextAreaElement>) => {
+    const element = event.currentTarget;
     element.style.height = "auto";
     const contentHeight = element.scrollHeight;
     element.style.height = `${Math.min(contentHeight, MAX_COMPOSER_HEIGHT)}px`;
@@ -957,7 +956,7 @@ const ProductGeneratorChat = () => {
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full flex-1 resize-none overflow-hidden border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
+              className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
               aria-describedby="composer-hint"
             />
             <div className="mt-2 flex min-h-9 items-center justify-between gap-2 border-t border-white/[0.06] pt-2 sm:mt-3 sm:min-h-10 sm:gap-3 sm:pt-3">
