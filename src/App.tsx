@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
@@ -29,7 +29,7 @@ const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 const SkillsPage = lazy(() => import("./pages/dashboard/SkillsPage"));
 
 import ViewableRoute from "./components/ViewableRoute";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +47,18 @@ const PageLoader = () => (
   </div>
 );
 
+const AuthRoute = () => {
+  const { session, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <div className="min-h-screen bg-[#080A0C]" aria-hidden="true" />;
+  if (session) {
+    const redirect = new URLSearchParams(location.search).get("redirect") || "/dashboard";
+    return <Navigate to={redirect} replace />;
+  }
+  return <Auth />;
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
@@ -62,8 +74,8 @@ const App = () => (
                 <Route path="/" element={<Landing />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/" element={<Blog />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/signin" element={<Auth />} />
+                <Route path="/auth" element={<AuthRoute />} />
+                <Route path="/auth/signin" element={<AuthRoute />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/contact" element={<Contact />} />

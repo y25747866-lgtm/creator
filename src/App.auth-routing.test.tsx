@@ -5,6 +5,7 @@ import App from "./App";
 
 const mocks = vi.hoisted(() => ({
   user: null as { id: string; email: string } | null,
+  session: null as null | { user: { id: string; email: string } },
   loading: false,
 }));
 
@@ -14,7 +15,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 vi.mock("@/hooks/useAuth", () => ({
   AuthProvider: ({ children }: { children: ReactNode }) => children,
-  useAuth: () => ({ user: mocks.user, loading: mocks.loading }),
+  useAuth: () => ({ user: mocks.user, session: mocks.session, loading: mocks.loading }),
 }));
 vi.mock("./pages/Landing", () => ({ default: () => <main>Landing route</main> }));
 vi.mock("./pages/Blog", () => ({ default: () => <main>Blog route</main> }));
@@ -29,6 +30,7 @@ afterEach(() => {
 
 beforeEach(() => {
   mocks.user = null;
+  mocks.session = null;
   mocks.loading = false;
 });
 
@@ -49,5 +51,32 @@ describe("dashboard authentication routing", () => {
     expect(await screen.findByText("Sign-in route")).toBeInTheDocument();
     expect(window.location.pathname).toBe("/auth/signin");
     expect(screen.queryByText("Private downloads route")).not.toBeInTheDocument();
+  });
+
+  it("keeps sign-in blank while the Supabase session is unresolved", () => {
+    window.history.replaceState({}, "", "/auth/signin");
+    mocks.loading = true;
+    render(<App />);
+
+    expect(screen.queryByText("Sign-in route")).not.toBeInTheDocument();
+    expect(document.querySelector("div[aria-hidden='true']")).toBeInTheDocument();
+  });
+
+  it("redirects an active session away from sign-in without rendering the sign-in page", async () => {
+    window.history.replaceState({}, "", "/auth/signin");
+    mocks.user = { id: "creator-1", email: "creator@example.com" };
+    mocks.session = { user: mocks.user };
+    render(<App />);
+
+    expect(await screen.findByText("Public chat workspace route")).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/dashboard");
+    expect(screen.queryByText("Sign-in route")).not.toBeInTheDocument();
+  });
+
+  it("shows sign-in only after session resolution confirms there is no session", async () => {
+    window.history.replaceState({}, "", "/auth/signin");
+    render(<App />);
+
+    expect(await screen.findByText("Sign-in route")).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, ClipboardEvent, FormEvent, KeyboardEvent, SVGProps, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowUp,
@@ -82,6 +82,8 @@ type ChatMessage = {
 };
 
 type SelectorPopupPosition = { top: number; left: number; width: number; maxHeight: number };
+type ComposerAttachment = MediaAttachment & { localOnly?: boolean; file?: File };
+const MAX_COMPOSER_HEIGHT = 200;
 
 const PRODUCT_TEMPLATES: Template[] = [
   {
@@ -203,7 +205,7 @@ const ProductGeneratorChat = () => {
   const [connectorPanelOpen, setConnectorPanelOpen] = useState(false);
   const [capabilityMenuOpen, setCapabilityMenuOpen] = useState(false);
   const [composerInteracted, setComposerInteracted] = useState(false);
-  const [pendingAttachments, setPendingAttachments] = useState<MediaAttachment[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<ComposerAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [recentTasks, setRecentTasks] = useState<CreatorConversationSummary[]>([]);
@@ -371,7 +373,9 @@ const ProductGeneratorChat = () => {
       if (generationLock.current) return;
       persistCurrentConversation();
       clearPendingChatTopic();
-      for (const attachment of pendingAttachments) void deleteCreatorMedia(attachment.path).catch(() => undefined);
+      for (const attachment of pendingAttachments) {
+        if (!attachment.localOnly) void deleteCreatorMedia(attachment.path).catch(() => undefined);
+      }
       activeConversationIdRef.current = null;
       setMessages([]);
       setPendingAttachments([]);
@@ -411,7 +415,10 @@ const ProductGeneratorChat = () => {
         },
       ]);
       setDraft("");
-      if (composerRef.current) composerRef.current.style.height = "auto";
+      if (composerRef.current) {
+        composerRef.current.style.height = "auto";
+        composerRef.current.style.overflowY = "hidden";
+      }
       setSelectedTemplate(null);
       return;
     }
@@ -423,7 +430,42 @@ const ProductGeneratorChat = () => {
     const element = composerRef.current;
     if (!element) return;
     element.style.height = "auto";
-    element.style.height = `${Math.min(element.scrollHeight, 160)}px`;
+    const contentHeight = element.scrollHeight;
+    element.style.height = `${Math.min(contentHeight, MAX_COMPOSER_HEIGHT)}px`;
+    element.style.overflowY = contentHeight > MAX_COMPOSER_HEIGHT ? "auto" : "hidden";
+  };
+
+  const resetComposerHeight = useCallback(() => {
+    const element = composerRef.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.overflowY = "hidden";
+  }, []);
+
+  const handleComposerPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const pastedText = event.clipboardData.getData("text");
+    if (pastedText.length <= 2000) return;
+
+    event.preventDefault();
+    const attachedInConversation = messages.reduce((total, message) => total + (message.attachments?.length ?? 0), 0);
+    if (attachedInConversation + pendingAttachments.length >= 5) {
+      toast({ title: "Attachment limit reached", description: "A conversation can contain up to five attachments.", variant: "destructive" });
+      composerRef.current?.focus();
+      return;
+    }
+
+    const file = new File([pastedText], "pasted-content.txt", { type: "text/plain" });
+    const id = `pasted-${makeId()}`;
+    setPendingAttachments((current) => [...current, {
+      id,
+      path: `local/${id}`,
+      name: file.name,
+      mimeType: file.type,
+      size: file.size,
+      localOnly: true,
+      file,
+    }]);
+    composerRef.current?.focus();
   };
 
   const handleMediaSelection = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -455,9 +497,11 @@ const ProductGeneratorChat = () => {
     setIsUploading(false);
   };
 
-  const removePendingAttachment = async (attachment: MediaAttachment) => {
+  const removePendingAttachment = async (attachment: ComposerAttachment) => {
     setPendingAttachments((current) => current.filter((item) => item.id !== attachment.id));
-    try { await deleteCreatorMedia(attachment.path); } catch { /* the chat does not depend on a cleanup retry */ }
+    if (!attachment.localOnly) {
+      try { await deleteCreatorMedia(attachment.path); } catch { /* the chat does not depend on a cleanup retry */ }
+    }
   };
 
   const submitTopic = (event?: FormEvent) => {
@@ -484,7 +528,7 @@ const ProductGeneratorChat = () => {
     }
 
     clearPendingChatTopic();
-    const attachments = pendingAttachments;
+    const attachments = pendingAttachments.filter((attachment) => !attachment.localOnly);
     setPendingAttachments([]);
     setAttachmentMenuOpen(false);
     if (activeSystem === "hybrid-agentic") {
@@ -500,7 +544,7 @@ const ProductGeneratorChat = () => {
         { id: progressId, role: "assistant", kind: "progress", text: "Connecting to the Hybrid Agentic System…", complete: false },
       ]);
       setDraft("");
-      if (composerRef.current) composerRef.current.style.height = "auto";
+      resetComposerHeight();
       generationLock.current = true;
       setIsGenerating(true);
       void (async () => {
@@ -531,7 +575,7 @@ const ProductGeneratorChat = () => {
       },
     ]);
     setDraft("");
-    if (composerRef.current) composerRef.current.style.height = "auto";
+    resetComposerHeight();
   };
 
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -890,8 +934,8 @@ const ProductGeneratorChat = () => {
             {pendingAttachments.length > 0 && (
               <div className="flex flex-wrap gap-2 px-4 pt-3 sm:px-5" aria-label="Pending attachments">
                 {pendingAttachments.map((attachment) => (
-                  <span key={attachment.id} className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-white/10 bg-black/20 px-2.5 py-1.5 text-[11px] text-[#C8C8C8]">
-                    {attachment.mimeType.startsWith("video/") ? <Video size={13} /> : attachment.mimeType === "application/pdf" ? <FileText size={13} /> : <ImageIcon size={13} />}
+                  <span key={attachment.id} className="inline-flex max-w-full items-center gap-1.5 rounded-lg border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 text-[11px] text-white">
+                    {attachment.mimeType.startsWith("video/") ? <Video size={13} aria-hidden="true" /> : attachment.mimeType === "application/pdf" || attachment.mimeType.startsWith("text/") ? <FileText size={13} aria-hidden="true" /> : <ImageIcon size={13} aria-hidden="true" />}
                     <span className="max-w-36 truncate">{attachment.name}</span>
                     <button type="button" aria-label={`Remove ${attachment.name}`} onClick={() => void removePendingAttachment(attachment)} className="ml-1 rounded p-0.5 text-[#8E8E8E] hover:bg-white/10 hover:text-white"><X size={12} /></button>
                   </span>
@@ -907,14 +951,13 @@ const ProductGeneratorChat = () => {
               onPointerDown={() => setComposerInteracted(true)}
               onFocus={() => setComposerInteracted(true)}
               value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                resizeComposer();
-              }}
+              onChange={(event) => setDraft(event.target.value)}
+              onInput={resizeComposer}
+              onPaste={handleComposerPaste}
               onKeyDown={handleComposerKeyDown}
               disabled={isGenerating || isUploading}
               placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="nexora-composer-input block min-h-[48px] w-full flex-1 resize-none border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
+              className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full flex-1 resize-none overflow-hidden border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
               aria-describedby="composer-hint"
             />
             <div className="mt-2 flex min-h-9 items-center justify-between gap-2 border-t border-white/[0.06] pt-2 sm:mt-3 sm:min-h-10 sm:gap-3 sm:pt-3">

@@ -163,6 +163,48 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
   });
 
+  it("grows the textarea to 200px, then scrolls internally and returns to hidden overflow", () => {
+    renderWorkspace();
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+    let scrollHeight = 88;
+    Object.defineProperty(composer, "scrollHeight", { configurable: true, get: () => scrollHeight });
+
+    fireEvent.input(composer, { target: { value: "A longer draft" } });
+    expect(composer).toHaveStyle({ height: "88px", overflowY: "hidden" });
+
+    scrollHeight = 248;
+    fireEvent.input(composer, { target: { value: "A much longer draft" } });
+    expect(composer).toHaveStyle({ height: "200px", overflowY: "auto" });
+
+    scrollHeight = 96;
+    fireEvent.input(composer, { target: { value: "Short again" } });
+    expect(composer).toHaveStyle({ height: "96px", overflowY: "hidden" });
+  });
+
+  it("allows paste up to 2000 characters and turns longer text into a local file pill", () => {
+    renderWorkspace();
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+    composer.focus();
+
+    const shortText = "s".repeat(2000);
+    expect(fireEvent.paste(composer, { clipboardData: { getData: () => shortText } })).toBe(true);
+    expect(screen.queryByText("pasted-content.txt")).not.toBeInTheDocument();
+
+    const longText = "l".repeat(2001);
+    expect(fireEvent.paste(composer, { clipboardData: { getData: () => longText } })).toBe(false);
+    expect(composer).toHaveValue("");
+    expect(composer).toHaveFocus();
+    const filename = screen.getByText("pasted-content.txt");
+    const pill = filename.closest("span.inline-flex");
+    expect(pill).toHaveClass("bg-[#1a1a1a]", "border-[#333]", "text-white");
+    expect(within(pill as HTMLElement).getByRole("button", { name: "Remove pasted-content.txt" })).toBeInTheDocument();
+    expect(mocks.uploadCreatorMedia).not.toHaveBeenCalled();
+
+    fireEvent.click(within(pill as HTMLElement).getByRole("button", { name: "Remove pasted-content.txt" }));
+    expect(screen.queryByText("pasted-content.txt")).not.toBeInTheDocument();
+    expect(mocks.deleteCreatorMedia).not.toHaveBeenCalled();
+  });
+
   it("stops the monochrome beam on first focus and does not restart after blur", () => {
     renderWorkspace();
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });

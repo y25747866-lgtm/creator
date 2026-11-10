@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import ViewableRoute from "./ViewableRoute";
 
-const authState = { user: null as null | { id: string }, loading: false };
+const authState = { user: null as null | { id: string }, session: null as null | { user: { id: string } }, loading: false };
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => authState,
@@ -47,6 +47,7 @@ const renderAt = (path: string) => render(
 describe("ViewableRoute guest preview", () => {
   beforeEach(() => {
     authState.user = null;
+    authState.session = null;
     authState.loading = false;
   });
 
@@ -64,15 +65,17 @@ describe("ViewableRoute guest preview", () => {
     expect(screen.queryByText("Private projects")).not.toBeInTheDocument();
   });
 
-  it("shows a skeleton status while auth is being checked rather than a sign-in page", () => {
+  it("keeps the screen black while auth is being checked rather than rendering dashboard or sign-in content", () => {
     authState.loading = true;
-    renderAt("/dashboard");
+    const { container } = renderAt("/dashboard");
 
-    expect(screen.getByRole("status", { name: "Loading workspace" })).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass("min-h-screen", "bg-[#080A0C]");
+    expect(screen.queryByText("Agent workspace preview")).not.toBeInTheDocument();
     expect(screen.queryByText(/Sign-in screen/)).not.toBeInTheDocument();
   });
 
   it("continues to render protected content for authenticated users", () => {
+    authState.session = { user: { id: "creator-1" } };
     authState.user = { id: "creator-1" };
     renderAt("/dashboard/products");
 
