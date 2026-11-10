@@ -48,7 +48,9 @@ const LENGTH_CONFIGS: Record<string, LengthConfig> = {
 };
 
 function getSystemPrompt(config: LengthConfig): string {
-  return `You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
+  return `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.
+
+You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
 
 The ebook must feel like a premium product worth $19–$49.
 
@@ -197,7 +199,7 @@ async function generateLongContent(
       messages: [
         {
           role: "system",
-          content: "You create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. [\"Introduction\", \"Chapter 1: ...\", ...]. No other text.",
+          content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. ["Introduction", "Chapter 1: ...", ...]. No other text.`,
         },
         {
           role: "user",

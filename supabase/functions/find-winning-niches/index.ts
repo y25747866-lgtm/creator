@@ -89,7 +89,7 @@ Respond ONLY with a JSON array of 6 objects. No other text.`;
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'You are a market research AI. Respond with JSON only.' },
+          { role: 'system', content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou are a market research AI. Respond with JSON only.` },
           { role: 'user', content: prompt }
         ],
         temperature: 0.8,

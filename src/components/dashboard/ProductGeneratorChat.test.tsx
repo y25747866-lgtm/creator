@@ -163,6 +163,27 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
   });
 
+  it("shows the character counter only above 1500, turns red at 1900, warns at 2000, and clears after send", () => {
+    renderWorkspace();
+    const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
+
+    fireEvent.change(composer, { target: { value: "a".repeat(1500) } });
+    expect(screen.queryByText("1,500 / 2,000")).not.toBeInTheDocument();
+
+    fireEvent.change(composer, { target: { value: "a".repeat(1847) } });
+    expect(screen.getByText("1,847 / 2,000").parentElement).toHaveClass("text-white/60");
+
+    fireEvent.change(composer, { target: { value: "a".repeat(1900) } });
+    expect(screen.getByText("1,900 / 2,000").parentElement).toHaveClass("text-red-400");
+
+    fireEvent.change(composer, { target: { value: "a".repeat(2000) } });
+    expect(screen.getByText("2,000 / 2,000").parentElement).toHaveClass("text-red-400");
+    expect(screen.getByText("Max reached — longer content will become a file")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Send topic" }));
+    expect(screen.queryByText("2,000 / 2,000")).not.toBeInTheDocument();
+  });
+
   it("grows the textarea to 200px, then scrolls internally and returns to hidden overflow", () => {
     renderWorkspace();
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });

@@ -74,7 +74,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional book title generator. Generate compelling, marketable ebook titles. Respond with ONLY the title, nothing else. No quotes, no explanation.'
+            content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou are a professional book title generator. Generate compelling, marketable ebook titles. Respond with ONLY the title, nothing else. No quotes, no explanation.`
           },
           {
             role: 'user',

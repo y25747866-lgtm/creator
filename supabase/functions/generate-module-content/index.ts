@@ -59,7 +59,7 @@ Return markdown.
           messages: [
             {
               role: "system",
-              content: "You are an expert digital marketing strategist.",
+              content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou are an expert digital marketing strategist.`,
             },
             {
               role: "user",

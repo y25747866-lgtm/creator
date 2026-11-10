@@ -81,7 +81,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You generate short, vivid image prompts for ebook covers. Be concise and specific.'
+            content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou generate short, vivid image prompts for ebook covers. Be concise and specific.`
           },
           {
             role: 'user',

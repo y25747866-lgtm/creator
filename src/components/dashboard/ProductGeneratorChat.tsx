@@ -508,8 +508,8 @@ const ProductGeneratorChat = () => {
     if (generationLock.current || !draft.trim()) return;
     const topic = draft.trim();
 
-    if (topic.length > 500) {
-      toast({ title: "Topic is too long", description: "Keep the ebook topic to 500 characters or fewer.", variant: "destructive" });
+    if (topic.length > 2000) {
+      toast({ title: "Topic is too long", description: "Keep the ebook topic to 2,000 characters or fewer.", variant: "destructive" });
       return;
     }
 
@@ -942,23 +942,31 @@ const ProductGeneratorChat = () => {
               </div>
             )}
             <p id="composer-hint" className="sr-only">Press Enter to send. Press Shift and Enter to add a new line.</p>
-            <textarea
-              id="nexora-topic-composer"
-              ref={composerRef}
-              rows={1}
-              maxLength={500}
-              onPointerDown={() => setComposerInteracted(true)}
-              onFocus={() => setComposerInteracted(true)}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onInput={resizeComposer}
-              onPaste={handleComposerPaste}
-              onKeyDown={handleComposerKeyDown}
-              disabled={isGenerating || isUploading}
-              placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-              className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
-              aria-describedby="composer-hint"
-            />
+            <div className="relative w-full">
+              <textarea
+                id="nexora-topic-composer"
+                ref={composerRef}
+                rows={1}
+                maxLength={2000}
+                onPointerDown={() => setComposerInteracted(true)}
+                onFocus={() => setComposerInteracted(true)}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onInput={resizeComposer}
+                onPaste={handleComposerPaste}
+                onKeyDown={handleComposerKeyDown}
+                disabled={isGenerating || isUploading}
+                placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
+                className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 pb-6 pr-2 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
+                aria-describedby="composer-hint"
+              />
+              {draft.length > 1500 && (
+                <div className={`absolute bottom-1 right-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-center justify-end gap-x-1.5 text-right text-[10px] leading-4 ${draft.length >= 1900 ? "text-red-400" : "text-white/60"}`} aria-live="polite">
+                  {draft.length === 2000 && <span>Max reached — longer content will become a file</span>}
+                  <span>{new Intl.NumberFormat("en-US").format(draft.length)} / 2,000</span>
+                </div>
+              )}
+            </div>
             <div className="mt-2 flex min-h-9 items-center justify-between gap-2 border-t border-white/[0.06] pt-2 sm:mt-3 sm:min-h-10 sm:gap-3 sm:pt-3">
               <div className="flex shrink-0 items-center gap-1 rounded-xl bg-[#1A1D24]/70 p-1">
                 <button
