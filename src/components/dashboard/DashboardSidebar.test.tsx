@@ -63,10 +63,23 @@ describe("DashboardSidebar Plugins navigation", () => {
     expect(link).toHaveAttribute("href", "/app/connectors");
     expect(link).toHaveAttribute("aria-current", "page");
     expect(link).toHaveClass("bg-[#111318]", "text-white");
+    expect(link).toHaveStyle({ backgroundImage: "var(--gradient-cta-subtle)" });
     expect(link.querySelector("svg")).toBeTruthy();
 
     fireEvent.click(link);
     expect(mocks.setMobileOpen).toHaveBeenCalledWith(false);
+  });
+
+  it("applies the subtle gradient to the active Product Studio row", () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <DashboardSidebar />
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole("link", { name: "Product Studio" });
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(link).toHaveStyle({ backgroundImage: "var(--gradient-cta-subtle)" });
   });
 
   it("routes locked workspace pages and Analytics to pricing when there is no paid plan", () => {

@@ -72,6 +72,7 @@ const DashboardSidebar = () => {
         title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
         aria-current={active ? "page" : undefined}
         aria-disabled={locked || undefined}
+        style={active ? { backgroundImage: "var(--gradient-cta-subtle)" } : undefined}
         className={`${hidden ? "hidden" : ""} flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "bg-[#111318] text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
       >
         <Icon size={17} className="shrink-0" aria-hidden="true" />
@@ -120,7 +121,7 @@ const DashboardSidebar = () => {
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
-          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} style={location.pathname === "/app/connectors" ? { backgroundImage: "var(--gradient-cta-subtle)" } : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Plug size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <span>Plugins</span>}
           </Link>

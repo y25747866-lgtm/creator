@@ -7,6 +7,11 @@
 @layer base {
   :root {
     --radius: 0.75rem;
+    --gradient-mesh: radial-gradient(ellipse at 20% 50%, #7022FC 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, #F09F33 0%, transparent 55%),
+      #010102;
+    --gradient-cta: linear-gradient(135deg, #7022FC 0%, #F09F33 100%);
+    --gradient-cta-subtle: linear-gradient(135deg, rgb(112 34 252 / 15%) 0%, rgb(240 159 51 / 15%) 100%);
 
     /* Light theme */
     --background: 0 0% 100%;
@@ -168,6 +173,7 @@
 #hero {
   position: relative !important;
   overflow: hidden !important;
+  background: var(--gradient-mesh);
 }
 
 /* Mobile — reduce opacity */
