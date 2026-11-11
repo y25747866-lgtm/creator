@@ -7,10 +7,20 @@
 @layer base {
   :root {
     --radius: 0.75rem;
-    --gradient-mesh: radial-gradient(ellipse at 20% 50%, #7022FC 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 20%, #F09F33 0%, transparent 55%),
-      #010102;
     --gradient-cta: linear-gradient(135deg, #7022FC 0%, #F09F33 100%);
+    --nexora-workspace-background: #010102;
+    --nexora-workspace-foreground: #FFFFFF;
+    --nexora-sidebar-background: #080A0C;
+    --nexora-sidebar-border: rgba(255, 255, 255, 0.08);
+    --nexora-composer-background: #010102;
+    --nexora-composer-border: #303640;
+    --nexora-composer-focus-border: rgba(112, 34, 252, 0.3);
+    --nexora-send-background: var(--gradient-cta);
+    --nexora-send-foreground: #010102;
+    --nexora-connector-icon-background: #1a1a1a;
+    --nexora-connector-icon-color: #FFFFFF;
+    --nexora-connector-icon-border: transparent;
+    color-scheme: dark;
 
     /* Light theme */
     --background: 0 0% 100%;
@@ -40,6 +50,21 @@
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 0 0% 48%;
+  }
+
+  :root.light {
+    --nexora-workspace-background: #F5F5F7;
+    --nexora-workspace-foreground: #010102;
+    --nexora-sidebar-background: #F5F5F7;
+    --nexora-sidebar-border: #E0E0E0;
+    --nexora-composer-background: #FFFFFF;
+    --nexora-composer-border: #E0E0E0;
+    --nexora-send-background: #010102;
+    --nexora-send-foreground: #FFFFFF;
+    --nexora-connector-icon-background: #FFFFFF;
+    --nexora-connector-icon-color: #010102;
+    --nexora-connector-icon-border: #E0E0E0;
+    color-scheme: light;
   }
 
   .dark {
@@ -99,6 +124,34 @@
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 220 14% 17%;
     --sidebar-ring: 217 11% 60%;
+  }
+
+  :root.light .nexora-dashboard {
+    --background: 240 11% 96%;
+    --foreground: 0 0% 1%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 1%;
+    --primary: 0 0% 1%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 0 0% 1%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 40%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 0 0% 1%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 270 96% 56%;
+    --sidebar-background: 240 11% 96%;
+    --sidebar-foreground: 0 0% 1%;
+    --sidebar-primary: 0 0% 1%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 0 0% 1%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 270 96% 56%;
   }
 }
 
@@ -168,11 +221,77 @@
   }
 }
 
+:root.dark body {
+  background: #010102 !important;
+  color: #FFFFFF !important;
+}
+
+:root.light body {
+  background: #F5F5F7 !important;
+  color: #010102 !important;
+}
+
+.nexora-composer-form {
+  background: var(--nexora-composer-background);
+  border-color: var(--nexora-composer-border);
+}
+
+.nexora-composer-form:focus-within {
+  border-color: var(--nexora-composer-focus-border);
+}
+
+:root.light [class*="bg-[#080A0C]"],
+:root.light [class*="bg-[#010102]"],
+:root.light [class*="bg-[#111318]"] {
+  background-color: #FFFFFF !important;
+}
+
+:root.light [class*="bg-[#1A1D24]"],
+:root.light [class*="bg-[#1a1a1a]"] {
+  background-color: #EEEFF2 !important;
+}
+
+:root.light [class*="text-[#F0F2F5]"],
+:root.light [class*="text-[#D6DAE0]"],
+:root.light [class*="text-[#D9D9D9]"],
+:root.light [class*="text-[#D4D4D4]"],
+:root.light [class*="text-white"] {
+  color: #010102 !important;
+}
+
+:root.light [class*="text-white/"],
+:root.light [class*="text-[#B7BEC8]"],
+:root.light [class*="text-[#B7C0CB]"],
+:root.light [class*="text-[#A0A0A0]"],
+:root.light [class*="text-[#A8A8A8]"],
+:root.light [class*="text-[#8B929E]"],
+:root.light [class*="text-[#8B8B8B]"],
+:root.light [class*="text-[#6B7280]"],
+:root.light [class*="text-[#949494]"],
+:root.light [class*="text-[#8E8E8E]"],
+:root.light [class*="text-[#999]"] {
+  color: #5F6368 !important;
+}
+
+:root.light [class*="border-[#303640]"]:not(.nexora-composer-form),
+:root.light [class*="border-[#2B3038]"],
+:root.light [class*="border-[#272B33]"],
+:root.light [class*="border-white/"] {
+  border-color: #E0E0E0 !important;
+}
+
+:root.light .nexora-composer-form:not(:focus-within) {
+  border-color: var(--nexora-composer-border) !important;
+}
+
+:root.light .nexora-connector-logo {
+  --tw-ring-color: #F5F5F7 !important;
+}
+
 /* Hero section */
 #hero {
   position: relative !important;
   overflow: hidden !important;
-  background: var(--gradient-mesh);
 }
 
 /* Mobile — reduce opacity */

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import DashboardLayout from "./DashboardLayout";
 import ProductGeneratorChat from "./ProductGeneratorChat";
 
@@ -79,13 +80,15 @@ vi.mock("@/lib/auth/login", () => ({ signInWithGoogle: mocks.signInWithGoogle })
 
 const renderWorkspace = () => {
   return render(
-    <QueryClientProvider client={testQueryClient}>
-      <MemoryRouter>
-        <DashboardLayout>
-          <ProductGeneratorChat />
-        </DashboardLayout>
-      </MemoryRouter>
-    </QueryClientProvider>,
+    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="nexora-theme" enableSystem={false}>
+      <QueryClientProvider client={testQueryClient}>
+        <MemoryRouter>
+          <DashboardLayout>
+            <ProductGeneratorChat />
+          </DashboardLayout>
+        </MemoryRouter>
+      </QueryClientProvider>
+    </ThemeProvider>,
   );
 };
 
@@ -99,6 +102,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   localStorage.clear();
+  document.documentElement.classList.remove("light", "dark");
+  document.documentElement.style.colorScheme = "";
   mocks.authUser = { id: "test-user", email: "creator@example.com" };
   mocks.authLoading = false;
   mocks.subscriptionRow = { plan: "pro", plan_type: "pro", status: "active", end_date: null, expires_at: null };
@@ -147,12 +152,14 @@ describe("Chat-first product workspace", () => {
   it("starts with an uncluttered prompt and hides product types that are not enabled", () => {
     const { container } = renderWorkspace();
 
-    expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "var(--gradient-mesh)", color: "#F0F2F5" });
+    expect(container.querySelector(".nexora-chat-workspace")).toHaveStyle({ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" });
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "text-[#F0F2F5]", "placeholder:text-[#8B929E]");
-    expect(composer.closest("form")).toHaveClass("min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[rgba(112,34,252,0.3)]", "bg-[#010102]", "focus-within:border-[#7022FC]");
+    expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "placeholder:text-[#8B929E]");
+    expect(composer).toHaveStyle({ color: "var(--nexora-workspace-foreground)" });
+    expect(composer.closest("form")).toHaveClass("nexora-composer-form", "min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[#303640]", "focus-within:border-[rgba(112,34,252,0.3)]");
+    expect(composer.closest("form")).toHaveStyle({ background: "var(--nexora-composer-background)" });
     expect(composer.closest("form")?.parentElement?.parentElement).toHaveClass("px-0", "sm:px-4");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");
@@ -160,10 +167,35 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-active", "true");
     const sendButton = screen.getByRole("button", { name: "Send topic" });
     expect(sendButton).toBeDisabled();
-    expect(sendButton).toHaveClass("text-[#010102]");
-    expect(sendButton).toHaveStyle({ background: "var(--gradient-cta)" });
+    expect(sendButton).toHaveStyle({ background: "var(--nexora-send-background)", color: "var(--nexora-send-foreground)" });
     expect(screen.getByRole("button", { name: "Course" })).toHaveClass("hidden");
     expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
+  });
+
+  it("toggles dark and light mode and persists the choice under nexora-theme", async () => {
+    renderWorkspace();
+
+    await waitFor(() => expect(document.documentElement).toHaveClass("dark"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to light mode" }));
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("light");
+      expect(localStorage.getItem("nexora-theme")).toBe("light");
+    });
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Switch to dark mode" }));
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("dark");
+      expect(localStorage.getItem("nexora-theme")).toBe("dark");
+    });
+  });
+
+  it("restores a saved light mode when the workspace loads", async () => {
+    localStorage.setItem("nexora-theme", "light");
+    renderWorkspace();
+
+    await waitFor(() => expect(document.documentElement).toHaveClass("light"));
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
   });
 
   it("shows the character counter only above 1500, turns red at 1900, warns at 2000, and clears after send", () => {
@@ -303,12 +335,12 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     const plugButton = screen.getByRole("button", { name: "Open workspace capabilities" });
     const icon = plugButton.querySelector("svg");
-    expect(plugButton).toHaveClass("text-[#8B929E]");
+    expect(plugButton).toHaveStyle({ backgroundColor: "var(--nexora-connector-icon-background)", color: "var(--nexora-connector-icon-color)" });
     expect(icon).toHaveAttribute("viewBox", "0 0 24 24");
     expect(icon?.querySelector("g")).toHaveAttribute("stroke-width", "2");
     expect(icon?.querySelectorAll("path")).toHaveLength(4);
     fireEvent.click(plugButton);
-    expect(plugButton).toHaveClass("bg-[#1A1D24]", "text-[#F0F2F5]");
+    expect(plugButton).toHaveStyle({ backgroundColor: "var(--nexora-connector-icon-background)", color: "var(--nexora-connector-icon-color)" });
     const panel = screen.getByRole("dialog", { name: "Workspace capabilities" });
     expect(panel).toHaveTextContent("60 curated apps · seven categories");
     expect(panel).toHaveTextContent("Productivity");
@@ -316,6 +348,10 @@ describe("Chat-first product workspace", () => {
     expect(panel).toHaveTextContent("Research & Web");
     expect(within(panel).getByRole("tab", { name: "All" })).toHaveAttribute("aria-selected", "true");
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(60);
+    expect(panel.querySelector(".nexora-connector-logo")).toHaveStyle({
+      backgroundColor: "var(--nexora-connector-icon-background)",
+      borderColor: "var(--nexora-connector-icon-border)",
+    });
     expect(within(panel).queryByText(/Browse all 1,000\+ apps/)).not.toBeInTheDocument();
     expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[#F0F2F5]", "bg-[#F0F2F5]", "text-[#080A0C]");
     expect(panel).toHaveClass("!bottom-20", "!left-1/2", "max-h-[70dvh]");
@@ -544,13 +580,15 @@ describe("Chat-first product workspace", () => {
 
     mocks.authUser = null;
     workspace.rerender(
-      <QueryClientProvider client={testQueryClient}>
-        <MemoryRouter>
-          <DashboardLayout>
-            <ProductGeneratorChat />
-          </DashboardLayout>
-        </MemoryRouter>
-      </QueryClientProvider>,
+      <ThemeProvider attribute="class" defaultTheme="dark" storageKey="nexora-theme" enableSystem={false}>
+        <QueryClientProvider client={testQueryClient}>
+          <MemoryRouter>
+            <DashboardLayout>
+              <ProductGeneratorChat />
+            </DashboardLayout>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole("button", { name: "Download PDF" }));
 

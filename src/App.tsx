@@ -60,7 +60,7 @@ const AuthRoute = () => {
 };
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  <ThemeProvider attribute="class" defaultTheme="dark" storageKey="nexora-theme" enableSystem={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <LazyMotion features={domAnimation}>

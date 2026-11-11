@@ -12,12 +12,15 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Loader2,
+  Moon,
   Plus,
   Puzzle,
   Sparkles,
+  Sun,
   Video,
   X,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useToast } from "@/hooks/use-toast";
@@ -180,6 +183,8 @@ function estimatePages(content: string): number {
 
 const ProductGeneratorChat = () => {
   const { user, loading: authLoading, sendMagicLink } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
+  const currentTheme = resolvedTheme === "light" ? "light" : "dark";
   const location = useLocation();
   const navigate = useNavigate();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
@@ -748,7 +753,7 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--gradient-mesh)", color: "#F0F2F5" }}>
+    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
@@ -766,16 +771,27 @@ const ProductGeneratorChat = () => {
             </span>
           )}
         </div>
-        {hasConversation && (
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={startNewChat}
-            disabled={isGenerating}
-            className="rounded-lg px-3 py-2 text-sm text-[#A0A0A0] transition hover:bg-[#111318] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setTheme(currentTheme === "dark" ? "light" : "dark")}
+            aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition hover:bg-[#111318] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
           >
-            New chat
+            {currentTheme === "dark" ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
           </button>
-        )}
+          {hasConversation && (
+            <button
+              type="button"
+              onClick={startNewChat}
+              disabled={isGenerating}
+              className="rounded-lg px-3 py-2 text-sm text-[#A0A0A0] transition hover:bg-[#111318] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              New chat
+            </button>
+          )}
+        </div>
       </header>
 
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -925,7 +941,7 @@ const ProductGeneratorChat = () => {
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
-          <form onSubmit={submitTopic} className="relative flex min-h-[120px] flex-col rounded-[24px] border border-[rgba(112,34,252,0.3)] bg-[#010102] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[#7022FC] sm:px-6 sm:py-5">
+          <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -957,7 +973,8 @@ const ProductGeneratorChat = () => {
                 onKeyDown={handleComposerKeyDown}
                 disabled={isGenerating || isUploading}
                 placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
-                className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 pb-6 pr-2 text-[16px] leading-[1.5] text-[#F0F2F5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
+                className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 pb-6 pr-2 text-[16px] leading-[1.5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
+                style={{ color: "var(--nexora-workspace-foreground)" }}
                 aria-describedby="composer-hint"
               />
               {draft.length > 1500 && (
@@ -985,7 +1002,8 @@ const ProductGeneratorChat = () => {
                   aria-label="Open workspace capabilities"
                   aria-expanded={connectorPanelOpen}
                   aria-haspopup="dialog"
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${connectorPanelOpen ? "bg-[#1A1D24] text-[#F0F2F5]" : "text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  style={{ backgroundColor: "var(--nexora-connector-icon-background)", color: "var(--nexora-connector-icon-color)", borderColor: "var(--nexora-connector-icon-border)" }}
                 >
                   <PlugSocketIcon size={17} aria-hidden="true" />
                 </button>
@@ -1039,8 +1057,8 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#010102] shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-[filter] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "hover:brightness-105 active:brightness-95" : ""}`}
-                  style={{ background: "var(--gradient-cta)" }}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-[filter] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "hover:brightness-105 active:brightness-95" : ""}`}
+                  style={{ background: "var(--nexora-send-background)", color: "var(--nexora-send-foreground)" }}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>

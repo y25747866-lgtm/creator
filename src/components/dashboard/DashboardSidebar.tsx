@@ -26,11 +26,6 @@ import nexoraLogo from "@/assets/nexora-logo.webp";
 import { useDashboardAccess, useSidebarState } from "./DashboardLayout";
 import CreditBalance from "./CreditBalance";
 
-const ACTIVE_NAV_STYLE = {
-  background: "linear-gradient(135deg, rgba(112,34,252,0.2), rgba(240,159,51,0.08))",
-  borderLeft: "2px solid #7022FC",
-};
-
 const DashboardSidebar = () => {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
@@ -77,8 +72,7 @@ const DashboardSidebar = () => {
         title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
         aria-current={active ? "page" : undefined}
         aria-disabled={locked || undefined}
-        style={active ? ACTIVE_NAV_STYLE : undefined}
-        className={`${hidden ? "hidden" : ""} flex min-h-10 items-center gap-3 rounded-xl border-l-2 border-transparent px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
+        className={`${hidden ? "hidden" : ""} flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "bg-[#111318] text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
       >
         <Icon size={17} className="shrink-0" aria-hidden="true" />
         {showLabels && <span className="min-w-0 flex-1 truncate">{label}</span>}
@@ -100,7 +94,8 @@ const DashboardSidebar = () => {
     <>
       <aside
         aria-label="Workspace navigation"
-        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-white/[0.08] bg-[#080A0C] transition-[width,transform] duration-200 md:translate-x-0 ${
+        style={{ backgroundColor: "var(--nexora-sidebar-background)", borderColor: "var(--nexora-sidebar-border)" }}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-white/[0.08] transition-[width,transform] duration-200 md:translate-x-0 ${
           collapsed ? "md:w-20" : "md:w-[280px]"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -126,7 +121,7 @@ const DashboardSidebar = () => {
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
-          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} style={location.pathname === "/app/connectors" ? ACTIVE_NAV_STYLE : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl border-l-2 border-transparent px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Plug size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <span>Plugins</span>}
           </Link>

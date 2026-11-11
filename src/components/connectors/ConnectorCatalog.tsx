@@ -29,7 +29,10 @@ export function ConnectorLogo({ connector, className = "" }: { connector: Connec
   }, [connector.id]);
 
   return (
-    <span className={`flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-black/5 bg-white p-1.5 ${className}`}>
+    <span
+      className={`nexora-connector-logo flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border p-1.5 ${className}`}
+      style={{ backgroundColor: "var(--nexora-connector-icon-background)", borderColor: "var(--nexora-connector-icon-border)" }}
+    >
       {!fallbackFailed ? (
         <img
           src={failed ? fallbackUrl : getConnectorLogoUrl(connector)}
@@ -45,7 +48,7 @@ export function ConnectorLogo({ connector, className = "" }: { connector: Connec
           }}
         />
       ) : (
-        <span aria-label={`${connector.name} logo unavailable`} className="text-xs font-semibold text-[#252525]">{initial}</span>
+        <span aria-label={`${connector.name} logo unavailable`} className="text-xs font-semibold" style={{ color: "var(--nexora-connector-icon-color)" }}>{initial}</span>
       )}
     </span>
   );
