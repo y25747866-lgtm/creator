@@ -5,6 +5,7 @@ import {
   Download,
   Plus,
   Package,
+  Radar,
   FolderOpen,
   BarChart3,
   Plug,
@@ -72,7 +73,7 @@ const DashboardSidebar = () => {
         title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
         aria-current={active ? "page" : undefined}
         aria-disabled={locked || undefined}
-        className={`${hidden ? "hidden" : ""} flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "bg-[#111318] text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
+        className={`${hidden ? "hidden" : ""} nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${active ? "active bg-[#111318] text-white" : locked ? "text-white/35" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
       >
         <Icon size={17} className="shrink-0" aria-hidden="true" />
         {showLabels && <span className="min-w-0 flex-1 truncate">{label}</span>}
@@ -118,10 +119,20 @@ const DashboardSidebar = () => {
           <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35 ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
+          <Link
+            to="/dashboard/deep-search"
+            onClick={closeMobile}
+            title={showLabels ? undefined : "Deep Search · PRO"}
+            aria-current={location.pathname === "/dashboard/deep-search" ? "page" : undefined}
+            className={`nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-[#111318] ${location.pathname === "/dashboard/deep-search" ? "active bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}
+          >
+            <Radar size={17} className="shrink-0" aria-hidden="true" />
+            {showLabels && <><span className="min-w-0 flex-1 truncate">Deep Search</span><span className="rounded-full border border-[#7022FC]/35 bg-[#7022FC]/10 px-1.5 py-0.5 text-[9px] font-bold leading-none tracking-[0.08em] text-[#7022FC]">PRO</span></>}
+          </Link>
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
-          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
+          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-[#111318] ${location.pathname === "/app/connectors" ? "active bg-[#111318] text-white" : "text-white/60"} ${showLabels ? "" : "justify-center"}`}>
             <Plug size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <span>Plugins</span>}
           </Link>

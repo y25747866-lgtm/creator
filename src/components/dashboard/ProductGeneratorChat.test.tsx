@@ -170,6 +170,19 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
   });
 
+  it("offers Deep Search from the Add to chat quick-access menu", async () => {
+    renderWorkspace();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
+    const deepSearchLink = await screen.findByRole("link", { name: /Deep Search/ });
+
+    expect(deepSearchLink).toHaveAttribute("href", "/dashboard/deep-search");
+    expect(within(deepSearchLink).getByText("PRO")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Camera" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Picture" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "File" })).toBeInTheDocument();
+  });
+
   it("toggles dark and light mode and persists the choice under nexora-theme", async () => {
     renderWorkspace();
 

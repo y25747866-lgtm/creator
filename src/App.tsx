@@ -27,6 +27,7 @@ const SalesPageBuilder = lazy(() => import("./pages/dashboard/SalesPageBuilder")
 const AnalyticsDashboard = lazy(() => import("./pages/dashboard/AnalyticsDashboard"));
 const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 const SkillsPage = lazy(() => import("./pages/dashboard/SkillsPage"));
+const DeepSearchPage = lazy(() => import("./pages/dashboard/DeepSearchPage"));
 
 import ViewableRoute from "./components/ViewableRoute";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/whop/success" element={<WhopSuccess />} />
                 <Route path="/dashboard" element={<ViewableRoute allowGuestPreview><Dashboard /></ViewableRoute>} />
                 <Route path="/dashboard/ebook-generator" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
+                <Route path="/dashboard/deep-search" element={<ViewableRoute><DeepSearchPage /></ViewableRoute>} />
                 <Route
                   path="/dashboard/downloads"
                   element={

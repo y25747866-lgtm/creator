@@ -42,6 +42,7 @@ vi.mock("@/lib/chatPersistence", () => ({
 describe("DashboardSidebar Plugins navigation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.access = { loading: false, hasPaidSubscription: true, analyticsAccess: true, agentAccess: true, renewalRequired: false, isExpired: false, error: false };
     mocks.listCreatorConversations.mockResolvedValue([]);
     mocks.supabaseFrom.mockImplementation(() => ({
       select: () => ({
@@ -78,7 +79,43 @@ describe("DashboardSidebar Plugins navigation", () => {
 
     const link = screen.getByRole("link", { name: "Product Studio" });
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveClass("bg-[#111318]", "text-white");
+    expect(link).toHaveClass("nav-item", "active", "bg-[#111318]", "text-white");
+  });
+
+  it("places Deep Search between Downloads and Skills with an active state and PRO badge", () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard/deep-search"]}>
+        <DashboardSidebar />
+      </MemoryRouter>,
+    );
+
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    const links = Array.from(nav.querySelectorAll("a"));
+    const labels = links.map((link) => link.textContent ?? "");
+    const downloadsIndex = labels.findIndex((label) => label.includes("Downloads"));
+    const deepSearchIndex = labels.findIndex((label) => label.includes("Deep Search"));
+    const skillsIndex = labels.findIndex((label) => label.includes("Skills"));
+    const link = screen.getByRole("link", { name: /Deep Search/ });
+
+    expect(deepSearchIndex).toBeGreaterThan(downloadsIndex);
+    expect(deepSearchIndex).toBeLessThan(skillsIndex);
+    expect(link).toHaveAttribute("href", "/dashboard/deep-search");
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(link).toHaveClass("nav-item", "active");
+    expect(link).toHaveTextContent("PRO");
+  });
+
+  it("routes free users to the Deep Search page so its plan-specific upgrade prompt is shown", () => {
+    mocks.access = { loading: false, hasPaidSubscription: false, analyticsAccess: false, agentAccess: false, renewalRequired: true, isExpired: false, error: false };
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <DashboardSidebar />
+      </MemoryRouter>,
+    );
+
+    const link = screen.getByRole("link", { name: /Deep Search/ });
+    expect(link).toHaveAttribute("href", "/dashboard/deep-search");
+    expect(link).toHaveTextContent("PRO");
   });
 
   it("routes locked workspace pages and Analytics to pricing when there is no paid plan", () => {

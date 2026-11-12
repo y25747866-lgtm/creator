@@ -15,6 +15,7 @@ import {
   Moon,
   Plus,
   Puzzle,
+  Radar,
   Sparkles,
   Sun,
   Video,
@@ -1078,7 +1079,7 @@ const ProductGeneratorChat = () => {
                 <SheetDescription className="text-xs leading-5 text-[#6B7280]">Private uploads: up to five files per conversation, 50 MB each. Pictures, videos, and PDF files are supported. The ebook generator currently uses your text brief, not uploaded media.</SheetDescription>
               </SheetHeader>
 
-              <div className="mt-4 grid grid-cols-3 gap-2.5 sm:gap-3">
+              <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
                 <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
                   <Camera size={20} aria-hidden="true" />
                   <span className="text-xs font-medium">Camera</span>
@@ -1091,6 +1092,11 @@ const ProductGeneratorChat = () => {
                   <FileText size={20} aria-hidden="true" />
                   <span className="text-xs font-medium">File</span>
                 </button>
+                <Link to="/dashboard/deep-search" onClick={() => setAttachmentMenuOpen(false)} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#7022FC]/35 bg-[#7022FC]/[0.08] text-[#D4D4D4] transition hover:border-[#7022FC]/60 hover:bg-[#7022FC]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
+                  <span className="absolute right-2 top-2 rounded-full border border-[#7022FC]/40 bg-[#7022FC]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-[0.08em] text-[#7022FC]">PRO</span>
+                  <Radar size={20} className="text-[#7022FC]" aria-hidden="true" />
+                  <span className="text-xs font-medium">Deep Search</span>
+                </Link>
               </div>
 
               {isUploading && <p role="status" className="mt-3 text-center text-xs text-[#999]">Uploading privately…</p>}

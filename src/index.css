@@ -264,6 +264,17 @@ html {
   color: #010102 !important;
 }
 
+:root[data-theme="light"] .nav-item.active {
+  background: #F0EEFF !important;
+  border-left: 3px solid #7022FC !important;
+  color: #7022FC !important;
+}
+
+:root[data-theme="light"] .nav-item.active svg,
+:root[data-theme="light"] .nav-item.active i {
+  color: #7022FC !important;
+}
+
 :root[data-theme="light"] [class*="text-white/"],
 :root[data-theme="light"] [class*="text-[#B7BEC8]"],
 :root[data-theme="light"] [class*="text-[#B7C0CB]"],

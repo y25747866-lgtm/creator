@@ -11,6 +11,7 @@
     { "path": "/dashboard", "title": "Product Studio" },
     { "path": "/dashboard/ebook-generator", "title": "Ebook generator" },
     { "path": "/dashboard/downloads", "title": "Downloads" },
+    { "path": "/dashboard/deep-search", "title": "Deep Search" },
     { "path": "/dashboard/settings", "title": "Settings" },
     { "path": "/dashboard/skills", "title": "Skills" },
     { "path": "/app/connectors", "title": "Plugins" },
