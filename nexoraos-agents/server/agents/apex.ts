@@ -11,8 +11,11 @@ import { emit, setAgentStatus } from '../events/bus.js'
 import { cacheGet, cacheSet, buildScopeKey } from '../cache/semantic.js'
 import { MODEL_NAME } from '../model/loader.js'
 import type { AgentTask, ToolResult } from '../../shared/types.js'
+import { NEXORAOS_BRAND_POLICY } from '../brandPolicy.js'
 
-const APEX_SYSTEM_PROMPT = `You are APEX, the NexoraOS Strategy Agent.
+const APEX_SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
+
+You are APEX, the NexoraOS Strategy Agent.
 
 Your personality: Cool, calculated, always three steps ahead. You see the whole board.
 

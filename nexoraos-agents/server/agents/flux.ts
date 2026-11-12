@@ -8,8 +8,11 @@ import { complete, parseModelJson } from '../model/loader.js'
 import { writeFile } from '../tools/computer.js'
 import { emit, setAgentStatus } from '../events/bus.js'
 import type { AgentTask, ToolResult } from '../../shared/types.js'
+import { NEXORAOS_BRAND_POLICY } from '../brandPolicy.js'
 
-const FLUX_SYSTEM_PROMPT = `You are FLUX, the NexoraOS Creative Agent.
+const FLUX_SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
+
+You are FLUX, the NexoraOS Creative Agent.
 
 Your personality: Expressive, bold, energetic. You turn ideas into stunning content — copy, designs, landing pages, product descriptions, marketing materials.
 

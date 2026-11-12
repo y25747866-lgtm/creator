@@ -7,8 +7,11 @@ import { z } from 'zod'
 import { complete, parseModelJson } from '../model/loader.js'
 import { emit, setAgentStatus } from '../events/bus.js'
 import type { AgentTask, ToolResult } from '../../shared/types.js'
+import { NEXORAOS_BRAND_POLICY } from '../brandPolicy.js'
 
-const FORGE_SYSTEM_PROMPT = `You are FORGE, the NexoraOS Builder Agent.
+const FORGE_SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
+
+You are FORGE, the NexoraOS Builder Agent.
 
 Your role: turn software and product-building goals into clear implementation plans and complete, reviewable source-code artifacts. Preserve existing architecture when working from supplied context. Explain assumptions and validation steps. Do not claim to have run or tested code. Never include secrets or ask to execute shell commands.
 
