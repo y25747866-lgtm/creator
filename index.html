@@ -10,9 +10,8 @@
         try {
           mode = localStorage.getItem("nexora-theme") === "light" ? "light" : "dark";
         } catch (_) {}
-        document.documentElement.classList.remove("dark", "light");
-        document.documentElement.classList.add(mode);
-        document.documentElement.style.colorScheme = mode;
+        document.documentElement.setAttribute("data-theme", mode);
+        document.documentElement.className = mode;
       })();
     </script>
     <meta name="google-site-verification" content="PEpKCfx9erZxkdYk1CGDdB123G9UtgbF0XbjZeEbpaM" />
@@ -59,8 +58,8 @@
     <style>
       #root:empty ~ * { display: none; }
       body { background: #0a0a0a; }
-      :root.dark body { background: #010102 !important; color: #FFFFFF !important; }
-      :root.light body { background: #F5F5F7 !important; color: #010102 !important; }
+      :root[data-theme="dark"] body { background: #010102 !important; color: #FFFFFF !important; }
+      :root[data-theme="light"] body { background: #F5F5F7 !important; color: #010102 !important; }
     </style>
 
     <!-- Schema: Brand Entity -->

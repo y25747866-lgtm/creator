@@ -185,6 +185,11 @@ const ProductGeneratorChat = () => {
   const { user, loading: authLoading, sendMagicLink } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const currentTheme = resolvedTheme === "light" ? "light" : "dark";
+  const toggleTheme = () => {
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    setTheme(nextTheme);
+  };
   const location = useLocation();
   const navigate = useNavigate();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
@@ -774,7 +779,7 @@ const ProductGeneratorChat = () => {
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={() => setTheme(currentTheme === "dark" ? "light" : "dark")}
+            onClick={toggleTheme}
             aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition hover:bg-[#111318] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
@@ -1057,7 +1062,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-[filter] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "hover:brightness-105 active:brightness-95" : ""}`}
+                  className={`send-button flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-[filter] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "hover:brightness-105 active:brightness-95" : ""}`}
                   style={{ background: "var(--nexora-send-background)", color: "var(--nexora-send-foreground)" }}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
