@@ -41,6 +41,7 @@ import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicato
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
 import AgentTeam, { BotAvatar } from "./AgentTeam";
+import BrowserPanel from "./BrowserPanel";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
@@ -217,6 +218,7 @@ const ProductGeneratorChat = () => {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [scoutBrowsing, setScoutBrowsing] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
@@ -807,7 +809,7 @@ const ProductGeneratorChat = () => {
         </div>
       </header>
 
-      {!hasConversation && <AgentTeam workingAgent={isGenerating ? "NEXUS" : null} />}
+      {!hasConversation && <AgentTeam workingAgent={scoutBrowsing ? "SCOUT" : isGenerating ? "NEXUS" : null} />}
 
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
@@ -1211,6 +1213,7 @@ const ProductGeneratorChat = () => {
         pendingTopic={draft || readPendingChatTopic()}
         sendMagicLink={sendMagicLink}
       />
+      <BrowserPanel onBrowsingChange={setScoutBrowsing} />
     </div>
   );
 };
