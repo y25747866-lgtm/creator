@@ -40,7 +40,7 @@ import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
-import AgentTeam from "./AgentTeam";
+import AgentTeam, { BotAvatar } from "./AgentTeam";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
@@ -89,6 +89,12 @@ type ChatMessage = {
 type SelectorPopupPosition = { top: number; left: number; width: number; maxHeight: number };
 type ComposerAttachment = MediaAttachment & { localOnly?: boolean; file?: File };
 const MAX_COMPOSER_HEIGHT = 200;
+const PROMPT_SUGGESTIONS = [
+  { label: "Write an Ebook", prompt: "Write an ebook about " },
+  { label: "Create a Course", prompt: "Create a course that teaches " },
+  { label: "Deep Search", prompt: "Run a deep search on " },
+  { label: "Build a Newsletter", prompt: "Build a newsletter about " },
+];
 
 const PRODUCT_TEMPLATES: Template[] = [
   {
@@ -950,6 +956,27 @@ const ProductGeneratorChat = () => {
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
+          {!hasConversation && (
+            <div className="mb-3 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-3" aria-label="NexoraOS AI team mark">
+                <BotAvatar name="SCOUT" working={false} size={32} />
+                <span className="text-lg font-semibold tracking-[-0.03em] text-[#F0F2F5]">NexoraOS</span>
+                <BotAvatar name="FORGE" working={false} size={32} />
+              </div>
+              <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
+                {PROMPT_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion.label}
+                    type="button"
+                    onClick={() => { setDraft(suggestion.prompt); composerRef.current?.focus(); }}
+                    className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-[#B7BEC8] transition hover:border-white/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
+                  >
+                    {suggestion.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />

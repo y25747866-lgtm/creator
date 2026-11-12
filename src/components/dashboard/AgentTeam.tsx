@@ -24,10 +24,10 @@ const ACTIVITY = [
   { label: "Checking data", time: "now", Icon: ShieldCheck },
 ];
 
-function BotAvatar({ name, working }: { name: AgentName; working: boolean }) {
+export function BotAvatar({ name, working, size = 64 }: { name: AgentName; working: boolean; size?: 32 | 64 }) {
   return (
-    <span className={`flex h-16 w-16 items-center justify-center rounded-full border bg-[#111318] text-[#F0F2F5] ${working ? "border-white/55" : "border-white/15"}`} aria-hidden="true">
-      <Bot size={28} strokeWidth={1.5} />
+    <span className={`flex items-center justify-center rounded-full border bg-[#111318] text-[#F0F2F5] ${size === 64 ? "h-16 w-16" : "h-8 w-8"} ${working ? "border-white/55" : "border-white/15"}`} aria-hidden="true">
+      <Bot size={size === 64 ? 28 : 15} strokeWidth={1.5} />
       <span className="sr-only">{name} avatar</span>
     </span>
   );

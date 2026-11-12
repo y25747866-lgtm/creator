@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, X, ArrowLeft, LogOut } from "lucide-react";
+import { Check, LockKeyhole, X, ArrowLeft, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
 import nexoraLogo from "@/assets/nexora-logo.webp";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const PAYMENT_LINKS = {
   starter: "https://whop.com/checkout/plan_P7Ank0qdHtHHF",
@@ -16,7 +17,7 @@ const PAYMENT_LINKS = {
   hybrid: "https://whop.com/checkout/plan_o0WkvL4RKGBw6/?session=chs_3XG1bMPMla6fNj",
 };
 
-type Feature = { text: string; included: boolean };
+type Feature = { text: string; included: boolean; upgradeTo?: string };
 type PlanDef = {
   id: "starter" | "pro" | "hybrid";
   name: string;
@@ -41,8 +42,10 @@ const PLANS: PlanDef[] = [
       { text: "AI Product Generator (1 product/month)", included: true },
       { text: "Marketing Studio", included: true },
       { text: "Sales Page Builder", included: true },
-      { text: "Analytics Dashboard", included: false },
-      { text: "Agent system", included: false },
+      { text: "Deep Search", included: false, upgradeTo: "Pro/Hybrid" },
+      { text: "Hybrid Agentic Mode", included: false, upgradeTo: "Hybrid" },
+      { text: "Priority generation", included: false, upgradeTo: "Pro/Hybrid" },
+      { text: "All agent access", included: false, upgradeTo: "Hybrid" },
     ],
     badge: "",
     cta: "Start Creating",
@@ -60,6 +63,11 @@ const PLANS: PlanDef[] = [
       { text: "Downloads & Exports", included: true },
       { text: "Priority generation queue", included: true },
       { text: "Credit top-up packs available", included: true },
+      { text: "1,000 credits/month", included: true },
+      { text: "All product types", included: true },
+      { text: "Deep Search", included: true },
+      { text: "SCOUT + NEXUS + FORGE", included: true },
+      { text: "Hybrid unlimited", included: false, upgradeTo: "Hybrid" },
     ],
     popular: true,
     badge: "Most Popular",
@@ -80,6 +88,10 @@ const PLANS: PlanDef[] = [
       { text: "Multi-agent parallel execution", included: true },
       { text: "WhatsApp + Telegram delivery", included: true },
       { text: "Priority support", included: true },
+      { text: "Unlimited generation", included: true },
+      { text: "All 5 agents", included: true },
+      { text: "Deep Search", included: true },
+      { text: "No credit deduction", included: true },
     ],
     badge: "Full AI Operating System",
     cta: "Start Hybrid AI OS",
@@ -227,14 +239,25 @@ const Pricing = () => {
                 <p className={`mt-5 text-sm font-semibold ${plan.popular ? "text-white" : "text-[#A6ADB8]"}`}>{plan.credits}</p>
                 <p className="mt-3 min-h-12 text-sm leading-6 text-[#6B7280]">{plan.description}</p>
               </div>
-              <ul className="flex-1 space-y-4 py-7">
-                {plan.features.map((feature) => (
-                  <li key={feature.text} className="flex items-start gap-3 text-sm leading-5">
-                    {feature.included ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-white" aria-hidden="true" /> : <X className="mt-0.5 h-4 w-4 shrink-0 text-[#6B7280]" aria-hidden="true" />}
-                    <span className={feature.included ? "text-[#D6DAE0]" : "text-[#6B7280]"}>{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
+              <TooltipProvider delayDuration={150}>
+                <ul className="flex-1 space-y-4 py-7">
+                  {plan.features.map((feature) => (
+                    <li key={feature.text} className="flex items-start gap-3 text-sm leading-5">
+                      {feature.included ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-white" aria-hidden="true" /> : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button type="button" aria-label={`${feature.text} locked`} className="mt-0.5 shrink-0 rounded-sm text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                              <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Upgrade to {feature.upgradeTo ?? "Pro/Hybrid"} to unlock</TooltipContent>
+                        </Tooltip>
+                      )}
+                      <span className={feature.included ? "text-[#D6DAE0]" : "text-[#6B7280]"}>{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </TooltipProvider>
               <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-white text-black hover:bg-[#F0F2F5]" : "border border-white/15 bg-[#1A1D24] text-[#F0F2F5] hover:bg-[#242832]"}`}>{plan.cta}</Button>
             </Card>
           ))}
