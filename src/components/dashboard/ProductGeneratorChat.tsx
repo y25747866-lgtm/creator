@@ -40,6 +40,7 @@ import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
+import AgentTeam from "./AgentTeam";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
@@ -800,6 +801,8 @@ const ProductGeneratorChat = () => {
         </div>
       </header>
 
+      {!hasConversation && <AgentTeam workingAgent={isGenerating ? "NEXUS" : null} />}
+
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
           <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation">
@@ -944,7 +947,7 @@ const ProductGeneratorChat = () => {
         )}
       </div>
 
-      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute left-0 right-0 top-1/2 z-10 w-full -translate-y-1/2 px-3 sm:px-6"}>
+      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
           <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
