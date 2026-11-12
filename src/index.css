@@ -17,7 +17,6 @@ html {
 @layer base {
   :root {
     --radius: 0.75rem;
-    --gradient-cta: linear-gradient(135deg, #7022FC 0%, #F09F33 100%);
     --nexora-workspace-background: #010102;
     --nexora-workspace-foreground: #FFFFFF;
     --nexora-sidebar-background: #080A0C;
@@ -25,8 +24,6 @@ html {
     --nexora-composer-background: #010102;
     --nexora-composer-border: rgba(112, 34, 252, 0.3);
     --nexora-composer-focus-border: rgba(112, 34, 252, 0.3);
-    --nexora-send-background: var(--gradient-cta);
-    --nexora-send-foreground: #010102;
     --nexora-connector-icon-background: #1a1a1a;
     --nexora-connector-icon-color: #FFFFFF;
     --nexora-connector-icon-border: transparent;
@@ -69,8 +66,6 @@ html {
     --nexora-sidebar-border: #E0E0E0;
     --nexora-composer-background: #FFFFFF;
     --nexora-composer-border: rgba(112, 34, 252, 0.3);
-    --nexora-send-background: #010102;
-    --nexora-send-foreground: #FFFFFF;
     --nexora-connector-icon-background: #FFFFFF;
     --nexora-connector-icon-color: #010102;
     --nexora-connector-icon-border: #E0E0E0;
@@ -248,21 +243,6 @@ html {
 
 .nexora-composer-form:focus-within {
   border-color: var(--nexora-composer-focus-border);
-}
-
-[data-theme="dark"] .send-button {
-  --nexora-send-background: var(--gradient-cta);
-  --nexora-send-foreground: #010102;
-}
-
-[data-theme="light"] .send-button {
-  --nexora-send-background: #010102;
-  --nexora-send-foreground: #FFFFFF;
-}
-
-[aria-label="Workspace navigation"] a[aria-current="page"] {
-  background: linear-gradient(135deg, rgba(112, 34, 252, 0.2), rgba(240, 159, 51, 0.08));
-  border-left: 2px solid #7022FC;
 }
 
 :root[data-theme="light"] [class*="bg-[#080A0C]"],

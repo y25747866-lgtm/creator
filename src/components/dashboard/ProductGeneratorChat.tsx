@@ -1062,8 +1062,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`send-button flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-[filter] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "hover:brightness-105 active:brightness-95" : ""}`}
-                  style={{ background: "var(--nexora-send-background)", color: "var(--nexora-send-foreground)" }}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
                 >
                   {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>

@@ -165,9 +165,7 @@ describe("Chat-first product workspace", () => {
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-size", "pulse-inner");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-strength", "0.45");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-active", "true");
-    const sendButton = screen.getByRole("button", { name: "Send topic" });
-    expect(sendButton).toBeDisabled();
-    expect(sendButton).toHaveStyle({ background: "var(--nexora-send-background)", color: "var(--nexora-send-foreground)" });
+    expect(screen.getByRole("button", { name: "Send topic" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Course" })).toHaveClass("hidden");
     expect(screen.getByRole("button", { name: "Workbook" })).toHaveClass("hidden");
   });
