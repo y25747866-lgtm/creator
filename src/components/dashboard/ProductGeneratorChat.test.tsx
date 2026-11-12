@@ -322,7 +322,7 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
     fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
     const sheet = screen.getByRole("dialog", { name: "Add to chat" });
-    for (const action of ["Camera", "Picture", "File", "Downloads", "Skills"]) {
+    for (const action of ["Camera", "Picture", "File", "Deep Search", "Downloads", "Skills"]) {
       expect(within(sheet).getByText(action)).toBeInTheDocument();
     }
     expect(within(sheet).queryByText("Library")).not.toBeInTheDocument();

@@ -109,6 +109,14 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/dashboard/deep-search"
+                  element={
+                    <ViewableRoute>
+                      <DeepSearchPage />
+                    </ViewableRoute>
+                  }
+                />
+                <Route
                   path="/app/connectors"
                   element={
                     <ViewableRoute>
