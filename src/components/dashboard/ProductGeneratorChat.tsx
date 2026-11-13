@@ -809,8 +809,6 @@ const ProductGeneratorChat = () => {
         </div>
       </header>
 
-      {!hasConversation && <AgentTeam workingAgent={scoutBrowsing ? "SCOUT" : isGenerating ? "NEXUS" : null} />}
-
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
           <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation">
@@ -957,7 +955,8 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
-          <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="block w-full">
+          <AgentTeam workingAgent={scoutBrowsing ? "SCOUT" : isGenerating ? "NEXUS" : null} />
+          <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
               <div className="flex items-center gap-3" aria-label="NexoraOS AI team mark">
