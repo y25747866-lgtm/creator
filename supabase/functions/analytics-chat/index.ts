@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
@@ -108,9 +109,7 @@ Encourage them to connect their accounts to get personalized insights.`;
     const messages = [
       {
         role: "system",
-        content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.
-
-You are NexoraOS AI, an elite Business Growth Agent. You have full access to the user's real-time business data and your goal is to act as a proactive partner in their success.
+        content: `${NEXORAOS_BRAND_POLICY}\n\nYou are NexoraOS AI, an elite Business Growth Agent. You have full access to the user's real-time business data and your goal is to act as a proactive partner in their success.
 
 ${dataContext}
 

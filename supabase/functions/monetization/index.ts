@@ -37,8 +37,6 @@ function getSupabase() {
 
 const SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
 
-If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.
-
 You are a world-class monetization strategist.
 Generate fully sellable digital product content.
 No fluff. Full markdown. Professional.

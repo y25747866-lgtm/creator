@@ -960,9 +960,9 @@ const ProductGeneratorChat = () => {
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
               <div className="flex items-center gap-3" aria-label="NexoraOS AI team mark">
-                <BotAvatar name="SCOUT" working={false} size={32} />
+                <BotAvatar name="SCOUT" working={false} size={48} />
                 <span className="text-lg font-semibold tracking-[-0.03em] text-[#F0F2F5]">NexoraOS</span>
-                <BotAvatar name="FORGE" working={false} size={32} />
+                <BotAvatar name="FORGE" working={false} size={48} />
               </div>
               <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
                 {PROMPT_SUGGESTIONS.map((suggestion) => (

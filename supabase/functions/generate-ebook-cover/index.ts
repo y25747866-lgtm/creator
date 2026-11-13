@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
@@ -81,7 +82,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou generate short, vivid image prompts for ebook covers. Be concise and specific.`
+            content: `${NEXORAOS_BRAND_POLICY}\n\nYou generate short, vivid image prompts for ebook covers. Be concise and specific.`
           },
           {
             role: 'user',

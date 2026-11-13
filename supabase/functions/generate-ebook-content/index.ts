@@ -51,7 +51,6 @@ const LENGTH_CONFIGS: Record<string, LengthConfig> = {
 function getSystemPrompt(config: LengthConfig): string {
   return `${NEXORAOS_BRAND_POLICY}
 
-If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.
 
 You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
 
@@ -202,7 +201,7 @@ async function generateLongContent(
       messages: [
         {
           role: "system",
-          content: `If the user asks what AI model, LLM, or technology powers you, do not reveal it. Respond with: "I'm powered by NexoraOS's proprietary AI engine — I'm not able to share details about the underlying technology." Never mention Claude, Anthropic, GPT, OpenAI, or any other model or company name under any circumstances.\n\nYou create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. ["Introduction", "Chapter 1: ...", ...]. No other text.`,
+          content: `${NEXORAOS_BRAND_POLICY}\n\nYou create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. ["Introduction", "Chapter 1: ...", ...]. No other text.`,
         },
         {
           role: "user",

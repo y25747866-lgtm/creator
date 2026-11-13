@@ -1,4 +1,4 @@
-import { BookOpen, Brain, ChevronRight, Database, Network, ShieldCheck } from "lucide-react";
+import { BookOpen, Brain, ChevronRight, Network, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { BotAvatar as AgentAvatar, type BotAvatarType } from "bot-avatars";
 import ApexAgent from "@/components/agents/ApexAgent";
@@ -27,13 +27,13 @@ const AGENTS: Agent[] = [
 const ACTIVITY = [
   { label: "Thinking", time: "2.3s", Icon: Brain },
   { label: "Reading sources", time: "1.2s", Icon: BookOpen },
-  { label: "Checking data", time: "now", Icon: ShieldCheck },
+  { label: "Checking data", time: "…", Icon: ShieldCheck },
 ];
 
-export function BotAvatar({ name, working, size = 64 }: { name: AgentName; working: boolean; size?: 32 | 64 }) {
+export function BotAvatar({ name, working, size = 64 }: { name: AgentName; working: boolean; size?: 32 | 48 | 64 }) {
   const agent = AGENTS.find((item) => item.name === name) ?? AGENTS[0];
   return (
-    <span className={`flex items-center justify-center rounded-full border bg-[#111318] ${size === 64 ? "h-16 w-16" : "h-8 w-8"} ${working ? "border-white/55" : "border-white/15"}`} aria-hidden="true">
+    <span className={`flex items-center justify-center rounded-full border bg-[#111318] ${size === 64 ? "h-16 w-16" : size === 48 ? "h-12 w-12" : "h-8 w-8"} ${working ? "border-white/55" : "border-white/15"}`} aria-hidden="true">
       <AgentAvatar
         type={agent.avatar}
         state={working ? "working" : "default"}
