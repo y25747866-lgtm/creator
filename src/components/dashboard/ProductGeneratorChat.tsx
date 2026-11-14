@@ -37,7 +37,7 @@ import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
-import AgentTeam, { type AgentStatus } from "./AgentTeam";
+import AgentTeam, { ActiveAgentStrip, type AgentName, type AgentStatus } from "./AgentTeam";
 import BrowserPanel from "./BrowserPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -217,6 +217,8 @@ const ProductGeneratorChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [scoutBrowsing, setScoutBrowsing] = useState(false);
+  const [activeAgent, setActiveAgent] = useState<AgentName>("FORGE");
+  const [completedAgent, setCompletedAgent] = useState<AgentName | null>(null);
   const [isSleeping, setIsSleeping] = useState(false);
   const [lastInteractionAt, setLastInteractionAt] = useState(() => Date.now());
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
@@ -243,8 +245,10 @@ const ProductGeneratorChat = () => {
   const selectorPopupRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const generationLock = useRef(false);
+  const previousGenerating = useRef(false);
   const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
+  const chatStarted = hasConversation;
   const markUserActivity = useCallback(() => {
     setLastInteractionAt(Date.now());
     setIsSleeping(false);
@@ -258,6 +262,16 @@ const ProductGeneratorChat = () => {
     return () => window.clearTimeout(sleepTimer);
   }, [isGenerating, lastInteractionAt, scoutBrowsing]);
   const agentStatus: AgentStatus = isGenerating || scoutBrowsing ? "working" : isSleeping ? "sleeping" : "idle";
+  useEffect(() => {
+    if (previousGenerating.current && !isGenerating) {
+      previousGenerating.current = false;
+      setCompletedAgent(activeAgent);
+      const timer = window.setTimeout(() => setCompletedAgent(null), 1800);
+      return () => window.clearTimeout(timer);
+    }
+    previousGenerating.current = isGenerating;
+    return undefined;
+  }, [activeAgent, isGenerating]);
 
   useEffect(() => {
     if (!capabilityMenuOpen) {
@@ -572,6 +586,8 @@ const ProductGeneratorChat = () => {
         return;
       }
       const progressId = makeId();
+      setActiveAgent("NEXUS");
+      setCompletedAgent(null);
       setMessages((current) => [
         ...current,
         { id: makeId(), role: "user", kind: "text", text: topic, attachments },
@@ -634,6 +650,8 @@ const ProductGeneratorChat = () => {
     }
 
     generationLock.current = true;
+    setActiveAgent("FORGE");
+    setCompletedAgent(null);
     setIsGenerating(true);
     setSelectedTemplate(template.id);
 
@@ -771,6 +789,7 @@ const ProductGeneratorChat = () => {
     activeConversationIdRef.current = null;
     setMessages([]);
     setPendingAttachments([]);
+    setCompletedAgent(null);
     setDraft("");
     setActiveProduct("Ebook");
     setSelectedTemplate(null);
@@ -795,6 +814,10 @@ const ProductGeneratorChat = () => {
           >
             <SidebarUnfoldLineIcon size={20} style={sidebarExpanded ? { transform: "scaleX(-1)" } : undefined} aria-hidden="true" />
           </button>
+          <div className={`flex items-center gap-2 overflow-hidden transition-[opacity,transform,max-width] duration-300 ease-in-out ${chatStarted ? "max-w-[160px] translate-y-0 opacity-100" : "pointer-events-none max-w-0 -translate-y-4 opacity-0"}`} aria-hidden={!chatStarted}>
+            <img src="/nexoraos-logo-animated.gif" alt="" className="h-8 w-8 shrink-0 rounded-md object-contain" />
+            <span className="truncate text-sm font-semibold tracking-[-0.02em] text-[#F0F2F5]">NexoraOS</span>
+          </div>
           {hasConversation && messages[0]?.role === "user" && (
             <span className="text-sm text-[#B7BEC8] truncate max-w-[200px] sm:max-w-[400px]">
               {messages[0].text?.slice(0, 50)}{(messages[0].text?.length ?? 0) > 50 ? "…" : ""}
@@ -825,12 +848,22 @@ const ProductGeneratorChat = () => {
         </div>
       </header>
 
-      <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        {!hasConversation ? (
-          <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation">
+      <div ref={conversationRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
+          <div className="flex w-full max-w-3xl flex-col items-center gap-7 py-8 sm:gap-9">
+            <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent transition-[transform,opacity] duration-300 ease-in-out" style={{ transform: chatStarted ? "scale(0.3) translateY(-200px)" : "scale(1) translateY(0)" }}>
+              <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="mx-auto h-auto w-full max-w-[480px] object-contain" />
+            </div>
+            <AgentTeam status={agentStatus} />
+            <div className="flex w-full justify-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
+              {PROMPT_SUGGESTIONS.map((suggestion) => (
+                <button key={suggestion.label} type="button" onClick={() => { setDraft(suggestion.prompt); composerRef.current?.focus(); }} className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-[#B7BEC8] transition hover:border-white/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">{suggestion.label}</button>
+              ))}
+            </div>
             {historyLoading && <Skeleton role="status" aria-label="Opening saved conversation" className="h-5 w-48" />}
-          </section>
-        ) : (
+          </div>
+        </section>
+        {hasConversation ? (
           <section className="mx-auto flex w-full max-w-[800px] flex-col gap-7 px-4 py-8 sm:px-8 sm:py-10" aria-label="Conversation" aria-live="polite">
             {messages.map((message) => (
               <div key={message.id} className={message.role === "user" ? "flex justify-end" : "flex justify-start"}>
@@ -966,32 +999,15 @@ const ProductGeneratorChat = () => {
             ))}
             <div className="h-2 shrink-0" aria-hidden="true" />
           </section>
-        )}
+        ) : null}
       </div>
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
-          <AgentTeam status={agentStatus} />
+          <div className={`mb-3 transition-[opacity,transform,max-height] duration-300 ease-in-out ${chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? "max-h-14 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-2 opacity-0"}`}>
+            {chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? <ActiveAgentStrip agent={scoutBrowsing ? "SCOUT" : completedAgent ?? activeAgent} status={isGenerating || scoutBrowsing ? "working" : "done"} /> : null}
+          </div>
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
-          {!hasConversation && (
-            <div className="mb-3 flex flex-col items-center gap-3">
-              <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent">
-                <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="h-auto w-full max-w-[480px] object-contain" />
-              </div>
-              <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
-                {PROMPT_SUGGESTIONS.map((suggestion) => (
-                  <button
-                    key={suggestion.label}
-                    type="button"
-                    onClick={() => { setDraft(suggestion.prompt); composerRef.current?.focus(); }}
-                    className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-[#B7BEC8] transition hover:border-white/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
-                  >
-                    {suggestion.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
@@ -1229,7 +1245,7 @@ const ProductGeneratorChat = () => {
         pendingTopic={draft || readPendingChatTopic()}
         sendMagicLink={sendMagicLink}
       />
-      <BrowserPanel onBrowsingChange={setScoutBrowsing} />
+      <BrowserPanel onBrowsingChange={(browsing) => { setScoutBrowsing(browsing); if (browsing) setActiveAgent("SCOUT"); }} />
     </div>
   );
 };

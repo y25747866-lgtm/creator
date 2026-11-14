@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { BookOpen, Brain, ChevronRight, Network, ShieldCheck } from "lucide-react";
 import type { BotAvatarType } from "bot-avatars";
 
-type AgentName = "SCOUT" | "NEXUS" | "FORGE" | "FLUX" | "APEX";
+export type AgentName = "SCOUT" | "NEXUS" | "FORGE" | "FLUX" | "APEX";
 export type AgentStatus = "idle" | "working" | "sleeping";
 type AgentTeamProps = { status?: AgentStatus; workingAgent?: AgentName | null };
 type Agent = { name: AgentName; role: string; description: string; avatar: BotAvatarType };
@@ -45,6 +45,16 @@ export function BotAvatar({ name, status = "idle", working = false, size = 64 }:
       </Suspense>
       <span className="sr-only">{name} avatar</span>
     </span>
+  );
+}
+
+export function ActiveAgentStrip({ agent, status }: { agent: AgentName; status: "working" | "done" }) {
+  return (
+    <div className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-[#111318] px-3 transition-[opacity,transform] duration-300 ease-in-out" role="status" aria-live="polite">
+      <BotAvatar name={agent} status={status === "working" ? "working" : "idle"} size={48} />
+      <span className="text-xs font-medium tracking-[0.06em] text-[#F0F2F5]">{agent}</span>
+      <span className="text-xs text-[#8B929E]">{status === "working" ? "Working…" : "Done ✓"}</span>
+    </div>
   );
 }
 
