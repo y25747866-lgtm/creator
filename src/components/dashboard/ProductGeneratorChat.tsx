@@ -960,7 +960,7 @@ const ProductGeneratorChat = () => {
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
-              <img src="/nexoraos-logo-animated.png" alt="NexoraOS" className="h-auto max-h-32 w-full max-w-[420px] object-contain" />
+              <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="h-auto max-h-32 w-full max-w-[420px] object-contain" />
               <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
                 {PROMPT_SUGGESTIONS.map((suggestion) => (
                   <button
