@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { isPaidPlan, isSubscriptionActive, normalizePlanType } from "@/lib/subscription";
 import DashboardSidebar from "./DashboardSidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SidebarContextType {
   collapsed: boolean;
@@ -23,6 +24,13 @@ const SidebarContext = createContext<SidebarContextType>({
 
 export const useSidebarState = () => useContext(SidebarContext);
 const SIDEBAR_KEY = "nexora_sidebar_collapsed";
+
+const DashboardShellSkeleton = () => (
+  <div className="app-shell-skeleton flex min-h-screen bg-[#080A0C]" role="status" aria-label="Loading workspace">
+    <aside className="hidden w-[280px] shrink-0 border-r border-white/10 p-4 md:block"><Skeleton className="mb-8 h-7 w-32" /><div className="space-y-3">{["w-4/5", "w-3/5", "w-3/4", "w-1/2", "w-2/3"].map((width, index) => <Skeleton key={index} className={`h-5 ${width}`} />)}</div></aside>
+    <main className="flex min-w-0 flex-1 flex-col items-center px-4 pt-20 sm:px-8"><div className="mb-6 flex gap-3">{[1, 2, 3, 4, 5].map((item) => <Skeleton key={item} className="h-16 w-16 rounded-full" />)}</div><Skeleton className="mb-5 h-28 w-full max-w-[420px]" /><div className="mb-5 flex gap-2"><Skeleton className="h-8 w-24 rounded-full" /><Skeleton className="h-8 w-28 rounded-full" /><Skeleton className="h-8 w-24 rounded-full" /><Skeleton className="h-8 w-28 rounded-full" /></div><Skeleton className="h-20 w-full max-w-3xl rounded-xl" /></main>
+  </div>
+);
 
 export interface DashboardAccessState {
   loading: boolean;
@@ -121,6 +129,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       // Sidebar state remains usable if local storage is unavailable.
     }
   };
+
+  if (authLoading) return <DashboardShellSkeleton />;
 
   return (
     <DashboardAccessContext.Provider value={dashboardAccess}>

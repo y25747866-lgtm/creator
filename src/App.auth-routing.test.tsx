@@ -53,13 +53,13 @@ describe("dashboard authentication routing", () => {
     expect(screen.queryByText("Private downloads route")).not.toBeInTheDocument();
   });
 
-  it("keeps sign-in blank while the Supabase session is unresolved", () => {
+  it("shows the app shell skeleton while the Supabase session is unresolved", () => {
     window.history.replaceState({}, "", "/auth/signin");
     mocks.loading = true;
     render(<App />);
 
     expect(screen.queryByText("Sign-in route")).not.toBeInTheDocument();
-    expect(document.querySelector("div[aria-hidden='true']")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading NexoraOS" })).toBeInTheDocument();
   });
 
   it("redirects an active session away from sign-in without rendering the sign-in page", async () => {

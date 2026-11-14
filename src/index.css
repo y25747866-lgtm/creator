@@ -11,14 +11,19 @@
   border-radius: 8px;
 }
 
-.nexoraos-logo img {
+.nexoraos-brand-logo {
+  background: transparent;
+}
+
+.nexoraos-brand-logo img {
   mix-blend-mode: multiply;
   background: transparent;
   width: 100%;
   max-width: 480px;
 }
 
-:root[data-theme="dark"] .nexoraos-logo img {
+:root[data-theme="dark"] .nexoraos-brand-logo,
+:root[data-theme="dark"] .nexoraos-brand-logo img {
   mix-blend-mode: normal;
 }
 

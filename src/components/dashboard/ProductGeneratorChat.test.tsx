@@ -174,10 +174,12 @@ describe("Chat-first product workspace", () => {
     renderWorkspace();
 
     fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
-    const deepSearchLink = await screen.findByRole("link", { name: /Deep Search/ });
+    const deepSearchButton = await screen.findByRole("button", { name: /Deep Search/ });
 
-    expect(deepSearchLink).toHaveAttribute("href", "/dashboard/deep-search");
-    expect(within(deepSearchLink).getByText("PRO")).toBeInTheDocument();
+    expect(within(deepSearchButton).getByText("PRO")).toBeInTheDocument();
+    fireEvent.click(deepSearchButton);
+    expect(screen.getByRole("textbox")).toHaveValue("Run a deep search on ");
+    fireEvent.click(screen.getByRole("button", { name: "Add to chat" }));
     expect(screen.getByRole("button", { name: "Camera" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Picture" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "File" })).toBeInTheDocument();

@@ -975,7 +975,7 @@ const ProductGeneratorChat = () => {
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
-              <div className="nexoraos-logo w-full max-w-[480px]">
+              <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent">
                 <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="h-auto w-full max-w-[480px] object-contain" />
               </div>
               <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
@@ -1136,11 +1136,11 @@ const ProductGeneratorChat = () => {
                   <span className="text-xs font-medium">Add file</span>
                   <span className="sr-only">File</span>
                 </button>
-                <Link to="/dashboard/deep-search" onClick={() => setAttachmentMenuOpen(false)} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#7022FC]/35 bg-[#7022FC]/[0.08] text-[#D4D4D4] transition hover:border-[#7022FC]/60 hover:bg-[#7022FC]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
+                <button type="button" onClick={() => { setDraft("Run a deep search on "); setAttachmentMenuOpen(false); window.setTimeout(() => composerRef.current?.focus(), 0); }} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#7022FC]/35 bg-[#7022FC]/[0.08] text-[#D4D4D4] transition hover:border-[#7022FC]/60 hover:bg-[#7022FC]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
                   <span className="absolute right-2 top-2 rounded-full border border-[#7022FC]/40 bg-[#7022FC]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-[0.08em] text-[#7022FC]">PRO</span>
                   <Radar size={20} className="text-[#7022FC]" aria-hidden="true" />
                   <span className="text-xs font-medium">Deep Search</span>
-                </Link>
+                </button>
                 <button type="button" onClick={() => { setActiveSystem("hybrid-agentic"); setAttachmentMenuOpen(false); }} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
                   <Zap size={20} aria-hidden="true" />
                   <span className="text-center text-xs font-medium">Hybrid Thinking mode</span>
