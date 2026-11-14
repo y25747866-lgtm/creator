@@ -16,15 +16,14 @@
 }
 
 .nexoraos-brand-logo img {
-  mix-blend-mode: multiply;
+  mix-blend-mode: screen;
   background: transparent;
   width: 100%;
   max-width: 480px;
 }
 
-:root[data-theme="dark"] .nexoraos-brand-logo,
-:root[data-theme="dark"] .nexoraos-brand-logo img {
-  mix-blend-mode: normal;
+:root[data-theme="light"] .nexoraos-brand-logo img {
+  mix-blend-mode: multiply;
 }
 
 @keyframes shimmer {
