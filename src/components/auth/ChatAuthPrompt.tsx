@@ -1,8 +1,9 @@
 import { FormEvent, useState } from "react";
-import { Loader2, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { signInWithGoogle } from "@/lib/auth/login";
 
+import { Skeleton } from "@/components/ui/skeleton";
 type ChatAuthPromptProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -107,7 +108,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
               disabled={isSendingEmail || isSendingGoogle}
               className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
-              {isSendingEmail ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
+              {isSendingEmail ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
               {isSendingEmail ? "Sending sign-in link…" : "Continue with email"}
             </button>
           </form>
@@ -125,7 +126,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
           disabled={isSendingEmail || isSendingGoogle}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3A3A] bg-[#222] px-4 text-sm font-medium text-[#E0E0E0] transition hover:bg-[#292929] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
         >
-          {isSendingGoogle ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
+          {isSendingGoogle ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
           {isSendingGoogle ? "Opening Google sign-in…" : "Continue with Google"}
         </button>
 

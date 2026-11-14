@@ -6,8 +6,7 @@ import {
   Compass,
   ExternalLink,
   Github,
-  Loader2,
-  MoreHorizontal,
+    MoreHorizontal,
   Pencil,
   Plus,
   Puzzle,
@@ -17,6 +16,7 @@ import {
   Upload,
   WandSparkles,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -575,7 +575,7 @@ export default function SkillsPage() {
           )}
 
           {loading ? (
-            <div role="status" className="flex min-h-36 items-center justify-center text-sm text-white/45"><Loader2 size={18} className="mr-2 animate-spin" />Loading skills…</div>
+            <div role="status" className="flex min-h-36 items-center justify-center text-sm text-white/45"><Skeleton className="h-4 w-4" aria-label="Loading" />Loading skills…</div>
           ) : visibleSkills.length === 0 ? (
             <section className="rounded-2xl border border-dashed border-white/15 bg-[#111318] px-5 py-14 text-center">
               <Puzzle size={22} className="mx-auto text-white/35" aria-hidden="true" />
@@ -711,7 +711,7 @@ export default function SkillsPage() {
                 <input id="github-skill-url" type="url" value={githubUrl} onChange={(event) => setGithubUrl(event.target.value)} placeholder="https://github.com/owner/repository" className="h-11 w-full rounded-lg border border-white/10 bg-[#101010] px-3 text-sm text-white caret-white outline-none placeholder:text-white/30 focus:border-[#8C96A3]" />
                 {importError && <p role="alert" className="rounded-lg border border-white/10 bg-[#080A0C] px-3 py-2 text-xs leading-5 text-white/65">{importError}</p>}
                 <button type="submit" disabled={isImporting || !githubUrl.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#F0F2F5] px-4 text-sm font-medium text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
-                  {isImporting ? <Loader2 size={15} className="animate-spin" /> : <Github size={15} />}
+                  {isImporting ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <Github size={15} />}
                   {isImporting ? "Importing…" : "Fetch skill.json"}
                 </button>
                 <p className="text-xs leading-5 text-white/35">Only the manifest is fetched. Skill tools are metadata here and are not executed by this page.</p>

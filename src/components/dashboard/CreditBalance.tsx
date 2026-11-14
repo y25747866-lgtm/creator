@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Coins, ExternalLink, Loader2 } from "lucide-react";
+import { ChevronDown, Coins, ExternalLink } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 const CREDIT_PACKS = [
   { credits: 1_000, price: "$19", href: "https://whop.com/checkout/plan_P7Ank0qdHtHHF" },
   { credits: 5_000, price: "$49", href: "https://whop.com/checkout/plan_YvUfetosyziGZ" },
@@ -94,7 +95,7 @@ export default function CreditBalance({ showLabels }: CreditBalanceProps) {
           </div>
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.16em] text-white/35">Credits</p>
-            <p className="truncate text-sm font-semibold text-white" aria-live="polite">{loading ? "Loading…" : formatCredits(balance)}</p>
+            <div className="truncate text-sm font-semibold text-white" aria-live="polite">{loading ? <Skeleton className="h-4 w-16" aria-label="Loading credits" /> : formatCredits(balance)}</div>
           </div>
         </div>
         {topUpsAvailable && (
@@ -117,7 +118,7 @@ export default function CreditBalance({ showLabels }: CreditBalanceProps) {
       </div>
       {!loading && ceiling && <p className="mt-2 text-[10px] text-white/35">{formatCredits(balance)} / {formatCredits(ceiling)} monthly credits</p>}
       {!loading && !ceiling && <p className="mt-2 text-[10px] text-white/35">Top-up packs available</p>}
-      {loading && <Loader2 className="mt-2 h-3 w-3 animate-spin text-white/35" aria-label="Loading credits" />}
+      {loading && <Skeleton className="h-4 w-4" aria-label="Loading" />}
     </div>
   );
 }

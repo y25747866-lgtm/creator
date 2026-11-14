@@ -4,6 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface, #111318) 25%, var(--color-border, #303640) 50%, var(--color-surface, #111318) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.nexoraos-logo img {
+  mix-blend-mode: multiply;
+  background: transparent;
+  width: 100%;
+  max-width: 480px;
+}
+
+:root[data-theme="dark"] .nexoraos-logo img {
+  mix-blend-mode: normal;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }

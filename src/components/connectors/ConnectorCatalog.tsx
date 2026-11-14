@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Search, X } from "lucide-react";
+import { Check, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   CONNECTOR_CATEGORIES,
@@ -10,6 +10,7 @@ import {
   type ConnectorDefinition,
   type ConnectorCategory,
 } from "@/lib/connectors/catalog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { startComposioConnection } from "@/lib/connectors/api";
 import { useConnectorConnections } from "@/hooks/useConnectorConnections";
 
@@ -116,7 +117,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
           <p className="text-[11px] font-medium text-[#F0F2F5]">Apps</p>
           <p className="mt-1 text-[10px] text-[#8B929E]">{CONNECTORS.length} curated apps · seven categories</p>
         </div>
-        {loading && <Loader2 size={14} className="mt-0.5 animate-spin text-[#8B929E]" aria-label="Checking connections" />}
+        {loading && <Skeleton className="h-4 w-4" aria-label="Loading" />}
       </div>
 
       {!compact && (
@@ -256,7 +257,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
                 disabled={Boolean(connectingId) || connectorIsConnected(selected) || connectorStatusUnknown(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
                 className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#F0F2F5] px-4 py-2 text-xs font-medium text-[#080A0C] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
               >
-                {connectingId === selected.id ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
+                {connectingId === selected.id ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
                 {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : connectorStatusUnknown(selected) ? (loading ? "Checking status" : "Status unavailable") : "Connect"}
               </button>
             </div>

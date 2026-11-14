@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client"; // adjust path
-import { Loader2 } from "lucide-react";
-
+import { Skeleton } from "@/components/ui/skeleton";
 export default function AuthCallback() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,15 +52,7 @@ export default function AuthCallback() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-6">
-        <Loader2 className="h-16 w-16 animate-spin text-white" />
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Completing sign in...
-        </h2>
-        <p className="text-muted-foreground">
-          Please wait a moment
-        </p>
-      </div>
+      <Skeleton role="status" aria-label="Completing sign in" className="h-24 w-72" />
     </div>
   );
 }

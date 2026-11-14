@@ -4,10 +4,10 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText, BookOpen, FileStack, RefreshCw,
-  ArrowRight, Download, Sparkles, Loader2,
-  CheckCircle2, Image as ImageIcon, Search,
+  ArrowRight, Download, Sparkles,   CheckCircle2, Image as ImageIcon, Search,
   ChevronRight, Globe, Lock, Check
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -773,7 +773,7 @@ const EbookGenerator = () => {
             disabled={isSearching}
             className="w-full h-14 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl transition-all"
           >
-            {isSearching ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
+            {isSearching ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <Search className="w-5 h-5 mr-2" />}
             Find Winning Niches
           </Button>
         </div>
@@ -782,7 +782,7 @@ const EbookGenerator = () => {
       {isSearching && (
         <div className="text-center py-20">
           <div className="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full mb-6">
-            <Loader2 className="w-5 h-5 animate-spin text-white" />
+            <Skeleton className="h-4 w-4" aria-label="Loading" />
             <span className="text-white font-medium">{searchStatus}</span>
           </div>
           <div className="max-w-xs mx-auto">

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +6,7 @@ import { signIn, signInWithGoogle } from "@/lib/auth/login";
 import { supabase } from "@/integrations/supabase/client";
 import nexoraLogo from "@/assets/nexora-logo.webp";
 
+import { Skeleton } from "@/components/ui/skeleton";
 const ParticleField = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -170,7 +170,7 @@ const NexoraOSSignIn = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#121212]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#6B7280]" />
+        <Skeleton className="h-4 w-4" aria-label="Loading" />
       </div>
     );
   }
@@ -214,7 +214,7 @@ const NexoraOSSignIn = () => {
           </div>
           {error && <p role="alert" className="text-xs text-[#F0F2F5]">{error}</p>}
           <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-bold text-black transition hover:bg-[#F0F2F5] disabled:cursor-not-allowed disabled:opacity-50">
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Continue →"}
+            {isLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : "Continue →"}
           </button>
         </form>
 
@@ -226,10 +226,10 @@ const NexoraOSSignIn = () => {
 
         <div className="flex flex-col gap-3">
           <button type="button" onClick={handleGoogleSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Google" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md border border-[#E0E0E0] bg-white px-4 text-sm font-medium text-black transition hover:bg-[#F0F0F0] disabled:cursor-not-allowed disabled:opacity-50">
-            {isGoogleLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><GoogleMark /><span>Continue with Google</span></>}
+            {isGoogleLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <><GoogleMark /><span>Continue with Google</span></>}
           </button>
           <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md bg-[#5865F2] px-4 text-sm font-medium text-white transition hover:bg-[#4F5BDE] disabled:cursor-not-allowed disabled:opacity-50">
-            {isDiscordLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <><DiscordMark /><span>Continue with Discord</span></>}
+            {isDiscordLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <><DiscordMark /><span>Continue with Discord</span></>}
           </button>
         </div>
 

@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { keysetCursorFilter, toKeysetPage, type KeysetCursor } from "@/lib/keysetPagination";
 import {
   Link2, Unlink, RefreshCw, DollarSign, ShoppingCart, Package, TrendingUp,
-  Send, Bot, User, Loader2, BarChart2, Lock,
+  Send, Bot, User, BarChart2, Lock,
 } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from "recharts";
 import whopLogo from "@/assets/whop-logo.webp";
@@ -538,7 +538,7 @@ const AnalyticsDashboard = () => {
                 onMouseEnter={(e) => { e.currentTarget.style.color = '#FFFFFF'; e.currentTarget.style.borderColor = '#333333'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666666'; e.currentTarget.style.borderColor = '#252525'; }}
               >
-                <RefreshCw className={cn("w-4 h-4", loadingData && "animate-spin")} />
+                {loadingData ? <Skeleton className="h-4 w-4 rounded-sm" aria-label="Refreshing analytics" /> : <RefreshCw className="w-4 h-4" />}
               </Button>
             </div>
           </div>
@@ -611,7 +611,7 @@ const AnalyticsDashboard = () => {
                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FF6B6B'; e.currentTarget.style.color = '#FF6B6B'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#252525'; e.currentTarget.style.color = '#FFFFFF'; }}
                       >
-                        {pendingDisconnects.includes(platform.id) ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Unlink className="w-4 h-4 mr-2" />}
+                        {pendingDisconnects.includes(platform.id) ? <Skeleton className="h-4 w-4" aria-hidden="true" /> : <Unlink className="w-4 h-4 mr-2" />}
                         {pendingDisconnects.includes(platform.id) ? "Disconnecting…" : "Disconnect"}
                       </Button>
                     </div>
@@ -888,7 +888,7 @@ const AnalyticsDashboard = () => {
                           borderRadius: '8px'
                         }}
                       >
-                        {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {chatLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <Send className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
@@ -957,7 +957,7 @@ const AnalyticsDashboard = () => {
                   fontSize: '14px'
                 }}
               >
-                {connecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {connecting ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
                 {connectError ? "Retry connection" : "Connect"}
               </Button>
             </div>

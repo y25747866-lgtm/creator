@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,10 +16,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (authLoading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-white" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+        <Skeleton role="status" aria-label="Checking access" className="h-24 w-64" />
       </div>
     );
   }

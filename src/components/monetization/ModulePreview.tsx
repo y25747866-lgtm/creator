@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import {
-  Loader2,
-  Download,
+    Download,
   RefreshCw,
   Copy,
   CheckCircle2,
@@ -283,7 +282,7 @@ export default function ModulePreview({
             disabled={generating}
           >
             {generating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Skeleton className="h-4 w-4" aria-label="Loading" />
             ) : (
               <RefreshCw className="w-4 h-4" />
             )}

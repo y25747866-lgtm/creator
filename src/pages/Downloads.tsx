@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Download, Eye, FileText, Image as ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { BookOpen, Download, Eye, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import DashboardLayout, { useDashboardAccess } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { deleteGeneratedEbook } from "@/lib/ebookRepository";
 import { generatePDF, downloadCoverImage } from "@/lib/pdfGenerator";
 import { recordMetric } from "@/lib/productTracking";
 import { Link } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Downloads() {
   const { ebooks, loading, error, refresh, user } = useOwnedEbooks();
@@ -71,7 +72,7 @@ export default function Downloads() {
           {error && <p role="alert" className="rounded-lg border border-white/10 bg-[#111318] px-4 py-3 text-sm text-white/65">Could not refresh your saved files: {error}</p>}
 
           {loading ? (
-            <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-[#111318] py-16 text-sm text-white/55"><Loader2 size={17} className="mr-2 animate-spin" />Loading generated files…</div>
+            <div role="status" aria-label="Loading generated files" className="grid gap-3 sm:grid-cols-2"><Skeleton className="h-28 w-full bg-[#111318]" /><Skeleton className="h-28 w-full bg-[#111318]" /><Skeleton className="h-28 w-full bg-[#111318]" /><Skeleton className="h-28 w-full bg-[#111318]" /></div>
           ) : ebooks.length === 0 ? (
             <section className="rounded-2xl border border-dashed border-white/15 bg-[#111318] px-6 py-16 text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03]"><BookOpen size={21} className="text-white/55" /></div>
@@ -100,7 +101,7 @@ export default function Downloads() {
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                       <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]" onClick={() => setPreview(ebook)}><Eye size={14} className="mr-1.5" />Preview</Button>
                       {ebook.coverImageUrl && <Button size="sm" variant="outline" className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]" onClick={() => void downloadCoverImage(ebook)}><ImageIcon size={14} className="mr-1.5" />Cover</Button>}
-                      <Button size="sm" disabled={!hasAccess || downloadingId === ebook.id} title={hasAccess ? "Download PDF" : "Upgrade to download"} className="bg-white text-[#080A0C] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(ebook)}>{downloadingId === ebook.id ? <Loader2 size={14} className="mr-1.5 animate-spin" /> : <Download size={14} className="mr-1.5" />}Download PDF</Button>
+                      <Button size="sm" disabled={!hasAccess || downloadingId === ebook.id} title={hasAccess ? "Download PDF" : "Upgrade to download"} className="bg-white text-[#080A0C] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(ebook)}>{downloadingId === ebook.id ? <Skeleton className="mr-1.5 h-3.5 w-3.5 rounded-sm" aria-label="Preparing download" /> : <Download size={14} className="mr-1.5" />}Download PDF</Button>
                       <Button size="icon" variant="ghost" aria-label={`Delete ${ebook.title}`} className="h-9 w-9 text-white/55 hover:bg-white/[0.06] hover:text-white" onClick={() => setDeleting(ebook)}><Trash2 size={15} /></Button>
                     </div>
                   </motion.article>

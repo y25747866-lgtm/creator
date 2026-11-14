@@ -10,7 +10,6 @@ import {
   FileText,
   FolderOpen,
   Image as ImageIcon,
-  Loader2,
   Plus,
   Puzzle,
   Radar,
@@ -38,8 +37,9 @@ import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
-import AgentTeam from "./AgentTeam";
+import AgentTeam, { type AgentStatus } from "./AgentTeam";
 import BrowserPanel from "./BrowserPanel";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
   return (
@@ -217,6 +217,8 @@ const ProductGeneratorChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [scoutBrowsing, setScoutBrowsing] = useState(false);
+  const [isSleeping, setIsSleeping] = useState(false);
+  const [lastInteractionAt, setLastInteractionAt] = useState(() => Date.now());
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
@@ -243,6 +245,19 @@ const ProductGeneratorChat = () => {
   const generationLock = useRef(false);
   const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
+  const markUserActivity = useCallback(() => {
+    setLastInteractionAt(Date.now());
+    setIsSleeping(false);
+  }, []);
+  useEffect(() => {
+    if (isGenerating || scoutBrowsing) {
+      setIsSleeping(false);
+      return undefined;
+    }
+    const sleepTimer = window.setTimeout(() => setIsSleeping(true), Math.max(0, 5 * 60 * 1000 - (Date.now() - lastInteractionAt)));
+    return () => window.clearTimeout(sleepTimer);
+  }, [isGenerating, lastInteractionAt, scoutBrowsing]);
+  const agentStatus: AgentStatus = isGenerating || scoutBrowsing ? "working" : isSleeping ? "sleeping" : "idle";
 
   useEffect(() => {
     if (!capabilityMenuOpen) {
@@ -768,7 +783,7 @@ const ProductGeneratorChat = () => {
   };
 
   return (
-    <div className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
+    <div onPointerDown={markUserActivity} onKeyDown={markUserActivity} className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
@@ -813,7 +828,7 @@ const ProductGeneratorChat = () => {
       <div ref={conversationRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {!hasConversation ? (
           <section className="mx-auto flex h-full min-h-full w-full max-w-[800px] items-center justify-center px-5 sm:px-8" aria-label="New conversation">
-            {historyLoading && <p role="status" className="text-xs text-[#8B8B8B]">Opening saved conversation…</p>}
+            {historyLoading && <Skeleton role="status" aria-label="Opening saved conversation" className="h-5 w-48" />}
           </section>
         ) : (
           <section className="mx-auto flex w-full max-w-[800px] flex-col gap-7 px-4 py-8 sm:px-8 sm:py-10" aria-label="Conversation" aria-live="polite">
@@ -879,7 +894,7 @@ const ProductGeneratorChat = () => {
                       <div className="rounded-2xl border border-[#2B3038] bg-[#111318] p-4 sm:p-5">
                         <div className="flex items-center gap-3">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#303640] bg-[#111318] text-[#8C96A3]">
-                            {message.complete ? <Check size={15} /> : <Loader2 size={15} className="animate-spin" />}
+                            {message.complete ? <Check size={15} /> : <Skeleton className="h-3.5 w-3.5 rounded-sm" aria-label="Generating" />}
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-[#F0F2F5]">{message.complete ? "Chapter preparation complete" : "Creating your ebook"}</p>
@@ -956,11 +971,13 @@ const ProductGeneratorChat = () => {
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
-          <AgentTeam workingAgent={scoutBrowsing ? "SCOUT" : isGenerating ? "NEXUS" : null} />
+          <AgentTeam status={agentStatus} />
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
-              <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="h-auto max-h-32 w-full max-w-[420px] object-contain" />
+              <div className="nexoraos-logo w-full max-w-[480px]">
+                <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="h-auto w-full max-w-[480px] object-contain" />
+              </div>
               <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
                 {PROMPT_SUGGESTIONS.map((suggestion) => (
                   <button
@@ -1093,7 +1110,7 @@ const ProductGeneratorChat = () => {
                   aria-label="Send topic"
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
                 >
-                  {isGenerating ? <Loader2 size={17} className="animate-spin" aria-hidden="true" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
+                  {isGenerating ? <Skeleton className="h-4 w-4 rounded-sm" aria-label="Generating" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
               </div>
             </div>
@@ -1130,7 +1147,7 @@ const ProductGeneratorChat = () => {
                 </button>
               </div>
 
-              {isUploading && <p role="status" className="mt-3 text-center text-xs text-[#999]">Uploading privately…</p>}
+              {isUploading && <Skeleton role="status" aria-label="Uploading privately" className="mx-auto mt-3 h-3 w-32" />}
               <div className="my-4 border-t border-white/10" />
               <div className="space-y-1">
                 <Link to="/dashboard/downloads" onClick={() => setAttachmentMenuOpen(false)} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm text-[#B7BEC8] transition hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">

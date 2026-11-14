@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
-  Loader2,
-  Sparkles,
+    Sparkles,
   CheckCircle2,
   Megaphone,
   AlertCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -287,7 +287,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
           {statuses.map((s, i) => (
             <div key={i} className="flex gap-2 items-center">
               {s.status === "generating" && (
-                <Loader2 className="animate-spin w-4 h-4" />
+                <Skeleton className="h-4 w-4" aria-label="Loading" />
               )}
 
               {s.status === "done" && (

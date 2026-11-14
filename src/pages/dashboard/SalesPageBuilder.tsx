@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Copy, Trash2, CheckCircle2, Sparkles, ChevronDown } from "lucide-react";
+import { Copy, Trash2, CheckCircle2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,7 @@ import { useEbookStore, Ebook } from "@/hooks/useEbookStore";
 import { useLocalPagination } from "@/hooks/useLocalPagination";
 import { DEFAULT_PAGE_SIZE, keysetCursorFilter, toKeysetPage, type KeysetCursor, type KeysetPage } from "@/lib/keysetPagination";
 
+import { Skeleton } from "@/components/ui/skeleton";
 interface SalesPageDraft {
   id: string;
   headline: string;
@@ -424,7 +425,7 @@ const SalesPageBuilder = () => {
                   onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
                   onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {loading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <Sparkles className="w-4 h-4" />}
                   {loading ? "Checking access / generating…" : "Generate 3 Sales Page Drafts"}
                 </button>
               </div>
