@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { User, Palette, Bell, Shield, CreditCard, LogOut, Moon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowRight, Bell, CreditCard, FileText, Globe2, HelpCircle, LockKeyhole, LogOut, Moon, Shield, Sun, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,279 +10,118 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useEbookStore } from "@/hooks/useEbookStore";
 import { getPlanDisplayName, getPlanPrice } from "@/lib/subscription";
 
-const SectionIcon = ({ icon: Icon }: { icon: any }) => (
-  <div style={{
-    width: '32px', height: '32px', background: '#1A1A1A',
-    border: '1px solid #222222', borderRadius: '6px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-  }}>
-    <Icon className="w-[14px] h-[14px] text-white" />
-  </div>
-);
+type SettingRowProps = {
+  icon: LucideIcon;
+  label: string;
+  description?: string;
+  onClick?: () => void;
+  to?: string;
+};
+
+function SettingRow({ icon: Icon, label, description, onClick, to }: SettingRowProps) {
+  const content = (
+    <>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]">
+        <Icon size={16} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1 text-left">
+        <span className="block text-sm font-medium text-[#F0F2F5]">{label}</span>
+        {description && <span className="mt-0.5 block truncate text-xs text-[#6B7280]">{description}</span>}
+      </span>
+      <ArrowRight size={16} className="shrink-0 text-[#6B7280] transition group-hover:translate-x-0.5 group-hover:text-[#B7BEC8]" aria-hidden="true" />
+    </>
+  );
+
+  if (to) return <Link to={to} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition last:border-0 hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8C96A3]">{content}</Link>;
+  return <button type="button" onClick={onClick} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition last:border-0 hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8C96A3]">{content}</button>;
+}
+
+function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <section aria-labelledby={`${label.toLowerCase()}-settings-heading`}>
+      <h2 id={`${label.toLowerCase()}-settings-heading`} className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B7280]">{label}</h2>
+      <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#111318]">{children}</div>
+    </section>
+  );
+}
 
 const Settings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const {
-    subscription, planType, hasPaidSubscription, expirationDate, loading: subLoading,
-  } = useSubscription();
-
-  const [profile, setProfile] = useState({ name: "", email: "" });
-  const [notifications, setNotifications] = useState({ email: true, updates: true });
+  const { resolvedTheme, setTheme } = useTheme();
+  const { subscription, planType, hasPaidSubscription, expirationDate, loading: subLoading } = useSubscription();
+  const [notifications, setNotifications] = useState(true);
 
   useEffect(() => {
-    if (user?.email) {
-      setProfile((prev) => ({ ...prev, email: user.email || "" }));
-    }
-  }, [user]);
+    if (!user) navigate("/auth/signin?redirect=/dashboard/settings", { replace: true });
+  }, [navigate, user]);
 
-  const handleSaveProfile = () => {
-    toast({ title: "Profile Updated", description: "Your profile has been saved successfully." });
-  };
+  const displayPlan = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
+  const displayPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
+  const currentTheme = resolvedTheme === "light" ? "light" : "dark";
+  const accountName = String(user?.user_metadata?.full_name || user?.email || "Account");
+  const initials = useMemo(() => accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "A", [accountName]);
 
   const handleSignOut = async () => {
     useEbookStore.getState().clearAllEbooks();
     await signOut();
-    toast({ title: "Signed out", description: "You have been signed out successfully." });
+    toast({ title: "Signed out" });
     navigate("/");
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  };
-
-  const isExpired = subscription?.status === "expired";
-
-  // FIX: If plan is expired or not paid, always show Free plan info
-  // Previously, it would still show "Pro Plan" even after expiry
-  const displayPlanName = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
-  const displayPlanPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
-
-  // Badge logic
-  const badgeText = isExpired ? "Expired" : hasPaidSubscription ? "Active" : "Free";
-  const badgeStyle = isExpired
-    ? { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#EF4444' }
-    : hasPaidSubscription
-    ? { background: 'rgba(0,212,170,0.1)', border: '1px solid rgba(0,212,170,0.3)', color: '#00d4aa' }
-    : { background: '#1A1A1A', border: '1px solid #2A2A2A', color: 'rgba(255,255,255,0.6)' };
-
-  const labelStyle = { fontFamily: "'DM Sans', sans-serif", fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#555555', marginBottom: '8px', display: 'block' };
-  const inputStyle = { background: '#161616', border: '1px solid #1A1A1A', borderRadius: '6px', color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '14px', padding: '12px 14px', width: '100%' };
-  const cardStyle = { background: '#111111', border: '1px solid #1A1A1A', borderRadius: '10px', padding: '32px' };
+  const handlePlaceholder = (label: string) => toast({ title: `${label} settings`, description: "This settings panel is ready for the next account integration." });
 
   return (
     <DashboardLayout>
-      <div style={{ background: '#0A0A0A', padding: '40px', paddingBottom: '120px' }}>
-        <div className="max-w-3xl mx-auto space-y-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>Settings</h1>
-            <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#555555' }}>Manage your account and preferences.</p>
-          </motion.div>
-
-          {/* Subscription */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }}>
-            <div style={cardStyle}>
-              <div className="flex items-center gap-3 mb-6">
-                <SectionIcon icon={CreditCard} />
-                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Subscription</h2>
-              </div>
-              {subLoading ? (
-                <p style={{ color: '#555555', fontSize: '13px' }}>Loading subscription...</p>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg gap-3" style={{ background: '#0F0F0F', border: '1px solid #1A1A1A' }}>
-                    <div>
-                      {/* FIX: Now correctly shows "Free Plan" when expired or not paid */}
-                      <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF', textTransform: 'capitalize' }}>
-                        {displayPlanName} Plan
-                      </p>
-                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#555555', marginTop: '4px' }}>
-                        {hasPaidSubscription && subscription
-                          ? `Active since ${formatDate(subscription.start_date || subscription.started_at)} · ${displayPlanPrice}`
-                          : displayPlanPrice}
-                      </p>
-                    </div>
-                    {/* FIX: Badge now shows correct color — teal for active, red for expired, grey for free */}
-                    <span style={{
-                      fontSize: '10px', fontWeight: 700, padding: '4px 12px', borderRadius: '4px',
-                      textTransform: 'uppercase', letterSpacing: '0.05em',
-                      ...badgeStyle
-                    }}>
-                      {badgeText}
-                    </span>
-                  </div>
-
-                  {hasPaidSubscription && subscription && (
-                    <div className="p-3 rounded-lg" style={{ background: '#161616', border: '1px solid #1A1A1A' }}>
-                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#666666' }}>
-                        Expires on {expirationDate}
-                      </p>
-                    </div>
-                  )}
-
-                  {isExpired && (
-                    <div className="p-3 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                      <p style={{ fontSize: '13px', color: '#EF4444' }}>
-                        Your subscription has expired. Please upgrade to continue using premium features.
-                      </p>
-                    </div>
-                  )}
-
-                  {!hasPaidSubscription && (
-                    <button onClick={() => navigate("/pricing")} style={{
-                      width: '100%', background: '#FFFFFF', color: '#0A0A0A',
-                      fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '14px',
-                      padding: '14px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                      transition: 'background 150ms',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#F0F0F0'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
-                    >
-                      Upgrade Plan
-                    </button>
-                  )}
-                </div>
-              )}
+      <div className="min-h-screen bg-[#080A0C] px-4 py-8 text-[#F0F2F5] sm:px-8 sm:py-12">
+        <div className="mx-auto max-w-2xl">
+          <header className="mb-8 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">Workspace</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#F0F2F5]">Settings</h1>
+              <p className="mt-2 text-sm leading-6 text-[#6B7280]">Manage your account, preferences, and plan.</p>
             </div>
-          </motion.div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[#111318] text-xs font-semibold">{initials}</div>
+          </header>
 
-          {/* Profile */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <div style={cardStyle}>
-              <div className="flex items-center gap-3 mb-6">
-                <SectionIcon icon={User} />
-                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Profile Information</h2>
-              </div>
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label style={labelStyle}>Full Name</label>
-                  <Input placeholder="Enter your name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={inputStyle} className="placeholder:text-[#333333] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                </div>
-                <div>
-                  <label style={labelStyle}>Email Address</label>
-                  <Input type="email" value={profile.email} disabled style={{ ...inputStyle, color: 'rgba(255,255,255,0.3)', cursor: 'not-allowed' }} />
-                </div>
-              </div>
-              <button onClick={handleSaveProfile} style={{
-                marginTop: '20px', background: 'transparent', border: '1px solid #1A1A1A',
-                color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
-                fontWeight: 600, padding: '10px 20px', borderRadius: '6px', cursor: 'pointer',
-                transition: 'border-color 150ms',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
-              >
-                Save Changes
+          <div className="space-y-7">
+            <SettingsGroup label="Account">
+              <SettingRow icon={UserRound} label="Profile" description={accountName} onClick={() => handlePlaceholder("Profile")} />
+              <SettingRow icon={Globe2} label="Email" description={user?.email || "Not connected"} onClick={() => handlePlaceholder("Email")} />
+              <SettingRow icon={LockKeyhole} label="Password" description="Update your sign-in method" onClick={() => handlePlaceholder("Password")} />
+            </SettingsGroup>
+
+            <SettingsGroup label="Preferences">
+              <button type="button" onClick={() => setNotifications((value) => !value)} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8C96A3]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]"><Bell size={16} aria-hidden="true" /></span>
+                <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Notifications</span><span className="mt-0.5 block text-xs text-[#6B7280]">Email and product updates</span></span>
+                <Switch checked={notifications} onCheckedChange={setNotifications} aria-label="Toggle notifications" />
               </button>
+              <SettingRow icon={Globe2} label="Language" description="English" onClick={() => handlePlaceholder("Language")} />
+              <div className="flex min-h-16 items-center gap-3 px-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]">{currentTheme === "dark" ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}</span>
+                <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Appearance</span><span className="mt-0.5 block text-xs text-[#6B7280]">{currentTheme === "dark" ? "Dark mode" : "Light mode"}</span></span>
+                <Switch checked={currentTheme === "dark"} onCheckedChange={(checked) => { const next = checked ? "dark" : "light"; document.documentElement.setAttribute("data-theme", next); setTheme(next); }} aria-label="Toggle dark mode" />
+              </div>
+            </SettingsGroup>
+
+            <SettingsGroup label="Billing">
+              <SettingRow icon={CreditCard} label="Current plan" description={subLoading ? "Loading plan" : `${displayPlan} · ${displayPrice}${subscription?.end_date || expirationDate ? ` · Renews ${expirationDate || subscription?.end_date}` : ""}`} onClick={() => handlePlaceholder("Current plan")} />
+              <SettingRow icon={ArrowRight} label="Upgrade" description={hasPaidSubscription ? "Change your plan" : "Choose a paid plan"} to="/pricing" />
+            </SettingsGroup>
+
+            <SettingsGroup label="Support">
+              <SettingRow icon={HelpCircle} label="Help center" description="Get answers and contact support" onClick={() => handlePlaceholder("Help center")} />
+              <SettingRow icon={Shield} label="Privacy policy" description="How NexoraOS handles your data" onClick={() => handlePlaceholder("Privacy policy")} />
+              <SettingRow icon={FileText} label="Terms of service" description="The rules for using NexoraOS" onClick={() => handlePlaceholder("Terms of service")} />
+            </SettingsGroup>
+
+            <div className="flex flex-col gap-3 border-t border-white/[0.08] pt-7 sm:flex-row sm:items-center sm:justify-between">
+              <button type="button" onClick={() => toast({ title: "Delete account", description: "Account deletion requests are handled by support." })} className="inline-flex items-center gap-2 text-sm font-medium text-[#EF6B73] transition hover:text-[#FF9A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF6B73] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080A0C]"><Trash2 size={15} aria-hidden="true" />Delete account</button>
+              <button type="button" onClick={handleSignOut} className="inline-flex items-center gap-2 text-sm text-[#8B929E] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"><LogOut size={15} aria-hidden="true" />Sign out</button>
             </div>
-          </motion.div>
-
-          {/* Appearance & Notifications */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-              <div style={{ ...cardStyle, height: '100%' }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <SectionIcon icon={Palette} />
-                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Appearance</h2>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: '#0F0F0F', border: '1px solid #1A1A1A' }}>
-                  <div>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>Dark Mode</p>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#555555', marginTop: '2px' }}>Always dark for professional focus</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Moon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.4)' }} />
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>Active</span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-              <div style={{ ...cardStyle, height: '100%' }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <SectionIcon icon={Bell} />
-                  <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Notifications</h2>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { key: 'email' as const, label: 'Email Alerts', desc: 'Activity updates' },
-                    { key: 'updates' as const, label: 'Product Updates', desc: 'New features' },
-                  ].map((item) => (
-                    <div key={item.key} className="flex items-center justify-between">
-                      <div>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 600, color: '#FFFFFF' }}>{item.label}</p>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#555555' }}>{item.desc}</p>
-                      </div>
-                      <Switch
-                        checked={notifications[item.key]}
-                        onCheckedChange={(checked) => setNotifications({ ...notifications, [item.key]: checked })}
-                        className="data-[state=checked]:bg-white data-[state=unchecked]:bg-[#2A2A2A]"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
           </div>
-
-          {/* Account Security */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
-            <div style={cardStyle}>
-              <div className="flex items-center gap-3 mb-6">
-                <SectionIcon icon={Shield} />
-                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700, color: '#FFFFFF' }}>Account Security</h2>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                {['Current Password', 'New Password', 'Confirm Password'].map((label) => (
-                  <div key={label}>
-                    <label style={labelStyle}>{label}</label>
-                    <Input type="password" placeholder="••••••••" style={inputStyle} className="placeholder:text-[#333333] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                  </div>
-                ))}
-              </div>
-              <button style={{
-                marginTop: '20px', background: 'transparent', border: '1px solid #1A1A1A',
-                color: '#FFFFFF', fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
-                fontWeight: 600, padding: '10px 20px', borderRadius: '6px', cursor: 'pointer',
-                transition: 'border-color 150ms',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#1A1A1A'}
-              >
-                Update Password
-              </button>
-            </div>
-          </motion.div>
-
-          {/* Sign Out */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}>
-            <div style={{ background: 'rgba(239,68,68,0.03)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: '10px', padding: '32px' }}>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="text-center md:text-left">
-                  <p style={{ fontFamily: "'Syne', sans-serif", fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Sign Out</p>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#555555', marginTop: '4px' }}>Sign out of your account on this device</p>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  style={{
-                    background: 'transparent', border: '1px solid #EF4444', color: '#EF4444',
-                    fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '14px',
-                    padding: '10px 24px', borderRadius: '6px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    transition: 'all 150ms',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#FFFFFF'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#EF4444'; }}
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </DashboardLayout>

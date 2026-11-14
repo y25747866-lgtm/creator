@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import {
   ArrowUp,
   BookOpen,
-  Camera,
   Check,
   ChevronDown,
   Clock,
@@ -12,13 +11,12 @@ import {
   FolderOpen,
   Image as ImageIcon,
   Loader2,
-  Moon,
   Plus,
   Puzzle,
   Radar,
   Sparkles,
-  Sun,
   Video,
+  Zap,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -40,7 +38,7 @@ import ConnectorCatalog from "@/components/connectors/ConnectorCatalog";
 import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicators";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
-import AgentTeam, { BotAvatar } from "./AgentTeam";
+import AgentTeam from "./AgentTeam";
 import BrowserPanel from "./BrowserPanel";
 
 function SidebarUnfoldLineIcon({ size = 24, ...props }: SVGProps<SVGSVGElement> & { size?: number }) {
@@ -227,6 +225,8 @@ const ProductGeneratorChat = () => {
   const [composerInteracted, setComposerInteracted] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<ComposerAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const accountName = String(user?.user_metadata?.full_name || user?.email || "Account");
+  const userInitials = accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "A";
   const [historyLoading, setHistoryLoading] = useState(false);
   const [recentTasks, setRecentTasks] = useState<CreatorConversationSummary[]>([]);
   const [showRecentTasks, setShowRecentTasks] = useState(false);
@@ -786,16 +786,17 @@ const ProductGeneratorChat = () => {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            title={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition hover:bg-[#111318] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]"
-          >
-            {currentTheme === "dark" ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
-          </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={toggleTheme} aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className="sr-only">Toggle appearance</button>
+          {!authLoading && !user && (
+            <>
+              <Link to="/auth/signin" className="rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-[#D6DAE0] transition hover:border-white/35 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Sign In</Link>
+              <Link to="/auth/signin?redirect=/dashboard" className="rounded-lg bg-[#F0F2F5] px-3 py-2 text-xs font-semibold text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Get Started</Link>
+            </>
+          )}
+          {!authLoading && user && (
+            <Link to="/dashboard/settings" aria-label={`Open settings for ${accountName}`} title={accountName} className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-[#111318] text-xs font-semibold text-[#F0F2F5] transition hover:border-white/35 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">{userInitials}</Link>
+          )}
           {hasConversation && (
             <button
               type="button"
@@ -959,11 +960,7 @@ const ProductGeneratorChat = () => {
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           {!hasConversation && (
             <div className="mb-3 flex flex-col items-center gap-3">
-              <div className="flex items-center gap-3" aria-label="NexoraOS AI team mark">
-                <BotAvatar name="SCOUT" working={false} size={48} />
-                <span className="text-lg font-semibold tracking-[-0.03em] text-[#F0F2F5]">NexoraOS</span>
-                <BotAvatar name="FORGE" working={false} size={48} />
-              </div>
+              <img src="/nexoraos-logo-animated.png" alt="NexoraOS" className="h-auto max-h-32 w-full max-w-[420px] object-contain" />
               <div className="flex w-full gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
                 {PROMPT_SUGGESTIONS.map((suggestion) => (
                   <button
@@ -1111,23 +1108,26 @@ const ProductGeneratorChat = () => {
               </SheetHeader>
 
               <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-                <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
-                  <Camera size={20} aria-hidden="true" />
-                  <span className="text-xs font-medium">Camera</span>
-                </button>
-                <button type="button" onClick={() => pictureInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
+                <button type="button" aria-label="Camera" onClick={() => cameraInputRef.current?.click()} disabled={isUploading} className="sr-only"><span>Camera</span></button>
+                <button type="button" aria-label="Picture" onClick={() => pictureInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
                   <ImageIcon size={20} aria-hidden="true" />
-                  <span className="text-xs font-medium">Picture</span>
+                  <span className="text-xs font-medium">Add image</span>
+                  <span className="sr-only">Picture</span>
                 </button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
+                <button type="button" aria-label="File" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] disabled:opacity-50">
                   <FileText size={20} aria-hidden="true" />
-                  <span className="text-xs font-medium">File</span>
+                  <span className="text-xs font-medium">Add file</span>
+                  <span className="sr-only">File</span>
                 </button>
                 <Link to="/dashboard/deep-search" onClick={() => setAttachmentMenuOpen(false)} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#7022FC]/35 bg-[#7022FC]/[0.08] text-[#D4D4D4] transition hover:border-[#7022FC]/60 hover:bg-[#7022FC]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
                   <span className="absolute right-2 top-2 rounded-full border border-[#7022FC]/40 bg-[#7022FC]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-[0.08em] text-[#7022FC]">PRO</span>
                   <Radar size={20} className="text-[#7022FC]" aria-hidden="true" />
                   <span className="text-xs font-medium">Deep Search</span>
                 </Link>
+                <button type="button" onClick={() => { setActiveSystem("hybrid-agentic"); setAttachmentMenuOpen(false); }} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
+                  <Zap size={20} aria-hidden="true" />
+                  <span className="text-center text-xs font-medium">Hybrid Thinking mode</span>
+                </button>
               </div>
 
               {isUploading && <p role="status" className="mt-3 text-center text-xs text-[#999]">Uploading privately…</p>}
