@@ -13,9 +13,9 @@ function DeepSearchContent() {
         <header className="mb-8">
           <p className="text-xs text-white/45">Research workspace</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <Radar size={22} className="text-[#7022FC]" aria-hidden="true" />
+            <Radar size={22} className="text-[#3B82F6]" aria-hidden="true" />
             <h1 className="text-2xl font-semibold tracking-tight">Deep Search</h1>
-            <span className="rounded-full border border-[#7022FC]/35 bg-[#7022FC]/10 px-2 py-1 text-[10px] font-bold tracking-[0.1em] text-[#7022FC]">PRO</span>
+            <span className="rounded-full border border-[#3B82F6]/35 bg-[#3B82F6]/10 px-2 py-1 text-[10px] font-bold tracking-[0.1em] text-[#3B82F6]">PRO</span>
           </div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">A focused research space for finding, checking, and organizing useful sources.</p>
         </header>
@@ -28,11 +28,11 @@ function DeepSearchContent() {
           <section aria-labelledby="scout-title" className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111318] p-6 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#7022FC]/30 bg-[#7022FC]/10 text-[#7022FC]">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 text-[#3B82F6]">
                   <Radar size={23} aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7022FC]">SCOUT agent</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#3B82F6]">SCOUT agent</p>
                   <h2 id="scout-title" className="mt-1 text-xl font-semibold tracking-tight">Coming Soon</h2>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">SCOUT will search across trusted sources, synthesize the strongest findings, and keep citations connected to your research brief.</p>
                 </div>
@@ -41,14 +41,14 @@ function DeepSearchContent() {
             </div>
           </section>
         ) : (
-          <section aria-labelledby="deep-search-upgrade-title" className="rounded-2xl border border-[#7022FC]/20 bg-[#111318] p-6 sm:p-8">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#7022FC]/25 bg-[#7022FC]/10 text-[#7022FC]">
+          <section aria-labelledby="deep-search-upgrade-title" className="rounded-2xl border border-[#3B82F6]/20 bg-[#111318] p-6 sm:p-8">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3B82F6]/25 bg-[#3B82F6]/10 text-[#3B82F6]">
               <LockKeyhole size={19} aria-hidden="true" />
             </div>
-            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7022FC]">Premium workspace</p>
+            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#3B82F6]">Premium workspace</p>
             <h2 id="deep-search-upgrade-title" className="mt-2 text-xl font-semibold tracking-tight">Upgrade to unlock Deep Search</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">Deep Search is available with Pro and Hybrid AI OS plans. Upgrade to open the SCOUT research workspace.</p>
-            <Link to="/pricing" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#080A0C] transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
+            <Link to="/pricing" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#080A0C] transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]">
               View plans <ArrowUpRight size={15} aria-hidden="true" />
             </Link>
           </section>

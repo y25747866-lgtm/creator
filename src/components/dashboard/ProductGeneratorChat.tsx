@@ -204,9 +204,14 @@ const ProductGeneratorChat = () => {
   const { agentAccess } = useDashboardAccess();
   const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 768;
   const sidebarExpanded = isDesktopViewport ? !collapsed : mobileOpen;
-  const { recordUsage, hasPaidSubscription, isExpired, canUseFeature } = useFeatureAccess();
+  const { recordUsage, hasPaidSubscription, isExpired, canUseFeature, planType } = useFeatureAccess();
   const canUseAgentSystem = typeof canUseFeature === "function" ? canUseFeature("agent_system") : true;
   const showHybridAgenticOption = !user?.id || agentAccess;
+  const upgradeLabel = planType === "creator"
+    ? "↑ Upgrade to Pro"
+    : planType === "pro"
+      ? "↑ Upgrade to Hybrid AI OS"
+      : null;
   const { toast } = useToast();
   const addEbook = useEbookStore((state) => state.addEbook);
   const [activeProduct, setActiveProduct] = useState<string>("Ebook");
@@ -808,7 +813,7 @@ const ProductGeneratorChat = () => {
 
   return (
     <div onPointerDown={markUserActivity} onKeyDown={markUserActivity} className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
+      <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -830,6 +835,15 @@ const ProductGeneratorChat = () => {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {upgradeLabel && (
+            <button
+              type="button"
+              onClick={() => navigate("/pricing")}
+              className="absolute left-1/2 -translate-x-1/2 rounded-full border border-[#3B82F6] px-3 py-1.5 text-xs font-medium text-[#3B82F6] transition-colors hover:bg-[#3B82F6] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
+            >
+              {upgradeLabel}
+            </button>
+          )}
           <button type="button" onClick={toggleTheme} aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className="sr-only">Toggle appearance</button>
           {!authLoading && !user && (
             <>
@@ -1130,7 +1144,7 @@ const ProductGeneratorChat = () => {
                   type="submit"
                   disabled={!draft.trim() || isGenerating || isUploading}
                   aria-label="Send topic"
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#F0F2F5] text-[#080A0C] hover:bg-white" : "bg-[#1A1D24] text-[#8B929E]"}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-[0_6px_16px_rgba(0,0,0,0.2)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] disabled:cursor-not-allowed ${draft.trim() && !isGenerating && !isUploading ? "bg-[#3B82F6] text-white hover:bg-[#2563EB]" : "bg-muted text-muted-foreground"}`}
                 >
                   {isGenerating ? <Skeleton className="h-4 w-4 rounded-sm" aria-label="Generating" /> : <ArrowUp size={19} strokeWidth={2.4} aria-hidden="true" />}
                 </button>
@@ -1158,9 +1172,9 @@ const ProductGeneratorChat = () => {
                   <span className="text-xs font-medium">Add file</span>
                   <span className="sr-only">File</span>
                 </button>
-                <button type="button" onClick={() => { setDraft("Run a deep search on "); setAttachmentMenuOpen(false); window.setTimeout(() => composerRef.current?.focus(), 0); }} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#7022FC]/35 bg-[#7022FC]/[0.08] text-[#D4D4D4] transition hover:border-[#7022FC]/60 hover:bg-[#7022FC]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7022FC]">
-                  <span className="absolute right-2 top-2 rounded-full border border-[#7022FC]/40 bg-[#7022FC]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-[0.08em] text-[#7022FC]">PRO</span>
-                  <Radar size={20} className="text-[#7022FC]" aria-hidden="true" />
+                <button type="button" onClick={() => { setDraft("Run a deep search on "); setAttachmentMenuOpen(false); window.setTimeout(() => composerRef.current?.focus(), 0); }} className="relative flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-[#3B82F6]/35 bg-[#3B82F6]/[0.08] text-[#D4D4D4] transition hover:border-[#3B82F6]/60 hover:bg-[#3B82F6]/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]">
+                  <span className="absolute right-2 top-2 rounded-full border border-[#3B82F6]/40 bg-[#3B82F6]/10 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-[0.08em] text-[#3B82F6]">PRO</span>
+                  <Radar size={20} className="text-[#3B82F6]" aria-hidden="true" />
                   <span className="text-xs font-medium">Deep Search</span>
                 </button>
                 <button type="button" onClick={() => { setActiveSystem("hybrid-agentic"); setAttachmentMenuOpen(false); }} className="flex aspect-square min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#111318] text-[#D4D4D4] transition hover:border-white/20 hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">

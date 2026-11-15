@@ -308,13 +308,13 @@ body {
 
 :root[data-theme="light"] .nav-item.active {
   background: #F0EEFF !important;
-  border-left: 3px solid #7022FC !important;
-  color: #7022FC !important;
+  border-left: 3px solid #3B82F6 !important;
+  color: #3B82F6 !important;
 }
 
 :root[data-theme="light"] .nav-item.active svg,
 :root[data-theme="light"] .nav-item.active i {
-  color: #7022FC !important;
+  color: #3B82F6 !important;
 }
 
 :root[data-theme="light"] [class*="text-white/"],
