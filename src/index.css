@@ -192,12 +192,27 @@ html {
     @apply border-border;
   }
 
-  body {
+body {
     @apply bg-background text-foreground;
     font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+  }
+  #root:empty {
+    min-height: 100vh;
+    background: hsl(var(--background));
+  }
+  #root:empty::before {
+    content: "";
+    display: block;
+    min-height: 100vh;
+    background:
+      linear-gradient(hsl(var(--muted)) 0 0) 24px 28px / 132px 28px no-repeat,
+      linear-gradient(hsl(var(--muted)) 0 0) 24px 88px / min(420px, calc(100vw - 48px)) 112px no-repeat,
+      linear-gradient(hsl(var(--muted)) 0 0) 24px 224px / min(720px, calc(100vw - 48px)) 20px no-repeat,
+      linear-gradient(hsl(var(--muted)) 0 0) 24px 264px / min(720px, calc(100vw - 48px)) 20px no-repeat,
+      linear-gradient(hsl(var(--muted)) 0 0) 24px 304px / min(720px, calc(100vw - 48px)) 20px no-repeat;
   }
 
   h1, h2, h3, h4, h5, h6 {

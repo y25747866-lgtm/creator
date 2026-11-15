@@ -35,7 +35,7 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 const queryClient = new QueryClient();
 
 const AppShellSkeleton = () => (
-  <div className="app-shell-skeleton flex min-h-screen bg-[#080A0C]" role="status" aria-label="Loading NexoraOS">
+  <div className="app-shell-skeleton flex min-h-screen bg-background" role="status" aria-label="Loading NexoraOS">
     <aside className="sidebar-skeleton hidden w-[280px] shrink-0 border-r border-white/10 p-4 md:block">
       <Skeleton className="mb-8 h-7 w-32" />
       <div className="space-y-3">

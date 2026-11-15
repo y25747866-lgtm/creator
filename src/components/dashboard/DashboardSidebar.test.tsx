@@ -63,14 +63,14 @@ describe("DashboardSidebar Plugins navigation", () => {
     const link = screen.getByRole("link", { name: "Plugins" });
     expect(link).toHaveAttribute("href", "/app/connectors");
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveClass("bg-[#111318]", "text-white");
+    expect(link).toHaveClass("bg-muted", "text-foreground");
     expect(link.querySelector("svg")).toBeTruthy();
 
     fireEvent.click(link);
     expect(mocks.setMobileOpen).toHaveBeenCalledWith(false);
   });
 
-  it("uses the original neutral fill for the active Product Studio row", () => {
+  it("uses the semantic neutral fill for the active Product Studio row", () => {
     render(
       <MemoryRouter initialEntries={["/dashboard"]}>
         <DashboardSidebar />
@@ -79,7 +79,7 @@ describe("DashboardSidebar Plugins navigation", () => {
 
     const link = screen.getByRole("link", { name: "Product Studio" });
     expect(link).toHaveAttribute("aria-current", "page");
-    expect(link).toHaveClass("nav-item", "active", "bg-[#111318]", "text-white");
+    expect(link).toHaveClass("nav-item", "active", "bg-muted", "text-foreground");
   });
 
   it("keeps Deep Search out of the sidebar and preserves workspace order", () => {
