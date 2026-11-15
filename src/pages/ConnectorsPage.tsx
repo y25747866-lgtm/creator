@@ -29,7 +29,7 @@ export default function ConnectorsPage() {
 
   return (
     <DashboardLayout>
-      <main className="min-h-full bg-[#080A0C] px-4 py-8 text-[#F0F2F5] sm:px-8">
+      <main className="min-h-full bg-background px-4 py-8 text-foreground sm:px-8">
         <div className="mx-auto max-w-5xl space-y-6">
           <header>
             <p className="text-xs text-[#8B929E]">Workspace</p>

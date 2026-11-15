@@ -65,11 +65,11 @@ describe("ViewableRoute guest preview", () => {
     expect(screen.queryByText("Private projects")).not.toBeInTheDocument();
   });
 
-  it("keeps the screen black while auth is being checked rather than rendering dashboard or sign-in content", () => {
+  it("keeps the screen quiet while auth is being checked rather than rendering dashboard or sign-in content", () => {
     authState.loading = true;
     const { container } = renderAt("/dashboard");
 
-    expect(container.firstChild).toHaveClass("min-h-screen", "bg-[#080A0C]");
+    expect(container.firstChild).toHaveClass("min-h-screen", "bg-background");
     expect(screen.queryByText("Agent workspace preview")).not.toBeInTheDocument();
     expect(screen.queryByText(/Sign-in screen/)).not.toBeInTheDocument();
   });

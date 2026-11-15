@@ -74,7 +74,7 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-[#080A0C] px-4 py-8 text-[#F0F2F5] sm:px-8 sm:py-12">
+      <div className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12">
         <div className="mx-auto max-w-2xl">
           <header className="mb-8 flex items-start justify-between gap-4">
             <div>

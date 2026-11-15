@@ -508,7 +508,7 @@ export default function SkillsPage() {
 
   return (
     <DashboardLayout>
-      <main className="min-h-screen bg-[#080A0C] px-4 pb-28 pt-5 text-white sm:px-8 sm:pt-8">
+      <main className="min-h-screen bg-background px-4 pb-28 pt-5 text-foreground sm:px-8 sm:pt-8">
         <div className="mx-auto max-w-6xl">
           <header className="mb-7 flex min-h-10 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">

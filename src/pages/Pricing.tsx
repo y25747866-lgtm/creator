@@ -168,8 +168,8 @@ const Pricing = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#080A0C] text-[#F0F2F5] selection:bg-white selection:text-[#080A0C]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      <header className="border-b border-white/[0.07] bg-[#080A0C]/90 backdrop-blur-xl">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground selection:bg-primary selection:text-primary-foreground" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+      <header className="border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link to="/" className="flex items-center gap-2.5" aria-label="NexoraOS home">
             <img src={nexoraLogo} alt="NexoraOS" width="32" height="32" className="h-8 w-8" />

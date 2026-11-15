@@ -38,6 +38,7 @@ import ConnectedAppIndicators from "@/components/connectors/ConnectedAppIndicato
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BorderBeam } from "border-beam";
 import AgentTeam, { ActiveAgentStrip, type AgentName, type AgentStatus } from "./AgentTeam";
+import AgentActivityPanel from "./AgentActivityPanel";
 import BrowserPanel from "./BrowserPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -190,7 +191,7 @@ function estimatePages(content: string): number {
 
 const ProductGeneratorChat = () => {
   const { user, loading: authLoading, sendMagicLink } = useAuth();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme, theme, setTheme } = useTheme();
   const currentTheme = resolvedTheme === "light" ? "light" : "dark";
   const toggleTheme = () => {
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
@@ -217,6 +218,7 @@ const ProductGeneratorChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [scoutBrowsing, setScoutBrowsing] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [activeAgent, setActiveAgent] = useState<AgentName>("FORGE");
   const [completedAgent, setCompletedAgent] = useState<AgentName | null>(null);
   const [isSleeping, setIsSleeping] = useState(false);
@@ -249,6 +251,7 @@ const ProductGeneratorChat = () => {
   const activeConversationIdRef = useRef<string | null>(null);
   const hasConversation = messages.length > 0;
   const chatStarted = hasConversation;
+  const heroLogo = theme === "light" ? "/logo-black.png" : "/logo-white.png";
   const markUserActivity = useCallback(() => {
     setLastInteractionAt(Date.now());
     setIsSleeping(false);
@@ -600,6 +603,7 @@ const ProductGeneratorChat = () => {
       void (async () => {
         try {
           const { taskId } = await submitHybridTask(topic);
+          setActiveTaskId(taskId);
           replaceMessage(progressId, { text: "NEXUS accepted the task. Recovering durable agent status…" });
           const task = await waitForHybridTask(taskId);
           if (task.status === "error") throw new Error("The Hybrid Agentic System reported an error while processing this task.");
@@ -609,6 +613,7 @@ const ProductGeneratorChat = () => {
         } finally {
           generationLock.current = false;
           setIsGenerating(false);
+          setActiveTaskId(null);
         }
       })();
       return;
@@ -815,7 +820,7 @@ const ProductGeneratorChat = () => {
             <SidebarUnfoldLineIcon size={20} style={sidebarExpanded ? { transform: "scaleX(-1)" } : undefined} aria-hidden="true" />
           </button>
           <div className={`flex items-center gap-2 overflow-hidden transition-[opacity,transform,max-width] duration-300 ease-in-out ${chatStarted ? "max-w-[160px] translate-y-0 opacity-100" : "pointer-events-none max-w-0 -translate-y-4 opacity-0"}`} aria-hidden={!chatStarted}>
-            <img src="/nexoraos-logo.png" alt="" className="h-8 w-8 shrink-0 rounded-md object-contain" />
+            <img src={heroLogo} alt="" width={32} height={32} loading="eager" fetchPriority="high" className="h-8 w-8 shrink-0 rounded-md object-contain" />
             <span className="truncate text-sm font-semibold tracking-[-0.02em] text-[#F0F2F5]">NexoraOS</span>
           </div>
           {hasConversation && messages[0]?.role === "user" && (
@@ -852,7 +857,7 @@ const ProductGeneratorChat = () => {
         <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
           <div className="flex w-full max-w-3xl flex-col items-center gap-7 py-8 sm:gap-9">
             <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent transition-[transform,opacity] duration-300 ease-in-out" style={{ transform: chatStarted ? "scale(0.3) translateY(-200px)" : "scale(1) translateY(0)" }}>
-              <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="mx-auto h-auto w-full max-w-[480px] object-contain" />
+              <img src={heroLogo} alt="NexoraOS" width={180} height={60} loading="eager" fetchPriority="high" className="mx-auto h-auto w-[180px] object-contain" />
             </div>
             <AgentTeam status={agentStatus} />
             <div className="flex w-full justify-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
@@ -1002,11 +1007,12 @@ const ProductGeneratorChat = () => {
         ) : null}
       </div>
 
-      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[#080A0C] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
+      <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[var(--nexora-workspace-background)] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[var(--nexora-workspace-background)] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
         <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
           <div className={`mb-3 transition-[opacity,transform,max-height] duration-300 ease-in-out ${chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? "max-h-14 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-2 opacity-0"}`}>
             {chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? <ActiveAgentStrip agent={scoutBrowsing ? "SCOUT" : completedAgent ?? activeAgent} status={isGenerating || scoutBrowsing ? "working" : "done"} /> : null}
           </div>
+          <AgentActivityPanel taskId={activeTaskId} />
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
           <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>

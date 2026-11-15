@@ -8,7 +8,7 @@ function DeepSearchContent() {
   const hasDeepSearchAccess = hasPaidSubscription && (planType === "pro" || planType === "hybrid");
 
   return (
-    <main className="min-h-screen bg-[#080A0C] px-4 pb-12 pt-6 text-white sm:px-8 sm:pt-8">
+    <main className="min-h-screen bg-background px-4 pb-12 pt-6 text-foreground sm:px-8 sm:pt-8">
       <div className="mx-auto max-w-5xl">
         <header className="mb-8">
           <p className="text-xs text-white/45">Research workspace</p>

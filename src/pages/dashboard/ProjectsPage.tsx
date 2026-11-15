@@ -118,7 +118,7 @@ export default function ProjectsPage() {
 
   return (
     <DashboardLayout>
-      <main className="min-h-full bg-[#080A0C] px-4 pb-28 pt-6 text-white sm:px-8 sm:pt-8">
+      <main className="min-h-full bg-background px-4 pb-28 pt-6 text-foreground sm:px-8 sm:pt-8">
         <div className="mx-auto max-w-6xl space-y-6">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
