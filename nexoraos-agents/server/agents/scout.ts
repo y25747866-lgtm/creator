@@ -10,8 +10,11 @@ import { lookupDocs } from '../tools/context7.js'
 import { runSwarmSimulation } from '../tools/simulation.js'
 import { emit, setAgentStatus } from '../events/bus.js'
 import type { AgentTask, ToolResult } from '../../shared/types.js'
+import { NEXORAOS_BRAND_POLICY } from '../brandPolicy.js'
 
-const SCOUT_SYSTEM_PROMPT = `You are SCOUT, the NexoraOS Research Agent.
+const SCOUT_SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
+
+You are SCOUT, the NexoraOS Research Agent.
 
 Your personality: Alert, curious, always scanning. You go out, find intelligence, and report back with precision.
 

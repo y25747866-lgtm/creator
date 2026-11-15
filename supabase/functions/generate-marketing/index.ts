@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAuthOnly, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
@@ -77,6 +78,7 @@ For each post, provide ONLY this JSON format (no other text):
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
           messages: [
+            { role: "system", content: NEXORAOS_BRAND_POLICY },
             {
               role: "user",
               content: prompt,
