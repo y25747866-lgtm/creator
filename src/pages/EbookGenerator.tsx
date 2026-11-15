@@ -510,7 +510,7 @@ const EbookGenerator = () => {
   const isCreatorOrAbove = planType === "creator" || planType === "pro";
 
   const [step, setStep] = useState(1);
-  const [topic, setTopic] = useState("");
+  const [topic, setTopic] = useState(() => new URLSearchParams(window.location.search).get("prompt") ?? "");
   const [topicError, setTopicError] = useState(false);
   const [language, setLanguage] = useState("English");
   const [isSearching, setIsSearching] = useState(false);

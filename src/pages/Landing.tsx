@@ -1,470 +1,236 @@
-import { useRef, useEffect, useState, lazy, Suspense } from 'react';
-import { Link } from 'react-router-dom';
-import { m, useInView } from 'framer-motion';
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BarChart3,
+  Box,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  FileText,
+  FolderOpen,
+  Lightbulb,
+  Mail,
+  Megaphone,
+  Monitor,
+  PanelsTopLeft,
+  Puzzle,
+  Search,
+  Sparkles,
+  Telescope,
+  X,
+} from "lucide-react";
+import { signInWithGoogle } from "@/lib/auth/login";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { ChatGPTPromptInput } from "@/components/ui/chatgpt-prompt-input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import { 
-  ArrowRight, Check, Sparkles, DollarSign,
-  TrendingUp, Rocket, BarChart2
-} from 'lucide-react';
-import nexoraLogo from '@/assets/nexora-logo.webp';
-import LandingSkeleton from '@/components/LandingSkeleton';
-import { useLandingLoading } from '@/hooks/useLandingLoading';
-import HeroBackground from '@/components/HeroBackground';
-
-/* ─── Section wrapper with fade-up ─── */
-const Section = ({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
-  return (
-    <m.section
-      ref={ref}
-      id={id}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, ease: 'easeOut' }}
-      className={className}
-    >
-      {children}
-    </m.section>
-  );
-};
-
-// ─── Platform logo names mapped to logo-1.webp through logo-8.webp ───────────
-const PLATFORM_NAMES = [
-  'Gumroad',
-  'Whop',
-  'Shopify',
-  'Etsy',
-  'Payhip',
-  'Teachable',
-  'Kajabi',
-  'Sellfy',
+const tools = [
+  { label: "3D Make", icon: Box, starter: "Create a 3D concept for " },
+  { label: "Product", icon: Sparkles, starter: "Create a digital product about " },
+  { label: "Marketing", icon: Megaphone, starter: "Create a marketing campaign for " },
+  { label: "Sales page", icon: PanelsTopLeft, starter: "Build a sales page for " },
+  { label: "Docs", icon: FileText, starter: "Draft a document about " },
+  { label: "Sheets", icon: BarChart3, starter: "Create a spreadsheet to track " },
+  { label: "Research", icon: Telescope, starter: "Research " },
 ];
 
-const Landing = () => {
-  const heroWordsRef = useRef<HTMLDivElement>(null);
-  const { isLoading } = useLandingLoading(100);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+const plugins = [
+  { name: "Gmail", icon: Mail, tint: "#f87171", description: "Search and draft email" },
+  { name: "Google Drive", icon: FolderOpen, tint: "#60a5fa", description: "Find your files" },
+  { name: "Google Calendar", icon: CalendarDays, tint: "#34d399", description: "Plan your schedule" },
+  { name: "Slack", icon: Puzzle, tint: "#c084fc", description: "Connect your workspace" },
+  { name: "Figma", icon: PanelsTopLeft, tint: "#fb923c", description: "Explore your designs" },
+];
 
-  useEffect(() => {
-    if (heroWordsRef.current && !isLoading) {
-      const words = heroWordsRef.current.querySelectorAll('.hero-word');
-      (words || []).forEach((word, index) => {
-        setTimeout(() => {
-          word.classList.add('opacity-100');
-        }, index * 150);
-      });
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M17.64 9.204A8.64 8.64 0 0 0 17.48 7.36H9v3.48h4.84a5.1 5.1 0 0 1-1.8 2.72l2.91 2.26c1.7-1.56 2.69-3.87 2.69-6.62Z" fill="#4285F4" />
+      <path d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33C2.44 15.98 5.48 18 9 18Z" fill="#34A853" />
+      <path d="M3.96 10.71a5.4 5.4 0 0 1 0-3.42V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33Z" fill="#FBBC05" />
+      <path d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58Z" fill="#EA4335" />
+    </svg>
+  );
+}
+
+function NexoraMark() {
+  return (
+    <svg viewBox="0 0 52 52" fill="none" aria-hidden="true" className="h-10 w-10 sm:h-11 sm:w-11">
+      <rect x="2" y="2" width="48" height="48" rx="13" fill="#00E68E" />
+      <path d="M15 14.5v23M15.5 37.5l21-23M36.5 14.5v23" stroke="#07110D" strokeWidth="5" strokeLinecap="square" />
+    </svg>
+  );
+}
+
+export default function Landing() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [prompt, setPrompt] = useState("");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [pluginsOpen, setPluginsOpen] = useState(true);
+  const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
+  const [projectNotice, setProjectNotice] = useState(false);
+
+  const submitPrompt = (value: string) => {
+    setPrompt(value);
+    setAuthError("");
+    if (user) {
+      navigate(`/dashboard?query=${encodeURIComponent(value)}`);
+      return;
     }
-  }, [isLoading]);
+    setAuthOpen(true);
+  };
 
-  const faqs = [
-    { q: 'Do I need technical skills?', a: 'No. If you can type and click, you can use NexoraOS. The AI handles the technical stuff.' },
-    { q: 'How long does it take to create a product?', a: 'Most products are done in under 3 minutes. The AI handles everything from research to generation.' },
-    { q: 'Can I sell on my own platform?', a: 'Yes. NexoraOS integrates with Gumroad, Whop, Shopify, and more. Or use our built-in checkout.' },
-    { q: 'What if I don\'t like it?', a: 'Cancel anytime. No contracts, no commitments, no hard feelings.' },
-    { q: 'Is this another course or template library?', a: 'No. This is software that builds products for you. Not tutorials. Not inspiration. Actual products you can sell today.' },
-    { q: 'Is there a free plan?', a: 'Yes. Start free, no credit card needed. Upgrade when you\'re ready.' },
-  ];
+  const selectTool = (starter: string) => {
+    setPrompt(starter);
+    requestAnimationFrame(() => promptRef.current?.focus());
+  };
 
-  if (isLoading) {
-    return <LandingSkeleton />;
-  }
+  const continueWithGoogle = async () => {
+    setIsSigningIn(true);
+    setAuthError("");
+    try {
+      try {
+        window.localStorage.setItem("nexora_initial_build_query", prompt.trim());
+      } catch {
+        // Continue OAuth even when browser storage is restricted.
+      }
+      await signInWithGoogle();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Google sign-in failed. Please try again.";
+      setAuthError(message);
+      toast({ title: "Google sign-in failed", description: message, variant: "destructive" });
+      setIsSigningIn(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-      
-      {/* ═══ NAVBAR ═══ */}
-      <m.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl"
-      >
-        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
-            <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
-          </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#A1A1A1] absolute left-1/2 -translate-x-1/2">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/auth" className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all">
-              Get Started
-            </Link>
-          </div>
+    <main className="nexora-home min-h-[100dvh] w-full bg-[#0a0a0a] p-[5px] text-[#e8e8e8]">
+      <section className="nexora-home-frame relative min-h-[calc(100dvh-10px)] overflow-hidden rounded-[13px] border border-[#282828] bg-[#101010]">
+        <div className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-md text-[#777777]" aria-hidden="true">
+          <PanelsTopLeft className="h-4 w-4" strokeWidth={1.7} />
         </div>
-      </m.nav>
+        <Link to="/pricing" className="nexora-upgrade absolute left-1/2 top-2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#153454] bg-[#0b1d2d] px-3 py-1.5 text-[11px] font-medium text-[#60a5fa] transition-colors hover:border-[#1d4f7a] hover:bg-[#10263a]">
+          <Sparkles className="h-3 w-3" /> Upgrade your plan
+        </Link>
 
-      {/* ═══ HERO ═══ */}
-      <section id="hero" className="pt-48 pb-24 hero-section relative overflow-hidden">
-        <HeroBackground />
-        <div className="relative z-10">
-          <div className="max-w-7xl mx-auto px-6">
-            <m.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="max-w-7xl mx-auto"
-            >
-              <div className="flex justify-start mb-8">
-                <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
-                  style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
-                  AI-POWERED BUSINESS OS
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div className="text-left">
-                  <div ref={heroWordsRef}>
-                    <h1 className="text-4xl md:text-[64px] font-[800] leading-[1.1] mb-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      <span className="sr-only">NexoraOS: </span>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">Your idea.</div>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">Your product.</div>
-                      <div className="hero-word transition-opacity duration-500">
-                        <span className="text-white/85">Your </span>
-                        <span className="text-white font-[900]">income.</span>
-                      </div>
-                      <div className="hero-word transition-opacity duration-500 text-white/85">In one session.</div>
-                    </h1>
-                  </div>
-                  <p className="text-[#A1A1A1] mb-10 text-lg leading-relaxed max-w-lg">
-                    NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
-                  </p>
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <Link to="/auth" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
-                      Start Building Now <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  <p className="text-[#707070] text-xs">No credit card. No fluff.</p>
-                </div>
-
-                <div className="hidden lg:block">
-                  <m.div
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl max-w-md ml-auto"
-                  >
-                    <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1A1A1A]">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
-                    </div>
-                    <div className="p-8 space-y-5 font-mono text-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">Product Generated</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">Sales Page Live</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-white">✓</span>
-                        <span className="text-[#CCCCCC]">First Sale: <span className="text-white font-bold">$49</span></span>
-                      </div>
-                      <div className="pt-4 border-t border-[#1A1A1A]">
-                        <span className="text-[#A1A1A1]">Time elapsed: </span>
-                        <span className="text-white">2 minutes</span>
-                      </div>
-                    </div>
-                  </m.div>
-                </div>
-              </div>
-            </m.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ FEATURES SECTION ═══ */}
-      <Section id="features" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              WHAT YOU GET
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-left mb-16" style={{ fontFamily: "'Syne', sans-serif" }}>
-            What you can do
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-10 gap-4">
-            <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Generate</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">AI builds your digital product from scratch. digital products, courses, templates, software—whatever you can sell, we can generate.</p>
-            </div>
-
-            <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Rocket className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Launch</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Sales page, checkout, delivery—all automated. You just share the link.</p>
-            </div>
-
-            <div className="md:col-span-4 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Sell</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Plug into any platform. Keep 100% of your earnings.</p>
-            </div>
-
-            <div className="md:col-span-6 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BarChart2 className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Track</h3>
-              <p className="text-[#A1A1A1] leading-relaxed">Real-time analytics. Know what's working. Know what's making money. No guesswork.</p>
-            </div>
-
-            <div className="md:col-span-10 bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 hover:border-[#2A2A2A] transition-all group cursor-pointer">
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
-                <div className="w-12 h-12 rounded-xl bg-[#111111] border border-[#1A1A1A] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-                  <h3 className="text-2xl font-bold whitespace-nowrap" style={{ fontFamily: "'Syne', sans-serif" }}>Scale</h3>
-                  <p className="text-[#A1A1A1] leading-relaxed">One product works? Spin up 10 more. The system does the heavy lifting.</p>
-                </div>
-              </div>
+        <div className="nexora-workspace-stage">
+          <div className="nexora-brand-lockup" aria-label="NexoraOS">
+            <NexoraMark />
+            <div className="flex flex-col leading-none">
+              <span className="nexora-wordmark">NEXORA</span>
+              <span className="mt-1.5 text-[9px] font-medium uppercase tracking-[0.36em] text-[#646464]">AI workspace</span>
             </div>
           </div>
-        </div>
-      </Section>
 
-      {/* ═══ PLATFORM STRIP ═══ */}
-      <section className="relative overflow-hidden py-8 bg-[#080808] border-y border-[#1A1A1A]">
-        <p className="text-center text-[10px] font-semibold tracking-[0.12em] uppercase text-[#707070] mb-5 font-['DM_Sans']">
-          SELL ON ANY PLATFORM
-        </p>
-        <div className="absolute left-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-r from-[#080808] to-transparent" />
-        <div className="absolute right-0 top-0 bottom-0 z-10 pointer-events-none w-[120px] bg-gradient-to-l from-[#080808] to-transparent" />
-        <div className="overflow-hidden w-full">
-          <div className="platform-track flex flex-nowrap items-center gap-20 w-max animate-platform-scroll">
-            {[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8].map((n, i) => (
-              <img
-                key={i}
-                src={`/logos/logo-${n}.webp`}
-                alt={`${PLATFORM_NAMES[n - 1]} Logo`}
-                width="120"
-                height="40"
-                loading="lazy"
-                className="h-10 w-auto shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-300"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ FOUNDER ═══ */}
-      <Section className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              WHY I BUILT THIS
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div className="flex justify-center">
-              <div className="w-full max-w-sm rounded-3xl border border-[#1A1A1A]">
-                <img src="/yesh-founder.webp" alt="Yesh Malik - Founder of NexoraOS" width="400" height="500" loading="lazy" style={{ width: '100%', height: 'auto', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '8px' }} />
-              </div>
-            </div>
-            <div>
-              <p className="text-[#707070] text-7xl font-serif leading-none mb-6">"</p>
-              <p className="text-white text-xl md:text-2xl leading-relaxed mb-8 -mt-8" style={{ fontFamily: "'Syne', sans-serif" }}>
-                I built this because I was tired of watching talented people waste years learning 'the right way' while others were already cashing out.
-              </p>
-              <div className="h-px bg-[#1A1A1A] mb-6" />
-              <p className="text-white font-bold text-lg">Yesh Malik</p>
-              <p className="text-[#A1A1A1] text-sm">Founder, NexoraOS</p>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ═══ PRICING ═══ */}
-      <Section id="pricing" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              SIMPLE PRICING
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-bold text-left mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Simple pricing
-          </h2>
-          <p className="text-left text-[#A1A1A1] mb-16">Pick what works. Cancel anytime.</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white border border-white rounded-2xl p-8 flex flex-col md:order-2 relative">
-              <h3 className="text-lg font-bold mb-2 text-[#0A0A0A]">Creator</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-bold text-[#0A0A0A]">$19</span>
-                <span className="text-[#A1A1A1]">/mo</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">Cancel anytime. No questions.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['Unlimited AI Generations', 'Premium Sales Page Builder', 'Advanced Analytics', 'Full-length exports', 'Built-in Monetization'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#0A0A0A]/70">
-                    <Check className="w-4 h-4 text-[#0A0A0A] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/pricing" className="w-full py-3.5 rounded-lg bg-[#0A0A0A] text-white font-bold text-center text-sm hover:opacity-90 transition-all block">
-                Get Started
-              </Link>
-            </div>
-
-            <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-1">
-              <h3 className="text-lg font-bold mb-2">Free</h3>
-              <div className="flex items-baseline mb-2">
-                <span className="text-5xl font-bold">$0</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">Try it out. See if it clicks.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['1 AI generation/day', 'Basic Sales Page Builder', 'Standard Analytics', 'Short-form exports'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#999999]">
-                    <Check className="w-4 h-4 text-[#707070] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/auth" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
-                Start Free
-              </Link>
-            </div>
-
-            <div className="bg-[#0F0F0F] border border-[#1A1A1A] rounded-2xl p-8 flex flex-col md:order-3">
-              <h3 className="text-lg font-bold mb-2">Pro</h3>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-bold">$39</span>
-                <span className="text-[#A1A1A1]">/mo</span>
-              </div>
-              <p className="text-[#A1A1A1] text-sm mb-6">For those going all in.</p>
-              <div className="space-y-3 mb-8 flex-grow">
-                {['Everything in Creator', 'AI Business Assistant', 'Priority Processing', 'Custom Domain Support', 'Advanced Automation'].map((f, j) => (
-                  <div key={j} className="flex items-center gap-3 text-sm text-[#999999]">
-                    <Check className="w-4 h-4 text-[#707070] shrink-0" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/pricing" className="w-full py-3.5 rounded-lg border border-[#242424] text-white font-bold text-center text-sm hover:border-white/20 transition-all block">
-                Go Pro
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ═══ FAQ ═══ */}
-      <Section id="faq" className="py-32 border-t border-[#1A1A1A]">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-left mb-4">
-            <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
-              QUESTIONS
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-4 mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Frequently Asked
-            </h2>
-            <h2 className="text-3xl md:text-5xl font-bold text-white/30" style={{ fontFamily: "'Syne', sans-serif" }}>
-              Questions
-            </h2>
-          </div>
-          <div className="space-y-4">
-            {faqs.map((faq, i) => (
-              <div key={i} className="rounded-2xl bg-[#111111] border border-[#1A1A1A] overflow-hidden">
+          <div className="nexora-composer-wrap">
+            <ChatGPTPromptInput value={prompt} onChange={setPrompt} onSubmit={submitPrompt} inputRef={promptRef} placeholder="Ask anything, or tell Nexora what to build..." />
+            <div className="nexora-composer-meta flex items-center justify-between px-3.5 pt-2.5">
+              <div className="relative flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  aria-expanded={openFaq === i}
-                  className="w-full flex items-center justify-between gap-6 p-6 text-left"
+                  onClick={() => setProjectNotice((open) => !open)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-[#999999] transition-colors hover:bg-[#252525] hover:text-[#e2e2e2]"
                 >
-                  <h3 className="text-xl font-bold text-white">{faq.q}</h3>
-                  <svg
-                    aria-hidden="true"
-                    className={`w-5 h-5 shrink-0 text-[#A1A1A1] transition-transform duration-300 ${openFaq === i ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
+                  <FolderOpen className="h-3.5 w-3.5" /> Choose project
                 </button>
-                <div className={`grid transition-[grid-template-rows] duration-300 ${openFaq === i ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                  <div className="overflow-hidden">
-                    <p className="px-6 pb-6 text-[#A1A1A1] leading-relaxed">{faq.a}</p>
+                <button
+                  type="button"
+                  aria-expanded={pluginsOpen}
+                  onClick={() => setPluginsOpen((open) => !open)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${pluginsOpen ? "border-[#393939] bg-[#292929] text-[#e2e2e2]" : "border-transparent text-[#999999] hover:border-[#303030] hover:bg-[#242424] hover:text-[#e2e2e2]"}`}
+                >
+                  <span className="flex -space-x-1.5" aria-hidden="true">
+                    {plugins.slice(0, 3).map((plugin) => {
+                      const Icon = plugin.icon;
+                      return <span key={plugin.name} className="flex h-4 w-4 items-center justify-center rounded-full border border-[#202020] bg-[#343434]" style={{ color: plugin.tint }}><Icon className="h-2.5 w-2.5" /></span>;
+                    })}
+                  </span>
+                  Plugins
+                </button>
+                {pluginsOpen && (
+                  <div className="nexora-plugin-menu absolute left-20 top-9 z-30 w-[220px] rounded-xl border border-[#343434] bg-[#242424] p-2 shadow-2xl shadow-black/50">
+                    <div className="flex items-center justify-between px-2 pb-2 pt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[#777777]">
+                      Recommended
+                      <button type="button" onClick={() => setPluginsOpen(false)} aria-label="Close plugins" className="rounded p-1 text-[#777777] hover:bg-[#333333] hover:text-white"><X className="h-3 w-3" /></button>
+                    </div>
+                    {plugins.map((plugin) => {
+                      const Icon = plugin.icon;
+                      const isSelected = selectedPlugin === plugin.name;
+                      return (
+                        <button key={plugin.name} type="button" onClick={() => setSelectedPlugin(isSelected ? null : plugin.name)} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-[#303030]">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#333333]" style={{ color: plugin.tint }}><Icon className="h-3.5 w-3.5" /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[11px] text-[#dddddd]">{plugin.name}</span>
+                            <span className="block truncate text-[9px] text-[#777777]">{plugin.description}</span>
+                          </span>
+                          {isSelected ? <Check className="h-3.5 w-3.5 text-[#00e68e]" /> : <span className="text-[9px] text-[#777777]">Preview</span>}
+                        </button>
+                      );
+                    })}
+                    <div className="mt-1 border-t border-[#363636] px-2 pt-2">
+                      <span className="inline-flex items-center gap-2 text-[10px] text-[#929292]"><Puzzle className="h-3 w-3" /> Manage plugins</span>
+                    </div>
                   </div>
-                </div>
+                )}
+                {projectNotice && (
+                  <div className="absolute left-0 top-9 z-20 w-52 rounded-lg border border-[#343434] bg-[#242424] p-3 text-[11px] text-[#a0a0a0] shadow-xl">
+                    Sign in to create and organize projects.
+                  </div>
+                )}
               </div>
+              <button type="button" onClick={() => toast({ title: "Desktop app", description: "The NexoraOS desktop app is coming soon." })} className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-[#999999] transition-colors hover:bg-[#252525] hover:text-[#e2e2e2]">
+                <Monitor className="h-3.5 w-3.5" /> <span className="hidden min-[440px]:inline">Use desktop app</span>
+              </button>
+            </div>
+          </div>
+
+          <nav className="nexora-tool-row" aria-label="Quick tools">
+            {tools.map(({ label, icon: Icon, starter }) => (
+              <button key={label} type="button" onClick={() => selectTool(starter)} className="nexora-tool-chip">
+                <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.7} />
+                <span>{label}</span>
+              </button>
             ))}
-          </div>
-        </div>
-      </Section>
+            <button type="button" aria-label="More tools" className="nexora-tool-more" onClick={() => selectTool("Help me explore NexoraOS tools")}><ChevronRight className="h-4 w-4" /></button>
+          </nav>
 
-      {/* ═══ FOOTER ═══ */}
-      <footer className="py-16 border-t border-[#1A1A1A]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-10">
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
-                <span className="font-bold text-lg" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
-              </div>
-              <p className="text-[#707070] text-sm">Built by a creator, for creators.</p>
-              <div className="flex items-center gap-4 mt-4">
-                <a href="https://www.instagram.com/nexoraos" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
-                  </svg>
-                </a>
-                <a href="https://www.tiktok.com/@nexoraos_" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15.5 3c.2 1.8 1.2 3.2 3 3.8v2.8a7.4 7.4 0 0 1-3-.8v6.1a5.1 5.1 0 1 1-4.4-5v2.9a2.2 2.2 0 1 0 1.5 2.1V3h2.9Z" />
-                  </svg>
-                </a>
-                <a href="https://x.com/NexoraOS" target="_blank" rel="noopener noreferrer" aria-label="X" className="text-[#707070] hover:text-[#00e68e] transition-colors">
-                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.2 3H21l-6.1 7 7.2 11h-5.6l-4.4-6.7L6.2 21H3.4l6.5-7.4L3 3h5.7l4 6.1L18.2 3Zm-1 16.1h1.6L7.1 4.8H5.4l11.8 14.3Z" />
-                  </svg>
-                </a>
-              </div>
-              <p className="text-[#222222] text-xs mt-1">No VC money. No corporate BS.</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-8 text-sm text-[#707070]">
-                <a href="#features" className="hover:text-white transition-colors">Features</a>
-                <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-                <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
-                <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
-                <span>© 2026 NexoraOS</span>
-              </div>
-              <div className="text-sm text-[#707070]">
-                <span>Support: </span>
-                <a href="mailto:support@nexoraos.digital" className="hover:text-white transition-colors">support@nexoraos.digital</a>
-              </div>
-            </div>
+          <div className="nexora-home-hint">
+            <Search className="h-3.5 w-3.5" /> Start with an idea. Make it real.
           </div>
         </div>
-      </footer>
-    </div>
+
+        <Link to="/pricing" className="nexora-inspiration absolute bottom-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap text-[11px] text-[#666666] transition-colors hover:text-[#a0a0a0]">
+          <Lightbulb className="h-3.5 w-3.5" /> Explore inspiration <ArrowRight className="ml-0.5 h-3 w-3" />
+        </Link>
+      </section>
+
+      <Dialog open={authOpen} onOpenChange={setAuthOpen}>
+        <DialogContent className="max-w-[420px] rounded-[20px] border-[#2a2a2a] bg-[#111111] p-6 text-[#e8e8e8]">
+          <DialogHeader className="pr-7 text-left">
+            <DialogTitle className="text-xl font-semibold text-[#e8e8e8]">Save your first build request</DialogTitle>
+            <DialogDescription className="pt-2 leading-6 text-[#888888]">Continue with Google to open your workspace. Your idea will be ready on the dashboard.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-28 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 text-sm leading-6 text-[#c8c8c8]">{prompt}</div>
+          {authError && <p role="alert" className="text-sm text-[#ff4444]">{authError}</p>}
+          <button type="button" onClick={() => void continueWithGoogle()} disabled={isSigningIn} className="inline-flex h-11 items-center justify-center gap-3 rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-sm font-semibold text-[#e8e8e8] transition-colors hover:border-[#00e68e]/40 hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
+            <GoogleMark />{isSigningIn ? "Connecting to Google…" : "Continue with Google"}
+          </button>
+          <p className="text-center text-xs text-[#666666]">Your prompt is stored locally only to complete this sign-in.</p>
+        </DialogContent>
+      </Dialog>
+    </main>
   );
-};
-
-export default Landing;
+}

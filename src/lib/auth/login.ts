@@ -19,17 +19,15 @@ export async function signIn(email: string, password: string) {
 }
 
 /**
- * Google Sign In
+ * Google Sign In. Callers may provide a same-origin callback URL with state to preserve.
  */
-export async function signInWithGoogle() {
-  // Dynamic redirect – works on localhost, preview, production
-  const redirectTo = `${window.location.origin}/auth/callback`;
+export async function signInWithGoogle(callbackUrl?: string) {
+  const redirectTo = callbackUrl ?? `${window.location.origin}/auth/callback`;
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
-      // Ask Google for refresh token + force consent screen (helps debugging)
       queryParams: {
         access_type: "offline",
         prompt: "consent",
