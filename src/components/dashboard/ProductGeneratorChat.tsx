@@ -852,7 +852,7 @@ const ProductGeneratorChat = () => {
         <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
           <div className="flex w-full max-w-3xl flex-col items-center gap-7 py-8 sm:gap-9">
             <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent transition-[transform,opacity] duration-300 ease-in-out" style={{ transform: chatStarted ? "scale(0.3) translateY(-200px)" : "scale(1) translateY(0)" }}>
-              <img src="/nexoraos-logo.png" alt="NexoraOS" className="mx-auto h-auto w-full max-w-[480px] object-contain" />
+              <img src="/nexoraos-logo-animated.gif" alt="NexoraOS" className="mx-auto h-auto w-full max-w-[480px] object-contain" />
             </div>
             <AgentTeam status={agentStatus} />
             <div className="flex w-full justify-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
