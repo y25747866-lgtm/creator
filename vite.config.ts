@@ -28,5 +28,15 @@ export default defineConfig(({ mode }) => ({
   base: '/',
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-charts': ['recharts'],
+          'vendor-rive': ['@rive-app/react-canvas'],
+        },
+      },
+    },
   },
 }))
