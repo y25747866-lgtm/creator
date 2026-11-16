@@ -56,10 +56,15 @@
     </noscript>
 
     <style>
+      html, body, #root {
+        background-color: #0a0a0a;
+        min-height: 100vh;
+      }
       #root:empty ~ * { display: none; }
       body { background: #0a0a0a; }
       :root[data-theme="dark"] body { background: #010102 !important; color: #FFFFFF !important; }
-      :root[data-theme="light"] body { background: #F5F5F7 !important; color: #010102 !important; }
+      :root[data-theme="light"] body,
+      :root[data-theme="light"] #root { background: #F5F5F7 !important; color: #010102 !important; }
     </style>
 
     <!-- Schema: Brand Entity -->
