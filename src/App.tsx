@@ -32,8 +32,16 @@ const ViewableRoute = lazy(() => import("./components/ViewableRoute"));
 const queryClient = new QueryClient();
 
 const PageLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[#00e68e]" />
+  <div className="min-h-screen bg-background p-6" aria-hidden="true">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="h-10 w-44 animate-pulse rounded-md bg-muted" />
+      <div className="h-24 w-full animate-pulse rounded-xl bg-muted" />
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="h-40 animate-pulse rounded-xl bg-muted" />
+        <div className="h-40 animate-pulse rounded-xl bg-muted" />
+        <div className="h-40 animate-pulse rounded-xl bg-muted" />
+      </div>
+    </div>
   </div>
 );
 
@@ -56,7 +64,7 @@ const App = () => (
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/whop/success" element={<WhopSuccess />} />
-                  <Route path="/dashboard" element={<ViewableRoute><Dashboard /></ViewableRoute>} />
+                  <Route path="/dashboard" element={<ViewableRoute allowGuestPreview><Dashboard /></ViewableRoute>} />
                   <Route path="/dashboard/agents" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
                   <Route path="/dashboard/hybrid-ai-os" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
                   <Route path="/dashboard/connectors" element={<ViewableRoute><Connectors /></ViewableRoute>} />
