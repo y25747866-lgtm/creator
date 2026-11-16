@@ -11,10 +11,10 @@ import Blog from "./pages/Blog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Lazy load non-critical pages
-import Dashboard from "./pages/Dashboard";
-import Downloads from "./pages/Downloads";
-import Settings from "./pages/Settings";
+// Keep the initial route small; dashboard and secondary pages load on demand.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Downloads = lazy(() => import("./pages/Downloads"));
+const Settings = lazy(() => import("./pages/Settings"));
 const Auth = lazy(() => import("./pages/Auth"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Pricing = lazy(() => import("./pages/Pricing"));

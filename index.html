@@ -64,6 +64,18 @@
       body { background: #0a0a0a; }
       :root[data-theme="dark"] body { background: #010102 !important; color: #FFFFFF !important; }
       :root[data-theme="light"] body { background: #F5F5F7 !important; color: #010102 !important; }
+      .initial-shell { box-sizing: border-box; min-height: 100vh; display: flex; background: #010102; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; }
+      .initial-shell__sidebar { display: none; width: 240px; flex: 0 0 240px; border-right: 1px solid rgba(255,255,255,.08); padding: 20px 16px; }
+      .initial-shell__content { width: 100%; padding: 64px 16px 24px; }
+      .initial-shell__line, .initial-shell__card, .initial-shell__composer { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; }
+      .initial-shell__line { height: 10px; margin-bottom: 16px; }
+      .initial-shell__line--brand { width: 112px; height: 18px; margin-bottom: 32px; }
+      .initial-shell__line--short { width: 72%; }
+      .initial-shell__card { height: 88px; max-width: 520px; margin: 0 auto 24px; }
+      .initial-shell__composer { height: 84px; max-width: 680px; margin: 0 auto; }
+      :root[data-theme="light"] .initial-shell { background: #F5F5F7; color: #010102; }
+      :root[data-theme="light"] .initial-shell__line, :root[data-theme="light"] .initial-shell__card, :root[data-theme="light"] .initial-shell__composer { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.08); }
+      @media (min-width: 768px) { .initial-shell__sidebar { display: block; } .initial-shell__content { padding: 80px 32px 32px; } }
     </style>
 
     <!-- Schema: Brand Entity -->
@@ -140,6 +152,10 @@
   </head>
   <body style="background:#0a0a0a;">
     <div id="root">
+      <div class="initial-shell" aria-label="Loading NexoraOS">
+        <aside class="initial-shell__sidebar"><div class="initial-shell__line initial-shell__line--brand"></div><div class="initial-shell__line"></div><div class="initial-shell__line initial-shell__line--short"></div><div class="initial-shell__line"></div><div class="initial-shell__line initial-shell__line--short"></div></aside>
+        <main class="initial-shell__content"><div class="initial-shell__card"></div><div class="initial-shell__card"></div><div class="initial-shell__composer"></div></main>
+      </div>
       <div style="display: none;">
         <main>
         <header>
