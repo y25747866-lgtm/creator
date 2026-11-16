@@ -1,21 +1,33 @@
 import { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Loader2 } from "lucide-react";
 
 interface ViewableRouteProps {
   children: ReactNode;
-  allowGuestPreview?: boolean;
 }
 
-/** Auth-only route guard for dashboard pages. */
-const ViewableRoute = ({ children, allowGuestPreview = false }: ViewableRouteProps) => {
-  const { session, loading } = useAuth();
-  const location = useLocation();
-  const redirect = `${location.pathname}${location.search}${location.hash}`;
-  const canBrowsePreview = allowGuestPreview && location.pathname === "/dashboard";
+/**
+ * Like ProtectedRoute but only requires auth, not subscription.
+ * Components inside should check subscription themselves to show upgrade overlay.
+ */
+const ViewableRoute = ({ children }: ViewableRouteProps) => {
+  const { user, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen bg-background" aria-hidden="true" />;
-  if (!session && !canBrowsePreview) return <Navigate to={`/auth/signin?redirect=${encodeURIComponent(redirect)}`} replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-white" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   return <>{children}</>;
 };

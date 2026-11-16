@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { verifyAccess, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
 const PAGE_SIZE = 20;
@@ -35,8 +34,7 @@ function getSupabase() {
   );
 }
 
-const SYSTEM_PROMPT = `${NEXORAOS_BRAND_POLICY}
-
+const SYSTEM_PROMPT = `
 You are a world-class monetization strategist.
 Generate fully sellable digital product content.
 No fluff. Full markdown. Professional.

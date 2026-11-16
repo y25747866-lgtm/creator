@@ -1,11 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  corsHeaders,
-  validateEbookInput,
-  sanitizeInput,
-  verifyAuthOnly,
+import { 
+  corsHeaders, 
+  validateEbookInput, 
+  sanitizeInput, 
+  verifyAuthOnly, 
   errorResponse,
   checkRateLimit,
   validateAndSanitize
@@ -43,7 +42,7 @@ serve(async (req) => {
     // Input validation & sanitization
     const topic = validateAndSanitize(body.topic, 500);
     const title = body.title ? validateAndSanitize(body.title, 100) : topic;
-
+    
     // Validate input
     const validation = validateEbookInput(topic, title);
     if (!validation.valid) {
@@ -59,7 +58,7 @@ serve(async (req) => {
     if (!OPENROUTER_API_KEY) {
       console.log('No API key - generating placeholder');
       return new Response(
-        JSON.stringify({
+        JSON.stringify({ 
           imageUrl: createGradientPlaceholder(sanitizedTitle)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -82,13 +81,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `${NEXORAOS_BRAND_POLICY}\n\nYou generate short, vivid image prompts for ebook covers. Be concise and specific.`
+            content: 'You generate short, vivid image prompts for ebook covers. Be concise and specific.'
           },
           {
             role: 'user',
-            content: `Create a short image generation prompt for an ebook cover. Title: "${sanitizedTitle}", Topic: "${sanitizedTopic}".
-
-Style: Professional, modern, clean design with abstract elements. Use gradients of steel blue and deep blue.
+            content: `Create a short image generation prompt for an ebook cover. Title: "${sanitizedTitle}", Topic: "${sanitizedTopic}". 
+            
+Style: Professional, modern, clean design with abstract elements. Use gradients of indigo, violet, and deep blue. 
 Include visual metaphors related to the topic. No text in the image.
 Keep it under 50 words.`
           }
@@ -101,7 +100,7 @@ Keep it under 50 words.`
     if (!descResponse.ok) {
       console.error('Failed to generate cover description');
       return new Response(
-        JSON.stringify({
+        JSON.stringify({ 
           imageUrl: createGradientPlaceholder(sanitizedTitle)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,7 +122,7 @@ Keep it under 50 words.`
   } catch (error) {
     console.error('Error in generate-ebook-cover:', error);
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         imageUrl: createGradientPlaceholder('Ebook')
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -134,14 +133,14 @@ Keep it under 50 words.`
 function createGradientPlaceholder(title: string): string {
   // Sanitize title for SVG - escape XML entities
   const safeTitle = escapeXml(title.substring(0, 60));
-
+  
   // Create an SVG-based cover
   const svg = `
     <svg width="600" height="800" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
-          <stop offset="50%" style="stop-color:#3B82F6;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#7C3AED;stop-opacity:1" />
           <stop offset="100%" style="stop-color:#2563EB;stop-opacity:1" />
         </linearGradient>
         <filter id="noise">
@@ -159,7 +158,7 @@ function createGradientPlaceholder(title: string): string {
       <text x="50%" y="90%" font-family="system-ui, sans-serif" font-size="18" fill="white" text-anchor="middle" opacity="0.7">NexoraOS</text>
     </svg>
   `;
-
+  
   const base64 = btoa(svg);
   return `data:image/svg+xml;base64,${base64}`;
 }

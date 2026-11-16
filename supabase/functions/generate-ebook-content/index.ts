@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { 
   corsHeaders, 
   validateEbookInput, 
@@ -49,10 +48,7 @@ const LENGTH_CONFIGS: Record<string, LengthConfig> = {
 };
 
 function getSystemPrompt(config: LengthConfig): string {
-  return `${NEXORAOS_BRAND_POLICY}
-
-
-You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
+  return `You are an elite AI ebook creation engine designed to generate premium, sellable digital products automatically.
 
 The ebook must feel like a premium product worth $19–$49.
 
@@ -201,7 +197,7 @@ async function generateLongContent(
       messages: [
         {
           role: "system",
-          content: `${NEXORAOS_BRAND_POLICY}\n\nYou create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. ["Introduction", "Chapter 1: ...", ...]. No other text.`,
+          content: "You create detailed book outlines. Return ONLY a JSON array of chapter titles, e.g. [\"Introduction\", \"Chapter 1: ...\", ...]. No other text.",
         },
         {
           role: "user",
@@ -346,8 +342,15 @@ serve(async (req) => {
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
     if (!GROQ_API_KEY) {
-      console.error("Ebook generation is unavailable: GROQ_API_KEY is not configured");
-      return errorResponse("Ebook generation is not configured for this preview. Configure the server-side GROQ_API_KEY and try again.", 503);
+      console.log("No API key - generating fallback content");
+      return new Response(
+        JSON.stringify({
+          content: `# ${sanitizedTitle}\n\n## Introduction\n\nThis is a placeholder for the ebook content about ${sanitizedTopic}. To generate full content, please configure your GROQ_API_KEY.`,
+          title: sanitizedTitle,
+          topic: sanitizedTopic
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log("Generating ebook content for:", sanitizedTitle.substring(0, 30) + "...");

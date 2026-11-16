@@ -257,13 +257,13 @@ export async function generatePDF(ebook: Ebook): Promise<void> {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    URL.revokeObjectURL(blobUrl);
 
     console.log(`✅ PDF downloaded: ${filename}.pdf`);
 
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error("❌ PDF generation failed:", error);
-    alert(`Download failed: ${error instanceof Error ? error.message : String(error)}`);
+    alert(`Download failed: ${error.message || error}`);
   }
 }
 

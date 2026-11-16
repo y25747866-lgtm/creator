@@ -1,9 +1,12 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export async function generateEbook(title: string) {
-  const { data, error } = await supabase.functions.invoke("generate-ebook-content", {
-    body: { title },
-  });
-  if (error) throw error;
-  return data;
+  const res = await fetch(
+    "https://zprgfzoxlgaxbnnjvvir.supabase.co/functions/v1/generate-ebook-content",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    }
+  );
+
+  return await res.json();
 }

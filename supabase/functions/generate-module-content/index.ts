@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAuthOnly, errorResponse, corsHeaders, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
 
@@ -60,7 +59,7 @@ Return markdown.
           messages: [
             {
               role: "system",
-              content: `${NEXORAOS_BRAND_POLICY}\n\nYou are an expert digital marketing strategist.`,
+              content: "You are an expert digital marketing strategist.",
             },
             {
               role: "user",

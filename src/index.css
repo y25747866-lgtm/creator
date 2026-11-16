@@ -2,214 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-.skeleton {
-  background: linear-gradient(90deg, var(--color-surface, #111318) 25%, var(--color-border, #303640) 50%, var(--color-surface, #111318) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
-
-.nexoraos-brand-logo {
-  background: transparent;
-}
-
-.nexoraos-brand-logo img {
-  mix-blend-mode: screen;
-  background: transparent;
-  width: 100%;
-  max-width: 480px;
-}
-
-:root[data-theme="light"] .nexoraos-brand-logo img {
-  mix-blend-mode: multiply;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-*,
-*::before,
-*::after {
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
 @layer base {
-  :root {
-    --radius: 0.75rem;
-    --nexora-workspace-background: #010102;
-    --nexora-workspace-foreground: #FFFFFF;
-    --nexora-sidebar-background: #080A0C;
-    --nexora-sidebar-border: rgba(255, 255, 255, 0.08);
-    --nexora-composer-background: #010102;
-    --nexora-composer-border: rgba(112, 34, 252, 0.3);
-    --nexora-composer-focus-border: rgba(112, 34, 252, 0.3);
-    --nexora-connector-icon-background: #1a1a1a;
-    --nexora-connector-icon-color: #FFFFFF;
-    --nexora-connector-icon-border: transparent;
+  :root,
+  .dark {
     color-scheme: dark;
-
-    /* Light theme */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 98%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 0 0% 16%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 0 0% 48%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 0 0% 16%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 0 0% 48%;
-  }
-
-  :root[data-theme="light"] {
-    --nexora-workspace-background: #F5F5F7;
-    --nexora-workspace-foreground: #010102;
-    --nexora-sidebar-background: #F5F5F7;
-    --nexora-sidebar-border: #E0E0E0;
-    --nexora-composer-background: #FFFFFF;
-    --nexora-composer-border: rgba(112, 34, 252, 0.3);
-    --nexora-connector-icon-background: #FFFFFF;
-    --nexora-connector-icon-color: #010102;
-    --nexora-connector-icon-border: #E0E0E0;
-    color-scheme: light;
-  }
-
-  :root[data-theme="dark"] {
+    --radius: 0.875rem;
     --background: 0 0% 4%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 4%;
+    --foreground: 0 0% 91%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 91%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 91%;
+    --primary: 154 100% 45%;
+    --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 0 0% 91%;
     --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
+    --muted-foreground: 0 0% 53%;
     --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 0% 22%;
+    --accent-foreground: 0 0% 91%;
+    --destructive: 0 100% 64%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 0 0% 100%;
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 0 0% 100%;
-  }
-
-  /* Approved NexoraOS charcoal palette: #080A0C, #111318, #1A1D24 */
-  .nexora-dashboard {
-    --background: 216 20% 3%;
-    --foreground: 210 20% 95%;
-    --card: 220 17% 8%;
-    --card-foreground: 210 20% 95%;
-    --popover: 220 17% 11%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 210 20% 95%;
-    --primary-foreground: 216 20% 3%;
-    --secondary: 220 17% 11%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 220 17% 11%;
-    --muted-foreground: 217 11% 53%;
-    --accent: 220 17% 11%;
-    --accent-foreground: 210 20% 95%;
-    --border: 220 14% 17%;
-    --input: 220 14% 17%;
-    --ring: 217 11% 60%;
-    --sidebar-background: 220 17% 7%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 210 20% 95%;
-    --sidebar-primary-foreground: 216 20% 3%;
-    --sidebar-accent: 220 17% 11%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 220 14% 17%;
-    --sidebar-ring: 217 11% 60%;
-  }
-
-  :root[data-theme="light"] .nexora-dashboard {
-    --background: 240 11% 96%;
-    --foreground: 0 0% 1%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 1%;
-    --primary: 0 0% 1%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 0 0% 1%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 40%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 0 0% 1%;
-    --border: 220 13% 88%;
-    --input: 220 13% 88%;
-    --ring: 270 96% 56%;
-    --sidebar-background: 240 11% 96%;
-    --sidebar-foreground: 0 0% 1%;
-    --sidebar-primary: 0 0% 1%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 0 0% 1%;
-    --sidebar-border: 220 13% 88%;
-    --sidebar-ring: 270 96% 56%;
+    --border: 0 0% 16.5%;
+    --input: 0 0% 16.5%;
+    --ring: 154 100% 45%;
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 91%;
+    --sidebar-primary: 154 100% 45%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 91%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 154 100% 45%;
   }
 
   * {
     @apply border-border;
   }
 
-body {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: #0a0a0a;
+  }
+
+  body {
     @apply bg-background text-foreground;
     margin: 0;
     font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-  }
-  #root:empty {
-    min-height: 100vh;
-    background: hsl(var(--background));
-  }
-  #root:empty::before {
-    content: "";
-    display: block;
-    min-height: 100vh;
-    background:
-      linear-gradient(hsl(var(--muted)) 0 0) 24px 28px / 132px 28px no-repeat,
-      linear-gradient(hsl(var(--muted)) 0 0) 24px 88px / min(420px, calc(100vw - 48px)) 112px no-repeat,
-      linear-gradient(hsl(var(--muted)) 0 0) 24px 224px / min(720px, calc(100vw - 48px)) 20px no-repeat,
-      linear-gradient(hsl(var(--muted)) 0 0) 24px 264px / min(720px, calc(100vw - 48px)) 20px no-repeat,
-      linear-gradient(hsl(var(--muted)) 0 0) 24px 304px / min(720px, calc(100vw - 48px)) 20px no-repeat;
   }
 
   h1,
@@ -334,85 +178,6 @@ a:not([class*="bg-"]):hover {
   }
 }
 
-:root[data-theme="dark"] body {
-  background: #010102 !important;
-  color: #FFFFFF !important;
-}
-
-:root[data-theme="light"] body {
-  background: #F5F5F7 !important;
-  color: #010102 !important;
-}
-
-.nexora-composer-form {
-  background: var(--nexora-composer-background);
-  border: 1px solid var(--nexora-composer-border);
-}
-
-.nexora-composer-form:focus-within {
-  border-color: var(--nexora-composer-focus-border);
-}
-
-:root[data-theme="light"] [class*="bg-[#080A0C]"],
-:root[data-theme="light"] [class*="bg-[#010102]"],
-:root[data-theme="light"] [class*="bg-[#111318]"] {
-  background-color: #FFFFFF !important;
-}
-
-:root[data-theme="light"] [class*="bg-[#1A1D24]"],
-:root[data-theme="light"] [class*="bg-[#1a1a1a]"] {
-  background-color: #EEEFF2 !important;
-}
-
-:root[data-theme="light"] [class*="text-[#F0F2F5]"],
-:root[data-theme="light"] [class*="text-[#D6DAE0]"],
-:root[data-theme="light"] [class*="text-[#D9D9D9]"],
-:root[data-theme="light"] [class*="text-[#D4D4D4]"],
-:root[data-theme="light"] [class*="text-white"] {
-  color: #010102 !important;
-}
-
-:root[data-theme="light"] .nav-item.active {
-  background: #F0EEFF !important;
-  border-left: 3px solid #3B82F6 !important;
-  color: #3B82F6 !important;
-}
-
-:root[data-theme="light"] .nav-item.active svg,
-:root[data-theme="light"] .nav-item.active i {
-  color: #3B82F6 !important;
-}
-
-:root[data-theme="light"] [class*="text-white/"],
-:root[data-theme="light"] [class*="text-[#B7BEC8]"],
-:root[data-theme="light"] [class*="text-[#B7C0CB]"],
-:root[data-theme="light"] [class*="text-[#A0A0A0]"],
-:root[data-theme="light"] [class*="text-[#A8A8A8]"],
-:root[data-theme="light"] [class*="text-[#8B929E]"],
-:root[data-theme="light"] [class*="text-[#8B8B8B]"],
-:root[data-theme="light"] [class*="text-[#6B7280]"],
-:root[data-theme="light"] [class*="text-[#949494]"],
-:root[data-theme="light"] [class*="text-[#8E8E8E]"],
-:root[data-theme="light"] [class*="text-[#999]"] {
-  color: #5F6368 !important;
-}
-
-:root[data-theme="light"] [class*="border-[#303640]"]:not(.nexora-composer-form),
-:root[data-theme="light"] [class*="border-[#2B3038]"],
-:root[data-theme="light"] [class*="border-[#272B33]"],
-:root[data-theme="light"] [class*="border-white/"] {
-  border-color: #E0E0E0 !important;
-}
-
-:root[data-theme="light"] .nexora-composer-form:not(:focus-within) {
-  border-color: var(--nexora-composer-border) !important;
-}
-
-:root[data-theme="light"] .nexora-connector-logo {
-  --tw-ring-color: #F5F5F7 !important;
-}
-
-/* Hero section */
 #hero {
   position: relative !important;
   overflow: hidden !important;
@@ -499,52 +264,4 @@ a:not([class*="bg-"]):hover {
 .marquee-content-reverse {
   display: inline-block;
   animation: marquee-reverse 35s linear infinite;
-}
-
-@keyframes marquee-reverse {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
-}
-
-  @media (max-width: 768px) {
-    .platform-track {
-      gap: 48px !important;
-      animation-duration: 20s !important;
-    }
-    .platform-track img {
-      height: 28px !important;
-    }
-  }
-
-/* Keep interaction chrome neutral app-wide; brand colors remain explicit and intentional. */
-:focus-visible {
-  --tw-ring-color: hsl(var(--ring));
-}
-
-:where(input, textarea, select, [contenteditable="true"]):focus:not(:disabled) {
-  outline: none;
-  box-shadow: none !important;
-}
-
-:where(input, textarea, select, [contenteditable="true"]):focus-visible:not(:disabled) {
-  outline: 2px solid hsl(var(--ring) / 0.65) !important;
-  outline-offset: 1px !important;
-  box-shadow: none !important;
-}
-
-.nexora-composer-input:focus,
-.nexora-composer-input:focus-visible {
-  outline: none !important;
-  outline-offset: 0 !important;
-  box-shadow: none !important;
-}
-
-:is(input, textarea, select, [contenteditable="true"]) {
-  accent-color: hsl(var(--primary));
-  caret-color: hsl(var(--foreground));
-}
-
-::selection {
-  color: hsl(var(--primary-foreground));
-  background: hsl(var(--primary));
 }

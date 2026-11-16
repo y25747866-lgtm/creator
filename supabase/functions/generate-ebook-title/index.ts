@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   corsHeaders, 
@@ -75,7 +74,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `${NEXORAOS_BRAND_POLICY}\n\nYou are a professional book title generator. Generate compelling, marketable ebook titles. Respond with ONLY the title, nothing else. No quotes, no explanation.`
+            content: 'You are a professional book title generator. Generate compelling, marketable ebook titles. Respond with ONLY the title, nothing else. No quotes, no explanation.'
           },
           {
             role: 'user',

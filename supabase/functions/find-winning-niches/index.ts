@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { NEXORAOS_BRAND_POLICY } from "../_shared/nexoraos-brand-policy.ts";
 import { 
   corsHeaders, 
   sanitizeInput, 
@@ -90,7 +89,7 @@ Respond ONLY with a JSON array of 6 objects. No other text.`;
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: `${NEXORAOS_BRAND_POLICY}\n\nYou are a market research AI. Respond with JSON only.` },
+          { role: 'system', content: 'You are a market research AI. Respond with JSON only.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.8,
