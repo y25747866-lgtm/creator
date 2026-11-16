@@ -1,32 +1,25 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2 } from "lucide-react";
 
 interface ViewableRouteProps {
   children: ReactNode;
+  allowGuestPreview?: boolean;
 }
 
-/**
- * Like ProtectedRoute but only requires auth, not subscription.
- * Components inside should check subscription themselves to show upgrade overlay.
- */
-const ViewableRoute = ({ children }: ViewableRouteProps) => {
-  const { user, loading } = useAuth();
+/** Auth-only route guard with an optional public dashboard preview. */
+const ViewableRoute = ({ children, allowGuestPreview = false }: ViewableRouteProps) => {
+  const { session, loading } = useAuth();
+  const location = useLocation();
+  const redirect = `${location.pathname}${location.search}${location.hash}`;
+  const canBrowsePreview = allowGuestPreview && location.pathname === "/dashboard";
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-white" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-background" aria-hidden="true" />;
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
+  if (!session && !canBrowsePreview) {
+    return <Navigate to={`/auth/signin?redirect=${encodeURIComponent(redirect)}`} replace />;
   }
 
   return <>{children}</>;
