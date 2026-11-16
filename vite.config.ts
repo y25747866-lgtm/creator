@@ -34,7 +34,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-react': ['react', 'react-dom'],
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-charts': ['recharts'],
-          'vendor-rive': ['@rive-app/react-canvas'],
         },
       },
     },
