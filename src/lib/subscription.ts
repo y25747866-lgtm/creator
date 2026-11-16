@@ -1,4 +1,4 @@
-export type PlanType = "free" | "creator" | "pro";
+export type PlanType = "free" | "creator" | "pro" | "hybrid";
 
 type SubscriptionStatus = "active" | "cancelled" | "expired";
 
@@ -6,6 +6,8 @@ const PLAN_ALIASES: Record<string, PlanType> = {
   free: "free",
   creator: "creator",
   pro: "pro",
+  hybrid: "hybrid",
+  "hybrid-ai-os": "hybrid",
   monthly: "creator",
   annual: "creator",
 };
@@ -83,7 +85,11 @@ export function isSubscriptionActive(
  * Check if plan is a paid plan
  */
 export function isPaidPlan(planType: PlanType): boolean {
-  return planType === "creator" || planType === "pro";
+  return planType === "creator" || planType === "pro" || planType === "hybrid";
+}
+
+export function isHybridPlan(planType: PlanType): boolean {
+  return planType === "hybrid";
 }
 
 /**
@@ -92,8 +98,9 @@ export function isPaidPlan(planType: PlanType): boolean {
 export function getPlanDisplayName(planType: PlanType): string {
   const displayNames: Record<PlanType, string> = {
     free: "Free",
-    creator: "Creator",
+    creator: "Starter",
     pro: "Pro",
+    hybrid: "Hybrid AI OS",
   };
   return displayNames[planType];
 }
@@ -106,6 +113,7 @@ export function getPlanPrice(planType: PlanType): string {
     free: "Free",
     creator: "$19/month",
     pro: "$39/month",
+    hybrid: "$249/month",
   };
   return prices[planType];
 }

@@ -25,3 +25,6 @@ dist-ssr
 
 # Environment variables
 .env
+# Local environment files (keep only committed examples)
+.env.*
+!.env.example

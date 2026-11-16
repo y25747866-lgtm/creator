@@ -7,20 +7,15 @@ interface ViewableRouteProps {
   allowGuestPreview?: boolean;
 }
 
-/** Auth-only route guard with an optional public dashboard preview. */
+/** Auth-only route guard for dashboard pages. */
 const ViewableRoute = ({ children, allowGuestPreview = false }: ViewableRouteProps) => {
   const { session, loading } = useAuth();
   const location = useLocation();
   const redirect = `${location.pathname}${location.search}${location.hash}`;
   const canBrowsePreview = allowGuestPreview && location.pathname === "/dashboard";
 
-  if (loading) {
-    return <div className="min-h-screen bg-background" aria-hidden="true" />;
-  }
-
-  if (!session && !canBrowsePreview) {
-    return <Navigate to={`/auth/signin?redirect=${encodeURIComponent(redirect)}`} replace />;
-  }
+  if (loading) return <div className="min-h-screen bg-background" aria-hidden="true" />;
+  if (!session && !canBrowsePreview) return <Navigate to={`/auth/signin?redirect=${encodeURIComponent(redirect)}`} replace />;
 
   return <>{children}</>;
 };

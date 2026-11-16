@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { InfiniteData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Loader2 as LoaderIcon, 
-  Copy as CopyIcon, 
+import {
+  Copy as CopyIcon,
   Trash2 as TrashIcon, 
   CheckCircle2 as CheckIcon, 
   Sparkles as SparklesIcon, 
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -304,7 +304,7 @@ const MarketingStudio = () => {
                 style={{ background: '#FFFFFF', color: '#0A0A0A', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', padding: '12px 24px', borderRadius: '6px', border: 'none', whiteSpace: 'nowrap' }}
                 className="hover:bg-[#F0F0F0]"
               >
-                {loading ? <LoaderIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
+                {loading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <SparklesIcon className="w-4 h-4" />}
                 {loading ? "Checking access / generating…" : "Generate Posts"}
               </Button>
             </div>

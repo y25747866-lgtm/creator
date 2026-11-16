@@ -4,9 +4,6 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  db: {
-    pooler: true,
-  } as any,
   auth: {
     persistSession: true,
     autoRefreshToken: true,
@@ -22,14 +19,17 @@ const checkInactivity = () => {
   const lastActive = localStorage.getItem("last_active");
   const now = Date.now();
 
-  if (lastActive && now - parseInt(lastActive) > INACTIVITY_LIMIT) {
+  if (!lastActive || !Number.isFinite(Number(lastActive))) {
+    localStorage.setItem("last_active", now.toString());
+    return;
+  }
+
+  if (now - Number(lastActive) > INACTIVITY_LIMIT) {
     console.log("Session expired due to 24h inactivity. Signing out...");
     localStorage.removeItem("last_active");
-    void supabase.auth.signOut().then(() => {
-      window.location.href = "/auth";
-    });
-  } else {
-    localStorage.setItem("last_active", now.toString());
+    // Let protected route guards respond to the signed-out event. Public routes,
+    // including the chat-first workspace, should remain viewable.
+    void supabase.auth.signOut();
   }
 };
 

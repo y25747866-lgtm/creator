@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyAccess, corsHeaders, errorResponse, checkRateLimit, validateAndSanitize } from "../_shared/validation.ts";
+import { decryptCredential } from "../_shared/credentials.ts";
 
 const PROVIDER_PAGE_SIZE = 20;
 
@@ -20,8 +21,7 @@ async function fetchWhopData(apiKey: string, cursors: { products?: string | null
       products = (data.data || []).filter((p: any) => p && typeof p === 'object');
       if (data.page_info?.has_next_page && data.page_info?.end_cursor) productCursor = data.page_info.end_cursor;
     } else {
-      const errText = await res.text();
-      console.error("❌ Whop products error:", res.status, errText);
+      console.error("❌ Whop products error:", res.status);
     }
   } catch (e) { 
     console.error("❌ Whop products fetch exception:", e); 
@@ -83,15 +83,13 @@ async function fetchPayhipData(apiKey: string) {
   let sales: any[] = [];
 
   try {
-    console.log("Fetching Payhip products with key:", apiKey.substring(0, 10) + "...");
     const res = await fetch("https://payhip.com/api/v1/product/list", { headers });
     if (res.ok) {
       const data = await res.json();
       products = ((data.data || data.products || []) as any[]).filter((p: any) => p && typeof p === 'object');
       console.log("✅ Payhip products fetched:", products.length);
     } else {
-      const errText = await res.text();
-      console.error("❌ Payhip products error:", res.status, errText);
+      console.error("❌ Payhip products error:", res.status);
     }
   } catch (e) { 
     console.error("❌ Payhip products fetch exception:", e); 
@@ -105,8 +103,7 @@ async function fetchPayhipData(apiKey: string) {
       sales = ((data.data || data.sales || []) as any[]).filter((s: any) => s && typeof s === 'object');
       console.log("✅ Payhip sales fetched:", sales.length);
     } else {
-      const errText = await res.text();
-      console.error("❌ Payhip sales error:", res.status, errText);
+      console.error("❌ Payhip sales error:", res.status);
     }
   } catch (e) { 
     console.error("❌ Payhip sales fetch exception:", e); 
@@ -195,8 +192,14 @@ serve(async (req) => {
 
     for (const conn of connections) {
       if (platform && conn.platform !== platform) continue;
-      
-      const apiKey = conn.api_key_encrypted;
+
+      let apiKey: string;
+      try {
+        apiKey = await decryptCredential(conn.api_key_encrypted);
+      } catch {
+        console.warn("⚠️ Skipping analytics connection that requires secure credential migration:", conn.platform);
+        continue;
+      }
       if (!apiKey) {
         console.warn("⚠️ No API key for platform:", conn.platform);
         continue;
