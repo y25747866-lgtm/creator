@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
-import Landing from "./pages/Landing";
 import Blog from "./pages/Blog";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +78,8 @@ const App = () => (
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                <Route path="/" element={<Landing />} />
+                {/* Keep the primary domain aligned with the current Product Studio experience. */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/" element={<Blog />} />
                 <Route path="/auth" element={<AuthRoute />} />
