@@ -176,7 +176,7 @@ export default function Landing() {
                             <span className="block text-[11px] text-[#dddddd]">{plugin.name}</span>
                             <span className="block truncate text-[9px] text-[#777777]">{plugin.description}</span>
                           </span>
-                          {isSelected ? <Check className="h-3.5 w-3.5 text-[#00e68e]" /> : <span className="text-[9px] text-[#777777]">Preview</span>}
+                          {isSelected ? <Check className="h-3.5 w-3.5 text-primary" /> : <span className="text-[9px] text-[#777777]">Preview</span>}
                         </button>
                       );
                     })}
@@ -225,7 +225,7 @@ export default function Landing() {
           </DialogHeader>
           <div className="max-h-28 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 text-sm leading-6 text-[#c8c8c8]">{prompt}</div>
           {authError && <p role="alert" className="text-sm text-[#ff4444]">{authError}</p>}
-          <button type="button" onClick={() => void continueWithGoogle()} disabled={isSigningIn} className="inline-flex h-11 items-center justify-center gap-3 rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-sm font-semibold text-[#e8e8e8] transition-colors hover:border-[#00e68e]/40 hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
+          <button type="button" onClick={() => void continueWithGoogle()} disabled={isSigningIn} className="inline-flex h-11 items-center justify-center gap-3 rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-sm font-semibold text-[#e8e8e8] transition-colors hover:border-primary/40 hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
             <GoogleMark />{isSigningIn ? "Connecting to Google…" : "Continue with Google"}
           </button>
           <p className="text-center text-xs text-[#666666]">Your prompt is stored locally only to complete this sign-in.</p>

@@ -291,7 +291,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
               )}
 
               {s.status === "done" && (
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <CheckCircle2 className="w-4 h-4 text-primary" />
               )}
 
               {s.status === "error" && (
@@ -312,7 +312,7 @@ const MonetizationWizard = ({ onComplete, onCancel }: Props) => {
 
       {step === "done" && (
         <div className="text-center space-y-4">
-          <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
+          <CheckCircle2 className="w-12 h-12 text-primary mx-auto" />
 
           <h2 className="text-xl font-bold">
             Marketing System Ready

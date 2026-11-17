@@ -260,8 +260,8 @@ button[class~="bg-white"],
 a.bg-white,
 a[class~="bg-white"],
 button[class*="data-[state=checked]:bg-white"] {
-  border-color: #00e68e !important;
-  background-color: #00e68e !important;
+  border-color: #e0e0e0 !important;
+  background-color: #ffffff !important;
   color: #000000 !important;
 }
 
@@ -272,8 +272,8 @@ button[class*="data-[state=checked]:bg-white"] {
 
 button[style*="255, 255, 255"],
 a[style*="255, 255, 255"] {
-  border-color: #00e68e !important;
-  background-color: #00e68e !important;
+  border-color: #e0e0e0 !important;
+  background-color: #ffffff !important;
   color: #000000 !important;
 }
 
@@ -283,12 +283,12 @@ a[style*="255, 255, 255"] {
 
 button[style*="240, 240, 240"],
 a[style*="240, 240, 240"] {
-  background-color: #00e68e !important;
+  background-color: #3b82f6 !important;
   color: #000000 !important;
 }
 
 a:not([class*="bg-"]):hover {
-  color: #00e68e !important;
+  color: #3b82f6 !important;
 }
 
 @layer components {

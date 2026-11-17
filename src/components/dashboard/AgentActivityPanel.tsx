@@ -24,7 +24,7 @@ type EventsClient = {
 
 const statusIcon = (status: string | null | undefined) => {
   const normalized = status?.toLowerCase();
-  if (["complete", "completed", "success", "done"].includes(normalized ?? "")) return <CheckCircle2 size={15} className="text-emerald-500" aria-label="Complete" />;
+  if (["complete", "completed", "success", "done"].includes(normalized ?? "")) return <CheckCircle2 size={15} className="text-primary" aria-label="Complete" />;
   if (["error", "failed", "failure"].includes(normalized ?? "")) return <XCircle size={15} className="text-red-400" aria-label="Error" />;
   if (["working", "in_progress", "in-progress", "running", "active"].includes(normalized ?? "")) return <Clock3 size={15} className="text-amber-400" aria-label="In progress" />;
   return <Circle size={15} className="text-muted-foreground" aria-label="Pending" />;

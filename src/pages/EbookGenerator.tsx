@@ -697,7 +697,7 @@ const EbookGenerator = () => {
           >
             {topic || "No topic selected"}
           </button>
-          <span className="rounded-full bg-[#00e68e] px-3 py-1 text-xs font-bold text-[#0A0A0A]">Niche</span>
+          <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-[#0A0A0A]">Niche</span>
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-4">
@@ -719,7 +719,7 @@ const EbookGenerator = () => {
                   <div className={`text-sm font-bold ${active || completed ? "text-white" : "text-zinc-600"}`}>Step {stepNumber}</div>
                   <div className={`text-lg font-semibold ${active || completed ? "text-white" : "text-zinc-600"}`}>{s.label}</div>
                   <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-900">
-                    <div className="h-full rounded-full bg-[#00e68e] transition-all duration-500" style={{ width: completed ? "100%" : active ? "50%" : "0%" }} />
+                    <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: completed ? "100%" : active ? "50%" : "0%" }} />
                   </div>
                 </div>
               </div>

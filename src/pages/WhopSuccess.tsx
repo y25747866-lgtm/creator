@@ -101,9 +101,9 @@ const WhopSuccess = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="flex items-center justify-center">
-          <CheckCircle className="w-12 h-12 text-green-500" />
+          <CheckCircle className="w-12 h-12 text-primary" />
         </div>
-        <h1 className="text-2xl font-semibold text-green-500">Access Verified!</h1>
+        <h1 className="text-2xl font-semibold text-primary">Access Verified!</h1>
         <p className="text-muted-foreground">
           Redirecting you to the dashboard…
         </p>

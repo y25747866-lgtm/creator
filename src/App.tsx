@@ -111,6 +111,14 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/settings"
+                  element={
+                    <ViewableRoute>
+                      <Settings />
+                    </ViewableRoute>
+                  }
+                />
+                <Route
                   path="/dashboard/skills"
                   element={
                     <ViewableRoute>

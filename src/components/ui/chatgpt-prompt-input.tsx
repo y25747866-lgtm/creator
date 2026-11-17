@@ -69,7 +69,7 @@ export function ChatGPTPromptInput({
               type="submit"
               aria-label="Send prompt"
               disabled={disabled || !value.trim()}
-              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-0 bg-[#4a4a4a] text-[#d0d0d0] transition-colors hover:bg-[#00e68e] hover:text-[#08120d] disabled:cursor-not-allowed disabled:opacity-65"
+              className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-0 bg-[#4a4a4a] text-[#d0d0d0] transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-65"
             >
               <ArrowUp className="h-4 w-4" strokeWidth={2} />
             </button>

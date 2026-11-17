@@ -516,6 +516,9 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          language: string
+          notifications_enabled: boolean
+          appearance: string
           plan_type: string | null
           updated_at: string
           user_id: string
@@ -525,6 +528,9 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          language?: string
+          notifications_enabled?: boolean
+          appearance?: string
           plan_type?: string | null
           updated_at?: string
           user_id: string
@@ -534,6 +540,9 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          language?: string
+          notifications_enabled?: boolean
+          appearance?: string
           plan_type?: string | null
           updated_at?: string
           user_id?: string
