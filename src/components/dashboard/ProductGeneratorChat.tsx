@@ -870,8 +870,16 @@ const ProductGeneratorChat = () => {
       <div ref={conversationRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
           <div className="flex w-full max-w-3xl flex-col items-center gap-7 py-8 sm:gap-9">
+            <div className="w-full max-w-2xl text-center">
+              <div className="mb-5 flex items-center justify-center gap-2 text-xs text-[#7F8996]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#60A5FA]" aria-hidden="true" />
+                <span>Product Studio</span>
+              </div>
+              <h1 className="text-3xl font-medium tracking-[-0.04em] text-[#F0F2F5] sm:text-4xl">Turn a brief into something useful</h1>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#9AA3AF]">Choose a starting point or describe the product you want to make. Your AI team will help shape the first draft.</p>
+            </div>
             <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent transition-[transform,opacity] duration-300 ease-in-out" style={{ transform: chatStarted ? "scale(0.3) translateY(-200px)" : "scale(1) translateY(0)" }}>
-              <img src={heroLogo} alt="NexoraOS" width={180} height={60} loading="eager" fetchPriority="high" className="mx-auto h-auto w-[180px] object-contain" />
+              <img src={heroLogo} alt="NexoraOS" width={180} height={60} loading="eager" fetchPriority="high" className="mx-auto h-auto w-[132px] object-contain opacity-80" />
             </div>
             <AgentTeam status={agentStatus} />
             <div className="flex w-full justify-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">

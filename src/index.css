@@ -1,3 +1,7 @@
+/* Hallmark · v2.0.0 · Unslop · NexoraOS workspace polish */
+/* Direction: precise, direct, quietly ambitious · world: editorial product studio */
+/* Kept: existing routes, content, handlers, selectors, and brand assets */
+
 /* Fonts are loaded via index.html for better performance */
 
 @tailwind base;
@@ -44,13 +48,13 @@ html {
 @layer base {
   :root {
     --radius: 0.75rem;
-    --nexora-workspace-background: #010102;
-    --nexora-workspace-foreground: #FFFFFF;
+    --nexora-workspace-background: #0B0D10;
+    --nexora-workspace-foreground: #F0F2F5;
     --nexora-sidebar-background: #080A0C;
     --nexora-sidebar-border: rgba(255, 255, 255, 0.08);
-    --nexora-composer-background: #010102;
-    --nexora-composer-border: rgba(112, 34, 252, 0.3);
-    --nexora-composer-focus-border: rgba(112, 34, 252, 0.3);
+    --nexora-composer-background: #101318;
+    --nexora-composer-border: rgba(148, 163, 184, 0.24);
+    --nexora-composer-focus-border: rgba(96, 165, 250, 0.72);
     --nexora-connector-icon-background: #1a1a1a;
     --nexora-connector-icon-color: #FFFFFF;
     --nexora-connector-icon-border: transparent;
@@ -192,12 +196,12 @@ html {
     @apply border-border;
   }
 
-body {
+  body {
     @apply bg-background text-foreground;
     font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   #root:empty {
     min-height: 100vh;
@@ -223,11 +227,11 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 bg-primary text-primary-foreground hover:bg-primary/90;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 border border-border text-foreground bg-transparent hover:bg-muted;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 border border-border text-foreground bg-transparent hover:bg-muted;
   }
 
   .section-block {
@@ -269,8 +273,8 @@ body {
 }
 
 :root[data-theme="dark"] body {
-  background: #010102 !important;
-  color: #FFFFFF !important;
+  background: #0B0D10 !important;
+  color: #F0F2F5 !important;
 }
 
 :root[data-theme="light"] body {
@@ -284,7 +288,7 @@ body {
 }
 
 .nexora-composer-form:focus-within {
-  border-color: var(--nexora-composer-focus-border);
+  border-color: var(--nexora-composer-focus-border) !important;
 }
 
 :root[data-theme="light"] [class*="bg-[#080A0C]"],
@@ -456,6 +460,12 @@ body {
 /* Keep interaction chrome neutral app-wide; brand colors remain explicit and intentional. */
 :focus-visible {
   --tw-ring-color: hsl(var(--ring));
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--nexora-composer-focus-border);
+  outline-offset: 2px;
 }
 
 :where(input, textarea, select, [contenteditable="true"]):focus:not(:disabled) {

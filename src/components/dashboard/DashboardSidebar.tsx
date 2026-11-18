@@ -72,7 +72,7 @@ const DashboardSidebar = () => {
         title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
         aria-current={active ? "page" : undefined}
         aria-disabled={locked || undefined}
-        className={`${hidden ? "hidden" : ""} nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-muted ${active ? "active bg-muted text-foreground" : locked ? "text-muted-foreground" : "text-muted-foreground"} ${showLabels ? "" : "justify-center"}`}
+        className={`${hidden ? "hidden" : ""} nav-item flex min-h-10 items-center gap-3 rounded-xl border-l-2 border-transparent px-3 text-sm transition-colors hover:bg-muted ${active ? "active bg-muted text-foreground border-l-blue-400 bg-blue-400/[0.08]" : locked ? "text-muted-foreground" : "text-muted-foreground"} ${showLabels ? "" : "justify-center"}`}
       >
         <Icon size={17} className="shrink-0" aria-hidden="true" />
         {showLabels && <span className="min-w-0 flex-1 truncate">{label}</span>}
@@ -115,7 +115,7 @@ const DashboardSidebar = () => {
             <Plus size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <><span className="flex-1 text-left">New chat</span>{workspaceLocked ? <LockKeyhole size={13} className="text-muted-foreground" aria-hidden="true" /> : <span className="text-[10px] text-muted-foreground">Ctrl K</span>}</>}
           </button>
-          <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          <p className={`mb-2 px-3 pt-1 text-xs font-medium text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
@@ -126,7 +126,7 @@ const DashboardSidebar = () => {
             {showLabels && <span>Plugins</span>}
           </Link>
           <div className={`my-4 border-t border-border pt-4 ${showLabels ? "" : "sr-only"}`}>
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">History</p>
+            <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">History</p>
             {historyItems.length ? historyItems.map((item) => (
               <button key={item.id} type="button" onClick={() => { navigate(`/dashboard?conversation=${encodeURIComponent(item.id)}`); closeMobile(); }} title={item.title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">{item.title.length > 27 ? `${item.title.slice(0, 27)}…` : item.title}</button>
             )) : <p className="px-3 py-2 text-xs leading-5 text-muted-foreground">Your recent prompts will appear here.</p>}
