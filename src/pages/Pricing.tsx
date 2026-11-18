@@ -106,10 +106,6 @@ const Pricing = () => {
   const [checkingAccess, setCheckingAccess] = useState(false);
   const isReady = useMemo(() => !!user && !subLoading, [user, subLoading]);
 
-  useEffect(() => {
-    if (hasPaidSubscription) navigate("/dashboard", { replace: true });
-  }, [hasPaidSubscription, navigate]);
-
   const handleSignOut = async () => {
     await signOut();
     toast({ title: "Signed out" });
@@ -195,6 +191,11 @@ const Pricing = () => {
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-[#6B7280]">NexoraOS membership</p>
           <h1 className="text-4xl font-bold tracking-[-0.04em] text-[#F0F2F5] sm:text-6xl" style={{ fontFamily: "'Syne', sans-serif" }}>Build more. Operate smarter.</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#6B7280] sm:text-lg">Choose the operating level that matches your ambition. Every plan is built around useful output, not feature clutter.</p>
+          {user && hasPaidSubscription && (
+            <p className="mx-auto mt-5 max-w-2xl rounded-xl border border-white/[0.08] bg-[#111318] px-4 py-3 text-sm text-[#A6ADB8]">
+              You&apos;re viewing plans from inside your workspace. Compare options below or choose a plan to open secure checkout.
+            </p>
+          )}
         </div>
 
         {user && purchaseStarted && (
