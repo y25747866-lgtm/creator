@@ -64,7 +64,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     queryKey: ["nexora-dashboard-access", user?.id ?? "anonymous"],
     enabled: !authLoading && Boolean(user?.id),
     staleTime: 60_000,
-    retry: false,
+    retry: 1,
     queryFn: async () => {
       const [subscriptionResult, analyticsResult, agentResult] = await Promise.all([
         supabase
@@ -150,11 +150,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div role="status" className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#111318] px-4 py-3 text-sm text-[#D4D4D4] sm:px-6">
               <span>{dashboardAccess.isExpired ? "Your plan has expired — Renew to continue" : "A paid plan is required — Choose a plan to continue"}</span>
               <Link to="/pricing" className="shrink-0 rounded-md border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.06]">{dashboardAccess.isExpired ? "Renew" : "View plans"}</Link>
-            </div>
-          )}
-          {dashboardAccess.error && (
-            <div role="alert" className="border-b border-white/10 bg-[#111318] px-4 py-3 text-sm text-[#A8A8A8] sm:px-6">
-              Could not verify plan access. Refresh this page to try again.
             </div>
           )}
           <AnimatePresence mode="wait" initial={false}>
