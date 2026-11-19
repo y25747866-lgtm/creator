@@ -48,13 +48,13 @@ html {
 @layer base {
   :root {
     --radius: 0.75rem;
-    --nexora-workspace-background: #0B0D10;
-    --nexora-workspace-foreground: #F0F2F5;
-    --nexora-sidebar-background: #080A0C;
-    --nexora-sidebar-border: rgba(255, 255, 255, 0.08);
-    --nexora-composer-background: #101318;
-    --nexora-composer-border: rgba(148, 163, 184, 0.24);
-    --nexora-composer-focus-border: rgba(96, 165, 250, 0.72);
+    --nexora-workspace-background: #0d1117;
+    --nexora-workspace-foreground: #edf2f7;
+    --nexora-sidebar-background: #0a0e13;
+    --nexora-sidebar-border: rgba(182, 201, 224, 0.13);
+    --nexora-composer-background: #121923;
+    --nexora-composer-border: rgba(166, 190, 221, 0.25);
+    --nexora-composer-focus-border: rgba(132, 181, 255, 0.78);
     --nexora-connector-icon-background: #1a1a1a;
     --nexora-connector-icon-color: #FFFFFF;
     --nexora-connector-icon-border: transparent;
@@ -133,33 +133,33 @@ html {
     --sidebar-ring: 0 0% 100%;
   }
 
-  /* Approved NexoraOS charcoal palette: #080A0C, #111318, #1A1D24 */
+  /* Approved NexoraOS graphite palette: deep navy-black, cool paper, restrained blue. */
   .nexora-dashboard {
-    --background: 216 20% 3%;
-    --foreground: 210 20% 95%;
-    --card: 220 17% 8%;
-    --card-foreground: 210 20% 95%;
-    --popover: 220 17% 11%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 210 20% 95%;
-    --primary-foreground: 216 20% 3%;
-    --secondary: 220 17% 11%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 220 17% 11%;
-    --muted-foreground: 217 11% 53%;
-    --accent: 220 17% 11%;
-    --accent-foreground: 210 20% 95%;
-    --border: 220 14% 17%;
-    --input: 220 14% 17%;
-    --ring: 217 11% 60%;
-    --sidebar-background: 220 17% 7%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 210 20% 95%;
-    --sidebar-primary-foreground: 216 20% 3%;
-    --sidebar-accent: 220 17% 11%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 220 14% 17%;
-    --sidebar-ring: 217 11% 60%;
+    --background: 214 25% 5%;
+    --foreground: 210 28% 95%;
+    --card: 215 24% 9%;
+    --card-foreground: 210 28% 95%;
+    --popover: 215 24% 12%;
+    --popover-foreground: 210 28% 95%;
+    --primary: 214 35% 94%;
+    --primary-foreground: 214 25% 5%;
+    --secondary: 215 22% 13%;
+    --secondary-foreground: 210 28% 95%;
+    --muted: 215 22% 13%;
+    --muted-foreground: 215 12% 62%;
+    --accent: 215 22% 13%;
+    --accent-foreground: 210 28% 95%;
+    --border: 215 18% 21%;
+    --input: 215 18% 21%;
+    --ring: 214 90% 73%;
+    --sidebar-background: 214 27% 7%;
+    --sidebar-foreground: 210 28% 95%;
+    --sidebar-primary: 214 35% 94%;
+    --sidebar-primary-foreground: 214 25% 5%;
+    --sidebar-accent: 215 22% 13%;
+    --sidebar-accent-foreground: 210 28% 95%;
+    --sidebar-border: 215 18% 21%;
+    --sidebar-ring: 214 90% 73%;
   }
 
   :root[data-theme="light"] .nexora-dashboard {

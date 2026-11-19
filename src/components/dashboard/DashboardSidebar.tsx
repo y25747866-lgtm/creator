@@ -99,10 +99,10 @@ const DashboardSidebar = () => {
           collapsed ? "md:w-20" : "md:w-[280px]"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className={`flex h-16 shrink-0 items-center border-b border-border px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
+        <div className={`flex h-[72px] shrink-0 items-center border-b border-border px-4 ${showLabels ? "justify-between" : "justify-center"}`}>
           <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
-            <img src={nexoraLogo} alt="NexoraOS" width="28" height="28" className="h-7 w-7 shrink-0 rounded-lg" />
-            {showLabels && <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-foreground">NexoraOS</span>}
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#dfeaff] shadow-[0_0_0_5px_rgba(159,196,255,0.08)]"><img src={nexoraLogo} alt="NexoraOS" width="24" height="24" className="h-6 w-6 rounded-md" /></span>
+            {showLabels && <span className="truncate text-[15px] font-semibold tracking-[-0.03em] text-foreground">NexoraOS<span className="ml-1 text-[#8ebcff]">/</span></span>}
           </Link>
           {showLabels && <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] md:flex"><ChevronLeft size={17} /></button>}
           <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] md:hidden">
@@ -110,12 +110,12 @@ const DashboardSidebar = () => {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
-          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 w-full items-center gap-3 rounded-xl border border-border px-3 text-sm transition-colors hover:bg-muted ${workspaceLocked ? "text-muted-foreground" : "text-foreground"} ${showLabels ? "" : "justify-center"}`}>
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5" aria-label="Main">
+          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-6 flex min-h-11 w-full items-center gap-3 rounded-xl border border-[#9ec5ff]/30 bg-[#9ec5ff]/[0.08] px-3 text-sm font-medium transition-colors hover:bg-[#9ec5ff]/[0.14] ${workspaceLocked ? "text-muted-foreground" : "text-[#dceaff]"} ${showLabels ? "" : "justify-center"}`}>
             <Plus size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <><span className="flex-1 text-left">New chat</span>{workspaceLocked ? <LockKeyhole size={13} className="text-muted-foreground" aria-hidden="true" /> : <span className="text-[10px] text-muted-foreground">Ctrl K</span>}</>}
           </button>
-          <p className={`mb-2 px-3 pt-1 text-xs font-medium text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          <p className={`mb-2 px-3 pt-1 text-[11px] font-semibold text-[#7f8da3] ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
@@ -125,8 +125,8 @@ const DashboardSidebar = () => {
             <Plug size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <span>Plugins</span>}
           </Link>
-          <div className={`my-4 border-t border-border pt-4 ${showLabels ? "" : "sr-only"}`}>
-            <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">History</p>
+          <div className={`my-5 border-t border-border pt-4 ${showLabels ? "" : "sr-only"}`}>
+            <p className="mb-2 px-3 text-[11px] font-semibold text-[#7f8da3]">Recent work</p>
             {historyItems.length ? historyItems.map((item) => (
               <button key={item.id} type="button" onClick={() => { navigate(`/dashboard?conversation=${encodeURIComponent(item.id)}`); closeMobile(); }} title={item.title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">{item.title.length > 27 ? `${item.title.slice(0, 27)}…` : item.title}</button>
             )) : <p className="px-3 py-2 text-xs leading-5 text-muted-foreground">Your recent prompts will appear here.</p>}

@@ -6,6 +6,15 @@ NexoraOS is a product studio for creators who want to turn a brief into a usable
 
 ## Changed
 
+### Comprehensive preview pass
+
+- Replaced the legacy Vite starter stylesheet with a product-wide foundation: full-width app root, intentional selection colors, shared navigation treatment, responsive dashboard background, and a graphite/navy palette with restrained steel-blue accents.
+- Updated the dashboard shell tokens so cards, inputs, focus rings, sidebar surfaces, and popovers read as one system instead of separate hard-coded screens.
+- Reworked the sidebar header, New chat action, section hierarchy, recent-work label, and active-state marker to make the workspace easier to scan and less visually generic.
+- Reframed the public landing page with a deeper editorial navy canvas, cooler typography, rounded pill navigation, stronger primary action, quieter hero badge, lifted feature cards, and more deliberate spacing.
+- Reframed authentication as a calm “Product studio access” surface with a larger welcome card, clearer hierarchy, navy input fields, and a consistent steel-blue primary action.
+- Removed the remaining Vite starter CSS that could constrain the routed app or introduce unrelated logo/card behavior.
+
 - Reworked the first dashboard screen so the core job is clear before the user types: “Turn a brief into something useful.”
 - Added concise supporting copy that explains the starting point without inventing metrics, testimonials, or product claims.
 - Reduced the logo's dominance and let the product action lead the screen.
@@ -32,9 +41,13 @@ NexoraOS is a product studio for creators who want to turn a brief into a usable
 - `npm test -- --maxWorkers=1` passes: 25 test files, 115 tests.
 - `npm run lint` remains blocked by pre-existing repository-wide issues, primarily `any` usage in Supabase functions and a `require()` in `tailwind.config.ts`; the redesign files introduced no lint errors.
 
-## Suggested next pass
+## Intentionally preserved
 
-- Apply the same token system to Projects, Downloads, Skills, Analytics, Plugins, and authentication.
-- Replace remaining hard-coded dashboard color values with shared tokens.
+- Existing routes, auth and subscription gates, Supabase queries, upload/download handlers, chat events, selectors, test hooks, product modes, and brand assets.
+- Existing content and claims; no fabricated customer numbers, testimonials, logos, or performance promises were added.
+
+## Follow-up backlog
+
+- The inner data-heavy pages still contain some legacy hard-coded utility colors and can be tokenized in a later code-quality pass without changing their behavior.
 - Add a visual screenshot comparison at desktop and mobile widths after the Vercel preview is available.
 - Address the existing repository-wide lint backlog separately from the visual redesign.

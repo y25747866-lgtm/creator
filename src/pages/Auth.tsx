@@ -178,13 +178,14 @@ const NexoraOSSignIn = () => {
   const isSocialLoading = isGoogleLoading || isDiscordLoading;
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8 text-foreground">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1117] px-4 py-8 text-foreground">
       <ParticleField />
-      <section className="relative z-10 w-full max-w-[400px] rounded-xl border border-border bg-card p-8 shadow-[0_16px_48px_rgba(0,0,0,0.24)]" aria-labelledby="sign-in-heading">
+      <section className="relative z-10 w-full max-w-[430px] rounded-2xl border border-white/[0.12] bg-[#121923] p-8 shadow-[0_24px_90px_rgba(0,0,0,0.38)]" aria-labelledby="sign-in-heading">
         <div className="text-center">
           <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11 brightness-0 invert" />
-          <h1 id="sign-in-heading" className="mt-6 text-xl font-bold tracking-tight text-foreground">Sign in to NexoraOS</h1>
-          <p className="mt-2 text-sm text-[#6B7280]">Create AI-powered digital businesses instantly.</p>
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9ec5ff]">Product studio access</p>
+          <h1 id="sign-in-heading" className="mt-3 text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
+          <p className="mt-2 text-sm text-[#9aa9bc]">Pick up where you left off and keep building.</p>
         </div>
 
         <form onSubmit={handleContinue} className="mt-8 space-y-5">
@@ -197,7 +198,7 @@ const NexoraOSSignIn = () => {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
-              className={`h-11 w-full rounded-md border bg-card px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring ${error ? "border-foreground" : "border-border"}`}
+              className={`h-11 w-full rounded-lg border bg-[#0d1117] px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-[#9ec5ff] ${error ? "border-foreground" : "border-white/[0.14]"}`}
             />
           </div>
           <div>
@@ -209,12 +210,12 @@ const NexoraOSSignIn = () => {
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
               autoComplete="current-password"
-              className="h-11 w-full rounded-md border border-border bg-card px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring"
+              className="h-11 w-full rounded-lg border border-white/[0.14] bg-[#0d1117] px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-[#9ec5ff]"
             />
           </div>
           {error && <p role="alert" className="text-xs text-[#F0F2F5]">{error}</p>}
-          <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-bold text-black transition hover:bg-[#F0F2F5] disabled:cursor-not-allowed disabled:opacity-50">
-            {isLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : "Continue →"}
+          <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#dfeaff] text-sm font-bold text-[#0d1117] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">
+            {isLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : "Continue"}
           </button>
         </form>
 

@@ -71,27 +71,27 @@ const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-white selection:text-[#0A0A0A] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#0d1117] text-white selection:bg-[#9ec5ff] selection:text-[#0d1117] overflow-x-hidden" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       
       {/* ═══ NAVBAR ═══ */}
       <m.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-[#1A1A1A] bg-[#0A0A0A]/80 backdrop-blur-2xl"
+        className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.09] bg-[#0d1117]/88 backdrop-blur-2xl"
       >
-        <div className="max-w-7xl mx-auto h-16 flex items-center justify-between px-6">
+        <div className="max-w-7xl mx-auto h-[72px] flex items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={nexoraLogo} alt="NexoraOS Logo" width="32" height="32" loading="lazy" className="w-8 h-8" />
             <span className="font-bold text-lg text-white" style={{ fontFamily: "'Syne', sans-serif" }}>NexoraOS</span>
           </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#A1A1A1] absolute left-1/2 -translate-x-1/2">
+          <div className="hidden md:flex gap-8 text-[13px] font-medium text-[#91a0b4] absolute left-1/2 -translate-x-1/2">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/dashboard" className="px-5 py-2 text-sm font-semibold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all">
+            <Link to="/dashboard" className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-[#dfeaff] text-[#0d1117] hover:bg-white transition-colors">
               Get Started
             </Link>
           </div>
@@ -99,7 +99,7 @@ const Landing = () => {
       </m.nav>
 
       {/* ═══ HERO ═══ */}
-      <section id="hero" className="pt-48 pb-24 hero-section relative overflow-hidden">
+      <section id="hero" className="pt-44 pb-28 hero-section relative overflow-hidden bg-[radial-gradient(circle_at_68%_36%,rgba(100,145,220,0.16),transparent_28rem)]">
         <HeroBackground />
         <div className="relative z-10">
           <div className="max-w-7xl mx-auto px-6">
@@ -110,8 +110,8 @@ const Landing = () => {
               className="max-w-7xl mx-auto"
             >
               <div className="flex justify-start mb-8">
-                <span className="inline-block px-4 py-1.5 text-[10px] font-semibold tracking-[0.2em] uppercase"
-                  style={{ background: '#111111', border: '1px solid #1A1A1A', color: '#FFFFFF', opacity: 0.6 }}>
+                <span className="inline-flex items-center gap-2 px-3.5 py-2 text-[10px] font-semibold tracking-[0.14em] uppercase rounded-full"
+                  style={{ background: 'rgba(158,197,255,0.08)', border: '1px solid rgba(158,197,255,0.28)', color: '#bcd6ff', opacity: 1 }}>
                   AI-POWERED BUSINESS OS
                 </span>
               </div>
@@ -130,11 +130,11 @@ const Landing = () => {
                       <div className="hero-word transition-opacity duration-500 text-white/85">In one session.</div>
                     </h1>
                   </div>
-                  <p className="text-[#A1A1A1] mb-10 text-lg leading-relaxed max-w-lg">
+                  <p className="text-[#aebdce] mb-10 text-lg leading-relaxed max-w-lg">
                     NexoraOS is the only system built for creators who are done waiting. Build, launch, and monetize — all in one place.
                   </p>
                   <div className="flex flex-wrap gap-3 mb-4">
-                    <Link to="/dashboard" className="px-8 py-4 font-bold rounded-lg bg-white text-[#0A0A0A] hover:bg-[#F0F0F0] transition-all text-sm flex items-center gap-2">
+                    <Link to="/dashboard" className="px-8 py-4 font-bold rounded-xl bg-[#dfeaff] text-[#0d1117] hover:bg-white transition-colors text-sm flex items-center gap-2 shadow-[0_14px_36px_rgba(122,169,239,0.18)]">
                       Start Building Now <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
@@ -146,7 +146,7 @@ const Landing = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, delay: 0.4 }}
-                    className="bg-[#0D0D0D] border border-[#1A1A1A] rounded-2xl overflow-hidden shadow-2xl max-w-md ml-auto"
+                    className="bg-[#121923] border border-white/[0.12] rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.34)] max-w-md ml-auto"
                   >
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1A1A1A]">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#333333]" />
@@ -180,7 +180,7 @@ const Landing = () => {
       </section>
 
       {/* ═══ FEATURES SECTION ═══ */}
-      <Section id="features" className="py-32 border-t border-[#1A1A1A]">
+      <Section id="features" className="py-28 border-t border-white/[0.08]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-left mb-4">
             <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
@@ -264,7 +264,7 @@ const Landing = () => {
       </section>
 
       {/* ═══ FOUNDER ═══ */}
-      <Section className="py-32 border-t border-[#1A1A1A]">
+      <Section className="py-28 border-t border-white/[0.08]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-4">
             <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
@@ -291,7 +291,7 @@ const Landing = () => {
       </Section>
 
       {/* ═══ PRICING ═══ */}
-      <Section id="pricing" className="py-32 border-t border-[#1A1A1A]">
+      <Section id="pricing" className="py-28 border-t border-white/[0.08]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-left mb-4">
             <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
@@ -367,7 +367,7 @@ const Landing = () => {
       </Section>
 
       {/* ═══ FAQ ═══ */}
-      <Section id="faq" className="py-32 border-t border-[#1A1A1A]">
+      <Section id="faq" className="py-28 border-t border-white/[0.08]">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-left mb-4">
             <span className="inline-block px-3 py-1 text-[10px] font-semibold tracking-[0.2em] uppercase text-[#A1A1A1] border border-[#1A1A1A] bg-[#111111] mb-6">
