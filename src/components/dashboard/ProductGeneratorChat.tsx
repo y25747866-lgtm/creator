@@ -824,7 +824,7 @@ const ProductGeneratorChat = () => {
           >
             <SidebarUnfoldLineIcon size={20} style={sidebarExpanded ? { transform: "scaleX(-1)" } : undefined} aria-hidden="true" />
           </button>
-          <div className={`flex items-center gap-2 overflow-hidden transition-[opacity,transform,max-width] duration-300 ease-in-out ${chatStarted ? "max-w-[160px] translate-y-0 opacity-100" : "pointer-events-none max-w-0 -translate-y-4 opacity-0"}`} aria-hidden={!chatStarted}>
+          <div className={`flex min-w-0 items-center gap-2 overflow-hidden transition-[opacity,transform,max-width] duration-300 ease-in-out ${chatStarted ? "max-w-[160px] translate-y-0 opacity-100" : "max-w-8 translate-y-0 opacity-100"}`} aria-hidden={false}>
             <img src={heroLogo} alt="" width={32} height={32} loading="eager" fetchPriority="high" className="h-8 w-8 shrink-0 rounded-md object-contain" />
             <span className="truncate text-sm font-semibold tracking-[-0.02em] text-[#F0F2F5]">NexoraOS</span>
           </div>
