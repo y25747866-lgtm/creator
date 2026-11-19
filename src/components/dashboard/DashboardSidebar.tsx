@@ -95,9 +95,9 @@ const DashboardSidebar = () => {
       <aside
         aria-label="Workspace navigation"
         style={{ backgroundColor: "var(--nexora-sidebar-background)", borderColor: "var(--nexora-sidebar-border)" }}
-        className={`fixed inset-y-0 left-0 z-40 flex w-[min(82vw,280px)] flex-col border-r border-border transition-[width,transform] duration-200 md:w-[284px] md:translate-x-0 ${
+        className={`nexora-sidebar fixed inset-y-0 left-0 z-40 flex w-[min(82vw,280px)] flex-col border-r border-border transition-[width,transform] duration-200 md:w-[284px] md:translate-x-0 ${
           collapsed ? "md:w-20" : "md:w-[280px]"
-        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        } ${mobileOpen ? "mobile-nav-open translate-x-0" : "mobile-nav-closed -translate-x-full"}`}
       >
         <div className={`flex h-[72px] shrink-0 items-center border-b border-border px-4 ${showLabels ? "justify-between" : "justify-center"}`}>
           <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">

@@ -24,6 +24,13 @@ NexoraOS is a product studio for creators who want to turn a brief into a usable
 - Recast the AI team as a compact supporting control: roles are visible, agent cards are denser, and selected/working states use the workspace steel-blue signal.
 - Reduced the mobile navigation drawer to a maximum of 82% viewport width so it does not consume the entire phone screen.
 
+### Mobile clipping and tablet viewport pass
+
+- Changed the effective drawer breakpoint to 1024px so Android browsers with a desktop-sized CSS viewport do not permanently reserve sidebar width.
+- Added an explicit closed/open drawer state override and removed main-column padding below the wide layout breakpoint, preventing the navigation from covering the first column of workspace content.
+- Made the workspace and composer explicitly `min-w-0`/full-width, increased guest header actions to comfortable touch targets, and reflowed the AI team to three columns on narrow phones.
+- Rebalanced the empty state upward on small and tablet widths so the composer and first-use controls are visible without a large dead vertical band.
+
 - Reworked the first dashboard screen so the core job is clear before the user types: “Turn a brief into something useful.”
 - Added concise supporting copy that explains the starting point without inventing metrics, testimonials, or product claims.
 - Reduced the logo's dominance and let the product action lead the screen.

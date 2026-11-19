@@ -140,12 +140,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <button
             type="button"
             aria-label="Close navigation drawer"
-            className="fixed inset-0 z-30 cursor-default bg-black/55 backdrop-blur-[2px] md:hidden"
+            className="fixed inset-0 z-30 cursor-default bg-black/55 backdrop-blur-[2px] lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
         )}
         <DashboardSidebar />
-        <main className={`relative z-10 flex min-h-screen w-full flex-col transition-[padding] duration-200 ${collapsed ? "md:pl-20" : "md:pl-[280px]"}`}>
+        <main className={`relative z-10 flex min-h-screen w-full min-w-0 flex-col transition-[padding] duration-200 ${collapsed ? "md:pl-20" : "md:pl-[280px]"}`}>
           {dashboardAccess.renewalRequired && (
             <div role="status" className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#111318] px-4 py-3 text-sm text-[#D4D4D4] sm:px-6">
               <span>{dashboardAccess.isExpired ? "Your plan has expired — Renew to continue" : "A paid plan is required — Choose a plan to continue"}</span>

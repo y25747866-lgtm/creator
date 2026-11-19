@@ -48,3 +48,19 @@ select {
     background-image: none;
   }
 }
+
+/* Android browsers often expose a desktop-sized CSS viewport. Keep the app drawer-like until the layout is genuinely wide. */
+@media (max-width: 1023px) {
+  .nexora-dashboard > main {
+    width: 100%;
+    padding-left: 0 !important;
+  }
+
+  .nexora-sidebar.mobile-nav-closed {
+    transform: translateX(-100%);
+  }
+
+  .nexora-sidebar.mobile-nav-open {
+    transform: translateX(0);
+  }
+}

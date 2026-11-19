@@ -202,7 +202,7 @@ const ProductGeneratorChat = () => {
   const navigate = useNavigate();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const { agentAccess } = useDashboardAccess();
-  const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 768;
+  const isDesktopViewport = typeof window !== "undefined" && window.innerWidth >= 1024;
   const sidebarExpanded = isDesktopViewport ? !collapsed : mobileOpen;
   const { recordUsage, hasPaidSubscription, isExpired, canUseFeature, planType } = useFeatureAccess();
   const canUseAgentSystem = typeof canUseFeature === "function" ? canUseFeature("agent_system") : true;
@@ -807,14 +807,14 @@ const ProductGeneratorChat = () => {
   };
 
   const toggleSidebar = () => {
-    if (window.innerWidth >= 768) setCollapsed(!collapsed);
+    if (window.innerWidth >= 1024) setCollapsed(!collapsed);
     else setMobileOpen(!mobileOpen);
   };
 
   return (
-    <div onPointerDown={markUserActivity} onKeyDown={markUserActivity} className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
-      <header className="relative flex h-14 shrink-0 items-center justify-between border-b border-[#272B33] px-3 sm:h-16 sm:px-6 lg:px-10">
-        <div className="flex items-center gap-3">
+    <div onPointerDown={markUserActivity} onKeyDown={markUserActivity} className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] w-full min-w-0 flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
+      <header className="relative flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#272B33] px-3 sm:h-16 sm:px-6 lg:px-10">
+        <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={toggleSidebar}
@@ -834,7 +834,7 @@ const ProductGeneratorChat = () => {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {upgradeLabel && (
             <button
               type="button"
@@ -847,8 +847,8 @@ const ProductGeneratorChat = () => {
           <button type="button" onClick={toggleTheme} aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className="sr-only">Toggle appearance</button>
           {!authLoading && !user && (
             <>
-              <Link to="/auth/signin" className="rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-[#D6DAE0] transition hover:border-white/35 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Sign In</Link>
-              <Link to="/auth/signin?redirect=/dashboard" className="rounded-lg bg-[#F0F2F5] px-3 py-2 text-xs font-semibold text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Get Started</Link>
+              <Link to="/auth/signin" className="inline-flex min-h-10 items-center rounded-lg border border-white/15 px-3.5 text-sm font-medium text-[#D6DAE0] transition hover:border-white/35 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Sign In</Link>
+              <Link to="/auth/signin?redirect=/dashboard" className="inline-flex min-h-10 items-center rounded-lg bg-[#F0F2F5] px-3.5 text-sm font-semibold text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">Get Started</Link>
             </>
           )}
           {!authLoading && user && (
@@ -868,8 +868,8 @@ const ProductGeneratorChat = () => {
       </header>
 
       <div ref={conversationRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
-          <div className="flex w-full max-w-3xl flex-col items-center gap-5 py-8 sm:gap-6 sm:py-12">
+        <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-start justify-center overflow-x-hidden px-4 pt-8 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 sm:pt-12 xl:items-center xl:py-12 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
+          <div className="flex w-full min-w-0 max-w-3xl flex-col items-center gap-5 pb-8 sm:gap-6 sm:pb-12">
             <div className="w-full max-w-2xl text-center">
               <p className="mb-3 text-xs font-medium text-[#8fa4c1]">Product Studio</p>
               <h1 className="text-[2rem] font-medium leading-tight tracking-[-0.05em] text-[#F0F2F5] sm:text-4xl">What are you making today?</h1>
@@ -1027,13 +1027,13 @@ const ProductGeneratorChat = () => {
       </div>
 
       <div className={hasConversation ? "sticky bottom-0 z-10 w-full shrink-0 bg-[var(--nexora-workspace-background)] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]" : "absolute bottom-0 left-0 right-0 z-10 w-full shrink-0 bg-[var(--nexora-workspace-background)] px-3 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3 sm:px-6 sm:pb-[calc(env(safe-area-inset-bottom)+20px)]"}>
-        <div className="mx-auto w-full max-w-3xl px-0 sm:px-4">
+        <div className="mx-auto w-full min-w-0 max-w-3xl px-0 sm:px-4">
           <div className={`mb-3 transition-[opacity,transform,max-height] duration-300 ease-in-out ${chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? "max-h-14 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-2 opacity-0"}`}>
             {chatStarted && (isGenerating || scoutBrowsing || completedAgent) ? <ActiveAgentStrip agent={scoutBrowsing ? "SCOUT" : completedAgent ?? activeAgent} status={isGenerating || scoutBrowsing ? "working" : "done"} /> : null}
           </div>
           <AgentActivityPanel taskId={activeTaskId} />
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
-          <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] min-h-[136px] flex-col rounded-[24px] rounded-[22px] border border-[#303640] border-[#53657f] px-3 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.32)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] focus-within:border-[#9ec5ff] focus-within:shadow-[0_18px_70px_rgba(76,126,197,0.18)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
+          <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] w-full min-w-0 flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.32)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] focus-within:border-[#9ec5ff] focus-within:shadow-[0_18px_70px_rgba(76,126,197,0.18)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
