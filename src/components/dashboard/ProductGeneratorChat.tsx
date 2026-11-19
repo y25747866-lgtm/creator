@@ -90,10 +90,10 @@ type SelectorPopupPosition = { top: number; left: number; width: number; maxHeig
 type ComposerAttachment = MediaAttachment & { localOnly?: boolean; file?: File };
 const MAX_COMPOSER_HEIGHT = 200;
 const PROMPT_SUGGESTIONS = [
-  { label: "Write an Ebook", prompt: "Write an ebook about " },
-  { label: "Create a Course", prompt: "Create a course that teaches " },
-  { label: "Deep Search", prompt: "Run a deep search on " },
-  { label: "Build a Newsletter", prompt: "Build a newsletter about " },
+  { label: "A beginner guide", prompt: "Create a beginner guide about " },
+  { label: "A course outline", prompt: "Create a course that teaches " },
+  { label: "A research brief", prompt: "Run a deep search on " },
+  { label: "A weekly newsletter", prompt: "Build a newsletter about " },
 ];
 
 const PRODUCT_TEMPLATES: Template[] = [
@@ -813,14 +813,14 @@ const ProductGeneratorChat = () => {
 
   return (
     <div onPointerDown={markUserActivity} onKeyDown={markUserActivity} className="nexora-chat-workspace relative flex h-[100dvh] min-h-[560px] flex-col overflow-hidden" style={{ background: "var(--nexora-workspace-background)", color: "var(--nexora-workspace-foreground)" }}>
-      <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-[#272B33] px-4 sm:px-6 lg:px-10">
+      <header className="relative flex h-14 shrink-0 items-center justify-between border-b border-[#272B33] px-3 sm:h-16 sm:px-6 lg:px-10">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={toggleSidebar}
             aria-label="Toggle sidebar"
             aria-expanded={sidebarExpanded}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.06] hover:text-white transition"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/50 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9ec5ff]"
           >
             <SidebarUnfoldLineIcon size={20} style={sidebarExpanded ? { transform: "scaleX(-1)" } : undefined} aria-hidden="true" />
           </button>
@@ -869,22 +869,19 @@ const ProductGeneratorChat = () => {
 
       <div ref={conversationRef} className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <section className={`pointer-events-auto absolute inset-0 z-[1] flex items-center justify-center px-5 transition-[opacity,transform] duration-300 ease-in-out sm:px-8 ${chatStarted ? "pointer-events-none -translate-y-5 opacity-0" : "translate-y-0 opacity-100"}`} aria-label="New conversation">
-          <div className="flex w-full max-w-3xl flex-col items-center gap-7 py-8 sm:gap-9">
+          <div className="flex w-full max-w-3xl flex-col items-center gap-5 py-8 sm:gap-6 sm:py-12">
             <div className="w-full max-w-2xl text-center">
-              <div className="mb-5 flex items-center justify-center gap-2 text-xs text-[#7F8996]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#60A5FA]" aria-hidden="true" />
-                <span>Product Studio</span>
-              </div>
-              <h1 className="text-3xl font-medium tracking-[-0.04em] text-[#F0F2F5] sm:text-4xl">Turn a brief into something useful</h1>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#9AA3AF]">Choose a starting point or describe the product you want to make. Your AI team will help shape the first draft.</p>
+              <p className="mb-3 text-xs font-medium text-[#8fa4c1]">Product Studio</p>
+              <h1 className="text-[2rem] font-medium leading-tight tracking-[-0.05em] text-[#F0F2F5] sm:text-4xl">What are you making today?</h1>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#9AA3AF]">Start with an idea, a question, or a useful outcome. Your team will shape the first draft.</p>
             </div>
-            <div className="nexoraos-brand-logo w-full max-w-[480px] bg-transparent transition-[transform,opacity] duration-300 ease-in-out" style={{ transform: chatStarted ? "scale(0.3) translateY(-200px)" : "scale(1) translateY(0)" }}>
-              <img src={heroLogo} alt="NexoraOS" width={180} height={60} loading="eager" fetchPriority="high" className="mx-auto h-auto w-[132px] object-contain opacity-80" />
+            <div className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.025] px-3 py-3 sm:px-4">
+              <AgentTeam status={agentStatus} />
             </div>
-            <AgentTeam status={agentStatus} />
-            <div className="flex w-full justify-center gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Prompt suggestions">
+            <div className="flex w-full flex-wrap justify-center gap-2 px-1 pb-1" aria-label="Prompt suggestions">
+              <span className="self-center px-1 text-xs text-[#718097]">Try:</span>
               {PROMPT_SUGGESTIONS.map((suggestion) => (
-                <button key={suggestion.label} type="button" onClick={() => { setDraft(suggestion.prompt); composerRef.current?.focus(); }} className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-xs text-[#B7BEC8] transition hover:border-white/35 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">{suggestion.label}</button>
+                <button key={suggestion.label} type="button" onClick={() => { setDraft(suggestion.prompt); composerRef.current?.focus(); }} className="shrink-0 rounded-lg border border-white/[0.12] bg-white/[0.025] px-3 py-2 text-xs text-[#B7BEC8] transition-colors hover:border-[#9ec5ff]/50 hover:bg-[#9ec5ff]/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9ec5ff]">{suggestion.label}</button>
               ))}
             </div>
             {historyLoading && <Skeleton role="status" aria-label="Opening saved conversation" className="h-5 w-48" />}
@@ -1036,7 +1033,7 @@ const ProductGeneratorChat = () => {
           </div>
           <AgentActivityPanel taskId={activeTaskId} />
           <BorderBeam size="pulse-inner" colorVariant="mono" duration={3.2} strength={0.45} active={!composerInteracted} className="mt-3 block w-full">
-          <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] flex-col rounded-[24px] border border-[#303640] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
+          <form onSubmit={submitTopic} className="nexora-composer-form relative flex min-h-[120px] min-h-[136px] flex-col rounded-[24px] rounded-[22px] border border-[#303640] border-[#53657f] px-3 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.32)] transition-colors duration-150 focus-within:border-[rgba(112,34,252,0.3)] focus-within:border-[#9ec5ff] focus-within:shadow-[0_18px_70px_rgba(76,126,197,0.18)] sm:px-6 sm:py-5" style={{ background: "var(--nexora-composer-background)" }}>
             <label htmlFor="nexora-topic-composer" className="sr-only">Describe the ebook topic</label>
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleMediaSelection} className="sr-only" aria-label="Capture a photo" />
             <input ref={pictureInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,video/ogg" onChange={handleMediaSelection} className="sr-only" aria-label="Choose pictures or videos" />
@@ -1067,7 +1064,7 @@ const ProductGeneratorChat = () => {
                 onPaste={handleComposerPaste}
                 onKeyDown={handleComposerKeyDown}
                 disabled={isGenerating || isUploading}
-                placeholder={activeSystem === "product-generator" ? "What do you want to create today?" : "What do you want your agents to do?"}
+                placeholder={activeSystem === "product-generator" ? "Describe the product, guide, or idea you want to make…" : "What do you want your agents to do?"}
                 className="nexora-composer-input block max-h-[200px] min-h-[48px] w-full resize-none overflow-hidden border-0 bg-transparent px-1 py-1 pb-6 pr-2 text-[16px] leading-[1.5] outline-none placeholder:text-[#8B929E] disabled:opacity-60 sm:min-h-[56px]"
                 style={{ color: "var(--nexora-workspace-foreground)" }}
                 aria-describedby="composer-hint"

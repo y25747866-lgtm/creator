@@ -15,6 +15,15 @@ NexoraOS is a product studio for creators who want to turn a brief into a usable
 - Reframed authentication as a calm “Product studio access” surface with a larger welcome card, clearer hierarchy, navy input fields, and a consistent steel-blue primary action.
 - Removed the remaining Vite starter CSS that could constrain the routed app or introduce unrelated logo/card behavior.
 
+### Focused creation workspace pass
+
+- Removed the oversized empty-state NexoraOS logo so the screen leads with the creation job rather than repeated branding.
+- Replaced the generic empty-state headline with a direct creation question and made the supporting copy shorter and more useful.
+- Elevated the composer with a clearer border, stronger focus state, larger working surface, and a prompt that explains what belongs in it.
+- Replaced generic action labels with concrete first-use starting points: beginner guide, course outline, research brief, and weekly newsletter.
+- Recast the AI team as a compact supporting control: roles are visible, agent cards are denser, and selected/working states use the workspace steel-blue signal.
+- Reduced the mobile navigation drawer to a maximum of 82% viewport width so it does not consume the entire phone screen.
+
 - Reworked the first dashboard screen so the core job is clear before the user types: “Turn a brief into something useful.”
 - Added concise supporting copy that explains the starting point without inventing metrics, testimonials, or product claims.
 - Reduced the logo's dominance and let the product action lead the screen.
