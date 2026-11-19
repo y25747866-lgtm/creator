@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useEbookStore } from "@/hooks/useEbookStore";
 import { getPlanDisplayName, getPlanPrice } from "@/lib/subscription";
+import { supabase } from "@/integrations/supabase/client";
 
 type SettingRowProps = {
   icon: LucideIcon;
@@ -39,7 +40,7 @@ function SettingRow({ icon: Icon, label, description, onClick, to }: SettingRowP
 function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section aria-labelledby={`${label.toLowerCase()}-settings-heading`}>
-      <h2 id={`${label.toLowerCase()}-settings-heading`} className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6B7280]">{label}</h2>
+      <h2 id={`${label.toLowerCase()}-settings-heading`} className="mb-2 px-1 text-xs font-medium text-[#8B929E]">{label}</h2>
       <div className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#111318]">{children}</div>
     </section>
   );
@@ -51,16 +52,104 @@ const Settings = () => {
   const { user, signOut } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
   const { subscription, planType, hasPaidSubscription, expirationDate, loading: subLoading } = useSubscription();
+  const [displayName, setDisplayName] = useState("");
   const [notifications, setNotifications] = useState(true);
+  const [language, setLanguage] = useState("en");
+  const [appearance, setAppearance] = useState<"dark" | "light">("dark");
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [savingDisplayName, setSavingDisplayName] = useState(false);
+  const [savingPreference, setSavingPreference] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) navigate("/auth/signin?redirect=/dashboard/settings", { replace: true });
   }, [navigate, user]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const loadProfile = async () => {
+      setProfileLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name, notifications_enabled, language, appearance")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        toast({ title: "Could not load settings", description: error.message, variant: "destructive" });
+      } else if (data) {
+        setDisplayName(data.display_name || String(user.user_metadata?.full_name || user.email || ""));
+        setNotifications(data.notifications_enabled ?? true);
+        setLanguage(data.language || "en");
+        const nextAppearance = data.appearance === "light" ? "light" : "dark";
+        setAppearance(nextAppearance);
+        document.documentElement.setAttribute("data-theme", nextAppearance);
+        setTheme(nextAppearance);
+      } else {
+        setDisplayName(String(user.user_metadata?.full_name || user.email || ""));
+        const fallbackAppearance = resolvedTheme === "light" ? "light" : "dark";
+        setAppearance(fallbackAppearance);
+      }
+      setProfileLoading(false);
+    };
+    void loadProfile();
+    return () => { cancelled = true; };
+  }, [resolvedTheme, setTheme, toast, user]);
+
+  const saveProfile = async (updates: { display_name?: string; notifications_enabled?: boolean; language?: string; appearance?: "dark" | "light" }, label: string) => {
+    if (!user?.id) return false;
+    const { error } = await supabase.from("profiles").upsert({ id: user.id, ...updates }, { onConflict: "id" });
+    if (error) {
+      toast({ title: "Could not save settings", description: error.message, variant: "destructive" });
+      return false;
+    }
+    toast({ title: "Settings saved", description: label });
+    return true;
+  };
+
+  const handleDisplayNameSave = async () => {
+    setSavingDisplayName(true);
+    await saveProfile({ display_name: displayName.trim() }, "Your profile name was updated.");
+    setSavingDisplayName(false);
+  };
+
+  const handleNotificationsChange = async (checked: boolean) => {
+    setNotifications(checked);
+    setSavingPreference("notifications");
+    const saved = await saveProfile({ notifications_enabled: checked }, "Notification preferences were updated.");
+    if (!saved) setNotifications(!checked);
+    setSavingPreference(null);
+  };
+
+  const handleLanguageChange = async (nextLanguage: string) => {
+    const previousLanguage = language;
+    setLanguage(nextLanguage);
+    setSavingPreference("language");
+    const saved = await saveProfile({ language: nextLanguage }, "Language preference was updated.");
+    if (!saved) setLanguage(previousLanguage);
+    setSavingPreference(null);
+  };
+
+  const handleAppearanceChange = async (checked: boolean) => {
+    const nextAppearance = checked ? "dark" : "light";
+    const previousAppearance = appearance;
+    setAppearance(nextAppearance);
+    document.documentElement.setAttribute("data-theme", nextAppearance);
+    setTheme(nextAppearance);
+    setSavingPreference("appearance");
+    const saved = await saveProfile({ appearance: nextAppearance }, "Appearance preference was updated.");
+    if (!saved) {
+      setAppearance(previousAppearance);
+      document.documentElement.setAttribute("data-theme", previousAppearance);
+      setTheme(previousAppearance);
+    }
+    setSavingPreference(null);
+  };
+
   const displayPlan = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
   const displayPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
   const currentTheme = resolvedTheme === "light" ? "light" : "dark";
-  const accountName = String(user?.user_metadata?.full_name || user?.email || "Account");
+  const accountName = displayName || String(user?.user_metadata?.full_name || user?.email || "Account");
   const initials = useMemo(() => accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "A", [accountName]);
 
   const handleSignOut = async () => {
@@ -78,7 +167,7 @@ const Settings = () => {
         <div className="mx-auto max-w-2xl">
           <header className="mb-8 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]">Workspace</p>
+              <p className="text-xs font-medium text-[#8B929E]">Workspace</p>
               <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#F0F2F5]">Settings</h1>
               <p className="mt-2 text-sm leading-6 text-[#6B7280]">Manage your account, preferences, and plan.</p>
             </div>
@@ -87,22 +176,31 @@ const Settings = () => {
 
           <div className="space-y-7">
             <SettingsGroup label="Account">
-              <SettingRow icon={UserRound} label="Profile" description={accountName} onClick={() => handlePlaceholder("Profile")} />
+              <div className="flex min-h-16 items-center gap-3 border-b border-white/[0.06] px-4 py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]"><UserRound size={16} aria-hidden="true" /></span>
+                <label htmlFor="profile-display-name" className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Profile name</span><span className="mt-0.5 block text-xs text-[#6B7280]">Shown on your workspace account</span></label>
+                <input id="profile-display-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} disabled={profileLoading || savingDisplayName} className="h-9 w-36 rounded-lg border border-white/[0.12] bg-[#0d1117] px-2.5 text-right text-sm text-[#F0F2F5] outline-none transition focus:border-[#9ec5ff] disabled:opacity-50 sm:w-48" />
+                <button type="button" onClick={() => void handleDisplayNameSave()} disabled={profileLoading || savingDisplayName} className="h-9 rounded-lg bg-[#dfeaff] px-3 text-xs font-semibold text-[#0d1117] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50">{savingDisplayName ? "Saving" : "Save"}</button>
+              </div>
               <SettingRow icon={Globe2} label="Email" description={user?.email || "Not connected"} onClick={() => handlePlaceholder("Email")} />
               <SettingRow icon={LockKeyhole} label="Password" description="Update your sign-in method" onClick={() => handlePlaceholder("Password")} />
             </SettingsGroup>
 
             <SettingsGroup label="Preferences">
-              <button type="button" onClick={() => setNotifications((value) => !value)} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8C96A3]">
+              <div className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition hover:bg-white/[0.025]">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]"><Bell size={16} aria-hidden="true" /></span>
                 <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Notifications</span><span className="mt-0.5 block text-xs text-[#6B7280]">Email and product updates</span></span>
-                <Switch checked={notifications} onCheckedChange={setNotifications} aria-label="Toggle notifications" />
-              </button>
-              <SettingRow icon={Globe2} label="Language" description="English" onClick={() => handlePlaceholder("Language")} />
+                <Switch checked={notifications} onCheckedChange={(checked) => void handleNotificationsChange(checked)} disabled={savingPreference === "notifications"} aria-label="Toggle notifications" />
+              </div>
+              <div className="flex min-h-16 items-center gap-3 border-b border-white/[0.06] px-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]"><Globe2 size={16} aria-hidden="true" /></span>
+                <label htmlFor="profile-language" className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Language</span><span className="mt-0.5 block text-xs text-[#6B7280]">Choose your interface language</span></label>
+                <select id="profile-language" value={language} onChange={(event) => void handleLanguageChange(event.target.value)} disabled={profileLoading || savingPreference === "language"} className="h-9 rounded-lg border border-white/[0.12] bg-[#0d1117] px-2 text-sm text-[#F0F2F5] outline-none focus:border-[#9ec5ff] disabled:opacity-50"><option value="en">English</option><option value="bn">বাংলা</option><option value="es">Español</option></select>
+              </div>
               <div className="flex min-h-16 items-center gap-3 px-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#111318] text-[#A6ADB8]">{currentTheme === "dark" ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}</span>
                 <span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[#F0F2F5]">Appearance</span><span className="mt-0.5 block text-xs text-[#6B7280]">{currentTheme === "dark" ? "Dark mode" : "Light mode"}</span></span>
-                <Switch checked={currentTheme === "dark"} onCheckedChange={(checked) => { const next = checked ? "dark" : "light"; document.documentElement.setAttribute("data-theme", next); setTheme(next); }} aria-label="Toggle dark mode" />
+                <Switch checked={appearance === "dark"} onCheckedChange={(checked) => void handleAppearanceChange(checked)} disabled={savingPreference === "appearance"} aria-label="Toggle dark mode" />
               </div>
             </SettingsGroup>
 
