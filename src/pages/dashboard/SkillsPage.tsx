@@ -528,7 +528,7 @@ export default function SkillsPage() {
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search skills"
                 aria-label="Search skills"
-                className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-[#1A1A1A] px-3 text-sm text-white caret-white outline-none placeholder:text-white/35 focus:border-[#8C96A3]"
+                className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-[#1A1A1A] px-3 text-sm text-white caret-white outline-none placeholder:text-white/35 focus:border-[hsl(var(--nx-amber))]"
               />
             ) : (
               <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search skills" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -537,14 +537,14 @@ export default function SkillsPage() {
             )}
           </header>
 
-          <section aria-label="Explore more skills" className="mb-6 overflow-hidden rounded-2xl border border-[#1E2028] bg-[#111318]">
+          <section aria-label="Explore more skills" className="mb-6 overflow-hidden rounded-2xl border border-[#1E2028] bg-[hsl(var(--nx-surface-2))]">
             <button type="button" onClick={() => setSelectedTab("All")} className="flex w-full items-center justify-between gap-3 px-4 pt-4 text-left">
               <span className="text-sm font-medium text-white">Explore more skills <ChevronRight size={15} className="ml-1 inline-block align-[-2px] text-white/55" aria-hidden="true" /></span>
               <span className="text-xs text-white/40">Official collection</span>
             </button>
             <div className="flex gap-2.5 overflow-x-auto p-4 pt-3">
               {BUILT_IN_SKILLS.map((skill) => (
-                <button key={skill.id} type="button" onClick={() => { setSelectedTab("Official"); setSearchQuery(skill.name); }} className="flex min-w-[190px] items-center gap-2.5 rounded-xl border border-[#1E2028] bg-[#080A0C] p-3 text-left transition hover:border-white/25">
+                <button key={skill.id} type="button" onClick={() => { setSelectedTab("Official"); setSearchQuery(skill.name); }} className="flex min-w-[190px] items-center gap-2.5 rounded-xl border border-[#1E2028] bg-[hsl(var(--nx-surface-1))] p-3 text-left transition hover:border-white/25">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/65"><ShieldCheck size={15} aria-hidden="true" /></span>
                   <span className="min-w-0"><span className="block truncate text-xs font-medium text-white">{skill.name}</span><span className="mt-1 block truncate text-[10px] text-white/40">Official skill</span></span>
                 </button>
@@ -560,16 +560,16 @@ export default function SkillsPage() {
                 role="tab"
                 aria-selected={selectedTab === tab}
                 onClick={() => setSelectedTab(tab)}
-                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm transition ${selectedTab === tab ? "bg-[#F0F2F5] text-[#080A0C]" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
+                className={`inline-flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-3 text-sm transition ${selectedTab === tab ? "bg-[hsl(var(--nx-ink))] text-[hsl(var(--nx-surface-1))]" : "text-white/50 hover:bg-white/[0.06] hover:text-white"}`}
               >
                 {tab}
-                <span className={`text-xs ${selectedTab === tab ? "text-[#303640]" : "text-white/35"}`}>{activeTabCount(tab)}</span>
+                <span className={`text-xs ${selectedTab === tab ? "text-[hsl(var(--nx-rule-strong))]" : "text-white/35"}`}>{activeTabCount(tab)}</span>
               </button>
             ))}
           </div>
 
           {loadError && (
-            <div role="alert" className="mb-5 rounded-xl border border-white/10 bg-[#111318] px-4 py-3 text-sm leading-6 text-white/65">
+            <div role="alert" className="mb-5 rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-sm leading-6 text-white/65">
               {loadError}
             </div>
           )}
@@ -577,7 +577,7 @@ export default function SkillsPage() {
           {loading ? (
             <div role="status" className="flex min-h-36 items-center justify-center text-sm text-white/45"><Skeleton className="h-4 w-4" aria-label="Loading" />Loading skills…</div>
           ) : visibleSkills.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-white/15 bg-[#111318] px-5 py-14 text-center">
+            <section className="rounded-2xl border border-dashed border-white/15 bg-[hsl(var(--nx-surface-2))] px-5 py-14 text-center">
               <Puzzle size={22} className="mx-auto text-white/35" aria-hidden="true" />
               <h2 className="mt-3 text-sm font-medium">{searchQuery ? "No matching skills" : "No skills in this category"}</h2>
               <p className="mt-1 text-sm text-white/45">{searchQuery ? "Try a different name or description." : "Create a skill or choose another category."}</p>
@@ -589,7 +589,7 @@ export default function SkillsPage() {
                 const active = skill.active;
                 const pending = pendingSkillIds.has(skill.id);
                 return (
-                  <article key={skill.id} className="flex min-h-[210px] min-w-0 flex-col rounded-xl border border-[#1E2028] bg-[#111318] p-3 transition-colors hover:border-white/20 sm:min-h-[220px] sm:rounded-2xl sm:p-4">
+                  <article key={skill.id} className="flex min-h-[210px] min-w-0 flex-col rounded-xl border border-[#1E2028] bg-[hsl(var(--nx-surface-2))] p-3 transition-colors hover:border-white/20 sm:min-h-[220px] sm:rounded-2xl sm:p-4">
                     <div className="flex min-w-0 items-start gap-2.5">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/65"><Puzzle size={16} aria-hidden="true" /></div>
                       <div className="min-w-0 flex-1">
@@ -601,7 +601,7 @@ export default function SkillsPage() {
                         onCheckedChange={(checked) => void setDisplayedSkillActive(skill, checked)}
                         disabled={pending || (skill.source === "catalog" && Boolean(loadError)) || (skill.source !== "catalog" && localStoreState?.key !== localStoreKey)}
                         aria-label={`${active ? "Disable" : "Enable"} ${skill.name}`}
-                        className="mt-0.5 shrink-0 data-[state=checked]:bg-[#F0F2F5] data-[state=unchecked]:bg-[#3A3A3A]"
+                        className="mt-0.5 shrink-0 data-[state=checked]:bg-[hsl(var(--nx-ink))] data-[state=unchecked]:bg-[#3A3A3A]"
                       />
                     </div>
                     <div className="mt-auto border-t border-white/[0.08] pt-3">
@@ -619,7 +619,7 @@ export default function SkillsPage() {
                               <MoreHorizontal size={17} aria-hidden="true" />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="border-white/10 bg-[#111318] text-white">
+                          <DropdownMenuContent align="end" className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
                             {skill.pack?.github_url && <DropdownMenuItem onSelect={() => { if (skill.pack?.github_url?.startsWith("https://github.com/")) window.open(skill.pack.github_url, "_blank", "noopener,noreferrer"); }}><ExternalLink size={14} className="mr-2" aria-hidden="true" />View on GitHub</DropdownMenuItem>}
                             {skill.pack?.github_url && <DropdownMenuSeparator className="bg-white/10" />}
                             <DropdownMenuItem onSelect={() => openEditSkill(skill)}><Pencil size={14} className="mr-2" aria-hidden="true" />Edit</DropdownMenuItem>
@@ -640,12 +640,12 @@ export default function SkillsPage() {
       </main>
 
       <input ref={fileInputRef} type="file" accept="application/json,.json" className="sr-only" aria-label="Upload a skill manifest" onChange={(event) => void handleSkillFile(event)} />
-      <button type="button" onClick={openCreateSkill} aria-label="New skill" title="New skill" className="fixed bottom-6 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[#F0F2F5] text-[#080A0C] shadow-[0_6px_18px_rgba(0,0,0,0.28)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+      <button type="button" onClick={openCreateSkill} aria-label="New skill" title="New skill" className="fixed bottom-6 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-[hsl(var(--nx-ink))] text-[hsl(var(--nx-surface-1))] shadow-[0_6px_18px_rgba(0,0,0,0.28)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Plus size={24} aria-hidden="true" />
       </button>
 
       <Sheet open={actionsOpen} onOpenChange={(open) => { setActionsOpen(open); if (!open) setEditingSkill(null); }}>
-        <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-2xl border-white/10 bg-[#111318] pb-[calc(env(safe-area-inset-bottom)+24px)] text-white">
+        <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto rounded-t-2xl border-white/10 bg-[hsl(var(--nx-surface-2))] pb-[calc(env(safe-area-inset-bottom)+24px)] text-white">
           {actionView === "create" ? (
             <>
               <SheetHeader className="mb-5 pr-8 text-left">
@@ -655,24 +655,24 @@ export default function SkillsPage() {
               <form onSubmit={(event) => saveSkillDraft(event)} className="mx-auto max-w-xl space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block space-y-1.5 text-xs text-white/65">Name
-                    <input required maxLength={80} value={skillDraft.name} onChange={(event) => setSkillDraft((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Launch checklist" className="h-10 w-full rounded-lg border border-white/10 bg-[#080A0C] px-3 text-sm text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
+                    <input required maxLength={80} value={skillDraft.name} onChange={(event) => setSkillDraft((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Launch checklist" className="h-10 w-full rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 text-sm text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
                   </label>
                   <label className="block space-y-1.5 text-xs text-white/65">Category
-                    <select value={skillDraft.category} disabled={editingSkill?.category === "Official"} onChange={(event) => setSkillDraft((current) => ({ ...current, category: event.target.value as SkillCategory }))} className="h-10 w-full rounded-lg border border-white/10 bg-[#080A0C] px-3 text-sm text-white outline-none focus-visible:border-white/40 disabled:opacity-50">
+                    <select value={skillDraft.category} disabled={editingSkill?.category === "Official"} onChange={(event) => setSkillDraft((current) => ({ ...current, category: event.target.value as SkillCategory }))} className="h-10 w-full rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 text-sm text-white outline-none focus-visible:border-white/40 disabled:opacity-50">
                       {editingSkill?.category === "Official" ? <option value="Official">Official</option> : <><option value="Personal">Personal</option><option value="Third-party">Third-party</option></>}
                     </select>
                   </label>
                 </div>
                 <label className="block space-y-1.5 text-xs text-white/65">Description
-                  <textarea required maxLength={300} rows={2} value={skillDraft.description} onChange={(event) => setSkillDraft((current) => ({ ...current, description: event.target.value }))} placeholder="What does this skill help with?" className="w-full resize-y rounded-lg border border-white/10 bg-[#080A0C] px-3 py-2.5 text-sm leading-5 text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
+                  <textarea required maxLength={300} rows={2} value={skillDraft.description} onChange={(event) => setSkillDraft((current) => ({ ...current, description: event.target.value }))} placeholder="What does this skill help with?" className="w-full resize-y rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 py-2.5 text-sm leading-5 text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
                 </label>
                 <label className="block space-y-1.5 text-xs text-white/65">Instructions
-                  <textarea required maxLength={6000} rows={6} value={skillDraft.instructions} onChange={(event) => setSkillDraft((current) => ({ ...current, instructions: event.target.value }))} placeholder="Write the steps or rules the agent should follow" className="w-full resize-y rounded-lg border border-white/10 bg-[#080A0C] px-3 py-2.5 text-sm leading-5 text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
+                  <textarea required maxLength={6000} rows={6} value={skillDraft.instructions} onChange={(event) => setSkillDraft((current) => ({ ...current, instructions: event.target.value }))} placeholder="Write the steps or rules the agent should follow" className="w-full resize-y rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 py-2.5 text-sm leading-5 text-white outline-none placeholder:text-white/30 focus-visible:border-white/40" />
                 </label>
                 <div className="flex flex-wrap justify-end gap-2 pt-1">
                   <button type="button" onClick={() => { setActionView("actions"); setImportError(null); }} className="mr-auto inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs text-white/55 hover:bg-white/[0.05] hover:text-white"><WandSparkles size={14} />More options</button>
                   <button type="button" onClick={() => { setActionsOpen(false); setEditingSkill(null); }} className="min-h-10 rounded-lg border border-white/15 px-4 text-sm text-white/70 hover:bg-white/[0.05]">Cancel</button>
-                  <button type="submit" disabled={!skillDraft.name.trim() || !skillDraft.description.trim() || !skillDraft.instructions.trim()} className="min-h-10 rounded-lg bg-white px-4 text-sm font-medium text-[#080A0C] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-45">{editingSkill ? "Save changes" : "Save skill"}</button>
+                  <button type="submit" disabled={!skillDraft.name.trim() || !skillDraft.description.trim() || !skillDraft.instructions.trim()} className="min-h-10 rounded-lg bg-white px-4 text-sm font-medium text-[hsl(var(--nx-surface-1))] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-45">{editingSkill ? "Save changes" : "Save skill"}</button>
                 </div>
               </form>
             </>
@@ -684,16 +684,16 @@ export default function SkillsPage() {
                 <SheetDescription className="text-white/50">Import a JSON manifest or browse the shared catalog.</SheetDescription>
               </SheetHeader>
               <div className="mx-auto max-w-xl space-y-2">
-                <button type="button" onClick={() => { setActionsOpen(false); fileInputRef.current?.click(); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[#080A0C] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
+                <button type="button" onClick={() => { setActionsOpen(false); fileInputRef.current?.click(); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-1))] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70"><Upload size={17} /></span>
                   <span className="min-w-0 flex-1"><span className="block text-sm font-medium">Upload a skill</span><span className="mt-0.5 block text-xs text-white/40">Choose a .json manifest</span></span>
                 </button>
-                <button type="button" onClick={() => { setActionView("github"); setImportError(null); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[#080A0C] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
+                <button type="button" onClick={() => { setActionView("github"); setImportError(null); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-1))] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70"><Github size={17} /></span>
                   <span className="min-w-0 flex-1"><span className="block text-sm font-medium">Import from GitHub</span><span className="mt-0.5 block text-xs text-white/40">Fetch skill.json from a public repository</span></span>
                   <ChevronRight size={16} className="text-white/35" />
                 </button>
-                <button type="button" onClick={() => { setSelectedTab("All"); setActionsOpen(false); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[#080A0C] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
+                <button type="button" onClick={() => { setSelectedTab("All"); setActionsOpen(false); }} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-1))] px-4 py-3.5 text-left transition hover:bg-white/[0.04]">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/70"><Compass size={17} /></span>
                   <span className="min-w-0 flex-1"><span className="block text-sm font-medium">Explore skills</span><span className="mt-0.5 block text-xs text-white/40">Browse the full catalog</span></span>
                 </button>
@@ -708,9 +708,9 @@ export default function SkillsPage() {
               </SheetHeader>
               <form onSubmit={(event) => void handleGithubImport(event)} className="mx-auto max-w-xl space-y-3">
                 <label htmlFor="github-skill-url" className="text-xs font-medium text-white/65">GitHub repository URL</label>
-                <input id="github-skill-url" type="url" value={githubUrl} onChange={(event) => setGithubUrl(event.target.value)} placeholder="https://github.com/owner/repository" className="h-11 w-full rounded-lg border border-white/10 bg-[#101010] px-3 text-sm text-white caret-white outline-none placeholder:text-white/30 focus:border-[#8C96A3]" />
-                {importError && <p role="alert" className="rounded-lg border border-white/10 bg-[#080A0C] px-3 py-2 text-xs leading-5 text-white/65">{importError}</p>}
-                <button type="submit" disabled={isImporting || !githubUrl.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#F0F2F5] px-4 text-sm font-medium text-[#080A0C] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
+                <input id="github-skill-url" type="url" value={githubUrl} onChange={(event) => setGithubUrl(event.target.value)} placeholder="https://github.com/owner/repository" className="h-11 w-full rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 text-sm text-white caret-white outline-none placeholder:text-white/30 focus:border-[hsl(var(--nx-amber))]" />
+                {importError && <p role="alert" className="rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 py-2 text-xs leading-5 text-white/65">{importError}</p>}
+                <button type="submit" disabled={isImporting || !githubUrl.trim()} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--nx-ink))] px-4 text-sm font-medium text-[hsl(var(--nx-surface-1))] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
                   {isImporting ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <Github size={15} />}
                   {isImporting ? "Importing…" : "Fetch skill.json"}
                 </button>
@@ -721,9 +721,9 @@ export default function SkillsPage() {
         </SheetContent>
       </Sheet>
       <AlertDialog open={Boolean(deletingSkill)} onOpenChange={(open) => !open && setDeletingSkill(null)}>
-        <AlertDialogContent className="border-white/10 bg-[#111318] text-white">
+        <AlertDialogContent className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
           <AlertDialogHeader><AlertDialogTitle>Delete this skill?</AlertDialogTitle><AlertDialogDescription className="text-white/55">“{deletingSkill?.name}” will be removed from your Skills page on this browser.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]">Cancel</AlertDialogCancel><AlertDialogAction className="bg-white text-[#080A0C] hover:bg-white/90" onClick={(event) => { event.preventDefault(); confirmDeleteDisplayedSkill(); }}>Delete skill</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]">Cancel</AlertDialogCancel><AlertDialogAction className="bg-white text-[hsl(var(--nx-surface-1))] hover:bg-white/90" onClick={(event) => { event.preventDefault(); confirmDeleteDisplayedSkill(); }}>Delete skill</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>

@@ -101,22 +101,22 @@ const DashboardSidebar = () => {
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className={`flex h-16 shrink-0 items-center border-b border-border px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
-          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3]">
+          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))]">
             <img src={nexoraLogo} alt="NexoraOS" width="28" height="28" className="h-7 w-7 shrink-0 rounded-lg" />
             {showLabels && <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-foreground">NexoraOS</span>}
           </Link>
-          {showLabels && <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] md:flex"><ChevronLeft size={17} /></button>}
-          <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C96A3] md:hidden">
+          {showLabels && <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))] md:flex"><ChevronLeft size={17} /></button>}
+          <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))] md:hidden">
             <X size={17} />
           </button>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
-          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-10 w-full items-center gap-3 rounded-xl border border-border px-3 text-sm transition-colors hover:bg-muted ${workspaceLocked ? "text-muted-foreground" : "text-foreground"} ${showLabels ? "" : "justify-center"}`}>
+          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-11 w-full items-center gap-3 rounded-[var(--nx-radius-control)] border border-[hsl(var(--nx-amber))]/45 bg-[hsl(var(--nx-amber-soft))] px-3 text-sm font-medium text-[hsl(var(--nx-ink))] transition-colors hover:border-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-amber))]/20 ${workspaceLocked ? "opacity-60" : ""} ${showLabels ? "" : "justify-center"}`}>
             <Plus size={17} className="shrink-0" aria-hidden="true" />
             {showLabels && <><span className="flex-1 text-left">New chat</span>{workspaceLocked ? <LockKeyhole size={13} className="text-muted-foreground" aria-hidden="true" /> : <span className="text-[10px] text-muted-foreground">Ctrl K</span>}</>}
           </button>
-          <p className={`mb-2 px-3 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          <p className={`mb-2 px-3 pt-1 text-xs font-medium text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
           {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
           {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
@@ -127,7 +127,7 @@ const DashboardSidebar = () => {
             {showLabels && <span>Plugins</span>}
           </Link>
           <div className={`my-4 border-t border-border pt-4 ${showLabels ? "" : "sr-only"}`}>
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">History</p>
+            <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">History</p>
             {historyItems.length ? historyItems.map((item) => (
               <button key={item.id} type="button" onClick={() => { navigate(`/dashboard?conversation=${encodeURIComponent(item.id)}`); closeMobile(); }} title={item.title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">{item.title.length > 27 ? `${item.title.slice(0, 27)}…` : item.title}</button>
             )) : <p className="px-3 py-2 text-xs leading-5 text-muted-foreground">Your recent prompts will appear here.</p>}
@@ -139,7 +139,7 @@ const DashboardSidebar = () => {
             <>
               <CreditBalance showLabels={showLabels} />
               <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
-                <Avatar className="h-8 w-8 shrink-0 border border-[#303640]">
+                <Avatar className="h-8 w-8 shrink-0 border border-[hsl(var(--nx-rule-strong))]">
                   <AvatarImage src={user.user_metadata?.avatar_url} alt="" />
                   <AvatarFallback className="bg-muted text-xs text-muted-foreground">
                     {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || <UserIcon size={15} />}
@@ -157,7 +157,7 @@ const DashboardSidebar = () => {
                   <Settings size={16} className="shrink-0" aria-hidden="true" />
                   {showLabels && <span className="truncate">Settings</span>}
                 </Link>
-                {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-border px-2 text-[11px] text-foreground hover:bg-muted">Upgrade <ArrowUpRight size={12}/></Link>}
+                {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-[hsl(var(--nx-amber))]/50 px-2 text-[11px] font-medium text-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-amber-soft))]">Upgrade <ArrowUpRight size={12}/></Link>}
                 <button type="button" onClick={() => void handleSignOut()} title="Sign out" aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><LogOut size={16}/></button>
               </div>
             </>

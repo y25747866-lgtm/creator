@@ -70,14 +70,14 @@ export default function CreditBalance({ showLabels }: CreditBalanceProps) {
 
   if (!showLabels) {
     return (
-      <div className="flex justify-center border-t border-[#111318] px-2 py-3" title={`${formatCredits(balance)} credits`}>
+      <div className="flex justify-center border-t border-[hsl(var(--nx-surface-2))] px-2 py-3" title={`${formatCredits(balance)} credits`}>
         <Coins size={17} className="text-white/60" aria-hidden="true" />
       </div>
     );
   }
 
   return (
-    <div className="border-t border-[#111318] px-3 py-3" data-testid="credit-balance">
+    <div className="border-t border-[hsl(var(--nx-surface-2))] px-3 py-3" data-testid="credit-balance">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <div className="relative h-9 w-9 shrink-0" aria-label={ceiling ? `${formatCredits(balance)} of ${formatCredits(ceiling)} credits` : `${formatCredits(balance)} credits`}>
@@ -104,7 +104,7 @@ export default function CreditBalance({ showLabels }: CreditBalanceProps) {
               Top up <ChevronDown size={12} aria-hidden="true" />
             </button>
             {packsOpen && (
-              <div role="menu" aria-label="Credit top-up packs" className="absolute bottom-10 right-0 z-50 w-48 rounded-xl border border-white/15 bg-[#111318] p-1.5 shadow-2xl">
+              <div role="menu" aria-label="Credit top-up packs" className="absolute bottom-10 right-0 z-50 w-48 rounded-xl border border-white/15 bg-[hsl(var(--nx-surface-2))] p-1.5 shadow-2xl">
                 {CREDIT_PACKS.map((pack) => (
                   <a key={pack.credits} href={pack.href} target="_blank" rel="noreferrer" role="menuitem" onClick={() => setPacksOpen(false)} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-xs text-white/75 transition hover:bg-white/[0.07] hover:text-white">
                     <span>{formatCredits(pack.credits)} cr</span>

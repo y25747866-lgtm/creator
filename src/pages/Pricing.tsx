@@ -174,11 +174,11 @@ const Pricing = () => {
           <div className="flex items-center gap-3">
             {!user && (
               <button type="button" onClick={() => navigate("/auth/signin?redirect=/pricing")} className="text-sm text-[#A6ADB8] transition hover:text-white">
-                Already have an account? <span className="font-semibold text-[#F0F2F5] underline underline-offset-4">Sign in</span>
+                Already have an account? <span className="font-semibold text-[hsl(var(--nx-ink))] underline underline-offset-4">Sign in</span>
               </button>
             )}
             {user && (
-              <Button variant="outline" onClick={handleSignOut} className="gap-2 border-white/10 bg-transparent text-[#A6ADB8] hover:bg-[#1A1D24] hover:text-white">
+              <Button variant="outline" onClick={handleSignOut} className="gap-2 border-white/10 bg-transparent text-[#A6ADB8] hover:bg-[hsl(var(--nx-surface-3))] hover:text-white">
                 <LogOut className="h-4 w-4" /> Sign Out
               </Button>
             )}
@@ -188,11 +188,11 @@ const Pricing = () => {
 
       <main className="mx-auto max-w-7xl px-5 pb-20 pt-16 sm:px-8 sm:pt-20">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-[#6B7280]">NexoraOS membership</p>
-          <h1 className="text-4xl font-bold tracking-[-0.04em] text-[#F0F2F5] sm:text-6xl" style={{ fontFamily: "'Syne', sans-serif" }}>Build more. Operate smarter.</h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#6B7280] sm:text-lg">Choose the operating level that matches your ambition. Every plan is built around useful output, not feature clutter.</p>
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-[hsl(var(--nx-ink-subtle))]">NexoraOS membership</p>
+          <h1 className="text-4xl font-bold tracking-[-0.04em] text-[hsl(var(--nx-ink))] sm:text-6xl" style={{ fontFamily: "'Syne', sans-serif" }}>Build more. Operate smarter.</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[hsl(var(--nx-ink-subtle))] sm:text-lg">Choose the operating level that matches your ambition. Every plan is built around useful output, not feature clutter.</p>
           {user && hasPaidSubscription && (
-            <p className="mx-auto mt-5 max-w-2xl rounded-xl border border-white/[0.08] bg-[#111318] px-4 py-3 text-sm text-[#A6ADB8]">
+            <p className="mx-auto mt-5 max-w-2xl rounded-xl border border-white/[0.08] bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-sm text-[#A6ADB8]">
               You&apos;re viewing plans from inside your workspace. Compare options below or choose a plan to open secure checkout.
             </p>
           )}
@@ -200,11 +200,11 @@ const Pricing = () => {
 
         {user && purchaseStarted && (
           <div className="mx-auto mb-8 mt-10 max-w-5xl">
-            <Card className="border-white/[0.08] bg-[#111318] p-5 text-left">
+            <Card className="border-white/[0.08] bg-[hsl(var(--nx-surface-2))] p-5 text-left">
               <p className="text-sm text-[#A6ADB8]">After completing checkout, come back to this tab. We&apos;ll unlock your account as soon as the payment confirmation arrives.</p>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <Button onClick={checkAccessNow} disabled={checkingAccess} className="bg-[#F0F2F5] text-[#080A0C] hover:bg-white sm:w-auto">{checkingAccess ? "Checking…" : "I&apos;ve paid — Unlock access"}</Button>
-                <Button variant="outline" onClick={() => navigate("/dashboard")} className="border-white/10 bg-transparent text-[#A6ADB8] hover:bg-[#1A1D24] hover:text-white sm:w-auto">Go to Dashboard</Button>
+                <Button onClick={checkAccessNow} disabled={checkingAccess} className="bg-[hsl(var(--nx-ink))] text-[hsl(var(--nx-surface-1))] hover:bg-white sm:w-auto">{checkingAccess ? "Checking…" : "I&apos;ve paid — Unlock access"}</Button>
+                <Button variant="outline" onClick={() => navigate("/dashboard")} className="border-white/10 bg-transparent text-[#A6ADB8] hover:bg-[hsl(var(--nx-surface-3))] hover:text-white sm:w-auto">Go to Dashboard</Button>
               </div>
             </Card>
           </div>
@@ -212,20 +212,20 @@ const Pricing = () => {
 
         <section className="mx-auto mt-12 grid max-w-6xl grid-cols-1 items-stretch gap-4 md:grid-cols-3" aria-label="Pricing plans">
           {PLANS.map((plan) => (
-            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[#111318] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-white shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_70px_rgba(0,0,0,0.24)]" : "border-white/[0.08]"}`}>
+            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[hsl(var(--nx-surface-2))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-white shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_70px_rgba(0,0,0,0.24)]" : "border-white/[0.08]"}`}>
               {plan.badge && (
                 <div className="absolute -top-3 left-6">
-                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-white bg-[#111318] text-white" : "border-white/20 bg-[#1A1D24] text-[#A6ADB8]"}`}>{plan.badge}</span>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-white bg-[hsl(var(--nx-surface-2))] text-white" : "border-white/20 bg-[hsl(var(--nx-surface-3))] text-[#A6ADB8]"}`}>{plan.badge}</span>
                 </div>
               )}
               <div className="border-b border-white/[0.08] pb-7">
-                <h2 className="text-xl font-bold tracking-tight text-[#F0F2F5]">{plan.name}</h2>
+                <h2 className="text-xl font-bold tracking-tight text-[hsl(var(--nx-ink))]">{plan.name}</h2>
                 <div className="mt-5 flex items-baseline gap-1">
-                  <span className="text-5xl font-bold tracking-[-0.06em] text-[#F0F2F5]">{plan.price}</span>
-                  <span className="text-sm text-[#6B7280]">/month</span>
+                  <span className="text-5xl font-bold tracking-[-0.06em] text-[hsl(var(--nx-ink))]">{plan.price}</span>
+                  <span className="text-sm text-[hsl(var(--nx-ink-subtle))]">/month</span>
                 </div>
                 <p className={`mt-5 text-sm font-semibold ${plan.popular ? "text-white" : "text-[#A6ADB8]"}`}>{plan.credits}</p>
-                <p className="mt-3 min-h-12 text-sm leading-6 text-[#6B7280]">{plan.description}</p>
+                <p className="mt-3 min-h-12 text-sm leading-6 text-[hsl(var(--nx-ink-subtle))]">{plan.description}</p>
               </div>
               <TooltipProvider delayDuration={150}>
                 <ul className="flex-1 space-y-4 py-7">
@@ -234,19 +234,19 @@ const Pricing = () => {
                       {feature.included ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-white" aria-hidden="true" /> : (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button type="button" aria-label={`${feature.text} locked`} className="mt-0.5 shrink-0 rounded-sm text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                            <button type="button" aria-label={`${feature.text} locked`} className="mt-0.5 shrink-0 rounded-sm text-[hsl(var(--nx-ink-subtle))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                               <LockKeyhole className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>Upgrade to {feature.upgradeTo ?? "Pro/Hybrid"} to unlock</TooltipContent>
                         </Tooltip>
                       )}
-                      <span className={feature.included ? "text-[#D6DAE0]" : "text-[#6B7280]"}>{feature.text}</span>
+                      <span className={feature.included ? "text-[hsl(var(--nx-ink))]" : "text-[hsl(var(--nx-ink-subtle))]"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
               </TooltipProvider>
-              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-white text-black hover:bg-[#F0F2F5]" : "border border-white/15 bg-[#1A1D24] text-[#F0F2F5] hover:bg-[#242832]"}`}>{plan.cta}</Button>
+              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-white text-black hover:bg-[hsl(var(--nx-ink))]" : "border border-white/15 bg-[hsl(var(--nx-surface-3))] text-[hsl(var(--nx-ink))] hover:bg-[#242832]"}`}>{plan.cta}</Button>
             </Card>
           ))}
         </section>
@@ -254,16 +254,16 @@ const Pricing = () => {
         <section className="mx-auto mt-20 max-w-6xl" aria-labelledby="comparison-heading">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6B7280]">Side by side</p>
-              <h2 id="comparison-heading" className="mt-2 text-2xl font-bold tracking-tight text-[#F0F2F5]">Compare what&apos;s included</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[hsl(var(--nx-ink-subtle))]">Side by side</p>
+              <h2 id="comparison-heading" className="mt-2 text-2xl font-bold tracking-tight text-[hsl(var(--nx-ink))]">Compare what&apos;s included</h2>
             </div>
           </div>
-          <div className="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[#111318]">
+          <div className="overflow-x-auto rounded-2xl border border-white/[0.08] bg-[hsl(var(--nx-surface-2))]">
             <table className="w-full min-w-[680px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-white/[0.08] text-[#A6ADB8]">
                   <th className="px-5 py-4 font-medium">Feature</th>
-                  {PLANS.map((plan) => <th key={plan.id} className={`px-5 py-4 font-semibold ${plan.popular ? "text-white" : "text-[#F0F2F5]"}`}>{plan.name}</th>)}
+                  {PLANS.map((plan) => <th key={plan.id} className={`px-5 py-4 font-semibold ${plan.popular ? "text-white" : "text-[hsl(var(--nx-ink))]"}`}>{plan.name}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -271,7 +271,7 @@ const Pricing = () => {
                   <tr key={row.feature} className="border-b border-white/[0.06] last:border-0">
                     <th scope="row" className="px-5 py-4 font-medium text-[#A6ADB8]">{row.feature}</th>
                     {row.values.map((value, index) => (
-                      <td key={`${row.feature}-${index}`} className="px-5 py-4 text-[#D6DAE0]">{typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-white" aria-label="Included" /> : <X className="h-4 w-4 text-[#6B7280]" aria-label="Not included" />) : value}</td>
+                      <td key={`${row.feature}-${index}`} className="px-5 py-4 text-[hsl(var(--nx-ink))]">{typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-white" aria-label="Included" /> : <X className="h-4 w-4 text-[hsl(var(--nx-ink-subtle))]" aria-label="Not included" />) : value}</td>
                     ))}
                   </tr>
                 ))}
@@ -281,7 +281,7 @@ const Pricing = () => {
         </section>
 
         <div className="mt-12 flex flex-col items-center gap-3 text-center">
-          <p className="text-sm text-[#6B7280]">Secure payment processing powered by Whop · Cancel anytime</p>
+          <p className="text-sm text-[hsl(var(--nx-ink-subtle))]">Secure payment processing powered by Whop · Cancel anytime</p>
           <button type="button" onClick={() => navigate("/")} className="inline-flex items-center gap-2 text-sm text-[#A6ADB8] transition hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to home</button>
         </div>
       </main>

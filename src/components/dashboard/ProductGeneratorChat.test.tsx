@@ -156,9 +156,9 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("heading", { name: "What are we creating today?" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ebook" })).toHaveAttribute("aria-pressed", "true");
     const composer = screen.getByRole("textbox", { name: "Describe the ebook topic" });
-    expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "placeholder:text-[#8B929E]");
+    expect(composer).toHaveClass("nexora-composer-input", "min-h-[48px]", "sm:min-h-[56px]", "w-full", "text-[16px]", "leading-[1.5]", "placeholder:text-[hsl(var(--nx-ink-muted))]");
     expect(composer).toHaveStyle({ color: "var(--nexora-workspace-foreground)" });
-    expect(composer.closest("form")).toHaveClass("nexora-composer-form", "min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[24px]", "border-[#303640]", "focus-within:border-[rgba(112,34,252,0.3)]");
+    expect(composer.closest("form")).toHaveClass("nexora-composer-form", "min-h-[120px]", "px-3", "py-3", "sm:px-6", "sm:py-5", "rounded-[var(--nx-radius-panel)]", "border-[hsl(var(--nx-rule-strong))]", "focus-within:border-[hsl(var(--nx-amber))]");
     expect(composer.closest("form")).toHaveStyle({ background: "var(--nexora-composer-background)" });
     expect(composer.closest("form")?.parentElement?.parentElement).toHaveClass("px-0", "sm:px-4");
     expect(screen.getByTestId("composer-border-beam")).toHaveAttribute("data-color-variant", "mono");
@@ -265,7 +265,7 @@ describe("Chat-first product workspace", () => {
     expect(composer).toHaveFocus();
     const filename = screen.getByText("pasted-content.txt");
     const pill = filename.closest("span.inline-flex");
-    expect(pill).toHaveClass("bg-[#1a1a1a]", "border-[#333]", "text-white");
+    expect(pill).toHaveClass("bg-[hsl(var(--nx-surface-2))]", "border-[#333]", "text-white");
     expect(within(pill as HTMLElement).getByRole("button", { name: "Remove pasted-content.txt" })).toBeInTheDocument();
     expect(mocks.uploadCreatorMedia).not.toHaveBeenCalled();
 
@@ -339,7 +339,7 @@ describe("Chat-first product workspace", () => {
     const plus = screen.getByRole("button", { name: "Add to chat" });
     const plugin = screen.getByRole("button", { name: "Open workspace capabilities" });
     expect(plus.parentElement).toBe(plugin.parentElement);
-    expect(plus.parentElement).toHaveClass("bg-[#1A1D24]/70", "p-1");
+    expect(plus.parentElement).toHaveClass("bg-[hsl(var(--nx-surface-3))]/70", "p-1");
     expect(plus.parentElement?.parentElement).toHaveClass("border-t", "justify-between");
     expect(screen.getByRole("button", { name: "Send topic" }).parentElement).toHaveClass("ml-auto", "min-w-0");
   });
@@ -366,11 +366,11 @@ describe("Chat-first product workspace", () => {
       borderColor: "var(--nexora-connector-icon-border)",
     });
     expect(within(panel).queryByText(/Browse all 1,000\+ apps/)).not.toBeInTheDocument();
-    expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[#F0F2F5]", "bg-[#F0F2F5]", "text-[#080A0C]");
+    expect(within(panel).getByRole("tab", { name: "All" })).toHaveClass("border-[hsl(var(--nx-ink))]", "bg-[hsl(var(--nx-ink))]", "text-[hsl(var(--nx-surface-1))]");
     expect(panel).toHaveClass("!bottom-20", "!left-1/2", "max-h-[70dvh]");
     fireEvent.click(within(panel).getByRole("tab", { name: "Productivity" }));
     expect(within(panel).getAllByRole("button", { name: /connector details/ })).toHaveLength(13);
-    expect(within(panel).getByRole("tab", { name: "Productivity" })).toHaveClass("bg-[#F0F2F5]", "text-[#080A0C]");
+    expect(within(panel).getByRole("tab", { name: "Productivity" })).toHaveClass("bg-[hsl(var(--nx-ink))]", "text-[hsl(var(--nx-surface-1))]");
   });
 
   it("closes the system selector on outside interaction without resetting the selected mode", async () => {
@@ -389,7 +389,7 @@ describe("Chat-first product workspace", () => {
     expect(screen.queryByRole("menu", { name: "NexoraOS system selector" })).not.toBeInTheDocument();
     const hybridModeButton = screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" });
     expect(hybridModeButton).toBeInTheDocument();
-    expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[#B7BEC8]");
+    expect(hybridModeButton.querySelector("svg")).toHaveClass("text-[hsl(var(--nx-ink-muted))]");
 
     fireEvent.click(screen.getByRole("button", { name: "Product mode: Hybrid Agentic System" }));
     expect(await screen.findByRole("menu", { name: "NexoraOS system selector" })).toBeInTheDocument();

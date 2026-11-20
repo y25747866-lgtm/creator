@@ -19,7 +19,7 @@ const Contact = () => {
           <h2 className="text-xl font-semibold mb-4">Support Email</h2>
           <a 
             href="mailto:support@nexoraos.digital"
-            className="text-lg text-blue-400 hover:text-blue-300 transition-colors break-all"
+            className="text-lg text-[hsl(var(--nx-amber))] hover:text-[hsl(var(--nx-amber-strong))] transition-colors break-all"
           >
             support@nexoraos.digital
           </a>

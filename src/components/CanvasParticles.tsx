@@ -11,8 +11,8 @@ const CanvasParticles = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let particles: any[] = [];
-    let mouse = { x: 0, y: 0 };
+    const particles: any[] = [];
+    const mouse = { x: 0, y: 0 };
     let W: number, H: number;
 
     const resize = () => {
@@ -27,7 +27,7 @@ const CanvasParticles = () => {
 
     const getAccentColor = () => {
       return getComputedStyle(document.documentElement)
-        .getPropertyValue('--particle-color').trim() || '#5B4FE8';
+        .getPropertyValue('--particle-color').trim() || 'hsl(var(--nx-amber))';
     };
 
     const hexToRgb = (hex: string) => {

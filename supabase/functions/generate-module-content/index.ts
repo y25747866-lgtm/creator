@@ -35,7 +35,7 @@ serve(async (req) => {
 
     const GROQ_KEY = Deno.env.get("GROQ_API_KEY");
 
-    let prompt = `
+    const prompt = `
 You are a professional marketing copywriter.
 
 Create a ${moduleType} for this product:

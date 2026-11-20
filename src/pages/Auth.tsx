@@ -184,7 +184,7 @@ const NexoraOSSignIn = () => {
         <div className="text-center">
           <img src={nexoraLogo} alt="NexoraOS" width="44" height="44" className="mx-auto h-11 w-11 brightness-0 invert" />
           <h1 id="sign-in-heading" className="mt-6 text-xl font-bold tracking-tight text-foreground">Sign in to NexoraOS</h1>
-          <p className="mt-2 text-sm text-[#6B7280]">Create AI-powered digital businesses instantly.</p>
+          <p className="mt-2 text-sm text-[hsl(var(--nx-ink-subtle))]">Create AI-powered digital businesses instantly.</p>
         </div>
 
         <form onSubmit={handleContinue} className="mt-8 space-y-5">
@@ -212,15 +212,15 @@ const NexoraOSSignIn = () => {
               className="h-11 w-full rounded-md border border-border bg-card px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring"
             />
           </div>
-          {error && <p role="alert" className="text-xs text-[#F0F2F5]">{error}</p>}
-          <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-bold text-black transition hover:bg-[#F0F2F5] disabled:cursor-not-allowed disabled:opacity-50">
+          {error && <p role="alert" className="text-xs text-[hsl(var(--nx-ink))]">{error}</p>}
+          <button type="submit" disabled={isLoading || isSocialLoading} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-bold text-black transition hover:bg-[hsl(var(--nx-ink))] disabled:cursor-not-allowed disabled:opacity-50">
             {isLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : "Continue →"}
           </button>
         </form>
 
         <div className="my-7 flex items-center gap-3" aria-hidden="true">
           <div className="h-px flex-1 bg-[#1E2028]" />
-          <span className="text-[11px] font-medium text-[#6B7280]">OR</span>
+          <span className="text-[11px] font-medium text-[hsl(var(--nx-ink-subtle))]">OR</span>
           <div className="h-px flex-1 bg-[#1E2028]" />
         </div>
 
@@ -228,12 +228,12 @@ const NexoraOSSignIn = () => {
           <button type="button" onClick={handleGoogleSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Google" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md border border-[#E0E0E0] bg-white px-4 text-sm font-medium text-black transition hover:bg-[#F0F0F0] disabled:cursor-not-allowed disabled:opacity-50">
             {isGoogleLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <><GoogleMark /><span>Continue with Google</span></>}
           </button>
-          <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md bg-[#5865F2] px-4 text-sm font-medium text-white transition hover:bg-[#4F5BDE] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="button" onClick={handleDiscordSignIn} disabled={isLoading || isSocialLoading} aria-label="Continue with Discord" className="flex h-11 w-full min-w-0 items-center justify-start gap-3 rounded-md bg-[hsl(var(--nx-amber))] px-4 text-sm font-medium text-white transition hover:bg-[hsl(var(--nx-amber-strong))] disabled:cursor-not-allowed disabled:opacity-50">
             {isDiscordLoading ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : <><DiscordMark /><span>Continue with Discord</span></>}
           </button>
         </div>
 
-        <p className="mt-7 text-center text-xs leading-5 text-[#6B7280]">
+        <p className="mt-7 text-center text-xs leading-5 text-[hsl(var(--nx-ink-subtle))]">
           By signing in, you agree to our <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Terms of Service</a> and <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Privacy Policy</a>
         </p>
       </section>

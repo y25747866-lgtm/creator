@@ -497,7 +497,7 @@ const AnalyticsDashboard = () => {
               <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '32px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.5px' }}>
                 Analytics Dashboard
               </h1>
-              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#777777', marginTop: '12px', fontWeight: 400 }}>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: 'hsl(var(--nx-ink-subtle))', marginTop: '12px', fontWeight: 400 }}>
                 Real-time insights into your sales, revenue, and product performance
               </p>
             </div>
@@ -573,7 +573,7 @@ const AnalyticsDashboard = () => {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px', fontFamily: "'Syne', sans-serif" }}>{platform.name}</h3>
-                      <p style={{ fontSize: '13px', color: '#777777', fontFamily: "'DM Sans', sans-serif", lineHeight: '1.5' }}>{platform.description}</p>
+                      <p style={{ fontSize: '13px', color: 'hsl(var(--nx-ink-subtle))', fontFamily: "'DM Sans', sans-serif", lineHeight: '1.5' }}>{platform.description}</p>
                     </div>
                     <img src={platform.logo} alt={platform.name} width="48" height="48" loading="lazy" style={{ width: '48px', height: '48px' }} />
                   </div>
@@ -582,7 +582,7 @@ const AnalyticsDashboard = () => {
                     <p className="mt-6 text-sm text-muted-foreground" role="status">Connecting…</p>
                   ) : isConnected ? (
                     <div className="mt-6 space-y-3">
-                      <div style={{ fontSize: '12px', color: '#777777', fontFamily: "'DM Sans', sans-serif" }}>
+                      <div style={{ fontSize: '12px', color: 'hsl(var(--nx-ink-subtle))', fontFamily: "'DM Sans', sans-serif" }}>
                         <p>Connected on {new Date(connection.connected_at).toLocaleDateString()}</p>
                         {connection.last_sync_at && <p>Last synced: {new Date(connection.last_sync_at).toLocaleString()}</p>}
                       </div>
@@ -662,7 +662,7 @@ const AnalyticsDashboard = () => {
           {connections.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 40px', background: '#0F0F0F', border: '1px solid #252525', borderRadius: '12px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px', fontFamily: "'Syne', sans-serif" }}>No Platforms Connected</h3>
-              <p style={{ fontSize: '14px', color: '#777777', fontFamily: "'DM Sans', sans-serif", marginBottom: '24px' }}>Connect Whop or Payhip to start tracking your analytics</p>
+              <p style={{ fontSize: '14px', color: 'hsl(var(--nx-ink-subtle))', fontFamily: "'DM Sans', sans-serif", marginBottom: '24px' }}>Connect Whop or Payhip to start tracking your analytics</p>
             </div>
           ) : (
             <div className="space-y-8">
@@ -679,7 +679,7 @@ const AnalyticsDashboard = () => {
                       <div style={{ padding: '10px', borderRadius: '10px', background: '#1A1A1A' }}>
                         <stat.icon className="w-5 h-5 text-white" />
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#777777', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>{stat.label}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--nx-ink-subtle))', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>{stat.label}</span>
                     </div>
                     <div className="text-3xl font-bold text-white" style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, letterSpacing: '-0.5px' }}>
                       {loadingData ? <Skeleton className="h-8 w-24" /> : stat.format(stat.value || 0)}
@@ -751,9 +751,9 @@ const AnalyticsDashboard = () => {
                       <Table>
                         <TableHeader>
                           <TableRow style={{ borderBottomColor: '#252525' }}>
-                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Product</TableHead>
-                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Sales</TableHead>
-                            <TableHead style={{ color: '#777777', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Revenue</TableHead>
+                            <TableHead style={{ color: 'hsl(var(--nx-ink-subtle))', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Product</TableHead>
+                            <TableHead style={{ color: 'hsl(var(--nx-ink-subtle))', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Sales</TableHead>
+                            <TableHead style={{ color: 'hsl(var(--nx-ink-subtle))', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Revenue</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -775,7 +775,7 @@ const AnalyticsDashboard = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={3} style={{ textAlign: 'center', color: '#777777', padding: '32px', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" }}>
+                              <TableCell colSpan={3} style={{ textAlign: 'center', color: 'hsl(var(--nx-ink-subtle))', padding: '32px', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" }}>
                                 No products data available
                               </TableCell>
                             </TableRow>
@@ -811,7 +811,7 @@ const AnalyticsDashboard = () => {
                         )}
                         {/* FIX: Guard chatMessages with Array.isArray before mapping */}
                         {!Array.isArray(chatMessages) || chatMessages.length === 0 ? (
-                          <div style={{ textAlign: 'center', color: '#777777', fontSize: '13px', paddingTop: '32px', fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
+                          <div style={{ textAlign: 'center', color: 'hsl(var(--nx-ink-subtle))', fontSize: '13px', paddingTop: '32px', fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>
                             Ask me anything about your analytics
                           </div>
                         ) : (
@@ -904,7 +904,7 @@ const AnalyticsDashboard = () => {
         <DialogContent style={{ background: '#0F0F0F', border: '1px solid #252525', color: '#FFFFFF', borderRadius: '12px' }}>
           <DialogHeader>
             <DialogTitle style={{ color: '#FFFFFF', fontFamily: "'Syne', sans-serif", fontSize: '18px', fontWeight: 700 }}>Connect {connectModal}</DialogTitle>
-            <DialogDescription style={{ color: '#777777', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
+            <DialogDescription style={{ color: 'hsl(var(--nx-ink-subtle))', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
               Enter your {connectModal} API key to start syncing data
             </DialogDescription>
           </DialogHeader>

@@ -91,7 +91,7 @@ const MarketingStudio = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (items: SocialResult[]) => {
-      let message = "Could not save one or more generated posts.";
+      const message = "Could not save one or more generated posts.";
       if (!user) return { saved: [] as SocialResult[], failed: items, message: "Sign in again, then retry saving." };
 
       // One batched insert request covers every generated post

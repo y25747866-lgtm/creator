@@ -46,7 +46,7 @@ const plugins = [
   { name: "Gmail", icon: Mail, tint: "#f87171", description: "Search and draft email" },
   { name: "Google Drive", icon: FolderOpen, tint: "#60a5fa", description: "Find your files" },
   { name: "Google Calendar", icon: CalendarDays, tint: "#34d399", description: "Plan your schedule" },
-  { name: "Slack", icon: Puzzle, tint: "#c084fc", description: "Connect your workspace" },
+  { name: "Slack", icon: Puzzle, tint: "hsl(var(--nx-amber))", description: "Connect your workspace" },
   { name: "Figma", icon: PanelsTopLeft, tint: "#fb923c", description: "Explore your designs" },
 ];
 
@@ -117,9 +117,9 @@ export default function Landing() {
   };
 
   return (
-    <main className="nexora-home min-h-[100dvh] w-full bg-[#0a0a0a] p-[5px] text-[#e8e8e8]">
-      <section className="nexora-home-frame relative min-h-[calc(100dvh-10px)] overflow-hidden rounded-[13px] border border-[#282828] bg-[#101010]">
-        <div className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-md text-[#777777]" aria-hidden="true">
+    <main className="nexora-home min-h-[100dvh] w-full bg-[hsl(var(--nx-surface-0))] p-[5px] text-[hsl(var(--nx-ink))]">
+      <section className="nexora-home-frame relative min-h-[calc(100dvh-10px)] overflow-hidden rounded-[13px] border border-[hsl(var(--nx-rule))] bg-[hsl(var(--nx-surface-1))]">
+        <div className="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-md text-[hsl(var(--nx-ink-subtle))]" aria-hidden="true">
           <PanelsTopLeft className="h-4 w-4" strokeWidth={1.7} />
         </div>
         <Link to="/pricing" className="nexora-upgrade absolute left-1/2 top-2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[#153454] bg-[#0b1d2d] px-3 py-1.5 text-[11px] font-medium text-[#60a5fa] transition-colors hover:border-[#1d4f7a] hover:bg-[#10263a]">
@@ -150,7 +150,7 @@ export default function Landing() {
                   type="button"
                   aria-expanded={pluginsOpen}
                   onClick={() => setPluginsOpen((open) => !open)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${pluginsOpen ? "border-[#393939] bg-[#292929] text-[#e2e2e2]" : "border-transparent text-[#999999] hover:border-[#303030] hover:bg-[#242424] hover:text-[#e2e2e2]"}`}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${pluginsOpen ? "border-[#393939] bg-[hsl(var(--nx-rule))] text-[#e2e2e2]" : "border-transparent text-[#999999] hover:border-[#303030] hover:bg-[#242424] hover:text-[#e2e2e2]"}`}
                 >
                   <span className="flex -space-x-1.5" aria-hidden="true">
                     {plugins.slice(0, 3).map((plugin) => {
@@ -162,9 +162,9 @@ export default function Landing() {
                 </button>
                 {pluginsOpen && (
                   <div className="nexora-plugin-menu absolute left-20 top-9 z-30 w-[220px] rounded-xl border border-[#343434] bg-[#242424] p-2 shadow-2xl shadow-black/50">
-                    <div className="flex items-center justify-between px-2 pb-2 pt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[#777777]">
+                    <div className="flex items-center justify-between px-2 pb-2 pt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[hsl(var(--nx-ink-subtle))]">
                       Recommended
-                      <button type="button" onClick={() => setPluginsOpen(false)} aria-label="Close plugins" className="rounded p-1 text-[#777777] hover:bg-[#333333] hover:text-white"><X className="h-3 w-3" /></button>
+                      <button type="button" onClick={() => setPluginsOpen(false)} aria-label="Close plugins" className="rounded p-1 text-[hsl(var(--nx-ink-subtle))] hover:bg-[#333333] hover:text-white"><X className="h-3 w-3" /></button>
                     </div>
                     {plugins.map((plugin) => {
                       const Icon = plugin.icon;
@@ -174,9 +174,9 @@ export default function Landing() {
                           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#333333]" style={{ color: plugin.tint }}><Icon className="h-3.5 w-3.5" /></span>
                           <span className="min-w-0 flex-1">
                             <span className="block text-[11px] text-[#dddddd]">{plugin.name}</span>
-                            <span className="block truncate text-[9px] text-[#777777]">{plugin.description}</span>
+                            <span className="block truncate text-[9px] text-[hsl(var(--nx-ink-subtle))]">{plugin.description}</span>
                           </span>
-                          {isSelected ? <Check className="h-3.5 w-3.5 text-primary" /> : <span className="text-[9px] text-[#777777]">Preview</span>}
+                          {isSelected ? <Check className="h-3.5 w-3.5 text-primary" /> : <span className="text-[9px] text-[hsl(var(--nx-ink-subtle))]">Preview</span>}
                         </button>
                       );
                     })}
@@ -218,14 +218,14 @@ export default function Landing() {
       </section>
 
       <Dialog open={authOpen} onOpenChange={setAuthOpen}>
-        <DialogContent className="max-w-[420px] rounded-[20px] border-[#2a2a2a] bg-[#111111] p-6 text-[#e8e8e8]">
+        <DialogContent className="max-w-[420px] rounded-[20px] border-[#2a2a2a] bg-[#111111] p-6 text-[hsl(var(--nx-ink))]">
           <DialogHeader className="pr-7 text-left">
-            <DialogTitle className="text-xl font-semibold text-[#e8e8e8]">Save your first build request</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-[hsl(var(--nx-ink))]">Save your first build request</DialogTitle>
             <DialogDescription className="pt-2 leading-6 text-[#888888]">Continue with Google to open your workspace. Your idea will be ready on the dashboard.</DialogDescription>
           </DialogHeader>
-          <div className="max-h-28 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 text-sm leading-6 text-[#c8c8c8]">{prompt}</div>
+          <div className="max-h-28 overflow-y-auto rounded-xl border border-[#2a2a2a] bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-sm leading-6 text-[#c8c8c8]">{prompt}</div>
           {authError && <p role="alert" className="text-sm text-[#ff4444]">{authError}</p>}
-          <button type="button" onClick={() => void continueWithGoogle()} disabled={isSigningIn} className="inline-flex h-11 items-center justify-center gap-3 rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 text-sm font-semibold text-[#e8e8e8] transition-colors hover:border-primary/40 hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
+          <button type="button" onClick={() => void continueWithGoogle()} disabled={isSigningIn} className="inline-flex h-11 items-center justify-center gap-3 rounded-[10px] border border-[#2a2a2a] bg-[hsl(var(--nx-surface-2))] px-4 text-sm font-semibold text-[hsl(var(--nx-ink))] transition-colors hover:border-primary/40 hover:bg-[#202020] disabled:cursor-wait disabled:opacity-60">
             <GoogleMark />{isSigningIn ? "Connecting to Google…" : "Continue with Google"}
           </button>
           <p className="text-center text-xs text-[#666666]">Your prompt is stored locally only to complete this sign-in.</p>

@@ -53,7 +53,7 @@ export function ChatGPTPromptInput({
           disabled={disabled}
           placeholder={placeholder}
           aria-label="What do you want to build today?"
-          className="nexora-home-input min-h-10 w-full max-h-[120px] resize-none bg-transparent py-1 text-[14px] leading-6 text-[#e8e8e8] outline-none placeholder:text-[#777777] disabled:cursor-not-allowed sm:text-[15px]"
+          className="nexora-home-input min-h-10 w-full max-h-[120px] resize-none bg-transparent py-1 text-[14px] leading-6 text-[hsl(var(--nx-ink))] outline-none placeholder:text-[hsl(var(--nx-ink-subtle))] disabled:cursor-not-allowed sm:text-[15px]"
         />
         <div className="mt-2 flex items-center justify-between gap-2">
           <button type="button" aria-label="Add attachment" onClick={() => document.getElementById("nexora-prompt-file")?.click()} className="flex h-8 w-8 items-center justify-center rounded-full text-[#a3a3a3] transition-colors hover:bg-[#303030] hover:text-white">

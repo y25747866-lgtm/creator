@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-surface, #111318) 25%, var(--color-border, #303640) 50%, var(--color-surface, #111318) 75%);
+  background: linear-gradient(90deg, var(--color-surface, hsl(var(--nx-surface-2))) 25%, var(--color-border, hsl(var(--nx-rule-strong))) 50%, var(--color-surface, hsl(var(--nx-surface-2))) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
@@ -42,14 +42,14 @@ html {
 @layer base {
   :root {
     --radius: 0.75rem;
-    --nexora-workspace-background: #010102;
+    --nexora-workspace-background: hsl(var(--nx-surface-0));
     --nexora-workspace-foreground: #FFFFFF;
-    --nexora-sidebar-background: #080A0C;
+    --nexora-sidebar-background: hsl(var(--nx-surface-1));
     --nexora-sidebar-border: rgba(255, 255, 255, 0.08);
-    --nexora-composer-background: #010102;
-    --nexora-composer-border: rgba(112, 34, 252, 0.3);
-    --nexora-composer-focus-border: rgba(112, 34, 252, 0.3);
-    --nexora-connector-icon-background: #1a1a1a;
+    --nexora-composer-background: hsl(var(--nx-surface-0));
+    --nexora-composer-border: hsl(var(--nx-rule-strong));
+    --nexora-composer-focus-border: hsl(var(--nx-amber));
+    --nexora-connector-icon-background: hsl(var(--nx-surface-2));
     --nexora-connector-icon-color: #FFFFFF;
     --nexora-connector-icon-border: transparent;
     color-scheme: dark;
@@ -86,13 +86,13 @@ html {
 
   :root[data-theme="light"] {
     --nexora-workspace-background: #F5F5F7;
-    --nexora-workspace-foreground: #010102;
+    --nexora-workspace-foreground: hsl(var(--nx-surface-0));
     --nexora-sidebar-background: #F5F5F7;
     --nexora-sidebar-border: #E0E0E0;
     --nexora-composer-background: #FFFFFF;
-    --nexora-composer-border: rgba(112, 34, 252, 0.3);
+    --nexora-composer-border: hsl(var(--nx-rule-strong));
     --nexora-connector-icon-background: #FFFFFF;
-    --nexora-connector-icon-color: #010102;
+    --nexora-connector-icon-color: hsl(var(--nx-surface-0));
     --nexora-connector-icon-border: #E0E0E0;
     color-scheme: light;
   }
@@ -127,7 +127,7 @@ html {
     --sidebar-ring: 0 0% 100%;
   }
 
-  /* Approved NexoraOS charcoal palette: #080A0C, #111318, #1A1D24 */
+  /* Approved NexoraOS charcoal palette: hsl(var(--nx-surface-1)), hsl(var(--nx-surface-2)), hsl(var(--nx-surface-3)) */
   .nexora-dashboard {
     --background: 216 20% 3%;
     --foreground: 210 20% 95%;
@@ -191,10 +191,10 @@ html {
 body {
     @apply bg-background text-foreground;
     margin: 0;
-    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-family: var(--nx-font-sans) !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   #root:empty {
     min-height: 100vh;
@@ -218,8 +218,9 @@ body {
   h4,
   h5,
   h6 {
-    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--nx-font-sans);
     letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
   code,
@@ -227,17 +228,17 @@ body {
   kbd,
   samp,
   .font-mono {
-    font-family: "JetBrains Mono", "Courier New", monospace !important;
+    font-family: var(--nx-font-mono) !important;
   }
 }
 
 body *:not(code):not(pre):not(kbd):not(samp):not(.font-mono) {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: var(--nx-font-sans) !important;
 }
 
 .bg-card {
-  background-color: #1a1a1a;
-  border-color: #2a2a2a;
+  background-color: hsl(var(--nx-surface-2));
+  border-color: hsl(var(--nx-rule));
   border-radius: 14px;
 }
 
@@ -246,13 +247,13 @@ body *:not(code):not(pre):not(kbd):not(samp):not(.font-mono) {
 }
 
 .bg-white {
-  background-color: #1a1a1a !important;
-  color: #e8e8e8 !important;
+  background-color: hsl(var(--nx-surface-2)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 [class*="data-[state=checked]:bg-white"] {
-  background-color: #1a1a1a !important;
-  color: #e8e8e8 !important;
+  background-color: hsl(var(--nx-surface-2)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 button.bg-white,
@@ -260,44 +261,44 @@ button[class~="bg-white"],
 a.bg-white,
 a[class~="bg-white"],
 button[class*="data-[state=checked]:bg-white"] {
-  border-color: #e0e0e0 !important;
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  border-color: hsl(var(--nx-rule-strong)) !important;
+  background-color: hsl(var(--nx-surface-1)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 [style*="255, 255, 255"] {
-  background-color: #1a1a1a !important;
-  color: #e8e8e8 !important;
+  background-color: hsl(var(--nx-surface-2)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 button[style*="255, 255, 255"],
 a[style*="255, 255, 255"] {
-  border-color: #e0e0e0 !important;
-  background-color: #ffffff !important;
-  color: #000000 !important;
+  border-color: hsl(var(--nx-rule-strong)) !important;
+  background-color: hsl(var(--nx-surface-1)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 [style*="240, 240, 240"] {
-  background-color: #1a1a1a !important;
+  background-color: hsl(var(--nx-surface-2)) !important;
 }
 
 button[style*="240, 240, 240"],
 a[style*="240, 240, 240"] {
-  background-color: #3b82f6 !important;
-  color: #000000 !important;
+  background-color: hsl(var(--nx-amber)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 a:not([class*="bg-"]):hover {
-  color: #3b82f6 !important;
+  color: hsl(var(--nx-amber)) !important;
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-[10px] bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90;
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] bg-primary px-6 py-3 font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary/90;
   }
 
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border border-border bg-transparent px-6 py-3 font-semibold text-foreground transition-all duration-200 hover:bg-muted;
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] border border-border bg-transparent px-6 py-3 font-semibold text-foreground transition-colors duration-200 hover:bg-muted;
   }
 
   .section-block {
@@ -335,13 +336,13 @@ a:not([class*="bg-"]):hover {
 }
 
 :root[data-theme="dark"] body {
-  background: #010102 !important;
-  color: #FFFFFF !important;
+  background: hsl(var(--nx-surface-0)) !important;
+  color: hsl(var(--nx-ink)) !important;
 }
 
 :root[data-theme="light"] body {
-  background: #F5F5F7 !important;
-  color: #010102 !important;
+  background: hsl(var(--nx-surface-0)) !important;
+  color: hsl(var(--nx-surface-0)) !important;
 }
 
 .nexora-composer-form {
@@ -353,55 +354,55 @@ a:not([class*="bg-"]):hover {
   border-color: var(--nexora-composer-focus-border);
 }
 
-:root[data-theme="light"] [class*="bg-[#080A0C]"],
-:root[data-theme="light"] [class*="bg-[#010102]"],
-:root[data-theme="light"] [class*="bg-[#111318]"] {
-  background-color: #FFFFFF !important;
+:root[data-theme="light"] [class*="bg-[hsl(var(--nx-surface-1))]"],
+:root[data-theme="light"] [class*="bg-[hsl(var(--nx-surface-0))]"],
+:root[data-theme="light"] [class*="bg-[hsl(var(--nx-surface-2))]"] {
+  background-color: hsl(var(--nx-ink)) !important;
 }
 
-:root[data-theme="light"] [class*="bg-[#1A1D24]"],
-:root[data-theme="light"] [class*="bg-[#1a1a1a]"] {
-  background-color: #EEEFF2 !important;
+:root[data-theme="light"] [class*="bg-[hsl(var(--nx-surface-3))]"],
+:root[data-theme="light"] [class*="bg-[hsl(var(--nx-surface-2))]"] {
+  background-color: hsl(var(--nx-surface-2)) !important;
 }
 
-:root[data-theme="light"] [class*="text-[#F0F2F5]"],
-:root[data-theme="light"] [class*="text-[#D6DAE0]"],
-:root[data-theme="light"] [class*="text-[#D9D9D9]"],
-:root[data-theme="light"] [class*="text-[#D4D4D4]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink))]"],
 :root[data-theme="light"] [class*="text-white"] {
-  color: #010102 !important;
+  color: hsl(var(--nx-surface-0)) !important;
 }
 
 :root[data-theme="light"] .nav-item.active {
-  background: #F0EEFF !important;
-  border-left: 3px solid #3B82F6 !important;
-  color: #3B82F6 !important;
+  background: hsl(var(--nx-amber-soft)) !important;
+  border-left: 3px solid hsl(var(--nx-amber)) !important;
+  color: hsl(var(--nx-amber)) !important;
 }
 
 :root[data-theme="light"] .nav-item.active svg,
 :root[data-theme="light"] .nav-item.active i {
-  color: #3B82F6 !important;
+  color: hsl(var(--nx-amber)) !important;
 }
 
 :root[data-theme="light"] [class*="text-white/"],
-:root[data-theme="light"] [class*="text-[#B7BEC8]"],
-:root[data-theme="light"] [class*="text-[#B7C0CB]"],
-:root[data-theme="light"] [class*="text-[#A0A0A0]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-muted))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-muted))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-muted))]"],
 :root[data-theme="light"] [class*="text-[#A8A8A8]"],
-:root[data-theme="light"] [class*="text-[#8B929E]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-muted))]"],
 :root[data-theme="light"] [class*="text-[#8B8B8B]"],
-:root[data-theme="light"] [class*="text-[#6B7280]"],
-:root[data-theme="light"] [class*="text-[#949494]"],
-:root[data-theme="light"] [class*="text-[#8E8E8E]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-subtle))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-subtle))]"],
+:root[data-theme="light"] [class*="text-[hsl(var(--nx-ink-subtle))]"],
 :root[data-theme="light"] [class*="text-[#999]"] {
-  color: #5F6368 !important;
+  color: hsl(var(--nx-ink-muted)) !important;
 }
 
-:root[data-theme="light"] [class*="border-[#303640]"]:not(.nexora-composer-form),
-:root[data-theme="light"] [class*="border-[#2B3038]"],
-:root[data-theme="light"] [class*="border-[#272B33]"],
+:root[data-theme="light"] [class*="border-[hsl(var(--nx-rule-strong))]"]:not(.nexora-composer-form),
+:root[data-theme="light"] [class*="border-[hsl(var(--nx-rule))]"],
+:root[data-theme="light"] [class*="border-[hsl(var(--nx-rule))]"],
 :root[data-theme="light"] [class*="border-white/"] {
-  border-color: #E0E0E0 !important;
+  border-color: hsl(var(--nx-rule-strong)) !important;
 }
 
 :root[data-theme="light"] .nexora-composer-form:not(:focus-within) {
@@ -409,7 +410,7 @@ a:not([class*="bg-"]):hover {
 }
 
 :root[data-theme="light"] .nexora-connector-logo {
-  --tw-ring-color: #F5F5F7 !important;
+  --tw-ring-color: hsl(var(--nx-surface-0)) !important;
 }
 
 /* Hero section */
@@ -460,16 +461,16 @@ a:not([class*="bg-"]):hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: hsl(var(--nx-surface-0));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: hsl(var(--nx-scrollbar));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444444;
+  background: hsl(var(--nx-rule-strong));
 }
 
 .marquee {
@@ -548,3 +549,60 @@ a:not([class*="bg-"]):hover {
   color: hsl(var(--primary-foreground));
   background: hsl(var(--primary));
 }
+
+/* NexoraOS design system bridge: amber is the only action signal. */
+:root,
+:root[data-theme="dark"],
+:root[data-theme="light"] {
+  --background: var(--nx-surface-0);
+  --foreground: var(--nx-ink);
+  --card: var(--nx-surface-1);
+  --card-foreground: var(--nx-ink);
+  --popover: var(--nx-surface-2);
+  --popover-foreground: var(--nx-ink);
+  --primary: var(--nx-amber);
+  --primary-foreground: var(--nx-amber-ink);
+  --secondary: var(--nx-surface-2);
+  --secondary-foreground: var(--nx-ink);
+  --muted: var(--nx-surface-2);
+  --muted-foreground: var(--nx-ink-muted);
+  --accent: var(--nx-amber-soft);
+  --accent-foreground: var(--nx-ink);
+  --border: var(--nx-rule);
+  --input: var(--nx-rule);
+  --ring: var(--nx-amber);
+  --sidebar-background: var(--nx-surface-1);
+  --sidebar-foreground: var(--nx-ink);
+  --sidebar-primary: var(--nx-amber);
+  --sidebar-primary-foreground: var(--nx-amber-ink);
+  --sidebar-accent: var(--nx-amber-soft);
+  --sidebar-accent-foreground: var(--nx-ink);
+  --sidebar-border: var(--nx-rule);
+  --sidebar-ring: var(--nx-amber);
+}
+
+html,
+body { overflow-x: clip; }
+body { background: hsl(var(--nx-surface-0)); color: hsl(var(--nx-ink)); }
+.nexora-dashboard,
+.nexora-chat-workspace { background: hsl(var(--nx-surface-0)) !important; color: hsl(var(--nx-ink)) !important; }
+.nexora-composer-form { border-color: hsl(var(--nx-rule-strong)); box-shadow: var(--nx-shadow-panel); }
+.nexora-composer-form:focus-within { border-color: hsl(var(--nx-amber)); box-shadow: 0 0 0 1px hsl(var(--nx-amber) / 0.28), var(--nx-shadow-panel); }
+.nav-item.active,
+.nav-item[aria-current="page"] { background: hsl(var(--nx-amber-soft)) !important; color: hsl(var(--nx-ink)) !important; box-shadow: inset 3px 0 0 hsl(var(--nx-amber)); }
+.nav-item.active svg,
+.nav-item[aria-current="page"] svg { color: hsl(var(--nx-amber)) !important; }
+:where(button, a, input, textarea, select, [role="button"]):focus-visible { outline: 2px solid hsl(var(--nx-amber)); outline-offset: 2px; }
+button.bg-primary,
+a.bg-primary { background: hsl(var(--nx-amber)) !important; color: hsl(var(--nx-amber-ink)) !important; }
+button.bg-primary:hover,
+a.bg-primary:hover { background: hsl(var(--nx-amber-strong)) !important; }
+:root[data-theme="light"] body { background: hsl(var(--nx-surface-0)) !important; color: hsl(var(--nx-ink)) !important; }
+:root[data-theme="light"] .nexora-dashboard,
+:root[data-theme="light"] .nexora-chat-workspace { background: hsl(var(--nx-surface-0)) !important; color: hsl(var(--nx-ink)) !important; }
+:root[data-theme="light"] .nexora-sidebar { background: hsl(var(--nx-surface-1)) !important; }
+:root[data-theme="light"] .nexora-composer-form { background: hsl(var(--nx-surface-1)) !important; }
+
+button:active, a:active, [role="button"]:active { transform: translateY(1px); }
+
+.animate-marquee:hover, .animate-marquee:focus-within, .marquee-content:hover, .marquee-content-reverse:hover { animation-play-state: paused; }

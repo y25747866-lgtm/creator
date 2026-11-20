@@ -892,7 +892,7 @@ const EbookGenerator = () => {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Render Complete</h2>
-        <div className="px-2 py-0.5 bg-[#3B82F6] text-white text-[10px] font-bold rounded uppercase tracking-wider">Ready</div>
+        <div className="px-2 py-0.5 bg-[hsl(var(--nx-amber))] text-white text-[10px] font-bold rounded uppercase tracking-wider">Ready</div>
       </div>
       <div className="bg-[#0F0F0F] border border-zinc-900 rounded-2xl p-6 mb-8">
         <div className="flex flex-col md:flex-row gap-8">
@@ -922,8 +922,8 @@ const EbookGenerator = () => {
             <div className="space-y-2">
               {["Niche Locked — Winning angle selected", "Script Compiled — Core sections staged", "Cover Rendered — Artwork synced."].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                  <div className="w-4 h-4 rounded-full bg-[#3B82F6]/20 flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-[#3B82F6]" />
+                  <div className="w-4 h-4 rounded-full bg-[hsl(var(--nx-amber))]/20 flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-[hsl(var(--nx-amber))]" />
                   </div>
                   {item.split(" — ")[0]} — <span className="text-zinc-500 font-medium normal-case">{item.split(" — ")[1]}</span>
                 </div>

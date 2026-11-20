@@ -126,7 +126,7 @@ export default function ProjectsPage() {
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">My Products</h1>
             </div>
             <div className="flex w-full items-center gap-2 sm:w-auto">
-              <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/10 bg-[#111318] px-3 text-white/50 sm:w-72 sm:flex-none">
+              <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-2))] px-3 text-white/50 sm:w-72 sm:flex-none">
                 <Search size={16} aria-hidden="true" />
                 <input
                   type="search"
@@ -140,9 +140,9 @@ export default function ProjectsPage() {
               </label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="outline" size="icon" aria-label="Filter products" title={filter} className="h-10 w-10 shrink-0 border-white/10 bg-[#111318] text-white/70 hover:bg-[#1A1D24] hover:text-white"><Filter size={16} /></Button>
+                  <Button type="button" variant="outline" size="icon" aria-label="Filter products" title={filter} className="h-10 w-10 shrink-0 border-white/10 bg-[hsl(var(--nx-surface-2))] text-white/70 hover:bg-[hsl(var(--nx-surface-3))] hover:text-white"><Filter size={16} /></Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="border-white/10 bg-[#111318] text-white">
+                <DropdownMenuContent align="end" className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
                   {(["All products", "Ready to download", "Needs review"] as ProductFilter[]).map((option) => (
                     <DropdownMenuItem key={option} onSelect={() => setFilter(option)} className={filter === option ? "bg-white/[0.08] text-white" : "text-white/70"}>{option}</DropdownMenuItem>
                   ))}
@@ -151,20 +151,20 @@ export default function ProjectsPage() {
             </div>
           </header>
 
-          {!canExport && <p className="rounded-xl border border-white/10 bg-[#111318] px-4 py-3 text-xs leading-5 text-white/65">Your saved products stay visible here. PDF downloads require an active paid plan. <Link to="/pricing" className="text-white underline underline-offset-2">View plans</Link></p>}
-          {error && <p role="alert" className="rounded-lg border border-white/10 bg-[#111318] px-4 py-3 text-sm text-white/65">Could not refresh saved products: {error}</p>}
+          {!canExport && <p className="rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-xs leading-5 text-white/65">Your saved products stay visible here. PDF downloads require an active paid plan. <Link to="/pricing" className="text-white underline underline-offset-2">View plans</Link></p>}
+          {error && <p role="alert" className="rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-sm text-white/65">Could not refresh saved products: {error}</p>}
 
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-3"><Skeleton className="h-44 bg-white/[0.05]" /><Skeleton className="h-44 bg-white/[0.05]" /><Skeleton className="h-44 bg-white/[0.05]" /></div>
           ) : isEmpty ? (
-            <section className="rounded-2xl border border-dashed border-white/15 bg-[#111318] px-5 py-14 text-center">
+            <section className="rounded-2xl border border-dashed border-white/15 bg-[hsl(var(--nx-surface-2))] px-5 py-14 text-center">
               <FolderOpen size={22} className="mx-auto text-white/45" aria-hidden="true" />
               <h2 className="mt-3 text-sm font-medium">Your products will appear here</h2>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/50">Start by creating your first digital product.</p>
-              <Button asChild className="mt-5 bg-white text-[#080A0C] hover:bg-white/90"><Link to="/dashboard"><Plus size={15} className="mr-2" />Create Product</Link></Button>
+              <Button asChild className="mt-5 bg-white text-[hsl(var(--nx-surface-1))] hover:bg-white/90"><Link to="/dashboard"><Plus size={15} className="mr-2" />Create Product</Link></Button>
             </section>
           ) : filteredEbooks.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-white/15 bg-[#111318] px-5 py-12 text-center">
+            <section className="rounded-2xl border border-dashed border-white/15 bg-[hsl(var(--nx-surface-2))] px-5 py-12 text-center">
               <Search size={20} className="mx-auto text-white/40" aria-hidden="true" />
               <h2 className="mt-3 text-sm font-medium">No matching products</h2>
               <p className="mt-1 text-sm text-white/50">Change the search or filter to see more.</p>
@@ -176,7 +176,7 @@ export default function ProjectsPage() {
                 const checks = checkEbookQuality(ebook);
                 const ready = checks.every((check) => check.passed);
                 return (
-                  <article key={ebook.id} className="flex min-h-[180px] min-w-0 flex-col rounded-xl border border-[#1E2028] bg-[#111318] p-3 transition-colors hover:border-white/20 sm:min-h-[196px] sm:rounded-2xl sm:p-4">
+                  <article key={ebook.id} className="flex min-h-[180px] min-w-0 flex-col rounded-xl border border-[#1E2028] bg-[hsl(var(--nx-surface-2))] p-3 transition-colors hover:border-white/20 sm:min-h-[196px] sm:rounded-2xl sm:p-4">
                     <div className="flex min-w-0 items-start gap-2.5">
                       {ebook.coverImageUrl ? (
                         <img src={ebook.coverImageUrl} alt="" width="40" height="48" className="h-12 w-10 shrink-0 rounded-md border border-white/10 object-cover" />
@@ -190,14 +190,14 @@ export default function ProjectsPage() {
                     </div>
                     <p className="mt-3 line-clamp-2 min-h-8 text-xs leading-4 text-white/45">{ebook.topic}</p>
                     <div className="mt-auto flex items-center justify-between gap-1 pt-3">
-                      <Button size="sm" disabled={!canExport} title={canExport ? "Download product" : "Upgrade to download"} className="h-8 min-w-0 bg-white px-2.5 text-xs text-[#080A0C] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(ebook)}>
+                      <Button size="sm" disabled={!canExport} title={canExport ? "Download product" : "Upgrade to download"} className="h-8 min-w-0 bg-white px-2.5 text-xs text-[hsl(var(--nx-surface-1))] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(ebook)}>
                         <Download size={13} className="mr-1.5 shrink-0" aria-hidden="true" />Download
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button type="button" variant="ghost" size="icon" aria-label={`${ebook.title} options`} className="h-8 w-8 shrink-0 text-white/55 hover:bg-white/[0.06] hover:text-white"><MoreHorizontal size={17} /></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="border-white/10 bg-[#111318] text-white">
+                        <DropdownMenuContent align="end" className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
                           <DropdownMenuItem onSelect={() => setReviewing(ebook)}><BookOpen size={14} className="mr-2" />Review</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => openRename(ebook)}><Pencil size={14} className="mr-2" />Rename</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => setDeleting(ebook)}><Trash2 size={14} className="mr-2" />Delete</DropdownMenuItem>
@@ -215,30 +215,30 @@ export default function ProjectsPage() {
           )}
         </div>
 
-        <Button asChild aria-label="New Product" className="fixed bottom-6 right-5 z-30 h-12 rounded-full bg-white px-4 text-sm font-medium text-[#080A0C] hover:bg-white/90">
+        <Button asChild aria-label="New Product" className="fixed bottom-6 right-5 z-30 h-12 rounded-full bg-white px-4 text-sm font-medium text-[hsl(var(--nx-surface-1))] hover:bg-white/90">
           <Link to="/dashboard"><Plus size={17} className="mr-2" />New Product</Link>
         </Button>
 
         <Dialog open={Boolean(renaming)} onOpenChange={(open) => { if (!open && !savingRename) setRenaming(null); }}>
-          <DialogContent className="border-white/10 bg-[#111318] text-white">
+          <DialogContent className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
             <DialogHeader><DialogTitle>Rename product</DialogTitle></DialogHeader>
             <form onSubmit={(event) => void saveRename(event)} className="space-y-4">
               <label htmlFor="rename-product-title" className="block text-xs text-white/65">Product name</label>
-              <input id="rename-product-title" value={renameTitle} onChange={(event) => setRenameTitle(event.target.value)} maxLength={120} autoFocus className="h-11 w-full rounded-lg border border-white/10 bg-[#080A0C] px-3 text-sm text-white outline-none focus-visible:border-white/40" />
+              <input id="rename-product-title" value={renameTitle} onChange={(event) => setRenameTitle(event.target.value)} maxLength={120} autoFocus className="h-11 w-full rounded-lg border border-white/10 bg-[hsl(var(--nx-surface-1))] px-3 text-sm text-white outline-none focus-visible:border-white/40" />
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" disabled={savingRename} className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]" onClick={() => setRenaming(null)}>Cancel</Button>
-                <Button type="submit" disabled={savingRename || !renameTitle.trim()} className="bg-white text-[#080A0C] hover:bg-white/90">{savingRename ? "Saving…" : "Save name"}</Button>
+                <Button type="submit" disabled={savingRename || !renameTitle.trim()} className="bg-white text-[hsl(var(--nx-surface-1))] hover:bg-white/90">{savingRename ? "Saving…" : "Save name"}</Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
 
         <Dialog open={Boolean(reviewing)} onOpenChange={(open) => !open && setReviewing(null)}>
-          <DialogContent className="max-h-[85dvh] max-w-3xl overflow-y-auto border-white/10 bg-[#111318] text-white">
+          <DialogContent className="max-h-[85dvh] max-w-3xl overflow-y-auto border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
             <DialogHeader><DialogTitle>{reviewing?.title}</DialogTitle></DialogHeader>
             {reviewing && (
               <div className="space-y-5">
-                <div className="rounded-xl border border-white/10 bg-[#080A0C] p-4">
+                <div className="rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-1))] p-4">
                   <h3 className="text-xs font-medium text-white/70">Pre-download review</h3>
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                     {checkEbookQuality(reviewing).map((check) => (
@@ -249,13 +249,13 @@ export default function ProjectsPage() {
                     ))}
                   </ul>
                 </div>
-                <section className="rounded-xl border border-white/10 bg-[#080A0C] p-4">
+                <section className="rounded-xl border border-white/10 bg-[hsl(var(--nx-surface-1))] p-4">
                   <h3 className="mb-3 text-xs font-medium text-white/70">Manuscript preview</h3>
                   <pre className="whitespace-pre-wrap font-sans text-sm leading-6 text-white/80">{reviewing.content}</pre>
                 </section>
                 <div className="flex flex-wrap justify-end gap-2">
                   <Button variant="outline" className="border-white/15 bg-transparent text-white" onClick={() => setReviewing(null)}>Close review</Button>
-                  <Button disabled={!canExport} className="bg-white text-[#080A0C] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(reviewing)}><Download size={14} className="mr-2" />Download PDF</Button>
+                  <Button disabled={!canExport} className="bg-white text-[hsl(var(--nx-surface-1))] hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40" onClick={() => void exportEbook(reviewing)}><Download size={14} className="mr-2" />Download PDF</Button>
                 </div>
               </div>
             )}
@@ -263,9 +263,9 @@ export default function ProjectsPage() {
         </Dialog>
 
         <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
-          <AlertDialogContent className="border-white/10 bg-[#111318] text-white">
+          <AlertDialogContent className="border-white/10 bg-[hsl(var(--nx-surface-2))] text-white">
             <AlertDialogHeader><AlertDialogTitle>Delete this product?</AlertDialogTitle><AlertDialogDescription className="text-white/55">“{deleting?.title}” and its saved versions will be removed from your account. This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-            <AlertDialogFooter><AlertDialogCancel className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]">Cancel</AlertDialogCancel><AlertDialogAction className="bg-white text-[#080A0C] hover:bg-white/90" onClick={(event) => { event.preventDefault(); void confirmDelete(); }}>Delete product</AlertDialogAction></AlertDialogFooter>
+            <AlertDialogFooter><AlertDialogCancel className="border-white/15 bg-transparent text-white hover:bg-white/[0.06]">Cancel</AlertDialogCancel><AlertDialogAction className="bg-white text-[hsl(var(--nx-surface-1))] hover:bg-white/90" onClick={(event) => { event.preventDefault(); void confirmDelete(); }}>Delete product</AlertDialogAction></AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </main>

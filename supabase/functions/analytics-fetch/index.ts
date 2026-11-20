@@ -23,8 +23,8 @@ async function fetchWhopData(apiKey: string, cursors: { products?: string | null
     } else {
       console.error("❌ Whop products error:", res.status);
     }
-  } catch (e) { 
-    console.error("❌ Whop products fetch exception:", e); 
+  } catch (e) {
+    console.error("❌ Whop products fetch exception:", e);
   }
 
   try {
@@ -40,8 +40,8 @@ async function fetchWhopData(apiKey: string, cursors: { products?: string | null
       // Whop API might return 401 if key is invalid
       console.error("❌ Whop memberships error:", res.status, errText);
     }
-  } catch (e) { 
-    console.error("❌ Whop memberships fetch exception:", e); 
+  } catch (e) {
+    console.error("❌ Whop memberships fetch exception:", e);
   }
 
   // ✅ Calculate conversion rate based on actual data
@@ -52,17 +52,17 @@ async function fetchWhopData(apiKey: string, cursors: { products?: string | null
     const amount = parseFloat(o?.amount_total || "0") / 100;
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
-  
+
   const totalSales = orders.length;
   const activeProducts = products.length;
 
   return {
     summary: { totalRevenue, totalSales, activeProducts, conversionRate, completedSales: completedOrders },
     cursors: { products: productCursor, orders: orderCursor },
-    products: products.map((p: any) => ({ 
-      id: p?.id || "unknown", 
-      name: p?.name || p?.title || "Unknown Product", 
-      price: parseFloat(p?.initial_price || "0"), 
+    products: products.map((p: any) => ({
+      id: p?.id || "unknown",
+      name: p?.name || p?.title || "Unknown Product",
+      price: parseFloat(p?.initial_price || "0"),
       platform: "whop",
       description: p?.description || ""
     })),
@@ -91,8 +91,8 @@ async function fetchPayhipData(apiKey: string) {
     } else {
       console.error("❌ Payhip products error:", res.status);
     }
-  } catch (e) { 
-    console.error("❌ Payhip products fetch exception:", e); 
+  } catch (e) {
+    console.error("❌ Payhip products fetch exception:", e);
   }
 
   try {
@@ -105,8 +105,8 @@ async function fetchPayhipData(apiKey: string) {
     } else {
       console.error("❌ Payhip sales error:", res.status);
     }
-  } catch (e) { 
-    console.error("❌ Payhip sales fetch exception:", e); 
+  } catch (e) {
+    console.error("❌ Payhip sales fetch exception:", e);
   }
 
   // ✅ Calculate conversion rate based on actual data
@@ -114,16 +114,16 @@ async function fetchPayhipData(apiKey: string) {
     const amount = parseFloat(s?.total || s?.amount || "0");
     return sum + (isNaN(amount) ? 0 : amount);
   }, 0);
-  
+
   const totalSales = sales.length;
   const conversionRate = products.length > 0 ? parseFloat(((totalSales / (products.length * 10)) * 100).toFixed(2)) : 0;
 
   return {
     summary: { totalRevenue, totalSales, activeProducts: products.length, conversionRate, completedSales: totalSales },
-    products: products.map((p: any) => ({ 
-      id: p?.id || p?.product_id || "unknown", 
-      name: p?.name || p?.title || "Unknown Product", 
-      price: parseFloat(p?.price || "0"), 
+    products: products.map((p: any) => ({
+      id: p?.id || p?.product_id || "unknown",
+      name: p?.name || p?.title || "Unknown Product",
+      price: parseFloat(p?.price || "0"),
       platform: "payhip",
       description: p?.description || ""
     })),
@@ -172,18 +172,18 @@ serve(async (req) => {
     if (connError) throw connError;
 
     if (!connections || connections.length === 0) {
-      return new Response(JSON.stringify({ 
-        summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 }, 
-        products: [], 
-        orders: [] 
+      return new Response(JSON.stringify({
+        summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0 },
+        products: [],
+        orders: []
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let allData = { 
+    const allData = {
       summary: { totalRevenue: 0, totalSales: 0, activeProducts: 0, conversionRate: 0, completedSales: 0 },
-      products: [] as any[], 
+      products: [] as any[],
       orders: [] as any[],
       nextCursors: { whop: null as { products: string | null; orders: string | null } | null },
     };

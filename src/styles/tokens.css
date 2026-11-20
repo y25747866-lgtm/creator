@@ -1,0 +1,82 @@
+/* Hallmark · redesign: full · scope: app · amber creator workstation · v2.0.0 */
+:root {
+  --nx-amber: 42 75% 56%;
+  --nx-amber-strong: 42 82% 48%;
+  --nx-amber-soft: 42 75% 56% / 0.14;
+  --nx-amber-ink: 39 48% 7%;
+  --nx-ink: 216 20% 95%;
+  --nx-ink-muted: 215 11% 66%;
+  --nx-ink-subtle: 216 10% 48%;
+  --nx-surface-0: 216 20% 3%;
+  --nx-surface-1: 220 17% 7%;
+  --nx-surface-2: 220 17% 10%;
+  --nx-surface-3: 220 14% 14%;
+  --nx-rule: 220 14% 18%;
+  --nx-rule-strong: 220 13% 25%;
+  --nx-danger: 4 76% 62%;
+  --nx-success: 145 48% 52%;
+  --nx-font-sans: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  --nx-font-mono: "JetBrains Mono", "Courier New", monospace;
+  --nx-scrollbar: var(--nx-surface-3);
+  --nx-radius-control: 10px;
+  --nx-radius-panel: 14px;
+  --nx-radius-soft: 8px;
+  --nx-shadow-panel: 0 18px 48px hsl(216 24% 2% / 0.28);
+  --nx-focus: hsl(var(--nx-amber));
+}
+
+:root[data-theme="light"] {
+  --nx-ink: 216 24% 13%;
+  --nx-ink-muted: 216 11% 38%;
+  --nx-ink-subtle: 216 9% 50%;
+  --nx-surface-0: 42 20% 97%;
+  --nx-surface-1: 0 0% 100%;
+  --nx-surface-2: 42 12% 94%;
+  --nx-surface-3: 42 10% 89%;
+  --nx-rule: 216 13% 84%;
+  --nx-rule-strong: 216 13% 72%;
+  --nx-amber: 39 78% 42%;
+  --nx-amber-strong: 38 82% 35%;
+  --nx-amber-soft: 39 78% 42% / 0.14;
+  --nx-amber-ink: 42 28% 98%;
+  --nx-scrollbar: var(--nx-rule-strong);
+}
+
+.nexora-dashboard,
+.nexora-chat-workspace {
+  --background: var(--nx-surface-0);
+  --foreground: var(--nx-ink);
+  --card: var(--nx-surface-1);
+  --card-foreground: var(--nx-ink);
+  --popover: var(--nx-surface-2);
+  --popover-foreground: var(--nx-ink);
+  --primary: var(--nx-amber);
+  --primary-foreground: var(--nx-amber-ink);
+  --secondary: var(--nx-surface-2);
+  --secondary-foreground: var(--nx-ink);
+  --muted: var(--nx-surface-2);
+  --muted-foreground: var(--nx-ink-muted);
+  --accent: var(--nx-amber-soft);
+  --accent-foreground: var(--nx-ink);
+  --border: var(--nx-rule);
+  --input: var(--nx-rule);
+  --ring: var(--nx-amber);
+  --sidebar-background: var(--nx-surface-1);
+  --sidebar-foreground: var(--nx-ink);
+  --sidebar-primary: var(--nx-amber);
+  --sidebar-primary-foreground: var(--nx-amber-ink);
+  --sidebar-accent: var(--nx-amber-soft);
+  --sidebar-accent-foreground: var(--nx-ink);
+  --sidebar-border: var(--nx-rule);
+  --sidebar-ring: var(--nx-amber);
+  --nexora-workspace-background: hsl(var(--nx-surface-0));
+  --nexora-workspace-foreground: hsl(var(--nx-ink));
+  --nexora-sidebar-background: hsl(var(--nx-surface-1));
+  --nexora-sidebar-border: hsl(var(--nx-rule));
+  --nexora-composer-background: hsl(var(--nx-surface-1));
+  --nexora-composer-border: hsl(var(--nx-rule-strong));
+  --nexora-composer-focus-border: hsl(var(--nx-amber));
+  --nexora-connector-icon-background: hsl(var(--nx-surface-3));
+  --nexora-connector-icon-color: hsl(var(--nx-ink));
+  --nexora-connector-icon-border: hsl(var(--nx-rule));
+}

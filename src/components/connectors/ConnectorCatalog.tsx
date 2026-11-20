@@ -114,16 +114,16 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
     <div className={compact ? "space-y-3" : "space-y-5"}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium text-[#F0F2F5]">Apps</p>
-          <p className="mt-1 text-[10px] text-[#8B929E]">{CONNECTORS.length} curated apps · seven categories</p>
+          <p className="text-[11px] font-medium text-[hsl(var(--nx-ink))]">Apps</p>
+          <p className="mt-1 text-[10px] text-[hsl(var(--nx-ink-muted))]">{CONNECTORS.length} curated apps · seven categories</p>
         </div>
         {loading && <Skeleton className="h-4 w-4" aria-label="Loading" />}
       </div>
 
       {!compact && (
-        <section aria-label="Connected applications" className="space-y-3 rounded-xl border border-[#303640] bg-[#111318] p-3 sm:p-4">
+        <section aria-label="Connected applications" className="space-y-3 rounded-xl border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-surface-2))] p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-medium text-[#F0F2F5]">Connected apps</h2>
+            <h2 className="text-sm font-medium text-[hsl(var(--nx-ink))]">Connected apps</h2>
             {serviceConfigured && !loading && !error && (
               <span className="rounded-full border border-[#00E68E]/25 bg-[#00E68E]/[0.07] px-2 py-1 text-[10px] tabular-nums text-[#00E68E]">
                 {connectedConnectors.length} connected
@@ -131,19 +131,19 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
             )}
           </div>
           {loading ? (
-            <p role="status" className="text-xs text-[#8B929E]">Checking your connected apps…</p>
+            <p role="status" className="text-xs text-[hsl(var(--nx-ink-muted))]">Checking your connected apps…</p>
           ) : !serviceConfigured ? (
-            <p role="status" className="text-xs leading-5 text-[#8B929E]">Connected apps cannot be verified until the Composio service is configured.</p>
+            <p role="status" className="text-xs leading-5 text-[hsl(var(--nx-ink-muted))]">Connected apps cannot be verified until the Composio service is configured.</p>
           ) : error ? (
-            <p role="status" className="text-xs leading-5 text-[#8B929E]">Could not verify connected apps. Try refreshing this page before relying on the displayed status.</p>
+            <p role="status" className="text-xs leading-5 text-[hsl(var(--nx-ink-muted))]">Could not verify connected apps. Try refreshing this page before relying on the displayed status.</p>
           ) : connectedConnectors.length === 0 ? (
-            <p role="status" className="text-xs leading-5 text-[#8B929E]">No connected apps were returned for this account. Choose an app below to connect it.</p>
+            <p role="status" className="text-xs leading-5 text-[hsl(var(--nx-ink-muted))]">No connected apps were returned for this account. Choose an app below to connect it.</p>
           ) : (
             <div role="list" aria-label="Verified connected apps" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {connectedConnectors.map((connector) => (
-                <div key={connector.id} role="listitem" className="flex min-h-14 items-center gap-3 rounded-lg border border-[#303640]/70 bg-[#080A0C] px-3 py-2">
+                <div key={connector.id} role="listitem" className="flex min-h-14 items-center gap-3 rounded-lg border border-[hsl(var(--nx-rule-strong))]/70 bg-[hsl(var(--nx-surface-1))] px-3 py-2">
                   <ConnectorLogo connector={connector} />
-                  <span className="min-w-0 flex-1 truncate text-sm text-[#F0F2F5]">{connector.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-[hsl(var(--nx-ink))]">{connector.name}</span>
                   <ConnectedMark connector={connector} />
                 </div>
               ))}
@@ -152,16 +152,16 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
         </section>
       )}
 
-      <label className="flex h-9 items-center gap-2 rounded-lg border border-[#303640] bg-[#111318] px-2.5 text-[#8B929E] transition-colors focus-within:border-[#8C96A3]">
+      <label className="flex h-9 items-center gap-2 rounded-lg border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-surface-2))] px-2.5 text-[hsl(var(--nx-ink-muted))] transition-colors focus-within:border-[hsl(var(--nx-amber))]">
         <Search size={14} aria-hidden="true" />
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search apps"
           aria-label="Search connectors"
-          className="min-w-0 flex-1 bg-transparent text-xs text-[#F0F2F5] caret-white outline-none placeholder:text-[#8B929E]"
+          className="min-w-0 flex-1 bg-transparent text-xs text-[hsl(var(--nx-ink))] caret-white outline-none placeholder:text-[hsl(var(--nx-ink-muted))]"
         />
-        {search && <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className="text-[#8B929E] hover:text-[#F0F2F5]"><X size={13} /></button>}
+        {search && <button type="button" onClick={() => setSearch("")} aria-label="Clear search" className="text-[hsl(var(--nx-ink-muted))] hover:text-[hsl(var(--nx-ink))]"><X size={13} /></button>}
       </label>
 
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label="Connector categories">
@@ -173,7 +173,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
             role="tab"
             aria-selected={category === item}
             onClick={() => setCategory(item)}
-            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${category === item ? "border-[#F0F2F5] bg-[#F0F2F5] text-[#080A0C]" : "border-[#303640] text-[#8B929E] hover:border-[#8C96A3] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"}`}
+            className={`shrink-0 rounded-md border px-2.5 py-1.5 text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${category === item ? "border-[hsl(var(--nx-ink))] bg-[hsl(var(--nx-ink))] text-[hsl(var(--nx-surface-1))]" : "border-[hsl(var(--nx-rule-strong))] text-[hsl(var(--nx-ink-muted))] hover:border-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-surface-3))] hover:text-[hsl(var(--nx-ink))]"}`}
           >
             {item}
           </button>
@@ -186,7 +186,7 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
         className={`grid gap-1.5 ${compact ? "max-h-[min(55dvh,500px)] grid-cols-1 overflow-y-auto pr-1" : "grid-cols-1 sm:grid-cols-2"}`}
       >
         {visibleConnectors.length === 0 ? (
-          <p className="col-span-full rounded-lg border border-[#303640] px-3 py-5 text-center text-xs text-[#8B929E]">No apps match this search</p>
+          <p className="col-span-full rounded-lg border border-[hsl(var(--nx-rule-strong))] px-3 py-5 text-center text-xs text-[hsl(var(--nx-ink-muted))]">No apps match this search</p>
         ) : visibleConnectors.map((connector) => {
           const connected = connectorIsConnected(connector);
           return (
@@ -196,19 +196,19 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
               onClick={() => { setSelected(connector); setActionError(null); }}
               aria-haspopup="dialog"
               aria-label={`${connector.name} connector details`}
-              className="flex min-h-[48px] w-full items-center gap-2 rounded-lg border border-[#303640]/70 bg-[#111318] px-2 py-1.5 text-left transition hover:border-[#8C96A3] hover:bg-[#1A1D24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-[48px] w-full items-center gap-2 rounded-lg border border-[hsl(var(--nx-rule-strong))]/70 bg-[hsl(var(--nx-surface-2))] px-2 py-1.5 text-left transition hover:border-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-surface-3))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ConnectorLogo connector={connector} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-[#F0F2F5]">{connector.name}</p>
-                {!compact && <p className="mt-0.5 truncate text-[10px] text-[#8B929E]">{connector.workspaceDefault && connector.supportsAccountConnection ? `Workspace ready · ${connector.authLabel}` : connector.authLabel}</p>}
+                <p className="truncate text-sm text-[hsl(var(--nx-ink))]">{connector.name}</p>
+                {!compact && <p className="mt-0.5 truncate text-[10px] text-[hsl(var(--nx-ink-muted))]">{connector.workspaceDefault && connector.supportsAccountConnection ? `Workspace ready · ${connector.authLabel}` : connector.authLabel}</p>}
               </div>
               {connectorStatusUnknown(connector) ? (
-                <span className="shrink-0 text-[10px] text-[#8B929E]">{loading ? "Checking…" : "Status unavailable"}</span>
+                <span className="shrink-0 text-[10px] text-[hsl(var(--nx-ink-muted))]">{loading ? "Checking…" : "Status unavailable"}</span>
               ) : connected ? (
                 <ConnectedMark connector={connector} />
               ) : (
-                <span className="rounded-md border border-[#303640] bg-[#F0F2F5] px-2.5 py-1.5 text-[10px] font-medium text-[#080A0C]">Connect</span>
+                <span className="rounded-md border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-ink))] px-2.5 py-1.5 text-[10px] font-medium text-[hsl(var(--nx-surface-1))]">Connect</span>
               )}
             </button>
           );
@@ -216,33 +216,33 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
       </div>
 
       {!serviceConfigured && (
-        <p className="rounded-lg border border-[#303640] bg-[#111318] px-3 py-2 text-[10px] leading-4 text-[#8B929E]">
+        <p className="rounded-lg border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-surface-2))] px-3 py-2 text-[10px] leading-4 text-[hsl(var(--nx-ink-muted))]">
           Composio account status and authorization need the server-side COMPOSIO_API_KEY configured for this preview.
         </p>
       )}
       {serviceConfigured && error && <p role="status" className="text-[10px] leading-4 text-[#C8A6A6]">{error}</p>}
 
-      <div className="flex items-center justify-end gap-2 border-t border-[#303640] pt-3">
-        <Link to="/app/connectors" className="text-[10px] text-[#8B929E] hover:text-[#F0F2F5]">Manage plugins</Link>
+      <div className="flex items-center justify-end gap-2 border-t border-[hsl(var(--nx-rule-strong))] pt-3">
+        <Link to="/app/connectors" className="text-[10px] text-[hsl(var(--nx-ink-muted))] hover:text-[hsl(var(--nx-ink))]">Manage plugins</Link>
       </div>
 
       {selected && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="connector-detail-title" className="w-full max-w-md rounded-2xl border border-[#303640] bg-[#111318] p-5 shadow-2xl">
+          <section role="dialog" aria-modal="true" aria-labelledby="connector-detail-title" className="w-full max-w-md rounded-2xl border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-surface-2))] p-5 shadow-2xl">
             <div className="flex items-start gap-3">
               <ConnectorLogo connector={selected} className="h-12 w-12 rounded-xl p-2.5" />
               <div className="min-w-0 flex-1">
-                <h2 id="connector-detail-title" className="text-base font-medium text-[#F0F2F5]">{selected.name}</h2>
-                <p className="mt-1 text-xs text-[#8B929E]">{selected.authLabel}</p>
+                <h2 id="connector-detail-title" className="text-base font-medium text-[hsl(var(--nx-ink))]">{selected.name}</h2>
+                <p className="mt-1 text-xs text-[hsl(var(--nx-ink-muted))]">{selected.authLabel}</p>
               </div>
-              <button type="button" onClick={() => setSelected(null)} aria-label="Close connector details" className="rounded-md p-1 text-[#8B929E] hover:bg-[#1A1D24] hover:text-[#F0F2F5]"><X size={17} /></button>
+              <button type="button" onClick={() => setSelected(null)} aria-label="Close connector details" className="rounded-md p-1 text-[hsl(var(--nx-ink-muted))] hover:bg-[hsl(var(--nx-surface-3))] hover:text-[hsl(var(--nx-ink))]"><X size={17} /></button>
             </div>
-            <p className="mt-4 text-sm leading-6 text-[#8B929E]">{selected.description}</p>
+            <p className="mt-4 text-sm leading-6 text-[hsl(var(--nx-ink-muted))]">{selected.description}</p>
             <div className="mt-4">
-              <p className="text-[11px] font-medium text-[#F0F2F5]">Example prompts</p>
+              <p className="text-[11px] font-medium text-[hsl(var(--nx-ink))]">Example prompts</p>
               <ul className="mt-2 space-y-2">
                 {getConnectorExamples(selected).map((example) => (
-                  <li key={example} className="flex gap-2 rounded-lg border border-[#303640]/70 bg-[#111318] px-3 py-2 text-xs leading-5 text-[#8B929E]">
+                  <li key={example} className="flex gap-2 rounded-lg border border-[hsl(var(--nx-rule-strong))]/70 bg-[hsl(var(--nx-surface-2))] px-3 py-2 text-xs leading-5 text-[hsl(var(--nx-ink-muted))]">
                     <Check size={13} className="mt-1 shrink-0 text-[#00E68E]" aria-hidden="true" />{example}
                   </li>
                 ))}
@@ -250,12 +250,12 @@ export default function ConnectorCatalog({ compact = false }: ConnectorCatalogPr
             </div>
               {actionError && <p role="alert" className="mt-4 rounded-lg border border-[#6B3F3F] bg-[#281919] px-3 py-2 text-xs leading-5 text-[#E7BABA]">{actionError}</p>}
             <div className="mt-5 flex items-center justify-between gap-3">
-              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-[#303640] px-3 py-2 text-xs text-[#8B929E] hover:bg-[#1A1D24]">Cancel</button>
+              <button type="button" onClick={() => setSelected(null)} className="rounded-lg border border-[hsl(var(--nx-rule-strong))] px-3 py-2 text-xs text-[hsl(var(--nx-ink-muted))] hover:bg-[hsl(var(--nx-surface-3))]">Cancel</button>
               <button
                 type="button"
                 onClick={() => void handleConnect(selected)}
                 disabled={Boolean(connectingId) || connectorIsConnected(selected) || connectorStatusUnknown(selected) || (selected.workspaceDefault && !selected.supportsAccountConnection)}
-                className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#F0F2F5] px-4 py-2 text-xs font-medium text-[#080A0C] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-[hsl(var(--nx-ink))] px-4 py-2 text-xs font-medium text-[hsl(var(--nx-surface-1))] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
               >
                 {connectingId === selected.id ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
                 {connectingId === selected.id ? "Starting connection" : connectorIsConnected(selected) ? "Connected" : selected.workspaceDefault && !selected.supportsAccountConnection ? "Workspace-connected" : connectorStatusUnknown(selected) ? (loading ? "Checking status" : "Status unavailable") : "Connect"}

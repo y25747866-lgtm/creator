@@ -93,13 +93,13 @@ describe("Plugins management catalog", () => {
     const allFilter = screen.getByRole("tab", { name: "All" });
     const search = screen.getByRole("textbox", { name: "Search connectors" });
 
-    expect(allFilter).toHaveClass("border-[#F0F2F5]", "bg-[#F0F2F5]", "text-[#080A0C]");
+    expect(allFilter).toHaveClass("border-[hsl(var(--nx-ink))]", "bg-[hsl(var(--nx-ink))]", "text-[hsl(var(--nx-surface-1))]");
     expect(search).toHaveClass("caret-white");
-    expect(search.closest("label")).toHaveClass("bg-[#111318]", "border-[#303640]", "focus-within:border-[#8C96A3]");
+    expect(search.closest("label")).toHaveClass("bg-[hsl(var(--nx-surface-2))]", "border-[hsl(var(--nx-rule-strong))]", "focus-within:border-[hsl(var(--nx-amber))]");
 
     const productivity = screen.getByRole("tab", { name: "Productivity" });
     fireEvent.click(productivity);
-    expect(productivity).toHaveClass("bg-[#F0F2F5]", "text-[#080A0C]");
+    expect(productivity).toHaveClass("bg-[hsl(var(--nx-ink))]", "text-[hsl(var(--nx-surface-1))]");
   });
 
   it("reports status errors and does not render stale apps as connected", () => {

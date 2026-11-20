@@ -29,16 +29,16 @@ export default function ConnectedAppIndicators() {
           <ConnectorLogo
             key={connector.id}
             connector={connector}
-            className="!h-5 !w-5 !rounded-md !p-0.5 ring-2 ring-[#1A1D24]"
+            className="!h-5 !w-5 !rounded-md !p-0.5 ring-2 ring-[hsl(var(--nx-surface-3))]"
           />
         ))}
         {overflowCount > 0 && (
-          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-md border border-[#303640] bg-[#1A1D24] px-1 text-[9px] font-medium leading-none text-[#F0F2F5] ring-2 ring-[#1A1D24]">
+          <span className="relative flex h-5 min-w-5 items-center justify-center rounded-md border border-[hsl(var(--nx-rule-strong))] bg-[hsl(var(--nx-surface-3))] px-1 text-[9px] font-medium leading-none text-[hsl(var(--nx-ink))] ring-2 ring-[hsl(var(--nx-surface-3))]">
             +{overflowCount}
           </span>
         )}
       </span>
-      <span aria-hidden="true" className="text-[10px] font-medium tabular-nums text-[#8B929E]">
+      <span aria-hidden="true" className="text-[10px] font-medium tabular-nums text-[hsl(var(--nx-ink-muted))]">
         {connectedConnectors.length}
       </span>
     </span>

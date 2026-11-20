@@ -83,7 +83,7 @@ const SalesPageBuilder = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (items: SalesPageDraft[]) => {
-      let message = "Could not save one or more generated sales-page drafts.";
+      const message = "Could not save one or more generated sales-page drafts.";
       if (!user) return { saved: [] as SalesPageDraft[], failed: items, message: "Sign in again, then retry saving." };
 
       // One batched insert request covers every generated draft

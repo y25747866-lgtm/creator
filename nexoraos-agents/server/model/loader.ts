@@ -97,7 +97,7 @@ function safeParseArgs(raw: string): Record<string, unknown> {
 /** Extract JSON from model output tolerating markdown fences and surrounding prose. */
 export function parseModelJson<T = unknown>(content: string): { ok: true; value: T } | { ok: false; raw: string } {
   if (!content || !content.trim()) return { ok: false, raw: content ?? '' }
-  let cleaned = content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+  const cleaned = content.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
   const start = cleaned.indexOf('{')
   const end = cleaned.lastIndexOf('}')
   const candidate = start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned

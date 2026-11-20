@@ -1,3 +1,4 @@
+/* Hallmark · redesign: app shell · amber creator workstation · v2.0.0 */
 #root {
   min-height: 100vh;
   width: 100%;
@@ -5,7 +6,7 @@
 }
 
 .nexora-home {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--nx-font-sans);
 }
 
 .nexora-home-frame {
@@ -31,8 +32,8 @@
 }
 
 .nexora-wordmark {
-  color: #e8e8e8;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: hsl(var(--nx-ink));
+  font-family: var(--nx-font-sans);
   font-size: clamp(21px, 6vw, 29px);
   font-weight: 760;
   letter-spacing: 0.18em;
@@ -45,7 +46,7 @@
 }
 
 .nexora-home-input::placeholder {
-  color: #777777;
+  color: hsl(var(--nx-ink-subtle));
   opacity: 1;
 }
 
@@ -67,20 +68,20 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid #292929;
+  border: 1px solid hsl(var(--nx-rule));
   border-radius: 999px;
-  background: rgba(18, 18, 18, 0.72);
+  background: hsl(var(--nx-surface-1) / 0.72);
   padding: 0 10px;
-  color: #a1a1a1;
+  color: hsl(var(--nx-ink-muted));
   font-size: 10.5px;
   transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
 }
 
 .nexora-tool-chip:hover,
 .nexora-tool-more:hover {
-  border-color: #414141;
-  background: #1d1d1d;
-  color: #e5e5e5;
+  border-color: hsl(var(--nx-rule-strong));
+  background: hsl(var(--nx-surface-2));
+  color: hsl(var(--nx-ink));
 }
 
 .nexora-tool-more {
@@ -94,7 +95,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 30px;
-  color: #5f5f5f;
+  color: hsl(var(--nx-ink-subtle));
   font-size: 10px;
   letter-spacing: 0.01em;
 }
@@ -111,21 +112,21 @@
 
 .nexora-upgrade,
 .nexora-inspiration {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--nx-font-sans);
 }
 
 .nexora-sidebar {
   width: 240px;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--nx-font-sans);
 }
 
 .nexora-sidebar-item:hover {
-  background: #1a1a1a !important;
-  color: #3b82f6 !important;
+  background: hsl(var(--nx-surface-2)) !important;
+  color: hsl(var(--nx-amber)) !important;
 }
 
 .nexora-sidebar-item[aria-disabled="true"]:hover {
-  color: #888888 !important;
+  color: hsl(var(--nx-ink-subtle)) !important;
 }
 
 .nexora-dashboard-main {
@@ -141,7 +142,7 @@
 }
 
 .nexora-sidebar-nav::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: hsl(var(--nx-scrollbar));
   border-radius: 999px;
 }
 
@@ -182,7 +183,7 @@
     height: 72px;
     flex-direction: row;
     border-right: 0;
-    border-top: 1px solid #1e1e1e;
+    border-top: 1px solid hsl(var(--nx-rule));
     padding-bottom: env(safe-area-inset-bottom);
   }
 

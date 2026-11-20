@@ -104,7 +104,7 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = 40 }) => {
 
       {/* Subtle footer text */}
       <div className="mt-20 flex justify-center">
-        <div className="px-6 py-2 rounded-full border border-white/5 bg-white/[0.02] text-[12px] uppercase tracking-[0.3em] text-[#6B7280] font-medium">
+        <div className="px-6 py-2 rounded-full border border-white/5 bg-white/[0.02] text-[12px] uppercase tracking-[0.3em] text-[hsl(var(--nx-ink-subtle))] font-medium">
           Trusted by 2,500+ Digital Entrepreneurs
         </div>
       </div>

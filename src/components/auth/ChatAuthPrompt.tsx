@@ -54,7 +54,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
       <DialogContent className="w-[calc(100%-1.25rem)] max-w-[440px] max-h-[calc(100dvh-2rem)] overflow-y-auto border-[#363636] bg-[#191919] p-5 text-[#F5F5F5] sm:p-6">
         <DialogHeader className="pr-7 text-left">
           <DialogTitle className="text-xl tracking-tight text-white">Sign in to continue</DialogTitle>
-          <DialogDescription className="pt-2 text-sm leading-6 text-[#A0A0A0]">
+          <DialogDescription className="pt-2 text-sm leading-6 text-[hsl(var(--nx-ink-muted))]">
             Sign in or create an account to continue in NexoraOS. {pendingTopic ? "Your draft is saved locally for up to one hour and resumes after sign-in." : "Protected account features remain available only after sign-in."}
           </DialogDescription>
         </DialogHeader>
@@ -82,7 +82,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
             <button
               type="button"
               onClick={() => setEmailSent(false)}
-              className="mt-3 text-xs font-medium text-[#B7BEC8] underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-3 text-xs font-medium text-[hsl(var(--nx-ink-muted))] underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Use a different email
             </button>
@@ -100,13 +100,13 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
-                className="h-11 w-full rounded-lg border border-[#3A3A3A] bg-[#111] px-3.5 text-sm text-white caret-white outline-none placeholder:text-[#696969] focus:border-[#8C96A3] focus:ring-2 focus:ring-[#8C96A3]/20"
+                className="h-11 w-full rounded-lg border border-[#3A3A3A] bg-[#111] px-3.5 text-sm text-white caret-white outline-none placeholder:text-[#696969] focus:border-[hsl(var(--nx-amber))] focus:ring-2 focus:ring-[hsl(var(--nx-amber))]/20"
               />
             </div>
             <button
               type="submit"
               disabled={isSendingEmail || isSendingGoogle}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[#E9E9E9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#151515] transition hover:bg-[hsl(var(--nx-ink))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
             >
               {isSendingEmail ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
               {isSendingEmail ? "Sending sign-in link…" : "Continue with email"}
@@ -124,7 +124,7 @@ const ChatAuthPrompt = ({ open, onOpenChange, pendingTopic, sendMagicLink }: Cha
           type="button"
           onClick={() => void handleGoogleSignIn()}
           disabled={isSendingEmail || isSendingGoogle}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3A3A] bg-[#222] px-4 text-sm font-medium text-[#E0E0E0] transition hover:bg-[#292929] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#3A3A3A] bg-[#222] px-4 text-sm font-medium text-[#E0E0E0] transition hover:bg-[hsl(var(--nx-rule))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-wait disabled:opacity-60"
         >
           {isSendingGoogle ? <Skeleton className="h-4 w-4" aria-label="Loading" /> : null}
           {isSendingGoogle ? "Opening Google sign-in…" : "Continue with Google"}

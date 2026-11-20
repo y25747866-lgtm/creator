@@ -147,7 +147,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <DashboardSidebar />
         <main className={`relative z-10 flex min-h-screen w-full flex-col transition-[padding] duration-200 ${collapsed ? "md:pl-20" : "md:pl-[280px]"}`}>
           {dashboardAccess.renewalRequired && (
-            <div role="status" className="flex items-center justify-between gap-3 border-b border-white/10 bg-[#111318] px-4 py-3 text-sm text-[#D4D4D4] sm:px-6">
+            <div role="status" className="flex items-center justify-between gap-3 border-b border-white/10 bg-[hsl(var(--nx-surface-2))] px-4 py-3 text-sm text-[hsl(var(--nx-ink))] sm:px-6">
               <span>{dashboardAccess.isExpired ? "Your plan has expired — Renew to continue" : "A paid plan is required — Choose a plan to continue"}</span>
               <Link to="/pricing" className="shrink-0 rounded-md border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.06]">{dashboardAccess.isExpired ? "Renew" : "View plans"}</Link>
             </div>
