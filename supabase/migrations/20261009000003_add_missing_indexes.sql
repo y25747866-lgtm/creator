@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_ebooks_user_id ON public.ebooks(user_id);
+CREATE INDEX IF NOT EXISTS idx_ebook_jobs_user_id ON public.ebook_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_ebook_jobs_created_at ON public.ebook_jobs(created_at);
+CREATE INDEX IF NOT EXISTS idx_saved_marketing_results_user_id ON public.saved_marketing_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_saved_marketing_results_created_at ON public.saved_marketing_results(created_at);
+CREATE INDEX IF NOT EXISTS idx_saved_sales_page_results_user_id ON public.saved_sales_page_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_saved_sales_page_results_created_at ON public.saved_sales_page_results(created_at);
+CREATE INDEX IF NOT EXISTS idx_product_feedback_user_id ON public.product_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_product_feedback_product_id ON public.product_feedback(product_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_data_user_id ON public.analytics_data(user_id);

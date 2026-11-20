@@ -1,188 +1,180 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Download,
-  Settings,
-  BarChart3,
-  Package,
   ChevronLeft,
-  ChevronRight,
-  ExternalLink,
+  Download,
+  Plus,
+  Package,
+  FolderOpen,
+  BarChart3,
+  Plug,
+  Puzzle,
+  ArrowUpRight,
+  LockKeyhole,
   LogOut,
+  Settings,
+  User as UserIcon,
+  X,
+  type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import nexoraLogo from "@/assets/nexora-logo.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { getLocalCreatorConversations, listCreatorConversations, type CreatorConversationSummary } from "@/lib/chatPersistence";
+import nexoraLogo from "@/assets/nexora-logo.webp";
+import { useDashboardAccess, useSidebarState } from "./DashboardLayout";
+import CreditBalance from "./CreditBalance";
 
 const DashboardSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebarState();
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const { signOut, user } = useAuth();
+  const access = useDashboardAccess();
   const { toast } = useToast();
+  const [historyItems, setHistoryItems] = useState<CreatorConversationSummary[]>([]);
 
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: BookOpen, label: "AI Product Generator", path: "/dashboard/ebook-generator" },
-    { icon: Package, label: "Monetization Engine", path: "/dashboard/monetization" },
-    { icon: BarChart3, label: "Analytics", path: "/dashboard/products" },
-    { icon: Download, label: "Downloads & Exports", path: "/dashboard/downloads" },
-    { icon: Settings, label: "Settings", path: "/dashboard/settings" },
-  ];
+  useEffect(() => {
+    if (!user?.id) { setHistoryItems([]); return; }
+    let cancelled = false;
+    const readHistory = async () => {
+      const localItems = getLocalCreatorConversations(user.id);
+      try {
+        const remoteItems = await listCreatorConversations(user.id);
+        if (cancelled) return;
+        const merged = new Map(remoteItems.map((item) => [item.id, item]));
+        for (const item of localItems) if (!merged.has(item.id)) merged.set(item.id, item);
+        setHistoryItems([...merged.values()].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 8));
+      } catch {
+        if (!cancelled) setHistoryItems(localItems.slice(0, 8));
+      }
+    };
+    void readHistory();
+    window.addEventListener("storage", readHistory);
+    window.addEventListener("nexoraos:history-updated", readHistory);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", readHistory);
+      window.removeEventListener("nexoraos:history-updated", readHistory);
+    };
+  }, [user?.id]);
+  const showLabels = !collapsed || mobileOpen;
+  const workspaceLocked = Boolean(user?.id) && !access.loading && !access.hasPaidSubscription;
+
+  const renderWorkspaceLink = (path: string, label: string, Icon: LucideIcon, isCurrent: boolean, allowed = true, hidden = false) => {
+    const locked = Boolean(user?.id) && !access.loading && !allowed;
+    const active = isCurrent && !locked;
+    return (
+      <Link
+        to={locked ? "/pricing" : path}
+        onClick={closeMobile}
+        title={locked ? "Upgrade to Pro" : showLabels ? undefined : label}
+        aria-current={active ? "page" : undefined}
+        aria-disabled={locked || undefined}
+        className={`${hidden ? "hidden" : ""} nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition-colors hover:bg-muted ${active ? "active bg-muted text-foreground" : locked ? "text-muted-foreground" : "text-muted-foreground"} ${showLabels ? "" : "justify-center"}`}
+      >
+        <Icon size={17} className="shrink-0" aria-hidden="true" />
+        {showLabels && <span className="min-w-0 flex-1 truncate">{label}</span>}
+        {showLabels && locked && <LockKeyhole size={13} className="shrink-0 text-muted-foreground" aria-hidden="true" />}
+      </Link>
+    );
+  };
 
   const handleSignOut = async () => {
     await signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
+    toast({ title: "Signed out", description: "You have been signed out successfully." });
+    setMobileOpen(false);
     navigate("/");
   };
 
+  const closeMobile = () => setMobileOpen(false);
+
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 80 : 280 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 bottom-0 z-40 glass-panel border-r border-border/50 flex flex-col"
-    >
-      {/* Logo */}
-      <div className="p-4 border-b border-border/50">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={nexoraLogo} alt="NexoraOS" className="w-10 h-10 shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="font-bold text-xl"
-              >
-                NexoraOS
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Link>
-      </div>
+    <>
+      <aside
+        aria-label="Workspace navigation"
+        style={{ backgroundColor: "var(--nexora-sidebar-background)", borderColor: "var(--nexora-sidebar-border)" }}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[284px] flex-col border-r border-border transition-[width,transform] duration-200 md:translate-x-0 ${
+          collapsed ? "md:w-20" : "md:w-[280px]"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <div className={`flex h-16 shrink-0 items-center border-b border-border px-3 ${showLabels ? "justify-between" : "justify-center"}`}>
+          <Link to="/dashboard" onClick={closeMobile} className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))]">
+            <img src={nexoraLogo} alt="NexoraOS" width="28" height="28" className="h-7 w-7 shrink-0 rounded-lg" />
+            {showLabels && <span className="truncate text-[15px] font-semibold tracking-[-0.02em] text-foreground">NexoraOS</span>}
+          </Link>
+          {showLabels && <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="hidden h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))] md:flex"><ChevronLeft size={17} /></button>}
+          <button type="button" onClick={closeMobile} aria-label="Close navigation drawer" className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))] md:hidden">
+            <X size={17} />
+          </button>
+        </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link key={item.path} to={item.path}>
-              <motion.div
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-                whileHover={{ x: collapsed ? 0 : 4 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-primary")} />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="font-medium"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </Link>
-          );
-        })}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4" aria-label="Main">
+          <button type="button" onClick={() => { if (workspaceLocked) { navigate("/pricing"); closeMobile(); return; } window.dispatchEvent(new Event("nexoraos:new-chat")); navigate("/dashboard"); closeMobile(); }} title={workspaceLocked ? "Upgrade to Pro" : showLabels ? undefined : "New chat"} className={`mb-4 flex min-h-11 w-full items-center gap-3 rounded-[var(--nx-radius-control)] border border-[hsl(var(--nx-amber))]/45 bg-[hsl(var(--nx-amber-soft))] px-3 text-sm font-medium text-[hsl(var(--nx-ink))] transition-colors hover:border-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-amber))]/20 ${workspaceLocked ? "opacity-60" : ""} ${showLabels ? "" : "justify-center"}`}>
+            <Plus size={17} className="shrink-0" aria-hidden="true" />
+            {showLabels && <><span className="flex-1 text-left">New chat</span>{workspaceLocked ? <LockKeyhole size={13} className="text-muted-foreground" aria-hidden="true" /> : <span className="text-[10px] text-muted-foreground">Ctrl K</span>}</>}
+          </button>
+          <p className={`mb-2 px-3 pt-1 text-xs font-medium text-muted-foreground ${showLabels ? "" : "sr-only"}`}>Workspace</p>
+          {renderWorkspaceLink("/dashboard", "Product Studio", Package, location.pathname === "/dashboard", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/downloads", "Downloads", Download, location.pathname === "/dashboard/downloads", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/products", "Projects", FolderOpen, location.pathname === "/dashboard/products", access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/skills", "Skills", Puzzle, location.pathname.startsWith("/dashboard/skills"), access.hasPaidSubscription)}
+          {renderWorkspaceLink("/dashboard/analytics", "Analytics", BarChart3, location.pathname.startsWith("/dashboard/analytics"), access.analyticsAccess)}
+          <Link to="/app/connectors" onClick={closeMobile} title={showLabels ? undefined : "Plugins"} aria-current={location.pathname === "/app/connectors" ? "page" : undefined} className={`nav-item flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm transition hover:bg-muted ${location.pathname === "/app/connectors" ? "active bg-muted text-foreground" : "text-muted-foreground"} ${showLabels ? "" : "justify-center"}`}>
+            <Plug size={17} className="shrink-0" aria-hidden="true" />
+            {showLabels && <span>Plugins</span>}
+          </Link>
+          <div className={`my-4 border-t border-border pt-4 ${showLabels ? "" : "sr-only"}`}>
+            <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">History</p>
+            {historyItems.length ? historyItems.map((item) => (
+              <button key={item.id} type="button" onClick={() => { navigate(`/dashboard?conversation=${encodeURIComponent(item.id)}`); closeMobile(); }} title={item.title} className="block w-full truncate rounded-lg px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">{item.title.length > 27 ? `${item.title.slice(0, 27)}…` : item.title}</button>
+            )) : <p className="px-3 py-2 text-xs leading-5 text-muted-foreground">Your recent prompts will appear here.</p>}
+          </div>
+        </nav>
 
-        {/* Start Your Digital Business Section */}
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="pt-6"
-            >
-              <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Start your digital business today
-              </p>
-              <div className="space-y-2">
-                <a
-                  href="https://whop.com/?a=zm1a"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
-                >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  <span className="font-medium text-sm">Whop</span>
-                </a>
-                <a
-                  href="https://payhip.com?fp_ref=yesh-malik48"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all group"
-                >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  <span className="font-medium text-sm">Payhip</span>
-                </a>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
-
-      {/* Sign Out & Collapse */}
-      <div className="p-4 border-t border-border/50 space-y-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSignOut}
-          className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
-            collapsed ? "justify-center px-2" : "justify-start"
-          )}
-        >
-          <LogOut className="w-5 h-5 shrink-0" />
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="ml-2"
-              >
-                Sign Out
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-center"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-5 h-5" />
-          ) : (
+        <div className="shrink-0 border-t border-border p-3">
+          {user?.id ? (
             <>
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              <span>Collapse</span>
+              <CreditBalance showLabels={showLabels} />
+              <div className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${showLabels ? "" : "justify-center"}`}>
+                <Avatar className="h-8 w-8 shrink-0 border border-[hsl(var(--nx-rule-strong))]">
+                  <AvatarImage src={user.user_metadata?.avatar_url} alt="" />
+                  <AvatarFallback className="bg-muted text-xs text-muted-foreground">
+                    {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase() || <UserIcon size={15} />}
+                  </AvatarFallback>
+                </Avatar>
+                {showLabels && (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-foreground">{user.user_metadata?.full_name || user.email?.split("@")[0] || "Account"}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">{user.email || "Workspace account"}</p>
+                  </div>
+                )}
+              </div>
+              <div className={`mt-2 flex items-center gap-2 ${showLabels ? "" : "flex-col"}`}>
+                <Link to="/dashboard/settings" title="Account settings" className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                  <Settings size={16} className="shrink-0" aria-hidden="true" />
+                  {showLabels && <span className="truncate">Settings</span>}
+                </Link>
+                {showLabels && <Link to="/pricing" className="flex min-h-8 items-center gap-1 rounded-lg border border-[hsl(var(--nx-amber))]/50 px-2 text-[11px] font-medium text-[hsl(var(--nx-amber))] hover:bg-[hsl(var(--nx-amber-soft))]">Upgrade <ArrowUpRight size={12}/></Link>}
+                <button type="button" onClick={() => void handleSignOut()} title="Sign out" aria-label="Sign out" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"><LogOut size={16}/></button>
+              </div>
             </>
+          ) : (
+            <div className={`rounded-xl px-2.5 py-2 ${showLabels ? "" : "flex justify-center"}`} title={showLabels ? undefined : "Guest preview"}>
+              {showLabels ? (
+                <>
+                  <p className="text-xs font-medium text-foreground">Guest preview</p>
+                  <p className="mt-1 text-[10px] leading-4 text-muted-foreground">Read-only workspace preview</p>
+                </>
+              ) : <UserIcon size={16} aria-hidden="true" />}
+            </div>
           )}
-        </Button>
-      </div>
-    </motion.aside>
+        </div>
+      </aside>
+
+    </>
   );
 };
 

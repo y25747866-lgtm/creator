@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { checkAccess } from "@/lib/checkAccess";
 import { Button } from "@/components/ui/button";
 
+import { Skeleton } from "@/components/ui/skeleton";
 type Status = "checking" | "active" | "timeout";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 60_000;
 const MAX_TRIES = 10;
 
 const WhopSuccess = () => {
@@ -56,7 +57,7 @@ const WhopSuccess = () => {
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
         <div className="max-w-md w-full text-center space-y-6">
           <div className="flex items-center justify-center">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <Skeleton className="h-4 w-4" aria-label="Loading" />
           </div>
           <h1 className="text-2xl font-semibold">Verifying access…</h1>
           <p className="text-muted-foreground">
@@ -100,9 +101,9 @@ const WhopSuccess = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <div className="max-w-md w-full text-center space-y-6">
         <div className="flex items-center justify-center">
-          <CheckCircle className="w-12 h-12 text-green-500" />
+          <CheckCircle className="w-12 h-12 text-primary" />
         </div>
-        <h1 className="text-2xl font-semibold text-green-500">Access Verified!</h1>
+        <h1 className="text-2xl font-semibold text-primary">Access Verified!</h1>
         <p className="text-muted-foreground">
           Redirecting you to the dashboard…
         </p>

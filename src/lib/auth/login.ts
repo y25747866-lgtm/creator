@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Email + Password Sign In
@@ -19,17 +19,16 @@ export async function signIn(email: string, password: string) {
 }
 
 /**
- * Google Sign In
+ * Google Sign In. Callers may provide a same-origin callback URL with state to preserve.
  */
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectPath = "/dashboard") {
   // Dynamic redirect – works on localhost, preview, production
-  const redirectTo = `${window.location.origin}/auth/callback`;
+  const redirectTo = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`;
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
       redirectTo,
-      // Ask Google for refresh token + force consent screen (helps debugging)
       queryParams: {
         access_type: "offline",
         prompt: "consent",
@@ -41,4 +40,4 @@ export async function signInWithGoogle() {
     console.error("Google sign-in failed:", error.message, error);
     throw error;
   }
-          }
+}

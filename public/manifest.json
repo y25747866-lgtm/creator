@@ -1,14 +1,14 @@
 {
   "short_name": "NexoraOS",
-  "name": "NexoraOS - AI Ebook Generator",
+  "name": "NexoraOS - AI Digital Product Generator",
   "icons": [
     {
-      "src": "/nexora-logo-192.png",
+      "src": "/nexora-logo-192.webp",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/nexora-logo-512.png",
+      "src": "/nexora-logo-512.webp",
       "type": "image/png",
       "sizes": "512x512"
     }
