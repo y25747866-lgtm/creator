@@ -127,6 +127,10 @@ export default function Landing() {
         </Link>
 
         <div className="nexora-workspace-stage">
+          <div className="nexora-intro">
+            <h1>Turn a rough idea into something real.</h1>
+            <p>NexoraOS is a practical AI workspace for creating digital products, documents, marketing, sales pages, research, and more from one clear starting point.</p>
+          </div>
           <div className="nexora-brand-lockup" aria-label="NexoraOS">
             <NexoraMark />
             <div className="flex flex-col leading-none">
@@ -210,12 +214,23 @@ export default function Landing() {
           <div className="nexora-home-hint">
             <Search className="h-3.5 w-3.5" /> Start with an idea. Make it real.
           </div>
+          <div className="nexora-value-strip" aria-label="What NexoraOS helps you do">
+            <div className="nexora-value-card"><strong>Make</strong><span>Turn prompts into usable first drafts and product assets.</span></div>
+            <div className="nexora-value-card"><strong>Organize</strong><span>Keep projects, files, credits, and connected tools together.</span></div>
+            <div className="nexora-value-card"><strong>Publish</strong><span>Review, refine, and move finished work into the world.</span></div>
+          </div>
         </div>
 
         <Link to="/pricing" className="nexora-inspiration absolute bottom-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap text-[11px] text-[#666666] transition-colors hover:text-[#a0a0a0]">
           <Lightbulb className="h-3.5 w-3.5" /> Explore inspiration <ArrowRight className="ml-0.5 h-3 w-3" />
         </Link>
       </section>
+      <footer className="nexora-public-footer">
+        <Link to="/privacy">Privacy</Link>
+        <Link to="/terms">Terms</Link>
+        <Link to="/refund">Refunds</Link>
+        <Link to="/contact">Contact</Link>
+      </footer>
 
       <Dialog open={authOpen} onOpenChange={setAuthOpen}>
         <DialogContent className="max-w-[420px] rounded-[20px] border-[#2a2a2a] bg-[#111111] p-6 text-[hsl(var(--nx-ink))]">

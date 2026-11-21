@@ -236,3 +236,105 @@
     padding-bottom: 82px;
   }
 }
+
+/* Legal pages and public product explanation */
+.legal-prose {
+  max-width: 720px;
+}
+
+.legal-prose h1 {
+  margin: 0 0 1rem;
+  color: hsl(var(--nx-ink));
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  overflow-wrap: break-word;
+}
+
+.legal-prose h2 {
+  margin: 2.75rem 0 0.75rem;
+  color: hsl(var(--nx-ink));
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.legal-prose p,
+.legal-prose li {
+  color: hsl(var(--nx-ink-muted));
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.legal-prose p { margin: 0 0 1rem; }
+.legal-prose ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+.legal-prose li { margin: 0.45rem 0; padding-left: 0.25rem; }
+.legal-prose a { color: hsl(var(--nx-amber)); text-underline-offset: 3px; }
+.legal-prose a:hover { color: hsl(var(--nx-amber-strong)); }
+.legal-updated { color: hsl(var(--nx-ink-subtle)) !important; font-size: 0.8rem !important; }
+
+.nexora-intro {
+  max-width: 620px;
+  margin: 0 auto 22px;
+  text-align: center;
+}
+
+.nexora-intro h1 {
+  margin: 0;
+  color: hsl(var(--nx-ink));
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  overflow-wrap: break-word;
+}
+
+.nexora-intro p {
+  max-width: 520px;
+  margin: 14px auto 0;
+  color: hsl(var(--nx-ink-muted));
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.nexora-value-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 620px);
+  margin: 26px auto 0;
+}
+
+.nexora-value-card {
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid hsl(var(--nx-rule));
+  border-radius: var(--nx-radius-soft);
+  background: hsl(var(--nx-surface-2));
+  text-align: left;
+}
+
+.nexora-value-card strong { display: block; color: hsl(var(--nx-ink)); font-size: 0.75rem; font-weight: 650; }
+.nexora-value-card span { display: block; margin-top: 5px; color: hsl(var(--nx-ink-subtle)); font-size: 0.68rem; line-height: 1.35; }
+
+.nexora-public-footer {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: hsl(var(--nx-ink-subtle));
+  font-size: 0.68rem;
+}
+
+.nexora-public-footer a { transition: color 150ms ease; }
+.nexora-public-footer a:hover { color: hsl(var(--nx-amber)); }
+
+@media (max-width: 640px) {
+  .nexora-value-strip { grid-template-columns: 1fr; max-width: 360px; }
+  .nexora-value-card { min-height: auto; }
+  .nexora-public-footer { position: static; margin: 20px 0 8px; flex-wrap: wrap; }
+}

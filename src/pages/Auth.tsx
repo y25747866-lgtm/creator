@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { signIn, signInWithGoogle } from "@/lib/auth/login";
@@ -234,7 +234,7 @@ const NexoraOSSignIn = () => {
         </div>
 
         <p className="mt-7 text-center text-xs leading-5 text-[hsl(var(--nx-ink-subtle))]">
-          By signing in, you agree to our <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Terms of Service</a> and <a href="#" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Privacy Policy</a>
+          By signing in, you agree to our <Link to="/terms" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Terms of Service</Link> and <Link to="/privacy" className="text-[#A6ADB8] underline underline-offset-2 hover:text-white">Privacy Policy</Link>
         </p>
       </section>
     </main>

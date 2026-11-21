@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Blog from "./pages/Blog";
+import Landing from "./pages/Landing";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -30,6 +31,9 @@ const SkillsPage = lazy(() => import("./pages/dashboard/SkillsPage"));
 const HybridAIOS = lazy(() => import("./pages/dashboard/HybridAIOS"));
 const DesignConnectors = lazy(() => import("./pages/dashboard/Connectors"));
 const EbookGenerator = lazy(() => import("./pages/EbookGenerator"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Refund = lazy(() => import("./pages/Refund"));
 
 import ViewableRoute from "./components/ViewableRoute";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -78,8 +82,7 @@ const App = () => (
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                {/* Keep the primary domain aligned with the current Product Studio experience. */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<Landing />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/" element={<Blog />} />
                 <Route path="/auth" element={<AuthRoute />} />
@@ -87,6 +90,9 @@ const App = () => (
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/refund" element={<Refund />} />
                 <Route path="/whop/success" element={<WhopSuccess />} />
                 <Route path="/dashboard" element={<ViewableRoute allowGuestPreview><Dashboard /></ViewableRoute>} />
                 <Route path="/dashboard/agents" element={<ViewableRoute><HybridAIOS /></ViewableRoute>} />
