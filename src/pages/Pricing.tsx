@@ -212,10 +212,10 @@ const Pricing = () => {
 
         <section className="mx-auto mt-12 grid max-w-6xl grid-cols-1 items-stretch gap-4 md:grid-cols-3" aria-label="Pricing plans">
           {PLANS.map((plan) => (
-            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[hsl(var(--nx-surface-2))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-white shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_70px_rgba(0,0,0,0.24)]" : "border-white/[0.08]"}`}>
+            <Card key={plan.id} className={`relative flex h-full flex-col rounded-2xl border bg-[hsl(var(--nx-surface-2))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.18)] sm:p-8 ${plan.popular ? "border-amber-500 shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_70px_rgba(0,0,0,0.24)]" : "border-white/[0.08]"}`}>
               {plan.badge && (
                 <div className="absolute -top-3 left-6">
-                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-white bg-[hsl(var(--nx-surface-2))] text-white" : "border-white/20 bg-[hsl(var(--nx-surface-3))] text-[#A6ADB8]"}`}>{plan.badge}</span>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${plan.popular ? "border-amber-500 bg-[hsl(var(--nx-surface-2))] text-white" : "border-white/20 bg-[hsl(var(--nx-surface-3))] text-[#A6ADB8]"}`}>{plan.badge}</span>
                 </div>
               )}
               <div className="border-b border-white/[0.08] pb-7">
@@ -246,7 +246,7 @@ const Pricing = () => {
                   ))}
                 </ul>
               </TooltipProvider>
-              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.popular ? "bg-white text-black hover:bg-[hsl(var(--nx-ink))]" : "border border-white/15 bg-[hsl(var(--nx-surface-3))] text-[hsl(var(--nx-ink))] hover:bg-[#242832]"}`}>{plan.cta}</Button>
+              <Button onClick={() => handlePurchase(plan)} className={`w-full rounded-xl font-semibold ${plan.id === "pro" ? "bg-amber-500 text-black hover:bg-amber-400" : "border border-white/20 bg-transparent text-white hover:border-white/40"}`}>{plan.cta}</Button>
             </Card>
           ))}
         </section>
