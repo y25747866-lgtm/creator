@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Star, MessageSquare, Tag } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FeedbackRecord } from "@/lib/dashboardMetrics";
@@ -9,9 +10,12 @@ import { extractKeywords, sectionInsights } from "@/lib/dashboardMetrics";
 interface Props {
   feedback: FeedbackRecord[];
   loading: boolean;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-const FeedbackInsights = ({ feedback, loading }: Props) => {
+const FeedbackInsights = ({ feedback, loading, hasMore = false, loadingMore = false, onLoadMore }: Props) => {
   const keywords = useMemo(() => extractKeywords(feedback), [feedback]);
   const sections = useMemo(() => sectionInsights(feedback), [feedback]);
   const avgRating = useMemo(() => {
@@ -86,6 +90,7 @@ const FeedbackInsights = ({ feedback, loading }: Props) => {
         <h4 className="text-sm font-semibold text-muted-foreground mb-2">Recent Feedback</h4>
         <div className="space-y-2 max-h-60 overflow-y-auto">
           {feedback
+            .slice()
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 8)
             .map((f) => (
@@ -101,8 +106,15 @@ const FeedbackInsights = ({ feedback, loading }: Props) => {
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1">{new Date(f.created_at).toLocaleDateString()}</p>
               </Card>
-            ))}
+          ))}
         </div>
+        {hasMore && (
+          <div className="flex justify-center mt-3">
+            <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+              {loadingMore ? "Loading feedback…" : "Load more feedback"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

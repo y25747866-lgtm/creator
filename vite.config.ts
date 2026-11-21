@@ -18,9 +18,24 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '::',
     port: 8080,
+    allowedHosts: true,
+  },
+  preview: {
+    host: '::',
+    port: 8080,
+    allowedHosts: true,
   },
   base: '/',
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-charts': ['recharts'],
+        },
+      },
+    },
   },
 }))

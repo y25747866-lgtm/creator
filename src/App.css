@@ -1,42 +1,340 @@
+/* Hallmark · redesign: app shell · amber creator workstation · v2.0.0 */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+}
+
+.nexora-home {
+  font-family: var(--nx-font-sans);
+}
+
+.nexora-home-frame {
+  min-height: calc(100dvh - 10px);
+}
+
+.nexora-workspace-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  width: min(100% - 32px, 576px);
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -47%);
+}
+
+.nexora-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 27px;
+}
+
+.nexora-wordmark {
+  color: hsl(var(--nx-ink));
+  font-family: var(--nx-font-sans);
+  font-size: clamp(21px, 6vw, 29px);
+  font-weight: 760;
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+
+.nexora-composer-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.nexora-home-input::placeholder {
+  color: hsl(var(--nx-ink-subtle));
+  opacity: 1;
+}
+
+.nexora-tool-row {
+  display: flex;
+  width: calc(100% + 8px);
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 23px;
+  overflow: hidden;
+}
+
+.nexora-tool-chip,
+.nexora-tool-more {
+  display: inline-flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid hsl(var(--nx-rule));
+  border-radius: 999px;
+  background: hsl(var(--nx-surface-1) / 0.72);
+  padding: 0 10px;
+  color: hsl(var(--nx-ink-muted));
+  font-size: 10.5px;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.nexora-tool-chip:hover,
+.nexora-tool-more:hover {
+  border-color: hsl(var(--nx-rule-strong));
+  background: hsl(var(--nx-surface-2));
+  color: hsl(var(--nx-ink));
+}
+
+.nexora-tool-more {
+  width: 29px;
+  min-width: 29px;
+  padding: 0;
+}
+
+.nexora-home-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 30px;
+  color: hsl(var(--nx-ink-subtle));
+  font-size: 10px;
+  letter-spacing: 0.01em;
+}
+
+.nexora-plugin-menu {
+  animation: nexora-menu-in 130ms ease-out;
+  transform-origin: top left;
+}
+
+@keyframes nexora-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.nexora-upgrade,
+.nexora-inspiration {
+  font-family: var(--nx-font-sans);
+}
+
+.nexora-sidebar {
+  width: 240px;
+  font-family: var(--nx-font-sans);
+}
+
+.nexora-sidebar-item:hover {
+  background: hsl(var(--nx-surface-2)) !important;
+  color: hsl(var(--nx-amber)) !important;
+}
+
+.nexora-sidebar-item[aria-disabled="true"]:hover {
+  color: hsl(var(--nx-ink-subtle)) !important;
+}
+
+.nexora-dashboard-main {
+  margin-left: 240px;
+}
+
+.nexora-mobile-settings {
+  display: none;
+}
+
+.nexora-sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nexora-sidebar-nav::-webkit-scrollbar-thumb {
+  background: hsl(var(--nx-scrollbar));
+  border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+  .nexora-workspace-stage {
+    width: calc(100% - 36px);
+    transform: translate(-50%, -46%);
+  }
+
+  .nexora-brand-lockup {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .nexora-tool-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0 2px 5px;
+    scrollbar-width: none;
+  }
+
+  .nexora-tool-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nexora-home-hint {
+    margin-top: 25px;
+  }
+}
+
+@media (max-width: 767px) {
+  .nexora-sidebar {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 72px;
+    flex-direction: row;
+    border-right: 0;
+    border-top: 1px solid hsl(var(--nx-rule));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .nexora-sidebar-header,
+  .nexora-sidebar-footer {
+    display: none;
+  }
+
+  .nexora-sidebar-nav {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+
+  .nexora-sidebar-item {
+    min-width: 62px;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 7px;
+    font-size: 9px !important;
+  }
+
+  .nexora-sidebar-item span {
+    max-width: 72px;
+    text-align: center;
+    font-size: 9px;
+  }
+
+  .nexora-sidebar-lock,
+  .nexora-nav-separator {
+    display: none;
+  }
+
+  .nexora-mobile-settings {
+    display: block;
+  }
+
+  .nexora-desktop-settings {
+    display: none;
+  }
+
+  .nexora-dashboard-main {
+    margin-left: 0;
+    padding-bottom: 82px;
+  }
+}
+
+/* Legal pages and public product explanation */
+.legal-prose {
+  max-width: 720px;
+}
+
+.legal-prose h1 {
+  margin: 0 0 1rem;
+  color: hsl(var(--nx-ink));
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  overflow-wrap: break-word;
+}
+
+.legal-prose h2 {
+  margin: 2.75rem 0 0.75rem;
+  color: hsl(var(--nx-ink));
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.legal-prose p,
+.legal-prose li {
+  color: hsl(var(--nx-ink-muted));
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.legal-prose p { margin: 0 0 1rem; }
+.legal-prose ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+.legal-prose li { margin: 0.45rem 0; padding-left: 0.25rem; }
+.legal-prose a { color: hsl(var(--nx-amber)); text-underline-offset: 3px; }
+.legal-prose a:hover { color: hsl(var(--nx-amber-strong)); }
+.legal-updated { color: hsl(var(--nx-ink-subtle)) !important; font-size: 0.8rem !important; }
+
+.nexora-intro {
+  max-width: 620px;
+  margin: 0 auto 22px;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.nexora-intro h1 {
+  margin: 0;
+  color: hsl(var(--nx-ink));
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  overflow-wrap: break-word;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.nexora-intro p {
+  max-width: 520px;
+  margin: 14px auto 0;
+  color: hsl(var(--nx-ink-muted));
+  font-size: 0.95rem;
+  line-height: 1.65;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.nexora-value-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 620px);
+  margin: 26px auto 0;
 }
 
-.card {
-  padding: 2em;
+.nexora-value-card {
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid hsl(var(--nx-rule));
+  border-radius: var(--nx-radius-soft);
+  background: hsl(var(--nx-surface-2));
+  text-align: left;
 }
 
-.read-the-docs {
-  color: #888;
+.nexora-value-card strong { display: block; color: hsl(var(--nx-ink)); font-size: 0.75rem; font-weight: 650; }
+.nexora-value-card span { display: block; margin-top: 5px; color: hsl(var(--nx-ink-subtle)); font-size: 0.68rem; line-height: 1.35; }
+
+.nexora-public-footer {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  color: hsl(var(--nx-ink-subtle));
+  font-size: 0.68rem;
+}
+
+.nexora-public-footer a { transition: color 150ms ease; }
+.nexora-public-footer a:hover { color: hsl(var(--nx-amber)); }
+
+@media (max-width: 640px) {
+  .nexora-value-strip { grid-template-columns: 1fr; max-width: 360px; }
+  .nexora-value-card { min-height: auto; }
+  .nexora-public-footer { position: static; margin: 20px 0 8px; flex-wrap: wrap; }
 }

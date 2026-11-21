@@ -1,319 +1,105 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { User, Palette, Bell, Shield, CreditCard, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowRight, Bell, CreditCard, FileText, Globe2, HelpCircle, LockKeyhole, LogOut, Moon, Save, Shield, Sun, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useEbookStore } from "@/hooks/useEbookStore";
+import { supabase } from "@/integrations/supabase/client";
+import { getPlanDisplayName, getPlanPrice } from "@/lib/subscription";
+
+type SettingRowProps = {
+  icon: LucideIcon;
+  label: string;
+  description?: string;
+  onClick?: () => void;
+  to?: string;
+  href?: string;
+};
+
+function SettingRow({ icon: Icon, label, description, onClick, to, href }: SettingRowProps) {
+  const content = (
+    <>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[hsl(var(--nx-surface-2))] text-[#A6ADB8]"><Icon size={16} aria-hidden="true" /></span>
+      <span className="min-w-0 flex-1 text-left"><span className="block text-sm font-medium text-[hsl(var(--nx-ink))]">{label}</span>{description && <span className="mt-0.5 block truncate text-xs text-[hsl(var(--nx-ink-subtle))]">{description}</span>}</span>
+      <ArrowRight size={16} className="shrink-0 text-[hsl(var(--nx-ink-subtle))] transition group-hover:translate-x-0.5 group-hover:text-[hsl(var(--nx-ink-muted))]" aria-hidden="true" />
+    </>
+  );
+  if (href) return <a href={href} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition last:border-0 hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--nx-amber))]">{content}</a>;
+  if (to) return <Link to={to} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition last:border-0 hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--nx-amber))]">{content}</Link>;
+  return <button type="button" onClick={onClick} className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition last:border-0 hover:bg-white/[0.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--nx-amber))]">{content}</button>;
+}
+
+function SettingsGroup({ label, children }: { label: string; children: ReactNode }) {
+  return <section aria-labelledby={`${label.toLowerCase()}-settings-heading`}><h2 id={`${label.toLowerCase()}-settings-heading`} className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--nx-ink-subtle))]">{label}</h2><div className="overflow-hidden rounded-xl border border-white/[0.08] bg-[hsl(var(--nx-surface-2))]">{children}</div></section>;
+}
 
 const Settings = () => {
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { subscription, hasActiveSubscription } = useSubscription();
-  
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-  });
-  const [notifications, setNotifications] = useState({
-    email: true,
-    updates: true,
-  });
+  const { resolvedTheme, setTheme } = useTheme();
+  const { subscription, planType, hasPaidSubscription, expirationDate, loading: subLoading } = useSubscription();
+  const [displayName, setDisplayName] = useState("");
+  const [language, setLanguage] = useState("English");
+  const [notifications, setNotifications] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
-    if (user?.email) {
-      setProfile(prev => ({ ...prev, email: user.email || "" }));
-    }
-  }, [user]);
-
-  const handleSaveProfile = () => {
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
+    if (!user) { navigate("/auth/signin?redirect=/dashboard/settings", { replace: true }); return; }
+    let cancelled = false;
+    void supabase.from("profiles").select("display_name, language, notifications_enabled, appearance").eq("user_id", user.id).maybeSingle().then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) { toast({ title: "Could not load settings", description: error.message, variant: "destructive" }); return; }
+      setDisplayName(data?.display_name || String(user.user_metadata?.full_name || ""));
+      setLanguage(data?.language || "English");
+      setNotifications(data?.notifications_enabled ?? true);
+      if (data?.appearance === "light" || data?.appearance === "dark") setTheme(data.appearance);
+      setProfileLoaded(true);
     });
+    return () => { cancelled = true; };
+  }, [navigate, setTheme, toast, user]);
+
+  const displayPlan = hasPaidSubscription ? getPlanDisplayName(planType) : "Free";
+  const displayPrice = hasPaidSubscription ? getPlanPrice(planType) : getPlanPrice("free");
+  const currentTheme = resolvedTheme === "light" ? "light" : "dark";
+  const accountName = displayName || String(user?.user_metadata?.full_name || user?.email || "Account");
+  const initials = useMemo(() => accountName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "A", [accountName]);
+
+  const saveProfile = async (patch: { display_name?: string | null; language?: string; notifications_enabled?: boolean; appearance?: "light" | "dark" }, label: string) => {
+    if (!user) return;
+    setSaving(label);
+    const { error } = await supabase.from("profiles").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", user.id);
+    setSaving(null);
+    if (error) { toast({ title: `${label} not saved`, description: error.message, variant: "destructive" }); return; }
+    toast({ title: `${label} saved`, description: "Your preference is now synced to your account." });
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been signed out successfully.",
-    });
-    navigate("/");
-  };
+  const handleSignOut = async () => { useEbookStore.getState().clearAllEbooks(); await signOut(); toast({ title: "Signed out" }); navigate("/"); };
+  const handleThemeChange = (checked: boolean) => { const next = checked ? "dark" : "light"; setTheme(next); void saveProfile({ appearance: next }, "Appearance"); };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  return (
-    <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account and preferences.
-          </p>
-        </motion.div>
-
-        {/* Subscription Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Subscription</h2>
-            </div>
-
-            {hasActiveSubscription && subscription ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/10 border border-primary/20">
-                  <div>
-                    <p className="font-semibold text-lg capitalize">
-                      {subscription.plan_type} Plan
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Active since {formatDate(subscription.started_at)}
-                    </p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-medium">
-                    Active
-                  </span>
-                </div>
-                {subscription.expires_at && (
-                  <p className="text-sm text-muted-foreground">
-                    Renews on {formatDate(subscription.expires_at)}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">No active subscription</p>
-                <Button onClick={() => navigate("/pricing")}>
-                  View Plans
-                </Button>
-              </div>
-            )}
-          </Card>
-        </motion.div>
-
-        {/* Profile Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Profile Information</h2>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={profile.email}
-                  disabled
-                  className="mt-2"
-                />
-              </div>
-            </div>
-
-            <Button onClick={handleSaveProfile} className="mt-6">
-              Save Changes
-            </Button>
-          </Card>
-        </motion.div>
-
-        {/* Theme Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Appearance</h2>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Dark Mode</p>
-                <p className="text-sm text-muted-foreground">
-                  Toggle between light and dark themes
-                </p>
-              </div>
-              <Switch
-                checked={theme === "dark"}
-                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-              />
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Notifications Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Notifications</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receive emails about your activity
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.email}
-                  onCheckedChange={(checked) =>
-                    setNotifications({ ...notifications, email: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Product Updates</p>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified about new features
-                  </p>
-                </div>
-                <Switch
-                  checked={notifications.updates}
-                  onCheckedChange={(checked) =>
-                    setNotifications({ ...notifications, updates: checked })
-                  }
-                />
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Account Security Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-semibold">Account Security</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  placeholder="Enter current password"
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Enter new password"
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Confirm new password"
-                  className="mt-2"
-                />
-              </div>
-              <Button variant="outline" className="mt-2">
-                Update Password
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Sign Out Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <Card className="glass-panel p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Sign Out</p>
-                <p className="text-sm text-muted-foreground">
-                  Sign out of your account on this device
-                </p>
-              </div>
-              <Button variant="destructive" onClick={handleSignOut} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    </DashboardLayout>
-  );
+  return <DashboardLayout><div className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 sm:py-12"><div className="mx-auto max-w-2xl">
+    <header className="mb-8 flex items-start justify-between gap-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[hsl(var(--nx-ink-subtle))]">Workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[hsl(var(--nx-ink))]">Settings</h1><p className="mt-2 text-sm leading-6 text-[hsl(var(--nx-ink-subtle))]">Manage your account, preferences, and plan.</p></div><div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-[hsl(var(--nx-surface-2))] text-xs font-semibold">{initials}</div></header>
+    <div className="space-y-7">
+      <SettingsGroup label="Account">
+        <div className="flex items-end gap-3 border-b border-white/[0.06] px-4 py-4"><label className="min-w-0 flex-1"><span className="mb-2 block text-sm font-medium text-[hsl(var(--nx-ink))]">Profile name</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder={user?.email || "Your name"} className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-ring" /></label><button type="button" onClick={() => void saveProfile({ display_name: displayName.trim() || null }, "Profile")} disabled={saving === "Profile" || !profileLoaded} className="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"><Save size={15} />{saving === "Profile" ? "Saving" : "Save"}</button></div>
+        <SettingRow icon={Globe2} label="Email" description={user?.email || "Not connected"} />
+        <SettingRow icon={LockKeyhole} label="Password" description="Update your sign-in method" onClick={() => toast({ title: "Password", description: "Use the password reset link from the sign-in page." })} />
+      </SettingsGroup>
+      <SettingsGroup label="Preferences">
+        <div className="group flex min-h-16 w-full items-center gap-3 border-b border-white/[0.06] px-4 text-left transition hover:bg-white/[0.025]"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[hsl(var(--nx-surface-2))] text-[#A6ADB8]"><Bell size={16} /></span><span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[hsl(var(--nx-ink))]">Notifications</span><span className="mt-0.5 block text-xs text-[hsl(var(--nx-ink-subtle))]">Email and product updates</span></span><Switch checked={notifications} onCheckedChange={(checked) => { setNotifications(checked); void saveProfile({ notifications_enabled: checked }, "Notifications"); }} aria-label="Toggle notifications" /></div>
+        <div className="flex min-h-16 items-center gap-3 border-b border-white/[0.06] px-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[hsl(var(--nx-surface-2))] text-[#A6ADB8]"><Globe2 size={16} /></span><label className="min-w-0 flex-1"><span className="block text-sm font-medium text-[hsl(var(--nx-ink))]">Language</span><span className="mt-0.5 block text-xs text-[hsl(var(--nx-ink-subtle))]">Choose your workspace language</span></label><select value={language} onChange={(event) => { setLanguage(event.target.value); void saveProfile({ language: event.target.value }, "Language"); }} className="h-9 rounded-md border border-border bg-card px-2 text-sm text-foreground outline-none focus:border-ring"><option>English</option><option>Spanish</option><option>French</option><option>German</option><option>Japanese</option></select></div>
+        <div className="flex min-h-16 items-center gap-3 px-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[hsl(var(--nx-surface-2))] text-[#A6ADB8]">{currentTheme === "dark" ? <Moon size={16} /> : <Sun size={16} />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium text-[hsl(var(--nx-ink))]">Appearance</span><span className="mt-0.5 block text-xs text-[hsl(var(--nx-ink-subtle))]">{currentTheme === "dark" ? "Dark mode" : "Light mode"}</span></span><Switch checked={currentTheme === "dark"} onCheckedChange={handleThemeChange} aria-label="Toggle dark mode" /></div>
+      </SettingsGroup>
+      <SettingsGroup label="Billing"><SettingRow icon={CreditCard} label="Current plan" description={subLoading ? "Loading plan" : `${displayPlan} · ${displayPrice}${subscription?.end_date || expirationDate ? ` · Renews ${expirationDate || subscription?.end_date}` : ""}`} /><SettingRow icon={ArrowRight} label="Upgrade" description={hasPaidSubscription ? "Change your plan" : "Choose a paid plan"} to="/pricing" /></SettingsGroup>
+      <SettingsGroup label="Support"><SettingRow icon={HelpCircle} label="Help center" description="Get answers and contact support" href="mailto:support@nexoraos.digital" /><SettingRow icon={Shield} label="Privacy policy" description="How NexoraOS handles your data" to="/privacy" /><SettingRow icon={FileText} label="Terms of service" description="The rules for using NexoraOS" to="/terms" /><SettingRow icon={CreditCard} label="Refund policy" description="How billing issues and cancellations work" to="/refund" /></SettingsGroup>
+      <div className="flex flex-col gap-3 border-t border-white/[0.08] pt-7 sm:flex-row sm:items-center sm:justify-between"><button type="button" onClick={() => toast({ title: "Delete account", description: "Account deletion requests are handled by support." })} className="inline-flex items-center gap-2 text-sm font-medium text-[#EF6B73] transition hover:text-[#FF9A9F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#EF6B73]"><Trash2 size={15} />Delete account</button><button type="button" onClick={handleSignOut} className="inline-flex items-center gap-2 text-sm text-[hsl(var(--nx-ink-muted))] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--nx-amber))]"><LogOut size={15} />Sign out</button></div>
+    </div>
+  </div></div></DashboardLayout>;
 };
 
 export default Settings;
