@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import Blog from "./pages/Blog";
-import Landing from "./pages/Landing";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -82,7 +81,7 @@ const App = () => (
               <ErrorBoundary>
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                <Route path="/" element={<Landing />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/" element={<Blog />} />
                 <Route path="/auth" element={<AuthRoute />} />
