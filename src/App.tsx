@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { lazy, Suspense } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
@@ -56,6 +56,20 @@ const AppShellSkeleton = () => (
   </div>
 );
 const PageLoader = AppShellSkeleton;
+
+const SiteFooter = () => (
+  <footer className="border-t border-white/[0.08] bg-[#0a0a0a] px-5 py-5 text-xs text-white/55 sm:px-8">
+    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3">
+      <span>© {new Date().getFullYear()} NexoraOS</span>
+      <nav className="flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="Legal and support links">
+        <Link to="/privacy" className="transition-colors hover:text-white">Privacy Policy</Link>
+        <Link to="/terms" className="transition-colors hover:text-white">Terms of Service</Link>
+        <Link to="/refund" className="transition-colors hover:text-white">Refund Policy</Link>
+        <a href="mailto:support@nexoraos.digital" className="transition-colors hover:text-white">Contact: support@nexoraos.digital</a>
+      </nav>
+    </div>
+  </footer>
+);
 
 const AuthRoute = () => {
   const { session, loading } = useAuth();
@@ -200,6 +214,7 @@ const App = () => (
                   </Routes>
                 </Suspense>
               </ErrorBoundary>
+              <SiteFooter />
             </BrowserRouter>
           </AuthProvider>
         </LazyMotion>
